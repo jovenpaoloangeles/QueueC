@@ -1,6 +1,6 @@
 // tests/e2e/05-courts-setup.spec.js
 import { test, expect } from '@playwright/test'
-import { BASE, createSession } from '../helpers.js'
+import { BASE, createSession, checkinPlayers, startSession } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
   const { session } = await (await page.request.get(`${BASE}/api/sessions/active`)).json()
@@ -47,9 +47,40 @@ test('5.6 set active_from time', async ({ page }) => {
   await expect(row.locator('input[type="time"]').first()).toHaveValue('18:00')
 })
 
+test('5.7 set active_until time', async ({ page }) => {
+  const row = page.locator('text=Courts').locator('..').locator('[class*="rounded-md border"]').first()
+  await row.locator('input[type="time"]').nth(1).fill('21:00')
+  await page.waitForTimeout(400)
+  await expect(row.locator('input[type="time"]').nth(1)).toHaveValue('21:00')
+})
+
 test('5.8 disable court — checkbox unchecked', async ({ page }) => {
   const row = page.locator('text=Courts').locator('..').locator('[class*="rounded-md border"]').first()
   await row.locator('input[type="checkbox"]').uncheck()
   await page.waitForTimeout(300)
   await expect(row.locator('input[type="checkbox"]')).not.toBeChecked()
+})
+
+test('5.9 disabled court absent from live view', async ({ page }) => {
+  // Disable court 1
+  const row = page.locator('text=Courts').locator('..').locator('[class*="rounded-md border"]').first()
+  await row.locator('input[type="checkbox"]').uncheck()
+  await page.waitForTimeout(300)
+  // Check in 2 players and start session
+  await checkinPlayers(page, ['Inter C1', 'Inter C2'])
+  await startSession(page)
+  // Court 1 should be absent (only Court 2 visible)
+  await expect(page.locator('text=Court 1')).toHaveCount(0)
+  await expect(page.locator('text=Court 2')).toBeVisible()
+})
+
+test('5.10 re-enabled court reappears in live view', async ({ page }) => {
+  const row = page.locator('text=Courts').locator('..').locator('[class*="rounded-md border"]').first()
+  await row.locator('input[type="checkbox"]').uncheck()
+  await page.waitForTimeout(300)
+  await row.locator('input[type="checkbox"]').check()
+  await page.waitForTimeout(300)
+  await checkinPlayers(page, ['Inter C1', 'Inter C2'])
+  await startSession(page)
+  await expect(page.locator('text=Court 1')).toBeVisible()
 })
