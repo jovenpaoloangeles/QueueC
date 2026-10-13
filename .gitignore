@@ -3,3 +3,5 @@ queuec.db
 node_modules/
 dist/
 .env
+.superpowers/
+.playwright-mcp/
