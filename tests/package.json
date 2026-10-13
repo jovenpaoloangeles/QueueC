@@ -8,7 +8,7 @@
     "test:e2e": "npx playwright test --config=playwright.config.js",
     "test:unit": "node unit/dnd.valid.test.js && node unit/api.error.test.js && node unit/timer.test.js"
   },
-  "dependencies": {
+  "devDependencies": {
     "@playwright/test": "^1.64.0"
   }
 }
