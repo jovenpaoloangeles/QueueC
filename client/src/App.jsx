@@ -28,6 +28,7 @@ export default function App() {
       team2_p1: t2p1, team2_p2: t2p2 ?? null
     })
     setSelection([])
+    setArmedCourt(null) // after the await: a rejected start keeps the arm so the retry affordance survives
   }
 
   // arm-then-auto-start: accumulate the drop into selection; auto-start only at 4.
