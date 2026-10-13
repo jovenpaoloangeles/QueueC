@@ -11,6 +11,7 @@ async function req(method, path, body) {
 }
 
 export const createSession = data => req('POST', '/sessions', data)
+export const startSession = id => req('PATCH', `/sessions/${id}/start`)
 export const endSession = id => req('PATCH', `/sessions/${id}/end`)
 export const getPlayers = () => req('GET', '/players')
 export const createPlayer = data => req('POST', '/players', data)

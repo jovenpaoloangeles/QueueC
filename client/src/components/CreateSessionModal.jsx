@@ -59,7 +59,7 @@ export default function CreateSessionModal({ onClose }) {
           <div className="flex gap-2 justify-end mt-1">
             <Button type="button" variant="outline" size="sm" onClick={onClose}>Cancel</Button>
             <Button type="submit" size="sm" disabled={loading}>
-              {loading ? '...' : 'Start Session'}
+              {loading ? '...' : 'Create Session'}
             </Button>
           </div>
         </form>

@@ -8,6 +8,7 @@ import CourtsRow from './components/CourtsRow.jsx'
 import QueueGrid from './components/QueueGrid.jsx'
 import StatsSidebar from './components/StatsSidebar.jsx'
 import CreateSessionModal from './components/CreateSessionModal.jsx'
+import SetupScreen from './components/SetupScreen.jsx'
 
 export default function App() {
   const [sseData, setSseData] = useState({ session: null, queue: [], activeMatches: [], stats: null, serverTime: null })
@@ -55,7 +56,10 @@ export default function App() {
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-background">
       <Header session={session} onNewSession={() => setShowCreate(true)} />
-      {session && (
+      {session && session.started_at == null && (
+        <SetupScreen session={session} queue={queue} />
+      )}
+      {session && session.started_at != null && (
         <div className="flex flex-1 overflow-hidden">
           <main className="flex min-w-0 flex-1 flex-col gap-4 overflow-hidden p-4">
             {/* band heights from the target arrangement: courts h-[45%] min-h-[300px], queue flex-1 */}
@@ -88,7 +92,7 @@ export default function App() {
         </div>
       )}
       {!session && (
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex flex-1 items-center justify-center">
           <Button size="lg" onClick={() => setShowCreate(true)}>
             + Start New Session
           </Button>

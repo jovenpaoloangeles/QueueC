@@ -7,7 +7,7 @@ export default function Header({ session, onNewSession }) {
   const [elapsed, setElapsed] = useState(0)
 
   useEffect(() => {
-    if (!session) return
+    if (!session || session.started_at == null) return
     const base = Math.floor(Date.now() / 1000) - session.started_at
     setElapsed(base)
     const id = setInterval(() => setElapsed(e => e + 1), 1000)
@@ -32,9 +32,14 @@ export default function Header({ session, onNewSession }) {
         )}
       </div>
       <div className="flex items-center gap-3">
-        {session && (
+        {session && session.started_at != null && (
           <Badge variant="outline" className="font-mono tabular-nums text-primary border-primary/30">
             ● {fmtDur(elapsed)}
+          </Badge>
+        )}
+        {session && session.started_at == null && (
+          <Badge variant="outline" className="text-2xs uppercase tracking-wider text-muted-foreground">
+            Not started
           </Badge>
         )}
         <Button size="sm" onClick={onNewSession}>
