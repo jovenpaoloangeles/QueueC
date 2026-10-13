@@ -12,7 +12,7 @@ export default function Header({ session, onNewSession }) {
     setElapsed(base)
     const id = setInterval(() => setElapsed(e => e + 1), 1000)
     return () => clearInterval(id)
-  }, [session?.id])
+  }, [session?.id, session?.started_at])
 
   const fmtTime = ts => ts ? new Date(ts * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'
 

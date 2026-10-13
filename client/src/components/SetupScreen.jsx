@@ -20,13 +20,20 @@ function SkillChip({ level }) {
 export default function SetupScreen({ session, queue }) {
   const [players, setPlayers] = useState([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState(false)
   const [starting, setStarting] = useState(false)
 
-  useEffect(() => {
-    getPlayers()
+  function loadPlayers() {
+    setLoading(true)
+    setFetchError(false)
+    return getPlayers()
       .then(d => setPlayers(d.players))
-      .catch(() => {})
+      .catch(() => setFetchError(true))
       .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    loadPlayers()
   }, [])
 
   const inQueue = new Set(queue.map(e => e.player_id))
@@ -74,7 +81,13 @@ export default function SetupScreen({ session, queue }) {
                 <Skeleton className="h-6 w-28" />
               </div>
             )}
-            {!loading && pool.length === 0 && (
+            {!loading && fetchError && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Couldn&apos;t load players.</span>
+                <Button variant="outline" size="xs" onClick={loadPlayers}>Retry</Button>
+              </div>
+            )}
+            {!loading && !fetchError && pool.length === 0 && (
               <span className="text-xs text-muted-foreground">All registered players are in the queue.</span>
             )}
             <div className="flex flex-wrap gap-2">
