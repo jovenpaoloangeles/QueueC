@@ -79,6 +79,7 @@ export default function App() {
                 onStartMatch={handleStartMatch}
                 onDropPlayer={handleDropOnCourt}
                 armedCourt={armedCourt}
+                serverTime={sseData.serverTime ?? Math.floor(Date.now() / 1000)}
               />
             </div>
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
