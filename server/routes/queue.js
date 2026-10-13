@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import db from '../db.js'
+import { suggestPlayers } from '../logic/smartQueue.js'
 
 const router = Router()
 
@@ -24,6 +25,16 @@ router.patch('/queue/:entryId/status', (req, res) => {
   const entry = db.prepare('SELECT * FROM queue_entries WHERE id = ?').get(req.params.entryId)
   if (!entry) return res.status(404).json({ error: 'Entry not found' })
   res.json({ entry })
+})
+
+router.get('/sessions/:id/suggest', (req, res) => {
+  const { mode } = req.query
+  if (mode !== 'singles' && mode !== 'doubles') {
+    return res.status(400).json({ error: 'mode must be singles or doubles' })
+  }
+  const entries = db.prepare('SELECT * FROM queue_entries WHERE session_id = ?').all(req.params.id)
+  const suggestion = suggestPlayers(entries, mode)
+  res.json({ suggestion })
 })
 
 export default router
