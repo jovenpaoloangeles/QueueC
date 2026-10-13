@@ -28,6 +28,9 @@ export function validateTeamSlots(body, currentIds) {
   for (const id of provided) {
     if (!current.has(id)) return { ok: false, error: `entry ${id} is not on this court` }
   }
+  if (provided.length !== currentIds.length) {
+    return { ok: false, error: 'payload must be a rearrangement of the entries on this court' }
+  }
   return { ok: true, value }
 }
 
