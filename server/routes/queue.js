@@ -1,3 +1,28 @@
 import { Router } from 'express'
+import db from '../db.js'
+
 const router = Router()
+
+router.post('/sessions/:id/checkin', (req, res) => {
+  const { player_id } = req.body
+  const now = Math.floor(Date.now() / 1000)
+  const existing = db.prepare(
+    'SELECT id FROM queue_entries WHERE session_id = ? AND player_id = ?'
+  ).get(req.params.id, player_id)
+  if (existing) return res.status(409).json({ error: 'Player already checked in' })
+
+  const { lastInsertRowid } = db.prepare(
+    'INSERT INTO queue_entries (session_id, player_id, checked_in_at) VALUES (?, ?, ?)'
+  ).run(req.params.id, player_id, now)
+  const entry = db.prepare('SELECT * FROM queue_entries WHERE id = ?').get(lastInsertRowid)
+  res.status(201).json({ entry })
+})
+
+router.patch('/queue/:entryId/status', (req, res) => {
+  const { status } = req.body
+  db.prepare('UPDATE queue_entries SET status = ? WHERE id = ?').run(status, req.params.entryId)
+  const entry = db.prepare('SELECT * FROM queue_entries WHERE id = ?').get(req.params.entryId)
+  res.json({ entry })
+})
+
 export default router
