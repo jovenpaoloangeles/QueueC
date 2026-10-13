@@ -11,6 +11,8 @@ router.get('/sessions/:id/courts', (req, res) => {
 
 router.post('/sessions/:id/courts', (req, res) => {
   const { label } = req.body
+  const session = db.prepare('SELECT id FROM sessions WHERE id = ?').get(req.params.id)
+  if (!session) return res.status(404).json({ error: 'Session not found' })
   const { lastInsertRowid } = db.prepare(
     'INSERT INTO courts (session_id, label) VALUES (?, ?)'
   ).run(req.params.id, label)
