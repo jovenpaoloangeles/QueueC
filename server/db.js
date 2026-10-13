@@ -111,6 +111,22 @@ if (sessionsNeedingCourts.length > 0) {
       }
     }
   })()
+  const updateMatches = db.prepare(`
+    UPDATE matches SET court_number = (
+      SELECT c.id FROM courts c
+      WHERE c.session_id = matches.session_id
+        AND c.label = 'Court ' || matches.court_number
+    )
+    WHERE session_id = ?
+      AND EXISTS (
+        SELECT 1 FROM courts c
+        WHERE c.session_id = matches.session_id
+          AND c.label = 'Court ' || matches.court_number
+      )
+  `)
+  for (const { id } of sessionsNeedingCourts) {
+    updateMatches.run(id)
+  }
 }
 
 export function seedPlayersFromFile(rows) {
