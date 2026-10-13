@@ -19,6 +19,7 @@ export default function CourtsRow({ session, activeMatches, queue, playSeconds, 
           canStart={canStart}
           onStartClick={courtNum => onStartMatch(courtNum, selection)}
           onDropPlayer={onDropPlayer}
+          canDropPlayer={entryId => selection.length < 4 || selection.includes(entryId)}
           armedEntryIds={armedCourt === n ? selection : []}
         />
       ))}

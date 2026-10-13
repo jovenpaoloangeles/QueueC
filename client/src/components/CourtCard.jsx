@@ -77,11 +77,13 @@ function TeamPanel({ side, entryIds, queue, matchId, match }) {
   )
 }
 
-export default function CourtCard({ courtNumber, match, queue, playSeconds, onStartClick, canStart, onDropPlayer, armedEntryIds }) {
+export default function CourtCard({ courtNumber, match, queue, playSeconds, onStartClick, canStart, onDropPlayer, canDropPlayer, armedEntryIds }) {
   const [showEnd, setShowEnd] = useState(false)
   const [over, setOver] = useState(false)
   const isActive = !!match
   const secs = isActive ? (playSeconds.get(match.id) ?? 0) : 0
+  // live check: drop may run before the dragover re-render flushes (batched), so never snapshot it
+  const dropAllowed = () => valid('court') && canDropPlayer(drag.current?.entryId)
 
   return (
     <Card
@@ -123,18 +125,20 @@ export default function CourtCard({ courtNumber, match, queue, playSeconds, onSt
           onDragLeave={() => setOver(false)}
           onDrop={e => {
             e.preventDefault(); setOver(false)
-            const p = drag.current
-            if (valid('court')) onDropPlayer(courtNumber, p.entryId)
+            if (dropAllowed()) onDropPlayer(courtNumber, drag.current.entryId)
           }}
           className={cn(
             'flex flex-1 flex-col items-center justify-center gap-2',
-            over && valid('court') && 'bg-drop-target ring-2 ring-drop-target-border',
-            over && drag.current && !valid('court') && 'bg-drop-invalid ring-2 ring-drop-invalid-border'
+            over && dropAllowed() && 'bg-drop-target ring-2 ring-drop-target-border',
+            over && drag.current && !dropAllowed() && 'bg-drop-invalid ring-2 ring-drop-invalid-border'
           )}
         >
           {armedEntryIds.length > 0 && (
-            <div className="rounded-full border border-drop-target-border bg-drop-target/60 px-3 py-1 text-sm font-medium text-foreground">
-              {armedEntryIds.map(id => playerName(queue, id)).join(' + ')}
+            <div className="flex items-center gap-2 rounded-full border border-drop-target-border bg-drop-target/60 px-3 py-1 text-sm font-medium text-foreground">
+              <span>{armedEntryIds.map(id => playerName(queue, id)).join(' + ')}</span>
+              {armedEntryIds.length === 2 && (
+                <Button size="xs" onClick={() => onStartClick(courtNumber)}>Start Singles</Button>
+              )}
             </div>
           )}
           <Empty className="border border-dashed border-border bg-muted/30 py-10">
@@ -146,9 +150,11 @@ export default function CourtCard({ courtNumber, match, queue, playSeconds, onSt
                 {canStart ? 'Or start with the players already selected' : 'Drag from the queue, or click to select'}
               </EmptyDescription>
             </EmptyHeader>
-            <Button variant="outline" size="sm" onClick={() => onStartClick(courtNumber)} disabled={!canStart}>
-              Start Match
-            </Button>
+            {armedEntryIds.length !== 2 && (
+              <Button variant="outline" size="sm" onClick={() => onStartClick(courtNumber)} disabled={!canStart}>
+                Start Match
+              </Button>
+            )}
           </Empty>
         </CardContent>
       )}

@@ -30,12 +30,14 @@ export default function App() {
     setSelection([])
   }
 
-  // arm-then-auto-start: accumulate the drop into selection, then start at 2 or 4
+  // arm-then-auto-start: accumulate the drop into selection; auto-start only at 4.
+  // A 5th NEW player onto a full selection is invalid — change nothing (ruling: doubles at 4, singles via button).
   async function handleDropOnCourt(courtNumber, entryId) {
-    const next = selection.includes(entryId) || selection.length >= 4 ? selection : [...selection, entryId]
+    if (selection.length >= 4 && !selection.includes(entryId)) return
+    const next = selection.includes(entryId) ? selection : [...selection, entryId]
     setSelection(next)
     setArmedCourt(courtNumber)
-    if (next.length === 2 || next.length === 4) {
+    if (next.length === 4) {
       await handleStartMatch(courtNumber, next) // clears selection
       setArmedCourt(null)
     }
