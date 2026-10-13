@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { fmtDur } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
 
 export default function Header({ session, onNewSession }) {
   const [elapsed, setElapsed] = useState(0)
@@ -18,33 +17,30 @@ export default function Header({ session, onNewSession }) {
   const fmtTime = ts => ts ? new Date(ts * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'
 
   return (
-    <div className="flex flex-col bg-card">
-      <div className="flex justify-between items-center px-3.5 py-1.5 text-xs">
-        <div className="flex items-center gap-3">
-          <span className="font-bold text-sm text-foreground">🏸 QueueC</span>
-          {session ? (
-            <>
-              <span className="text-muted-foreground/30">·</span>
-              <span className="text-muted-foreground">{session.name}</span>
-              <span className="text-muted-foreground/30">·</span>
-              <span className="text-muted-foreground/60">{fmtTime(session.scheduled_start)}–{fmtTime(session.scheduled_end)}</span>
-            </>
-          ) : (
-            <span className="text-muted-foreground/20">No active session</span>
-          )}
-        </div>
-        <div className="flex items-center gap-2.5">
-          {session && (
-            <Badge variant="outline" className="text-primary border-primary/30 text-[10px] px-1.5 py-0">
-              ● {fmtDur(elapsed)}
-            </Badge>
-          )}
-          <Button variant="outline" size="xs" onClick={onNewSession}>
-            + Session
-          </Button>
-        </div>
+    <div className="flex h-14 shrink-0 items-center justify-between gap-4 bg-card px-4">
+      <div className="flex items-baseline gap-3">
+        <span className="text-base font-semibold text-foreground">🏸 QueueC</span>
+        {session ? (
+          <>
+            <span className="text-base text-muted-foreground">{session.name}</span>
+            <span className="text-2xs uppercase tracking-wider text-muted-foreground">
+              {fmtTime(session.scheduled_start)}–{fmtTime(session.scheduled_end)}
+            </span>
+          </>
+        ) : (
+          <span className="text-2xs uppercase tracking-wider text-muted-foreground">No active session</span>
+        )}
       </div>
-      <Separator />
+      <div className="flex items-center gap-3">
+        {session && (
+          <Badge variant="outline" className="font-mono tabular-nums text-primary border-primary/30">
+            ● {fmtDur(elapsed)}
+          </Badge>
+        )}
+        <Button size="sm" onClick={onNewSession}>
+          + Session
+        </Button>
+      </div>
     </div>
   )
 }

@@ -14,7 +14,10 @@ export default function App() {
   const [showCreate, setShowCreate] = useState(false)
   const [selection, setSelection] = useState([])
 
+  const { session, queue, activeMatches, stats } = sseData
+
   async function handleStartMatch(courtNumber, sel) {
+    if (!session) return
     const mapped = sel.length === 2 ? [sel[0], null, sel[1], null] : sel
     const [t1p1, t1p2, t2p1, t2p2] = mapped
     await startMatch({
@@ -30,38 +33,36 @@ export default function App() {
 
   const { waitSeconds, playSeconds } = useTimers(sseData.serverTime, sseData.queue, sseData.activeMatches)
 
-  const { session, queue, activeMatches, stats } = sseData
-
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-background">
       <Header session={session} onNewSession={() => setShowCreate(true)} />
       {session && (
         <div className="flex flex-1 overflow-hidden">
-          <div className="flex flex-col flex-1 overflow-hidden">
-            <CourtsRow
-              session={session}
-              activeMatches={activeMatches}
-              queue={queue}
-              playSeconds={playSeconds}
-              selection={selection}
-              onStartMatch={handleStartMatch}
-            />
-            <div className="flex flex-1 overflow-hidden">
-              <div className="flex-1 overflow-auto p-3">
-                <QueueGrid
-                  session={session}
-                  queue={queue}
-                  activeMatches={activeMatches}
-                  waitSeconds={waitSeconds}
-                  selection={selection}
-                  onSelectionChange={setSelection}
-                />
-              </div>
-              <div className="w-[180px] border-l border-border overflow-auto">
-                <StatsSidebar stats={stats} />
-              </div>
+          <main className="flex min-w-0 flex-1 flex-col gap-4 overflow-hidden p-4">
+            {/* band heights from the target arrangement: courts h-[45%] min-h-[300px], queue flex-1 */}
+            <div className="grid h-[45%] min-h-[300px] shrink-0 overflow-hidden">
+              <CourtsRow
+                session={session}
+                activeMatches={activeMatches}
+                queue={queue}
+                playSeconds={playSeconds}
+                selection={selection}
+                onStartMatch={handleStartMatch}
+              />
             </div>
-          </div>
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+              <QueueGrid
+                session={session}
+                queue={queue}
+                waitSeconds={waitSeconds}
+                selection={selection}
+                onSelectionChange={setSelection}
+              />
+            </div>
+          </main>
+          <aside className="w-72 shrink-0 overflow-y-auto border-l border-border bg-card">
+            <StatsSidebar stats={stats} />
+          </aside>
         </div>
       )}
       {!session && (
