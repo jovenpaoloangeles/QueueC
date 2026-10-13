@@ -22,20 +22,26 @@ export default function EndMatchModal({ match, onClose }) {
           <DialogTitle>End Match — Court {match.court_number}</DialogTitle>
         </DialogHeader>
         <form onSubmit={submit} className="flex flex-col gap-4">
-          <div className="flex items-center gap-3 justify-center">
-            <Input
-              type="number" min="0" max="99"
-              value={scores.team1}
-              onChange={e => setScores(s => ({...s, team1: e.target.value}))}
-              className="w-16 text-center"
-            />
-            <span className="text-muted-foreground/40">–</span>
-            <Input
-              type="number" min="0" max="99"
-              value={scores.team2}
-              onChange={e => setScores(s => ({...s, team2: e.target.value}))}
-              className="w-16 text-center"
-            />
+          <div className="flex items-end gap-3 justify-center">
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-2xs uppercase tracking-wider text-muted-foreground">Team 1</span>
+              <Input
+                type="number" min="0" max="99"
+                value={scores.team1}
+                onChange={e => setScores(s => ({...s, team1: e.target.value}))}
+                className="w-24 h-12 text-2xl font-mono tabular-nums text-center"
+              />
+            </div>
+            <span className="pb-3 text-muted-foreground/40">–</span>
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-2xs uppercase tracking-wider text-muted-foreground">Team 2</span>
+              <Input
+                type="number" min="0" max="99"
+                value={scores.team2}
+                onChange={e => setScores(s => ({...s, team2: e.target.value}))}
+                className="w-24 h-12 text-2xl font-mono tabular-nums text-center"
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" size="sm" onClick={onClose}>Cancel</Button>
