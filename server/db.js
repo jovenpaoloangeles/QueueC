@@ -104,13 +104,6 @@ if (sessionsNeedingCourts.length > 0) {
   const insertCourt = db.prepare(
     'INSERT INTO courts (session_id, label) VALUES (?, ?)'
   )
-  db.transaction(() => {
-    for (const { id, court_count } of sessionsNeedingCourts) {
-      for (let i = 1; i <= court_count; i++) {
-        insertCourt.run(id, `Court ${i}`)
-      }
-    }
-  })()
   const updateMatches = db.prepare(`
     UPDATE matches SET court_number = (
       SELECT c.id FROM courts c
@@ -124,9 +117,16 @@ if (sessionsNeedingCourts.length > 0) {
           AND c.label = 'Court ' || matches.court_number
       )
   `)
-  for (const { id } of sessionsNeedingCourts) {
-    updateMatches.run(id)
-  }
+  db.transaction(() => {
+    for (const { id, court_count } of sessionsNeedingCourts) {
+      for (let i = 1; i <= court_count; i++) {
+        insertCourt.run(id, `Court ${i}`)
+      }
+    }
+    for (const { id } of sessionsNeedingCourts) {
+      updateMatches.run(id)
+    }
+  })()
 }
 
 export function seedPlayersFromFile(rows) {
