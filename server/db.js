@@ -22,7 +22,7 @@ db.exec(`
     scheduled_start INTEGER NOT NULL,
     scheduled_end INTEGER NOT NULL,
     court_count INTEGER NOT NULL DEFAULT 2,
-    started_at INTEGER NOT NULL,
+    started_at INTEGER,
     ended_at INTEGER
   );
 
@@ -58,6 +58,29 @@ const hasSortOrder = db.prepare("PRAGMA table_info(queue_entries)").all()
   .some(c => c.name === 'sort_order')
 if (!hasSortOrder) {
   db.exec('ALTER TABLE queue_entries ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0')
+}
+
+// ponytail: rebuild sessions to relax started_at — drafts have NULL until PATCH /start
+const startedAt = db.prepare('PRAGMA table_info(sessions)').all()
+  .find(c => c.name === 'started_at')
+if (startedAt?.notnull === 1) {
+  db.pragma('foreign_keys = OFF')
+  db.exec(`
+    CREATE TABLE sessions_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      scheduled_start INTEGER NOT NULL,
+      scheduled_end INTEGER NOT NULL,
+      court_count INTEGER NOT NULL DEFAULT 2,
+      started_at INTEGER,
+      ended_at INTEGER
+    );
+    INSERT INTO sessions_new (id, name, scheduled_start, scheduled_end, court_count, started_at, ended_at)
+      SELECT id, name, scheduled_start, scheduled_end, court_count, started_at, ended_at FROM sessions;
+    DROP TABLE sessions;
+    ALTER TABLE sessions_new RENAME TO sessions;
+  `)
+  db.pragma('foreign_keys = ON')
 }
 
 export default db

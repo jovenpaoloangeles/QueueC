@@ -36,6 +36,9 @@ export function validateTeamSlots(body, currentIds) {
 
 router.post('/', (req, res) => {
   const { session_id, court_number, team1_p1, team1_p2, team2_p1, team2_p2 } = req.body
+  const session = db.prepare('SELECT * FROM sessions WHERE id = ?').get(session_id)
+  if (!session) return res.status(404).json({ error: 'Session not found' })
+  if (session.started_at == null) return res.status(400).json({ error: 'Session not started' })
   const now = Math.floor(Date.now() / 1000)
   const format = team1_p2 ? 'doubles' : 'singles'
 
