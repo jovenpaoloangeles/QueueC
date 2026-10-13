@@ -36,7 +36,7 @@ router.get('/sessions/:id/suggest', (req, res) => {
     return res.status(400).json({ error: 'mode must be singles or doubles' })
   }
   const entries = db.prepare(
-    "SELECT qe.*, p.skill_level FROM queue_entries qe JOIN players p ON p.id = qe.player_id WHERE qe.session_id = ?"
+    "SELECT qe.*, p.skill_level FROM queue_entries qe JOIN players p ON p.id = qe.player_id WHERE qe.session_id = ? AND qe.status = 'waiting'"
   ).all(req.params.id)
   const suggestion = suggestPlayers(entries, mode)
   res.json({ suggestion })
