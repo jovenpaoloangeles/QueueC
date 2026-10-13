@@ -24,7 +24,8 @@ export default function CreateSessionModal({ onClose }) {
       scheduled_end: toUnix(form.date, form.end),
       court_count: Number(form.courts)
     })
-    onClose()
+    // intentionally no onClose() here — App closes reactively via SSE
+    setLoading(false)
   }
 
   return (

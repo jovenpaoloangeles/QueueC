@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useSSE } from './hooks/useSSE.js'
 import { useTimers } from './hooks/useTimers.js'
 import { startMatch, setQueueOrder } from './api.js'
@@ -50,6 +50,11 @@ export default function App() {
   }, [session?.id])
 
   useSSE(useCallback(data => setSseData(data), []))
+
+  // close the "new session" modal as soon as SSE confirms a draft session arrived
+  useEffect(() => {
+    if (session != null) setShowCreate(false)
+  }, [session])
 
   const { waitSeconds, playSeconds } = useTimers(sseData.serverTime, sseData.queue, sseData.activeMatches)
 
