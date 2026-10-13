@@ -12,6 +12,18 @@ function playerName(queue, entryId) {
   return queue.find(e => e.id === entryId)?.name ?? '?'
 }
 
+function TeamPlayer({ entryId, name }) {
+  const dragProps = useDragSource(() => ({ kind: 'player', entryId, status: 'playing' }))
+  return (
+    <span
+      {...dragProps}
+      onDragStart={e => { e.stopPropagation(); dragProps.onDragStart(e) }}
+    >
+      {name}
+    </span>
+  )
+}
+
 function TeamPanel({ side, entryIds, queue, matchId, match }) {
   const dragProps = useDragSource(() => ({ kind: 'team', matchId, side }))
   const [over, setOver] = useState(false)
@@ -54,7 +66,12 @@ function TeamPanel({ side, entryIds, queue, matchId, match }) {
       )}
     >
       <div className="text-base font-medium">
-        {entryIds.filter(Boolean).map(id => playerName(queue, id)).join(' + ')}
+        {entryIds.filter(Boolean).map((id, i) => (
+          <span key={id}>
+            {i > 0 && ' + '}
+            <TeamPlayer entryId={id} name={playerName(queue, id)} />
+          </span>
+        ))}
       </div>
     </div>
   )
