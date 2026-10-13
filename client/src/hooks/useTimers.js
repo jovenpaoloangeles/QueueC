@@ -8,6 +8,10 @@ export function useTimers(serverTime, queue, activeMatches) {
     return () => clearInterval(id)
   }, [])
 
+  useEffect(() => {
+    setTick(0)
+  }, [serverTime])
+
   const now = (serverTime ?? Math.floor(Date.now() / 1000)) + tick
 
   const waitSeconds = new Map()

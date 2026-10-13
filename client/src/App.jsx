@@ -23,7 +23,8 @@ export default function App() {
   const [selection, setSelection] = useState([])
 
   async function handleStartMatch(courtNumber, sel) {
-    const [t1p1, t1p2, t2p1, t2p2] = sel
+    const mapped = sel.length === 2 ? [sel[0], null, sel[1], null] : sel
+    const [t1p1, t1p2, t2p1, t2p2] = mapped
     await startMatch({
       session_id: session.id,
       court_number: courtNumber,
