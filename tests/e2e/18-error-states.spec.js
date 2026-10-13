@@ -1,6 +1,6 @@
 // tests/e2e/18-error-states.spec.js
 import { test, expect } from '@playwright/test'
-import { BASE, fullSetup } from '../helpers.js'
+import { BASE, fullSetup, createSession, checkinPlayers, startSession } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
   const { session } = await (await page.request.get(`${BASE}/api/sessions/active`)).json()
@@ -16,10 +16,7 @@ test('18.1 page reload mid-session restores state', async ({ page }) => {
 })
 
 test('18.4 empty queue shows empty state', async ({ page }) => {
-  // Create session, start with minimum players, then bench all
-  const { session } = await (await page.request.get(`${BASE}/api/sessions/active`)).json()
   // Already cleaned up in beforeEach — just start fresh with 2 players
-  const { createSession, checkinPlayers, startSession } = await import('../helpers.js')
   await createSession(page)
   await checkinPlayers(page, ['Inter C1', 'Inter C2'])
   await startSession(page)

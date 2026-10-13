@@ -23,7 +23,7 @@ export default function Header({ session, onNewSession }) {
         {session ? (
           <>
             <span className="text-base text-muted-foreground">{session.name}</span>
-            <span className="text-2xs uppercase tracking-wider text-muted-foreground">
+            <span data-testid="header-time-range" className="text-2xs uppercase tracking-wider text-muted-foreground">
               {fmtTime(session.scheduled_start)}–{fmtTime(session.scheduled_end)}
             </span>
           </>

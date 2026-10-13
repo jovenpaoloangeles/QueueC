@@ -1,12 +1,14 @@
 // tests/global-setup.js
 import { unlinkSync, existsSync, readFileSync } from 'fs'
 import { createRequire } from 'module'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
 
 const require = createRequire(import.meta.url)
-const Database = require('/home/klodsjoven/QueueC/server/node_modules/better-sqlite3')
+const Database = require(join(dirname(fileURLToPath(import.meta.url)), '../server/node_modules/better-sqlite3'))
 
 const DB = '/tmp/queuec-test.db'
-const PLAYERS_PATH = '/home/klodsjoven/QueueC/tests/fixtures/players.json'
+const PLAYERS_PATH = join(dirname(fileURLToPath(import.meta.url)), 'fixtures/players.json')
 
 export default async function globalSetup() {
   // Wipe DB so fixture players seed fresh (avoids duplicate-name conflicts)

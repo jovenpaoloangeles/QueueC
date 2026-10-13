@@ -14,8 +14,8 @@ test('15.1 session name in header', async ({ page }) => {
 
 test('15.2 scheduled time range shown', async ({ page }) => {
   await createSession(page, { name: 'Header Test' })
-  // Time range format: HH:MM–HH:MM
-  await expect(page.locator('text=/\\d{1,2}:\\d{2}.*–.*\\d{1,2}:\\d{2}/')).toBeVisible()
+  // Time range format: HH:MM–HH:MM (scoped to header to avoid SetupScreen duplicate)
+  await expect(page.locator('[data-testid="header-time-range"]')).toBeVisible()
 })
 
 test('15.4 elapsed timer absent during setup', async ({ page }) => {
