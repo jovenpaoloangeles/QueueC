@@ -6,6 +6,7 @@ import queueRouter from './routes/queue.js'
 import matchesRouter from './routes/matches.js'
 import statsRouter from './routes/stats.js'
 import sseRouter, { broadcast } from './routes/sse.js'
+import courtsRouter from './routes/courts.js'
 
 const app = express()
 app.use(cors())
@@ -17,6 +18,7 @@ app.use('/api', queueRouter)
 app.use('/api/matches', matchesRouter)
 app.use('/api', statsRouter)
 app.use('/api/sse', sseRouter)
+app.use('/api', courtsRouter)
 
 // Broadcast state every second for live timers
 setInterval(broadcast, 1000)
