@@ -40,16 +40,18 @@ export default function CreateSessionModal({ onClose }) {
             <Label htmlFor="csm-name">Name</Label>
             <Input id="csm-name" autoFocus value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))} required />
           </div>
-          {/* Date hidden from tab order — defaults to today */}
-          <input id="csm-date" type="hidden" value={form.date} readOnly />
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="csm-date">Date</Label>
+            <Input id="csm-date" type="date" value={form.date} onChange={e => setForm(f => ({...f, date: e.target.value}))} required />
+          </div>
           <div className="flex gap-2">
             <div className="flex flex-col gap-1.5 flex-1">
               <Label htmlFor="csm-start">Start</Label>
-              <Input id="csm-start" type="text" placeholder="18:00" value={form.start} onChange={e => setForm(f => ({...f, start: e.target.value}))} required />
+              <Input id="csm-start" type="time" value={form.start} onChange={e => setForm(f => ({...f, start: e.target.value}))} required />
             </div>
             <div className="flex flex-col gap-1.5 flex-1">
               <Label htmlFor="csm-end">End</Label>
-              <Input id="csm-end" type="text" placeholder="21:00" value={form.end} onChange={e => setForm(f => ({...f, end: e.target.value}))} required />
+              <Input id="csm-end" type="time" value={form.end} onChange={e => setForm(f => ({...f, end: e.target.value}))} required />
             </div>
           </div>
           <div className="flex flex-col gap-1.5">

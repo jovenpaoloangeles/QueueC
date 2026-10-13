@@ -31,7 +31,7 @@ const publicDir = existsSync(join(__dirname, '..', 'public'))
   ? join(__dirname, '..', 'public')
   : join(__dirname, '..', 'client', 'dist')
 app.use(express.static(publicDir))
-app.get('*', (_req, res) => res.sendFile(join(publicDir, 'index.html')))
+app.get(/^(?!\/api).*/, (_req, res) => res.sendFile(join(publicDir, 'index.html')))
 
 const PORT = process.env.PORT ?? 3001
 app.listen(PORT, () => console.log(`Server running on :${PORT}`))

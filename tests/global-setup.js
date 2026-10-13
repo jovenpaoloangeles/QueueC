@@ -21,6 +21,7 @@ export default async function globalSetup() {
   db.pragma('journal_mode = WAL')
   db.pragma('foreign_keys = ON')
 
+  // ponytail: DDL mirrors server/db.js — keep in sync on schema changes
   db.exec(`
     CREATE TABLE IF NOT EXISTS players (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -31,11 +31,8 @@ test('16.3 modal close buttons reachable by Tab', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: '+ Session' }).click()
   // Tab through modal — Cancel should be focusable
-  await page.keyboard.press('Tab')
-  await page.keyboard.press('Tab')
-  await page.keyboard.press('Tab')
-  await page.keyboard.press('Tab')
-  await page.keyboard.press('Tab')
+  // type=date uses 4 sub-fields, type=time uses 4 sub-fields each; Cancel is at Tab 14 from Name
+  for (let i = 0; i < 14; i++) await page.keyboard.press('Tab')
   const focused = await page.evaluate(() => document.activeElement?.textContent)
   expect(['Cancel', 'Create Session']).toContain(focused?.trim())
 })
