@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
-import { updateMatchTeams } from '../api.js'
+import { updateMatchTeams, updateCourt } from '../api.js'
 import EndMatchModal from './EndMatchModal.jsx'
 
 function playerName(queue, entryId) {
@@ -77,7 +77,7 @@ function TeamPanel({ side, entryIds, queue, matchId, match }) {
   )
 }
 
-export default function CourtCard({ courtNumber, match, queue, playSeconds, onStartClick, canStart, onDropPlayer, canDropPlayer, armedEntryIds }) {
+export default function CourtCard({ court, match, queue, playSeconds, onStartClick, canStart, onDropPlayer, canDropPlayer, armedEntryIds }) {
   const [showEnd, setShowEnd] = useState(false)
   const [over, setOver] = useState(false)
   const isActive = !!match
@@ -87,17 +87,25 @@ export default function CourtCard({ courtNumber, match, queue, playSeconds, onSt
 
   return (
     <Card
-      data-drop={`court-${courtNumber}`}
+      data-drop={`court-${court.id}`}
       className={cn('flex flex-col border-border bg-card shadow-sm',
         isActive && 'border-court-live-border bg-court-live')}
     >
       {/* grid-cols wins outright (base has no unconditional grid-cols); items-center! is important so it beats base items-start regardless of emission order */}
       <CardHeader className="grid-cols-[1fr_auto] items-center! pb-3">
         <div className="flex items-center gap-2">
-          <span className="text-2xs font-medium uppercase tracking-wider text-muted-foreground">Court {courtNumber}</span>
+          <span className="text-2xs font-medium uppercase tracking-wider text-muted-foreground">{court.label}</span>
           {isActive && <Badge variant="outline" className="text-2xs uppercase">{match.format}</Badge>}
         </div>
         <div className="flex items-center gap-3">
+          <label className="flex items-center gap-1 text-xs text-muted-foreground cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={!!court.enabled}
+              onChange={e => updateCourt(court.id, { enabled: e.target.checked ? 1 : 0 }).catch(() => {})}
+            />
+            Open
+          </label>
           {isActive && <span className="font-mono text-sm tabular-nums text-foreground">{fmtClock(secs)}</span>}
           {isActive && (
             <Button variant="destructive" size="sm" onClick={() => setShowEnd(true)}>End Match</Button>
@@ -120,12 +128,12 @@ export default function CourtCard({ courtNumber, match, queue, playSeconds, onSt
 
       {!isActive && (
         <CardContent
-          data-drop={`court-${courtNumber}`}
+          data-drop={`court-${court.id}`}
           onDragOver={e => { e.preventDefault(); setOver(true) }}
           onDragLeave={() => setOver(false)}
           onDrop={e => {
             e.preventDefault(); setOver(false)
-            if (dropAllowed()) onDropPlayer(courtNumber, drag.current.entryId)
+            if (dropAllowed()) onDropPlayer(court.id, drag.current.entryId)
           }}
           className={cn(
             'flex flex-1 flex-col items-center justify-center gap-2',
@@ -137,7 +145,7 @@ export default function CourtCard({ courtNumber, match, queue, playSeconds, onSt
             <div className="flex items-center gap-2 rounded-full border border-drop-target-border bg-drop-target/60 px-3 py-1 text-sm font-medium text-foreground">
               <span>{armedEntryIds.map(id => playerName(queue, id)).join(' + ')}</span>
               {armedEntryIds.length === 2 && (
-                <Button size="xs" onClick={() => onStartClick(courtNumber)}>Start Singles</Button>
+                <Button size="xs" onClick={() => onStartClick(court.id)}>Start Singles</Button>
               )}
             </div>
           )}
@@ -151,7 +159,7 @@ export default function CourtCard({ courtNumber, match, queue, playSeconds, onSt
               </EmptyDescription>
             </EmptyHeader>
             {armedEntryIds.length !== 2 && (
-              <Button variant="outline" size="sm" onClick={() => onStartClick(courtNumber)} disabled={!canStart}>
+              <Button variant="outline" size="sm" onClick={() => onStartClick(court.id)} disabled={!canStart}>
                 Start Match
               </Button>
             )}
