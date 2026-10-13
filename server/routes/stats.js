@@ -12,7 +12,7 @@ router.get('/sessions/:id/stats', (req, res) => {
   ).get(sid).c
 
   const match_count = db.prepare(
-    'SELECT COUNT(*) as c FROM matches WHERE session_id = ? AND ended_at IS NOT NULL'
+    'SELECT COUNT(*) as c FROM matches WHERE session_id = ?'
   ).get(sid).c
 
   const waiters = db.prepare(

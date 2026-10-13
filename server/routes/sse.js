@@ -33,7 +33,7 @@ function currentState() {
     : 0
 
   const match_count = db.prepare(
-    'SELECT COUNT(*) as c FROM matches WHERE session_id = ? AND ended_at IS NOT NULL'
+    'SELECT COUNT(*) as c FROM matches WHERE session_id = ?'
   ).get(session.id).c
 
   const leaderboard = db.prepare(`

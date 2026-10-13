@@ -86,7 +86,7 @@ export default function CourtCard({ courtNumber, match, queue, playSeconds, onSt
   return (
     <Card
       data-drop={`court-${courtNumber}`}
-      className={cn('flex h-full flex-col border-border bg-card shadow-sm',
+      className={cn('flex flex-col border-border bg-card shadow-sm',
         isActive && 'border-court-live-border bg-court-live')}
     >
       {/* grid-cols wins outright (base has no unconditional grid-cols); items-center! is important so it beats base items-start regardless of emission order */}

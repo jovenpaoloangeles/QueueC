@@ -7,7 +7,7 @@ export default function CourtsRow({ session, activeMatches, queue, playSeconds, 
 
   // ponytail: >9 courts scroll the band; raise the breakpoint if a club ever needs it
   return (
-    <div className={cn('grid h-full min-h-[300px] gap-4 overflow-y-auto',
+    <div className={cn('grid h-full min-h-[300px] auto-rows-[minmax(260px,auto)] gap-4 overflow-y-auto',
       session.court_count <= 4 ? 'grid-cols-2' : 'grid-cols-3')}>
       {courts.map(n => (
         <CourtCard
