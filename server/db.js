@@ -1,9 +1,11 @@
 import Database from 'better-sqlite3'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
+import { readFileSync, existsSync } from 'fs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const db = new Database(join(__dirname, '../queuec.db'))
+const dbPath = process.env.DB_PATH ?? join(__dirname, '../queuec.db')
+const db = new Database(dbPath)
 
 db.pragma('journal_mode = WAL')
 db.pragma('foreign_keys = ON')
@@ -81,6 +83,28 @@ if (startedAt?.notnull === 1) {
     ALTER TABLE sessions_new RENAME TO sessions;
   `))()
   db.pragma('foreign_keys = ON')
+}
+
+export function seedPlayersFromFile(rows) {
+  const now = Math.floor(Date.now() / 1000)
+  const insert = db.prepare(
+    'INSERT OR IGNORE INTO players (name, skill_level, created_at) SELECT ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM players WHERE name = ?)'
+  )
+  for (const { name, skill_level } of rows) {
+    insert.run(name, skill_level, now, name)
+  }
+}
+
+const dbDir = dirname(dbPath)
+const presetPath = existsSync(`${dbDir}/players.json`)
+  ? `${dbDir}/players.json`
+  : join(__dirname, '../players.json')
+
+if (existsSync(presetPath)) {
+  try {
+    const rows = JSON.parse(readFileSync(presetPath, 'utf8'))
+    if (Array.isArray(rows)) seedPlayersFromFile(rows)
+  } catch {}
 }
 
 export default db

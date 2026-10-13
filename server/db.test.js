@@ -1,4 +1,6 @@
+import assert from 'node:assert/strict'
 import db from './db.js'
+import { seedPlayersFromFile } from './db.js'
 
 // Verify all tables exist
 const tables = db.prepare(
@@ -18,4 +20,15 @@ try {
   console.assert(e.message.includes('FOREIGN KEY'), `Expected FK error, got: ${e.message}`)
 }
 
-console.log('db.test.js: all assertions passed')
+// Test seedPlayersFromFile
+const before = db.prepare('SELECT COUNT(*) as c FROM players').get().c
+seedPlayersFromFile([
+  { name: '__test_seed_alice__', skill_level: 'beginner' },
+  { name: '__test_seed_alice__', skill_level: 'beginner' }, // duplicate — should skip
+])
+const after = db.prepare('SELECT COUNT(*) as c FROM players').get().c
+assert.equal(after - before, 1, 'should insert exactly 1 (duplicate skipped)')
+
+// cleanup
+db.prepare("DELETE FROM players WHERE name LIKE '__test_seed_%'").run()
+console.log('db.test.js: seedPlayersFromFile assertions passed')
