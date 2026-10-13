@@ -49,6 +49,13 @@ export default function QueueGrid({ session, queue, waitSeconds, selection, onSe
     }
   }
 
+  // benching must also leave the selection, or handleStartMatch would put a
+  // resting player on court
+  function bench(id) {
+    setEntryStatus(id, 'resting')
+    onSelectionChange(selection.filter(s => s !== id))
+  }
+
   const waiting = queue.filter(e => e.status === 'waiting')
   const resting = queue.filter(e => e.status === 'resting')
   const notInSession = allPlayers.filter(p => !queue.some(e => e.player_id === p.id))
@@ -140,7 +147,7 @@ export default function QueueGrid({ session, queue, waitSeconds, selection, onSe
             entry={entry}
             waitSecs={waitSeconds.get(entry.id) ?? 0}
             selectionIndex={selection.indexOf(entry.id)}
-            onClick={e => e.shiftKey ? setEntryStatus(entry.id, 'resting') : toggleSelect(entry.id)}
+            onClick={e => e.shiftKey ? bench(entry.id) : toggleSelect(entry.id)}
             onDropOn={handleDropOnPlayer}
           />
         ))}
@@ -149,7 +156,7 @@ export default function QueueGrid({ session, queue, waitSeconds, selection, onSe
       <RestingTray
         entries={resting}
         onReturn={id => setEntryStatus(id, 'waiting')}
-        onDropEntry={id => setEntryStatus(id, 'resting')}
+        onDropEntry={bench}
       />
     </div>
   )
