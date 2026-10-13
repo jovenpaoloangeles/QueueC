@@ -21,3 +21,5 @@ export const setEntryStatus = (entryId, status) =>
 export const startMatch = data => req('POST', '/matches', data)
 export const endMatch = (id, scores) => req('PATCH', `/matches/${id}/end`, scores)
 export const getPlayerHistory = playerId => req('GET', `/players/${playerId}/history`)
+export const getSuggestion = (sessionId, mode) =>
+  req('GET', `/sessions/${sessionId}/suggest?mode=${mode}`)
