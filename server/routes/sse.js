@@ -19,7 +19,7 @@ function currentState() {
   if (!session) return { session: null, queue: [], activeMatches: [], stats: null, serverTime: Math.floor(Date.now() / 1000) }
 
   const queue = db.prepare(
-    "SELECT qe.*, p.name, p.skill_level FROM queue_entries qe JOIN players p ON p.id = qe.player_id WHERE qe.session_id = ? AND qe.status != 'left' ORDER BY qe.checked_in_at"
+    "SELECT qe.*, p.name, p.skill_level FROM queue_entries qe JOIN players p ON p.id = qe.player_id WHERE qe.session_id = ? AND qe.status != 'left' ORDER BY qe.sort_order, qe.checked_in_at, qe.id"
   ).all(session.id)
 
   const activeMatches = db.prepare(

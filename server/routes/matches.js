@@ -4,6 +4,33 @@ import { broadcast } from './sse.js'
 
 const router = Router()
 
+/**
+ * Validate a proposed team arrangement against the entries currently on court.
+ * Returns { ok: true, value } or { ok: false, error }.
+ * ponytail: membership is fixed at the four on-court entries; bench someone
+ * first via PATCH /api/queue/:id/status if you need a different set
+ */
+export function validateTeamSlots(body, currentIds) {
+  const value = {
+    team1_p1: body.team1_p1 ?? null,
+    team1_p2: body.team1_p2 ?? null,
+    team2_p1: body.team2_p1 ?? null,
+    team2_p2: body.team2_p2 ?? null,
+  }
+  if (!value.team1_p1 || !value.team2_p1) {
+    return { ok: false, error: 'team1_p1 and team2_p1 are required' }
+  }
+  const provided = [value.team1_p1, value.team1_p2, value.team2_p1, value.team2_p2].filter(Boolean)
+  if (new Set(provided).size !== provided.length) {
+    return { ok: false, error: 'duplicate entry in team slots' }
+  }
+  const current = new Set(currentIds)
+  for (const id of provided) {
+    if (!current.has(id)) return { ok: false, error: `entry ${id} is not on this court` }
+  }
+  return { ok: true, value }
+}
+
 router.post('/', (req, res) => {
   const { session_id, court_number, team1_p1, team1_p2, team2_p1, team2_p2 } = req.body
   const now = Math.floor(Date.now() / 1000)
@@ -45,6 +72,27 @@ router.patch('/:id/end', (req, res) => {
     WHERE id = ?
   `)
   for (const id of playerEntryIds) updateEntry.run(now, duration, id)
+
+  const updated = db.prepare('SELECT * FROM matches WHERE id = ?').get(req.params.id)
+  broadcast()
+  res.json({ match: updated })
+})
+
+router.patch('/:id/teams', (req, res) => {
+  const match = db.prepare('SELECT * FROM matches WHERE id = ?').get(req.params.id)
+  if (!match) return res.status(404).json({ error: 'Match not found' })
+  if (match.ended_at) return res.status(404).json({ error: 'Match already ended' })
+
+  const currentIds = [match.team1_p1, match.team1_p2, match.team2_p1, match.team2_p2].filter(Boolean)
+  const check = validateTeamSlots(req.body, currentIds)
+  if (!check.ok) return res.status(400).json({ error: check.error })
+
+  const v = check.value
+  db.prepare(`
+    UPDATE matches
+    SET team1_p1 = ?, team1_p2 = ?, team2_p1 = ?, team2_p2 = ?
+    WHERE id = ?
+  `).run(v.team1_p1, v.team1_p2, v.team2_p1, v.team2_p2, req.params.id)
 
   const updated = db.prepare('SELECT * FROM matches WHERE id = ?').get(req.params.id)
   broadcast()

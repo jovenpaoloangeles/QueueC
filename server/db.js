@@ -33,7 +33,8 @@ db.exec(`
     checked_in_at INTEGER NOT NULL,
     status TEXT NOT NULL DEFAULT 'waiting' CHECK(status IN ('waiting','playing','resting','left')),
     last_played_at INTEGER,
-    total_seconds_played INTEGER NOT NULL DEFAULT 0
+    total_seconds_played INTEGER NOT NULL DEFAULT 0,
+    sort_order INTEGER NOT NULL DEFAULT 0
   );
 
   CREATE TABLE IF NOT EXISTS matches (
@@ -51,5 +52,12 @@ db.exec(`
     ended_at INTEGER
   );
 `)
+
+// ponytail: one-shot column add for DBs created before sort_order existed
+const hasSortOrder = db.prepare("PRAGMA table_info(queue_entries)").all()
+  .some(c => c.name === 'sort_order')
+if (!hasSortOrder) {
+  db.exec('ALTER TABLE queue_entries ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0')
+}
 
 export default db
