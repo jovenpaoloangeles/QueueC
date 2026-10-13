@@ -4,12 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>QueueC</title>
+    <!-- Paint only. Tailwind preflight already owns the box-sizing/margin reset
+         inside @layer base — an unlayered `* { margin:0; padding:0 }` here would
+         beat @layer utilities and zero every p-*/m-* in the app. Likewise no
+         font-family here: an unlayered one outranks the Geist theme font. -->
     <style>
-      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
       html, body {
         background: #f4f6f3;
         color: #1a221e;
-        font-family: system-ui, sans-serif;
         min-height: 100vh;
       }
     </style>
