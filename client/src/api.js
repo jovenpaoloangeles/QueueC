@@ -26,3 +26,9 @@ export const setQueueOrder = (sessionId, order) => req('PATCH', '/queue/order', 
 export const getPlayerHistory = playerId => req('GET', `/players/${playerId}/history`)
 export const getSuggestion = (sessionId, mode) =>
   req('GET', `/sessions/${sessionId}/suggest?mode=${mode}`)
+export const addCourt = (sessionId, label) =>
+  req('POST', `/sessions/${sessionId}/courts`, { label })
+export const deleteCourt = courtId =>
+  fetch(`${BASE}/courts/${courtId}`, { method: 'DELETE' })
+export const updateCourt = (courtId, patch) =>
+  req('PATCH', `/courts/${courtId}`, patch)
