@@ -53,6 +53,15 @@ db.exec(`
     started_at INTEGER NOT NULL,
     ended_at INTEGER
   );
+
+  CREATE TABLE IF NOT EXISTS courts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id INTEGER NOT NULL REFERENCES sessions(id),
+    label TEXT NOT NULL,
+    active_from INTEGER,
+    active_until INTEGER,
+    enabled INTEGER NOT NULL DEFAULT 1
+  );
 `)
 
 // ponytail: one-shot column add for DBs created before sort_order existed
@@ -83,6 +92,25 @@ if (startedAt?.notnull === 1) {
     ALTER TABLE sessions_new RENAME TO sessions;
   `))()
   db.pragma('foreign_keys = ON')
+}
+
+// backfill courts for sessions that predate the courts table
+const sessionsNeedingCourts = db.prepare(`
+  SELECT s.id, s.court_count FROM sessions s
+  WHERE s.court_count > 0
+    AND NOT EXISTS (SELECT 1 FROM courts c WHERE c.session_id = s.id)
+`).all()
+if (sessionsNeedingCourts.length > 0) {
+  const insertCourt = db.prepare(
+    'INSERT INTO courts (session_id, label) VALUES (?, ?)'
+  )
+  db.transaction(() => {
+    for (const { id, court_count } of sessionsNeedingCourts) {
+      for (let i = 1; i <= court_count; i++) {
+        insertCourt.run(id, `Court ${i}`)
+      }
+    }
+  })()
 }
 
 export function seedPlayersFromFile(rows) {

@@ -16,6 +16,15 @@ router.post('/', (req, res) => {
   const { lastInsertRowid } = db.prepare(
     'INSERT INTO sessions (name, scheduled_start, scheduled_end, court_count) VALUES (?, ?, ?, ?)'
   ).run(name, scheduled_start, scheduled_end, court_count ?? 2)
+
+  // seed courts
+  const insertCourt = db.prepare('INSERT INTO courts (session_id, label) VALUES (?, ?)')
+  db.transaction(() => {
+    for (let i = 1; i <= (court_count ?? 2); i++) {
+      insertCourt.run(lastInsertRowid, `Court ${i}`)
+    }
+  })()
+
   const session = db.prepare('SELECT * FROM sessions WHERE id = ?').get(lastInsertRowid)
   broadcast()
   res.status(201).json({ session })
