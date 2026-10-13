@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import PlayerCard from './PlayerCard.jsx'
-import { checkinPlayer, getPlayers, getSuggestion } from '../api.js'
+import { checkinPlayer, getPlayers, getSuggestion, setEntryStatus } from '../api.js'
 
 export default function QueueGrid({ session, queue, waitSeconds, selection, onSelectionChange }) {
   const [mode, setMode] = useState('smart')
@@ -28,6 +28,7 @@ export default function QueueGrid({ session, queue, waitSeconds, selection, onSe
   }
 
   const waiting = queue.filter(e => e.status === 'waiting')
+  const resting = queue.filter(e => e.status === 'resting')
   const notInSession = allPlayers.filter(p => !queue.some(e => e.player_id === p.id))
 
   return (
@@ -62,10 +63,24 @@ export default function QueueGrid({ session, queue, waitSeconds, selection, onSe
             entry={entry}
             waitSecs={waitSeconds.get(entry.id) ?? 0}
             selectionIndex={selection.indexOf(entry.id)}
-            onClick={() => toggleSelect(entry.id)}
+            onClick={e => e.shiftKey ? setEntryStatus(entry.id, 'resting') : toggleSelect(entry.id)}
           />
         ))}
       </div>
+
+      {resting.length > 0 && (
+        <div style={{ marginTop: 8 }}>
+          <div style={{ color: '#1e293b', fontSize: 8, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 3 }}>Resting</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+            {resting.map(e => (
+              <button key={e.id} onClick={() => setEntryStatus(e.id, 'waiting')}
+                style={{ background: '#0f172a', color: '#475569', border: '1px solid #1e293b', borderRadius: 3, padding: '2px 7px', fontSize: 9, cursor: 'pointer', fontFamily: 'inherit' }}>
+                {e.name} ↩
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
