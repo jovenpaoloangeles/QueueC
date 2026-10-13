@@ -65,7 +65,7 @@ const startedAt = db.prepare('PRAGMA table_info(sessions)').all()
   .find(c => c.name === 'started_at')
 if (startedAt?.notnull === 1) {
   db.pragma('foreign_keys = OFF')
-  db.exec(`
+  db.transaction(() => db.exec(`
     CREATE TABLE sessions_new (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
@@ -79,7 +79,7 @@ if (startedAt?.notnull === 1) {
       SELECT id, name, scheduled_start, scheduled_end, court_count, started_at, ended_at FROM sessions;
     DROP TABLE sessions;
     ALTER TABLE sessions_new RENAME TO sessions;
-  `)
+  `))()
   db.pragma('foreign_keys = ON')
 }
 
