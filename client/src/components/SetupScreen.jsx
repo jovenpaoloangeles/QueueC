@@ -6,8 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { checkinPlayer, getPlayers, startSession, addCourt, deleteCourt, updateCourt } from '../api.js'
 
-const fmtTimeInput = ts =>
-  ts ? new Date(ts * 1000).toISOString().slice(11, 16) : ''
+const fmtTimeInput = ts => {
+  if (!ts) return ''
+  const d = new Date(ts * 1000)
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
+}
 
 const timeToUnix = (dateRef, timeStr) => {
   const dateStr = new Date(dateRef * 1000).toISOString().split('T')[0]
