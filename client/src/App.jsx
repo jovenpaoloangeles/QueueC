@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useSSE } from './hooks/useSSE.js'
 import { useTimers } from './hooks/useTimers.js'
+import { startMatch } from './api.js'
 import Header from './components/Header.jsx'
 import CourtsRow from './components/CourtsRow.jsx'
 import QueueGrid from './components/QueueGrid.jsx'
@@ -19,6 +20,18 @@ const styles = {
 export default function App() {
   const [sseData, setSseData] = useState({ session: null, queue: [], activeMatches: [], stats: null, serverTime: null })
   const [showCreate, setShowCreate] = useState(false)
+  const [selection, setSelection] = useState([])
+
+  async function handleStartMatch(courtNumber, sel) {
+    const [t1p1, t1p2, t2p1, t2p2] = sel
+    await startMatch({
+      session_id: session.id,
+      court_number: courtNumber,
+      team1_p1: t1p1, team1_p2: t1p2 ?? null,
+      team2_p1: t2p1, team2_p2: t2p2 ?? null
+    })
+    setSelection([])
+  }
 
   useSSE(useCallback(data => setSseData(data), []))
 
@@ -37,6 +50,8 @@ export default function App() {
               activeMatches={activeMatches}
               queue={queue}
               playSeconds={playSeconds}
+              selection={selection}
+              onStartMatch={handleStartMatch}
             />
             <div style={styles.bottom}>
               <div style={styles.queueWrap}>
@@ -45,6 +60,8 @@ export default function App() {
                   queue={queue}
                   activeMatches={activeMatches}
                   waitSeconds={waitSeconds}
+                  selection={selection}
+                  onSelectionChange={setSelection}
                 />
               </div>
               <div style={styles.sidebar}>
