@@ -56,7 +56,8 @@ test('2.9 court_count respected', async ({ page }) => {
   await page.getByLabel('Courts').fill('3')
   await page.getByRole('button', { name: 'Create Session' }).click()
   await page.waitForSelector('text=Not started')
-  const courts = page.locator('text=Court')
+  // Court label spans in SetupScreen have class min-w-[64px]
+  const courts = page.locator('span.font-medium', { hasText: /^Court \d+$/ })
   await expect(courts).toHaveCount(3)
 })
 

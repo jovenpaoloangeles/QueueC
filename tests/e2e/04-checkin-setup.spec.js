@@ -45,11 +45,15 @@ test('4.6 check in 8 players — all in queue in order', async ({ page }) => {
 })
 
 test('4.7 pool empty message when all checked in', async ({ page }) => {
-  // Check in all 20
-  const res = await page.request.get(`${BASE}/api/players`)
-  const { players } = await res.json()
-  await checkinPlayers(page, players.map(p => p.name))
-  await expect(page.locator('text=All registered players are in the queue')).toBeVisible()
+  // Check in all 20 via API directly — clicking 20 buttons sequentially is too slow/fragile
+  const { session } = await (await page.request.get(`${BASE}/api/sessions/active`)).json()
+  const { players } = await (await page.request.get(`${BASE}/api/players`)).json()
+  for (const p of players) {
+    await page.request.post(`${BASE}/api/sessions/${session.id}/checkin`, {
+      data: { player_id: p.id },
+    })
+  }
+  await expect(page.locator('text=All registered players are in the queue')).toBeVisible({ timeout: 10000 })
 })
 
 test('4.8 players visible in live queue after start', async ({ page }) => {

@@ -13,6 +13,8 @@ test('10.1 Smart mode button active by default', async ({ page }) => {
 })
 
 test('10.2 Smart mode auto-populates selection', async ({ page }) => {
+  // fullSetup leaves us in Manual mode; switch back to Smart for this test
+  await page.getByRole('button', { name: '● Smart' }).click()
   await page.waitForTimeout(800) // smart suggestion fetch
   const selected = page.locator('[class*="ring-2"][class*="ring-primary"]')
   const count = await selected.count()

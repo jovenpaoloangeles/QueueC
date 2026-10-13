@@ -59,7 +59,7 @@ test('7.8 court shows elapsed timer from 0:00', async ({ page }) => {
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
   await page.getByRole('button', { name: 'Start Match' }).first().click()
   await page.waitForTimeout(500)
-  await expect(page.locator('text=/0:0[012]/')).toBeVisible()
+  await expect(page.locator('text=/0:0[012]/').first()).toBeVisible()
 })
 
 test('7.9 match timer increments', async ({ page }) => {

@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
 
 test('3.1 setup screen appears after create', async ({ page }) => {
   await createSession(page)
-  await expect(page.locator('text=Not started')).toBeVisible()
+  await expect(page.locator('text=Session Setup')).toBeVisible()
 })
 
 test('3.2 "Not started" badge in header', async ({ page }) => {
@@ -53,7 +53,8 @@ test('3.8 elapsed timer badge appears', async ({ page }) => {
   await createSession(page)
   await checkinPlayers(page, ['Inter C1', 'Inter C2'])
   await startSession(page)
-  await expect(page.locator('text=●')).toBeVisible()
+  // Scope to header to avoid matching the '● Smart' queue button
+  await expect(page.locator('[class*="h-14"]').locator('text=●')).toBeVisible()
 })
 
 test('3.9 elapsed timer increments', async ({ page }) => {

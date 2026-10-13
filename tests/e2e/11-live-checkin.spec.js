@@ -22,6 +22,8 @@ test('11.2 panel shows players not in session', async ({ page }) => {
 })
 
 test('11.3 checking in appends to queue end', async ({ page }) => {
+  // Wait for queue entries to render before snapshotting count
+  await page.locator('[data-entry-id]').first().waitFor()
   const beforeCount = await page.locator('[data-entry-id]').count()
   await page.getByRole('button', { name: '+ Check In' }).click()
   await page.getByRole('button', { name: 'Advanced E1', exact: false }).click()
@@ -41,5 +43,6 @@ test('11.5 checked-in player absent from panel', async ({ page }) => {
   await page.getByRole('button', { name: 'Advanced E1', exact: false }).click()
   await page.waitForTimeout(400)
   await page.getByRole('button', { name: '+ Check In' }).click()
-  await expect(page.locator('text=Advanced E1')).toHaveCount(0)
+  // Check that Advanced E1 is not in the check-in panel (buttons); they may appear in the queue grid
+  await expect(page.getByRole('button', { name: 'Advanced E1', exact: false })).toHaveCount(0)
 })
