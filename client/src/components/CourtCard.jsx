@@ -36,7 +36,8 @@ export default function CourtCard({ courtNumber, match, queue, playSeconds, onSt
       className={cn('flex h-full flex-col border-border bg-card shadow-sm',
         isActive && 'border-court-live-border bg-court-live')}
     >
-      <CardHeader className="flex flex-row items-center justify-between pb-3">
+      {/* grid-cols wins outright (base has no unconditional grid-cols); items-center! is important so it beats base items-start regardless of emission order */}
+      <CardHeader className="grid-cols-[1fr_auto] items-center! pb-3">
         <div className="flex items-center gap-2">
           <span className="text-2xs font-medium uppercase tracking-wider text-muted-foreground">Court {courtNumber}</span>
           {isActive && <Badge variant="outline" className="text-2xs uppercase">{match.format}</Badge>}
@@ -80,7 +81,7 @@ export default function CourtCard({ courtNumber, match, queue, playSeconds, onSt
         </CardContent>
       )}
 
-      {showEnd && <EndMatchModal match={match} onClose={() => setShowEnd(false)} />}
+      {showEnd && match && <EndMatchModal match={match} onClose={() => setShowEnd(false)} />}
     </Card>
   )
 }
