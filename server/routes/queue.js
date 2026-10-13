@@ -22,6 +22,7 @@ router.patch('/queue/:entryId/status', (req, res) => {
   const { status } = req.body
   db.prepare('UPDATE queue_entries SET status = ? WHERE id = ?').run(status, req.params.entryId)
   const entry = db.prepare('SELECT * FROM queue_entries WHERE id = ?').get(req.params.entryId)
+  if (!entry) return res.status(404).json({ error: 'Entry not found' })
   res.json({ entry })
 })
 

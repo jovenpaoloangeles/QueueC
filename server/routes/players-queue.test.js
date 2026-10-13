@@ -27,6 +27,8 @@ async function run() {
     body: JSON.stringify({ player_id: r1.player.id })
   }).then(r => r.json())
   console.assert(r4.entry.status === 'waiting', 'Expected waiting status')
+  console.assert(r4.entry.last_played_at === null, 'Expected last_played_at null')
+  console.assert(r4.entry.total_seconds_played === 0, 'Expected total_seconds_played 0')
 
   // Duplicate checkin → 409
   const r5 = await fetch(`${BASE}/sessions/${r3.session.id}/checkin`, {
