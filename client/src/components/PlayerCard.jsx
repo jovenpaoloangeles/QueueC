@@ -1,9 +1,13 @@
-const SKILL_COLORS = {
-  newbie: ['#1c1917', '#a8a29e'],
-  beginner: ['#164e63', '#67e8f9'],
-  intermediate: ['#312e81', '#a5b4fc'],
-  upper_intermediate: ['#1a2e05', '#86efac'],
-  advanced: ['#064e3b', '#6ee7b7'],
+import { cn } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
+
+// ponytail: skill colors kept as Tailwind classes; add to theme tokens if design system grows
+const SKILL_CLASSES = {
+  newbie: 'bg-stone-900 text-stone-400',
+  beginner: 'bg-cyan-950 text-cyan-300',
+  intermediate: 'bg-indigo-950 text-indigo-300',
+  upper_intermediate: 'bg-green-950 text-green-300',
+  advanced: 'bg-emerald-950 text-emerald-300',
 }
 
 function fmtTime(s) {
@@ -13,40 +17,34 @@ function fmtTime(s) {
 
 export default function PlayerCard({ entry, waitSecs, selectionIndex, onClick }) {
   const isSelected = selectionIndex !== undefined && selectionIndex !== -1
-  const [bg, color] = SKILL_COLORS[entry.skill_level] ?? SKILL_COLORS.intermediate
+  const skillClass = SKILL_CLASSES[entry.skill_level] ?? SKILL_CLASSES.intermediate
 
   return (
     <div
       onClick={onClick}
-      style={{
-        background: isSelected ? '#0c1a2e' : '#0f172a',
-        border: `${isSelected ? 2 : 1}px solid ${isSelected ? '#1d4ed8' : '#1e293b'}`,
-        borderRadius: 4,
-        padding: '6px 8px',
-        cursor: 'pointer',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        userSelect: 'none',
-        transition: 'border-color 0.1s',
-      }}
+      className={cn(
+        'rounded border p-1.5 cursor-pointer flex justify-between items-center select-none transition-colors',
+        isSelected
+          ? 'bg-accent/10 border-accent border-2'
+          : 'bg-card border-border'
+      )}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div className="flex items-center gap-1.5">
         {isSelected && (
-          <span style={{ background: '#1d4ed8', color: '#fff', fontSize: 7, width: 14, height: 14, borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+          <span className="bg-accent text-white text-[7px] size-3.5 rounded-sm flex items-center justify-center font-bold">
             {selectionIndex + 1}
           </span>
         )}
-        <span style={{ color: isSelected ? '#bfdbfe' : '#94a3b8', fontSize: 11, fontWeight: isSelected ? 600 : 400 }}>
+        <span className={cn('text-[11px]', isSelected ? 'text-blue-200 font-semibold' : 'text-muted-foreground')}>
           {entry.name}
         </span>
-        <span style={{ background: bg, color, fontSize: 7, padding: '0 3px', borderRadius: 2 }}>
+        <Badge className={cn('text-[7px] px-1 py-0 h-auto rounded-sm border-0', skillClass)}>
           {entry.skill_level.replace('_', ' ')}
-        </span>
+        </Badge>
       </div>
-      <div style={{ textAlign: 'right' }}>
-        <div style={{ color: '#fbbf24', fontSize: 9 }}>⏳ {fmtTime(waitSecs ?? 0)}</div>
-        <div style={{ color: '#334155', fontSize: 8 }}>🏸 {Math.floor((entry.total_seconds_played ?? 0) / 60)}m</div>
+      <div className="text-right">
+        <div className="text-[9px] text-yellow-400">⏳ {fmtTime(waitSecs ?? 0)}</div>
+        <div className="text-[8px] text-muted-foreground/30">🏸 {Math.floor((entry.total_seconds_played ?? 0) / 60)}m</div>
       </div>
     </div>
   )

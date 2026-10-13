@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
 
 function fmt(s) {
   const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60
@@ -19,29 +22,33 @@ export default function Header({ session, onNewSession }) {
   const fmtTime = ts => ts ? new Date(ts * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'
 
   return (
-    <div style={{ background: '#0f172a', borderBottom: '1px solid #1e293b', padding: '6px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, fontFamily: 'inherit' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <span style={{ color: '#f1f5f9', fontWeight: 700, fontSize: 13 }}>🏸 QueueC</span>
-        {session ? (
-          <>
-            <span style={{ color: '#475569' }}>·</span>
-            <span style={{ color: '#94a3b8' }}>{session.name}</span>
-            <span style={{ color: '#475569' }}>·</span>
-            <span style={{ color: '#64748b' }}>{fmtTime(session.scheduled_start)}–{fmtTime(session.scheduled_end)}</span>
-          </>
-        ) : (
-          <span style={{ color: '#334155' }}>No active session</span>
-        )}
+    <div className="flex flex-col bg-card">
+      <div className="flex justify-between items-center px-3.5 py-1.5 text-xs">
+        <div className="flex items-center gap-3">
+          <span className="font-bold text-sm text-foreground">🏸 QueueC</span>
+          {session ? (
+            <>
+              <span className="text-muted-foreground/30">·</span>
+              <span className="text-muted-foreground">{session.name}</span>
+              <span className="text-muted-foreground/30">·</span>
+              <span className="text-muted-foreground/60">{fmtTime(session.scheduled_start)}–{fmtTime(session.scheduled_end)}</span>
+            </>
+          ) : (
+            <span className="text-muted-foreground/20">No active session</span>
+          )}
+        </div>
+        <div className="flex items-center gap-2.5">
+          {session && (
+            <Badge variant="outline" className="text-primary border-primary/30 text-[10px] px-1.5 py-0">
+              ● {fmt(elapsed)}
+            </Badge>
+          )}
+          <Button variant="outline" size="xs" onClick={onNewSession}>
+            + Session
+          </Button>
+        </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        {session && <span style={{ color: '#4ade80', fontSize: 10 }}>● {fmt(elapsed)}</span>}
-        <button
-          onClick={onNewSession}
-          style={{ background: '#1e293b', color: '#94a3b8', border: '1px solid #334155', borderRadius: 4, padding: '3px 8px', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}
-        >
-          + Session
-        </button>
-      </div>
+      <Separator />
     </div>
   )
 }

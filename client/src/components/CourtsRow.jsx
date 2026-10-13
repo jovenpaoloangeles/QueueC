@@ -5,7 +5,7 @@ export default function CourtsRow({ session, activeMatches, queue, playSeconds, 
   const canStart = selection?.length === 2 || selection?.length === 4
 
   return (
-    <div style={{ display: 'flex', gap: 8, padding: '8px 12px', borderBottom: '1px solid #1e293b', flexWrap: 'wrap' }}>
+    <div className="flex gap-2 p-3 border-b border-border flex-wrap">
       {courts.map(n => (
         <CourtCard
           key={n}

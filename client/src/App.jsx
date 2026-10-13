@@ -2,20 +2,12 @@ import { useState, useCallback } from 'react'
 import { useSSE } from './hooks/useSSE.js'
 import { useTimers } from './hooks/useTimers.js'
 import { startMatch } from './api.js'
+import { Button } from '@/components/ui/button'
 import Header from './components/Header.jsx'
 import CourtsRow from './components/CourtsRow.jsx'
 import QueueGrid from './components/QueueGrid.jsx'
 import StatsSidebar from './components/StatsSidebar.jsx'
 import CreateSessionModal from './components/CreateSessionModal.jsx'
-
-const styles = {
-  app: { display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' },
-  body: { display: 'flex', flex: 1, overflow: 'hidden' },
-  main: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
-  bottom: { display: 'flex', flex: 1, overflow: 'hidden' },
-  queueWrap: { flex: 1, overflow: 'auto', padding: '8px 12px' },
-  sidebar: { width: 180, borderLeft: '1px solid #1e293b', overflow: 'auto' },
-}
 
 export default function App() {
   const [sseData, setSseData] = useState({ session: null, queue: [], activeMatches: [], stats: null, serverTime: null })
@@ -41,11 +33,11 @@ export default function App() {
   const { session, queue, activeMatches, stats } = sseData
 
   return (
-    <div style={styles.app}>
+    <div className="flex flex-col h-screen overflow-hidden bg-background">
       <Header session={session} onNewSession={() => setShowCreate(true)} />
       {session && (
-        <div style={styles.body}>
-          <div style={styles.main}>
+        <div className="flex flex-1 overflow-hidden">
+          <div className="flex flex-col flex-1 overflow-hidden">
             <CourtsRow
               session={session}
               activeMatches={activeMatches}
@@ -54,8 +46,8 @@ export default function App() {
               selection={selection}
               onStartMatch={handleStartMatch}
             />
-            <div style={styles.bottom}>
-              <div style={styles.queueWrap}>
+            <div className="flex flex-1 overflow-hidden">
+              <div className="flex-1 overflow-auto p-3">
                 <QueueGrid
                   session={session}
                   queue={queue}
@@ -65,7 +57,7 @@ export default function App() {
                   onSelectionChange={setSelection}
                 />
               </div>
-              <div style={styles.sidebar}>
+              <div className="w-[180px] border-l border-border overflow-auto">
                 <StatsSidebar stats={stats} />
               </div>
             </div>
@@ -73,13 +65,10 @@ export default function App() {
         </div>
       )}
       {!session && (
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <button
-            onClick={() => setShowCreate(true)}
-            style={{ background: '#166534', color: '#dcfce7', border: 'none', borderRadius: 6, padding: '12px 24px', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}
-          >
+        <div className="flex-1 flex items-center justify-center">
+          <Button size="lg" onClick={() => setShowCreate(true)}>
             + Start New Session
-          </button>
+          </Button>
         </div>
       )}
       {showCreate && <CreateSessionModal onClose={() => setShowCreate(false)} />}

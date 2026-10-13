@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 import PlayerCard from './PlayerCard.jsx'
 import { checkinPlayer, getPlayers, getSuggestion, setEntryStatus } from '../api.js'
 
@@ -32,31 +34,59 @@ export default function QueueGrid({ session, queue, waitSeconds, selection, onSe
   const notInSession = allPlayers.filter(p => !queue.some(e => e.player_id === p.id))
 
   return (
-    <div style={{ fontFamily: 'inherit', fontSize: 11 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-        <span style={{ color: '#334155', fontSize: 9, textTransform: 'uppercase', letterSpacing: 1 }}>
+    <div className="text-xs">
+      <div className="flex justify-between items-center mb-1.5">
+        <span className="text-[9px] text-muted-foreground/30 uppercase tracking-widest">
           Queue · {waiting.length} Waiting
-          {selection.length > 0 && <span style={{ color: '#60a5fa', marginLeft: 8 }}>{selection.length} selected → {selection.length === 2 ? 'Singles' : selection.length === 4 ? 'Doubles' : '...'}</span>}
+          {selection.length > 0 && (
+            <span className="text-blue-400 ml-2">
+              {selection.length} selected → {selection.length === 2 ? 'Singles' : selection.length === 4 ? 'Doubles' : '...'}
+            </span>
+          )}
         </span>
-        <div style={{ display: 'flex', gap: 4 }}>
-          <button onClick={() => { setMode('manual'); onSelectionChange([]) }} style={{ background: mode === 'manual' ? '#1e293b' : '#0f172a', color: mode === 'manual' ? '#94a3b8' : '#334155', border: '1px solid #1e293b', borderRadius: 3, padding: '2px 6px', fontSize: 8, cursor: 'pointer', fontFamily: 'inherit' }}>Manual</button>
-          <button onClick={() => setMode('smart')} style={{ background: mode === 'smart' ? '#172554' : '#0f172a', color: mode === 'smart' ? '#60a5fa' : '#334155', border: `1px solid ${mode === 'smart' ? '#1d4ed8' : '#1e293b'}`, borderRadius: 3, padding: '2px 6px', fontSize: 8, cursor: 'pointer', fontFamily: 'inherit' }}>● Smart</button>
-          <button onClick={() => setShowCheckin(v => !v)} style={{ background: '#0f172a', color: '#475569', border: '1px solid #1e293b', borderRadius: 3, padding: '2px 6px', fontSize: 8, cursor: 'pointer', fontFamily: 'inherit', marginLeft: 6 }}>+ Check In</button>
+        <div className="flex gap-1">
+          <Button
+            variant={mode === 'manual' ? 'outline' : 'ghost'}
+            size="xs"
+            onClick={() => { setMode('manual'); onSelectionChange([]) }}
+          >
+            Manual
+          </Button>
+          <Button
+            variant={mode === 'smart' ? 'outline' : 'ghost'}
+            size="xs"
+            onClick={() => setMode('smart')}
+            className={cn(mode === 'smart' && 'border-accent text-blue-400')}
+          >
+            ● Smart
+          </Button>
+          <Button
+            variant="ghost"
+            size="xs"
+            className="ml-1.5"
+            onClick={() => setShowCheckin(v => !v)}
+          >
+            + Check In
+          </Button>
         </div>
       </div>
 
       {showCheckin && notInSession.length > 0 && (
-        <div style={{ marginBottom: 8, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+        <div className="mb-2 flex flex-wrap gap-1">
           {notInSession.map(p => (
-            <button key={p.id} onClick={async () => { await checkinPlayer(session.id, p.id); setShowCheckin(false) }}
-              style={{ background: '#0f172a', color: '#64748b', border: '1px solid #1e293b', borderRadius: 3, padding: '2px 7px', fontSize: 9, cursor: 'pointer', fontFamily: 'inherit' }}>
+            <Button
+              key={p.id}
+              variant="outline"
+              size="xs"
+              onClick={async () => { await checkinPlayer(session.id, p.id); setShowCheckin(false) }}
+            >
               {p.name}
-            </button>
+            </Button>
           ))}
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
+      <div className="grid grid-cols-2 gap-1">
         {waiting.map(entry => (
           <PlayerCard
             key={entry.id}
@@ -69,14 +99,18 @@ export default function QueueGrid({ session, queue, waitSeconds, selection, onSe
       </div>
 
       {resting.length > 0 && (
-        <div style={{ marginTop: 8 }}>
-          <div style={{ color: '#1e293b', fontSize: 8, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 3 }}>Resting</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+        <div className="mt-2">
+          <div className="text-[8px] text-muted-foreground/20 uppercase tracking-widest mb-0.5">Resting</div>
+          <div className="flex flex-wrap gap-1">
             {resting.map(e => (
-              <button key={e.id} onClick={() => setEntryStatus(e.id, 'waiting')}
-                style={{ background: '#0f172a', color: '#475569', border: '1px solid #1e293b', borderRadius: 3, padding: '2px 7px', fontSize: 9, cursor: 'pointer', fontFamily: 'inherit' }}>
+              <Button
+                key={e.id}
+                variant="outline"
+                size="xs"
+                onClick={() => setEntryStatus(e.id, 'waiting')}
+              >
                 {e.name} ↩
-              </button>
+              </Button>
             ))}
           </div>
         </div>
