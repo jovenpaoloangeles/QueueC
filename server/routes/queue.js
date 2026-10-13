@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import db from '../db.js'
 import { suggestPlayers } from '../logic/smartQueue.js'
+import { broadcast } from './sse.js'
 
 const router = Router()
 
@@ -16,6 +17,7 @@ router.post('/sessions/:id/checkin', (req, res) => {
     'INSERT INTO queue_entries (session_id, player_id, checked_in_at) VALUES (?, ?, ?)'
   ).run(req.params.id, player_id, now)
   const entry = db.prepare('SELECT * FROM queue_entries WHERE id = ?').get(lastInsertRowid)
+  broadcast()
   res.status(201).json({ entry })
 })
 
@@ -24,6 +26,7 @@ router.patch('/queue/:entryId/status', (req, res) => {
   db.prepare('UPDATE queue_entries SET status = ? WHERE id = ?').run(status, req.params.entryId)
   const entry = db.prepare('SELECT * FROM queue_entries WHERE id = ?').get(req.params.entryId)
   if (!entry) return res.status(404).json({ error: 'Entry not found' })
+  broadcast()
   res.json({ entry })
 })
 

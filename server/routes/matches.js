@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import db from '../db.js'
+import { broadcast } from './sse.js'
 
 const router = Router()
 
@@ -19,6 +20,7 @@ router.post('/', (req, res) => {
   for (const id of playerEntryIds) setPlaying.run('playing', id)
 
   const match = db.prepare('SELECT * FROM matches WHERE id = ?').get(lastInsertRowid)
+  broadcast()
   res.status(201).json({ match })
 })
 
@@ -45,6 +47,7 @@ router.patch('/:id/end', (req, res) => {
   for (const id of playerEntryIds) updateEntry.run(now, duration, id)
 
   const updated = db.prepare('SELECT * FROM matches WHERE id = ?').get(req.params.id)
+  broadcast()
   res.json({ match: updated })
 })
 
