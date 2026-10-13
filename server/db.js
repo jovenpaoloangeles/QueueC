@@ -140,9 +140,8 @@ export function seedPlayersFromFile(rows) {
 }
 
 const dbDir = dirname(dbPath)
-const presetPath = existsSync(`${dbDir}/players.json`)
-  ? `${dbDir}/players.json`
-  : join(__dirname, '../players.json')
+const presetPath = process.env.PLAYERS_PATH
+  ?? (existsSync(`${dbDir}/players.json`) ? `${dbDir}/players.json` : join(__dirname, '../players.json'))
 
 if (existsSync(presetPath)) {
   try {
