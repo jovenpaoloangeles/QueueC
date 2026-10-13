@@ -11,12 +11,12 @@ import CreateSessionModal from './components/CreateSessionModal.jsx'
 import SetupScreen from './components/SetupScreen.jsx'
 
 export default function App() {
-  const [sseData, setSseData] = useState({ session: null, queue: [], activeMatches: [], stats: null, serverTime: null })
+  const [sseData, setSseData] = useState({ session: null, queue: [], activeMatches: [], courts: [], stats: null, serverTime: null })
   const [showCreate, setShowCreate] = useState(false)
   const [selection, setSelection] = useState([])
   const [armedCourt, setArmedCourt] = useState(null)
 
-  const { session, queue, activeMatches, stats } = sseData
+  const { session, queue, activeMatches, courts, stats } = sseData
 
   async function handleStartMatch(courtNumber, sel) {
     if (!session) return
@@ -62,7 +62,7 @@ export default function App() {
     <div className="flex flex-col h-screen overflow-hidden bg-background">
       <Header session={session} onNewSession={() => setShowCreate(true)} />
       {session && session.started_at == null && (
-        <SetupScreen session={session} queue={queue} />
+        <SetupScreen session={session} queue={queue} courts={courts} />
       )}
       {session && session.started_at != null && (
         <div className="flex flex-1 overflow-hidden">
@@ -71,6 +71,7 @@ export default function App() {
             <div className="grid h-[45%] min-h-[300px] shrink-0 overflow-hidden">
               <CourtsRow
                 session={session}
+                courts={courts}
                 activeMatches={activeMatches}
                 queue={queue}
                 playSeconds={playSeconds}

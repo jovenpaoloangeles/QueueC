@@ -16,7 +16,7 @@ function currentState() {
     'SELECT * FROM sessions WHERE ended_at IS NULL ORDER BY started_at DESC LIMIT 1'
   ).get() ?? null
 
-  if (!session) return { session: null, queue: [], activeMatches: [], stats: null, serverTime: Math.floor(Date.now() / 1000) }
+  if (!session) return { session: null, queue: [], activeMatches: [], courts: [], stats: null, serverTime: Math.floor(Date.now() / 1000) }
 
   const queue = db.prepare(
     "SELECT qe.*, p.name, p.skill_level FROM queue_entries qe JOIN players p ON p.id = qe.player_id WHERE qe.session_id = ? AND qe.status != 'left' ORDER BY qe.sort_order, qe.checked_in_at, qe.id"
@@ -24,6 +24,10 @@ function currentState() {
 
   const activeMatches = db.prepare(
     'SELECT * FROM matches WHERE session_id = ? AND ended_at IS NULL'
+  ).all(session.id)
+
+  const courts = db.prepare(
+    'SELECT * FROM courts WHERE session_id = ? ORDER BY id'
   ).all(session.id)
 
   const now = Math.floor(Date.now() / 1000)
@@ -53,6 +57,7 @@ function currentState() {
     session,
     queue,
     activeMatches,
+    courts,
     stats: { player_count: queue.length, match_count, avg_wait_seconds, leaderboard },
     serverTime: now
   }
