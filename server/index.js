@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import { fileURLToPath } from 'url'
 import { join, dirname } from 'path'
+import { existsSync } from 'fs'
 import sessionsRouter from './routes/sessions.js'
 import playersRouter from './routes/players.js'
 import queueRouter from './routes/queue.js'
@@ -26,8 +27,11 @@ app.use('/api', courtsRouter)
 setInterval(broadcast, 1000)
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const publicDir = join(__dirname, '..', 'public')
+const publicDir = existsSync(join(__dirname, '..', 'public'))
+  ? join(__dirname, '..', 'public')
+  : join(__dirname, '..', 'client', 'dist')
 app.use(express.static(publicDir))
 app.get('*', (_req, res) => res.sendFile(join(publicDir, 'index.html')))
 
-app.listen(3001, () => console.log('Server running on :3001'))
+const PORT = process.env.PORT ?? 3001
+app.listen(PORT, () => console.log(`Server running on :${PORT}`))

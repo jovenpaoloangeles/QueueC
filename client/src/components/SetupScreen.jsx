@@ -66,9 +66,9 @@ export default function SetupScreen({ session, queue, courts }) {
     <div className="flex flex-1 items-center justify-center overflow-y-auto p-4">
       <Card className="w-full max-w-xl border-border bg-card shadow-sm">
         <CardHeader className="gap-1">
-          <CardTitle className="text-lg">{session.name}</CardTitle>
+          <CardTitle className="text-lg">Session Setup</CardTitle>
           <span className="text-2xs uppercase tracking-wider text-muted-foreground">
-            {fmtTime(session.scheduled_start)}–{fmtTime(session.scheduled_end)} · {session.court_count} courts · Not started
+            {session.court_count} courts
           </span>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">

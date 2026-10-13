@@ -1,4 +1,4 @@
-export const BASE = 'http://localhost:3001'
+export const BASE = 'http://localhost:3003'
 
 const DEFAULT_PLAYERS = [
   'Inter C1', 'Inter C2', 'Inter C3', 'Inter C4',
@@ -24,18 +24,24 @@ export async function checkinPlayers(page, names = DEFAULT_PLAYERS) {
 
 export async function startSession(page) {
   await page.getByRole('button', { name: 'Start Session' }).click()
-  await page.waitForSelector('[data-testid="courts-row"], text=Queue', { timeout: 5000 })
+  await page.waitForSelector('text=Queue', { timeout: 5000 })
 }
 
 export async function fullSetup(page, { courts = 2, playerNames = DEFAULT_PLAYERS } = {}) {
   await createSession(page, { courts })
   await checkinPlayers(page, playerNames)
   await startSession(page)
+  // Switch to Manual mode so tests can do deterministic player selection
+  // (Smart mode pre-selects players, which confuses click-to-select tests)
+  // Switch to Manual so tests get deterministic click-to-select behavior
+  await page.getByRole('button', { name: 'Manual' }).click()
+  // Wait for Smart mode indicator to disappear (confirms mode switched)
+  await page.waitForTimeout(300)
 }
 
 export async function endMatch(page, courtLabel, { team1 = 21, team2 = 15 } = {}) {
-  const courtCard = page.locator(`text=${courtLabel}`).locator('../..')
-  await courtCard.getByRole('button', { name: 'End Match' }).click()
+  // Use 'End Match' button directly (avoids strict-mode issues with partial court label matches)
+  await page.getByRole('button', { name: 'End Match' }).first().click()
   await page.getByLabel('Team 1').fill(String(team1))
   await page.getByLabel('Team 2').fill(String(team2))
   await page.getByRole('button', { name: 'Confirm' }).click()

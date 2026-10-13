@@ -31,6 +31,7 @@ export default function EndMatchModal({ match, onClose }) {
                 </FieldLabel>
                 <Input
                   id="end-match-team1"
+                  autoFocus
                   type="number" min="0" max="99"
                   value={scores.team1}
                   onChange={e => setScores(s => ({...s, team1: e.target.value}))}
