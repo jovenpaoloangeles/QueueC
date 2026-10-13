@@ -1,12 +1,8 @@
 import { useState, useEffect } from 'react'
+import { fmtDur } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-
-function fmt(s) {
-  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60
-  return `${h ? h + ':' : ''}${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
-}
 
 export default function Header({ session, onNewSession }) {
   const [elapsed, setElapsed] = useState(0)
@@ -40,7 +36,7 @@ export default function Header({ session, onNewSession }) {
         <div className="flex items-center gap-2.5">
           {session && (
             <Badge variant="outline" className="text-primary border-primary/30 text-[10px] px-1.5 py-0">
-              ● {fmt(elapsed)}
+              ● {fmtDur(elapsed)}
             </Badge>
           )}
           <Button variant="outline" size="xs" onClick={onNewSession}>

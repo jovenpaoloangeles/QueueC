@@ -1,23 +1,9 @@
-import { cn } from '@/lib/utils'
+import { cn, fmtClock, fmtMins, SKILL_BADGE } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
-
-// ponytail: skill colors kept as Tailwind classes; add to theme tokens if design system grows
-const SKILL_CLASSES = {
-  newbie: 'bg-stone-900 text-stone-400',
-  beginner: 'bg-cyan-950 text-cyan-300',
-  intermediate: 'bg-indigo-950 text-indigo-300',
-  upper_intermediate: 'bg-green-950 text-green-300',
-  advanced: 'bg-emerald-950 text-emerald-300',
-}
-
-function fmtTime(s) {
-  const m = Math.floor(s / 60), sec = s % 60
-  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
-}
 
 export default function PlayerCard({ entry, waitSecs, selectionIndex, onClick }) {
   const isSelected = selectionIndex !== undefined && selectionIndex !== -1
-  const skillClass = SKILL_CLASSES[entry.skill_level] ?? SKILL_CLASSES.intermediate
+  const skillClass = SKILL_BADGE[entry.skill_level] ?? SKILL_BADGE.intermediate
 
   return (
     <div
@@ -43,8 +29,8 @@ export default function PlayerCard({ entry, waitSecs, selectionIndex, onClick })
         </Badge>
       </div>
       <div className="text-right">
-        <div className="text-[9px] text-yellow-400">⏳ {fmtTime(waitSecs ?? 0)}</div>
-        <div className="text-[8px] text-muted-foreground/30">🏸 {Math.floor((entry.total_seconds_played ?? 0) / 60)}m</div>
+        <div className="text-[9px] text-yellow-400">⏳ {fmtClock(waitSecs ?? 0)}</div>
+        <div className="text-[8px] text-muted-foreground/30">🏸 {fmtMins(entry.total_seconds_played ?? 0)}</div>
       </div>
     </div>
   )

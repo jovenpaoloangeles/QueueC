@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { createPlayer } from '../api.js'
+import { fmtClock } from '@/lib/utils'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -7,12 +8,6 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const SKILL_LEVELS = ['newbie', 'beginner', 'intermediate', 'upper_intermediate', 'advanced']
-
-function fmtWait(s) {
-  if (!s) return '0m'
-  const m = Math.floor(s / 60)
-  return m < 60 ? `${m}m` : `${Math.floor(m/60)}h ${m%60}m`
-}
 
 function StatCell({ label, value, valueClass }) {
   return (
@@ -45,7 +40,7 @@ export default function StatsSidebar({ stats }) {
 
       <StatCell label="Players" value={stats?.player_count ?? 0} />
       <StatCell label="Matches" value={stats?.match_count ?? 0} />
-      <StatCell label="Avg Wait" value={fmtWait(stats?.avg_wait_seconds)} valueClass="text-yellow-400" />
+      <StatCell label="Avg Wait" value={fmtClock(stats?.avg_wait_seconds)} valueClass="text-yellow-400" />
 
       {stats?.leaderboard?.length > 0 && (
         <Card>

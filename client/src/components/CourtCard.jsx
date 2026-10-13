@@ -1,14 +1,9 @@
 import { useState } from 'react'
-import { cn } from '@/lib/utils'
+import { cn, fmtClock } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import EndMatchModal from './EndMatchModal.jsx'
-
-function fmt(s) {
-  const m = Math.floor(s / 60), sec = s % 60
-  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
-}
 
 function playerName(queue, entryId) {
   return queue.find(e => e.id === entryId)?.name ?? '?'
@@ -29,7 +24,7 @@ export default function CourtCard({ courtNumber, match, queue, playSeconds, onSt
           {isActive ? '▶' : '·'} COURT {courtNumber}
         </span>
         {isActive && (
-          <span className="text-[9px] font-semibold text-yellow-400">⏱ {fmt(secs)}</span>
+          <span className="text-[9px] font-semibold text-yellow-400">⏱ {fmtClock(secs)}</span>
         )}
       </CardHeader>
 
