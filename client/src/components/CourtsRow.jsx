@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
 import CourtCard from './CourtCard.jsx'
 
-export default function CourtsRow({ session, activeMatches, queue, playSeconds, selection, onStartMatch }) {
+export default function CourtsRow({ session, activeMatches, queue, playSeconds, selection, onStartMatch, onDropPlayer, armedCourt }) {
   const courts = Array.from({ length: session.court_count }, (_, i) => i + 1)
   const canStart = selection?.length === 2 || selection?.length === 4
 
@@ -18,6 +18,8 @@ export default function CourtsRow({ session, activeMatches, queue, playSeconds, 
           playSeconds={playSeconds}
           canStart={canStart}
           onStartClick={courtNum => onStartMatch(courtNum, selection)}
+          onDropPlayer={onDropPlayer}
+          armedEntryIds={armedCourt === n ? selection : []}
         />
       ))}
     </div>

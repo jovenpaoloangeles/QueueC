@@ -31,3 +31,44 @@ export function useDragSource(payload) {
     onDragEnd: () => clearDrag(),
   }
 }
+
+/** New team-slot object for a match after a cross-team move.
+ *  Without `entryId`: full team swap. With `entryId`: that player swaps with the
+ *  target team's same slot index (a null may be left behind — still a valid
+ *  rearrangement). Same side, or an entry not on the match, is identity. */
+export function rearrange(match, fromSide, toSide, entryId = null) {
+  const slots = {
+    team1_p1: match.team1_p1 ?? null,
+    team1_p2: match.team1_p2 ?? null,
+    team2_p1: match.team2_p1 ?? null,
+    team2_p2: match.team2_p2 ?? null,
+  }
+  if (fromSide === toSide) return slots
+  if (entryId == null) {
+    return {
+      team1_p1: slots.team2_p1,
+      team1_p2: slots.team2_p2,
+      team2_p1: slots.team1_p1,
+      team2_p2: slots.team1_p2,
+    }
+  }
+  const fromKey = ['team1_p1', 'team1_p2', 'team2_p1', 'team2_p2'].find(k => slots[k] === entryId)
+  if (!fromKey) return slots
+  const toKey = `team${toSide}_${fromKey.endsWith('p2') ? 'p2' : 'p1'}`
+  const tmp = slots[toKey]
+  slots[toKey] = slots[fromKey]
+  slots[fromKey] = tmp
+  return slots
+}
+
+/** New array with `dragId` spliced immediately before `targetId`. Pure. */
+export function moveBefore(order, dragId, targetId) {
+  const next = [...order]
+  const from = next.indexOf(dragId)
+  if (from === -1 || dragId === targetId) return next
+  next.splice(from, 1)
+  const to = next.indexOf(targetId)
+  if (to === -1) return [...order]
+  next.splice(to, 0, dragId)
+  return next
+}

@@ -20,6 +20,8 @@ export const setEntryStatus = (entryId, status) =>
   req('PATCH', `/queue/${entryId}/status`, { status })
 export const startMatch = data => req('POST', '/matches', data)
 export const endMatch = (id, scores) => req('PATCH', `/matches/${id}/end`, scores)
+export const updateMatchTeams = (id, teams) => req('PATCH', `/matches/${id}/teams`, teams)
+export const setQueueOrder = (sessionId, order) => req('PATCH', '/queue/order', { session_id: sessionId, order })
 export const getPlayerHistory = playerId => req('GET', `/players/${playerId}/history`)
 export const getSuggestion = (sessionId, mode) =>
   req('GET', `/sessions/${sessionId}/suggest?mode=${mode}`)

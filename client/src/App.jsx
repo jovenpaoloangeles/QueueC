@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useSSE } from './hooks/useSSE.js'
 import { useTimers } from './hooks/useTimers.js'
-import { startMatch } from './api.js'
+import { startMatch, setQueueOrder } from './api.js'
 import { Button } from '@/components/ui/button'
 import Header from './components/Header.jsx'
 import CourtsRow from './components/CourtsRow.jsx'
@@ -13,6 +13,7 @@ export default function App() {
   const [sseData, setSseData] = useState({ session: null, queue: [], activeMatches: [], stats: null, serverTime: null })
   const [showCreate, setShowCreate] = useState(false)
   const [selection, setSelection] = useState([])
+  const [armedCourt, setArmedCourt] = useState(null)
 
   const { session, queue, activeMatches, stats } = sseData
 
@@ -28,6 +29,21 @@ export default function App() {
     })
     setSelection([])
   }
+
+  // arm-then-auto-start: accumulate the drop into selection, then start at 2 or 4
+  async function handleDropOnCourt(courtNumber, entryId) {
+    const next = selection.includes(entryId) || selection.length >= 4 ? selection : [...selection, entryId]
+    setSelection(next)
+    setArmedCourt(courtNumber)
+    if (next.length === 2 || next.length === 4) {
+      await handleStartMatch(courtNumber, next) // clears selection
+      setArmedCourt(null)
+    }
+  }
+
+  const handleReorder = useCallback(newOrder => {
+    setQueueOrder(session.id, newOrder).catch(() => {}) // SSE keeps the truth on failure
+  }, [session?.id])
 
   useSSE(useCallback(data => setSseData(data), []))
 
@@ -48,6 +64,8 @@ export default function App() {
                 playSeconds={playSeconds}
                 selection={selection}
                 onStartMatch={handleStartMatch}
+                onDropPlayer={handleDropOnCourt}
+                armedCourt={armedCourt}
               />
             </div>
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -57,6 +75,7 @@ export default function App() {
                 waitSeconds={waitSeconds}
                 selection={selection}
                 onSelectionChange={setSelection}
+                onReorder={handleReorder}
               />
             </div>
           </main>

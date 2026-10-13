@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { drag, moveBefore } from '@/lib/dnd'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -6,11 +7,23 @@ import PlayerCard from './PlayerCard.jsx'
 import RestingTray from './RestingTray.jsx'
 import { checkinPlayer, getPlayers, getSuggestion, setEntryStatus } from '../api.js'
 
-export default function QueueGrid({ session, queue, waitSeconds, selection, onSelectionChange }) {
+export default function QueueGrid({ session, queue, waitSeconds, selection, onSelectionChange, onReorder }) {
   const [mode, setMode] = useState('smart')
   const [allPlayers, setAllPlayers] = useState([])
   const [playersLoading, setPlayersLoading] = useState(true)
   const [showCheckin, setShowCheckin] = useState(false)
+  const [order, setOrder] = useState([])
+
+  // order survives SSE pushes (every 1s): initialise once from the first
+  // non-empty queue, thereafter only append genuinely new entry ids
+  useEffect(() => {
+    setOrder(prev => {
+      if (prev.length === 0) return queue.map(e => e.id)
+      const known = new Set(prev)
+      const fresh = queue.map(e => e.id).filter(id => !known.has(id))
+      return fresh.length ? [...prev, ...fresh] : prev
+    })
+  }, [queue])
 
   useEffect(() => {
     getPlayers()
@@ -39,6 +52,26 @@ export default function QueueGrid({ session, queue, waitSeconds, selection, onSe
   const waiting = queue.filter(e => e.status === 'waiting')
   const resting = queue.filter(e => e.status === 'resting')
   const notInSession = allPlayers.filter(p => !queue.some(e => e.player_id === p.id))
+
+  const list = useMemo(() => {
+    const idx = new Map(order.map((id, i) => [id, i]))
+    return [...waiting].sort((a, b) => (idx.get(a.id) ?? 1e9) - (idx.get(b.id) ?? 1e9))
+  }, [waiting, order])
+
+  function handleDropOnPlayer(dragId, targetId) {
+    if (drag.current?.status === 'resting') {
+      setEntryStatus(dragId, 'waiting')
+      return
+    }
+    const next = moveBefore(order, dragId, targetId)
+    setOrder(next)
+    // full session order, every entry id exactly once, built after the local reorder
+    const waitingIds = new Set(waiting.map(e => e.id))
+    const waitingInOrder = next.filter(id => waitingIds.has(id))
+    const restingIds = resting.map(e => e.id)
+    const playingIds = queue.filter(e => e.status === 'playing').map(e => e.id)
+    onReorder([...waitingInOrder, ...restingIds, ...playingIds])
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
@@ -101,18 +134,23 @@ export default function QueueGrid({ session, queue, waitSeconds, selection, onSe
       )}
 
       <div className="grid auto-rows-min content-start flex-1 grid-cols-2 gap-3 overflow-y-auto lg:grid-cols-3 xl:grid-cols-4">
-        {waiting.map(entry => (
+        {list.map(entry => (
           <PlayerCard
             key={entry.id}
             entry={entry}
             waitSecs={waitSeconds.get(entry.id) ?? 0}
             selectionIndex={selection.indexOf(entry.id)}
             onClick={e => e.shiftKey ? setEntryStatus(entry.id, 'resting') : toggleSelect(entry.id)}
+            onDropOn={handleDropOnPlayer}
           />
         ))}
       </div>
 
-      <RestingTray entries={resting} onReturn={id => setEntryStatus(id, 'waiting')} />
+      <RestingTray
+        entries={resting}
+        onReturn={id => setEntryStatus(id, 'waiting')}
+        onDropEntry={id => setEntryStatus(id, 'resting')}
+      />
     </div>
   )
 }
