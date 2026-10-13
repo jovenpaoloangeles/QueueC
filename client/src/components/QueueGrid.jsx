@@ -1,15 +1,22 @@
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import PlayerCard from './PlayerCard.jsx'
+import RestingTray from './RestingTray.jsx'
 import { checkinPlayer, getPlayers, getSuggestion, setEntryStatus } from '../api.js'
 
 export default function QueueGrid({ session, queue, waitSeconds, selection, onSelectionChange }) {
   const [mode, setMode] = useState('smart')
   const [allPlayers, setAllPlayers] = useState([])
+  const [playersLoading, setPlayersLoading] = useState(true)
   const [showCheckin, setShowCheckin] = useState(false)
 
-  useEffect(() => { getPlayers().then(d => setAllPlayers(d.players)) }, [])
+  useEffect(() => {
+    getPlayers()
+      .then(d => setAllPlayers(d.players))
+      .finally(() => setPlayersLoading(false))
+  }, [])
 
   // Apply smart suggestion when mode switches to smart or queue changes
   useEffect(() => {
@@ -34,36 +41,35 @@ export default function QueueGrid({ session, queue, waitSeconds, selection, onSe
   const notInSession = allPlayers.filter(p => !queue.some(e => e.player_id === p.id))
 
   return (
-    <div className="text-xs">
-      <div className="flex justify-between items-center mb-1.5">
-        <span className="text-[9px] text-muted-foreground/30 uppercase tracking-widest">
-          Queue · {waiting.length} Waiting
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-sm font-semibold text-foreground">
+          Queue · <span className="font-mono tabular-nums">{waiting.length}</span> Waiting
           {selection.length > 0 && (
-            <span className="text-blue-400 ml-2">
+            <span className="ml-2 text-primary">
               {selection.length} selected → {selection.length === 2 ? 'Singles' : selection.length === 4 ? 'Doubles' : '...'}
             </span>
           )}
         </span>
-        <div className="flex gap-1">
+        <div className="flex gap-2">
           <Button
             variant={mode === 'manual' ? 'outline' : 'ghost'}
-            size="xs"
+            size="sm"
             onClick={() => { setMode('manual'); onSelectionChange([]) }}
           >
             Manual
           </Button>
           <Button
             variant={mode === 'smart' ? 'outline' : 'ghost'}
-            size="xs"
+            size="sm"
             onClick={() => setMode('smart')}
-            className={cn(mode === 'smart' && 'border-accent text-blue-400')}
+            className={cn(mode === 'smart' && 'border-accent text-primary')}
           >
             ● Smart
           </Button>
           <Button
             variant="ghost"
-            size="xs"
-            className="ml-1.5"
+            size="sm"
             onClick={() => setShowCheckin(v => !v)}
           >
             + Check In
@@ -71,8 +77,16 @@ export default function QueueGrid({ session, queue, waitSeconds, selection, onSe
         </div>
       </div>
 
-      {showCheckin && notInSession.length > 0 && (
-        <div className="mb-2 flex flex-wrap gap-1">
+      {showCheckin && playersLoading && (
+        <div className="flex flex-wrap gap-2">
+          <Skeleton className="h-6 w-24" />
+          <Skeleton className="h-6 w-20" />
+          <Skeleton className="h-6 w-28" />
+        </div>
+      )}
+
+      {showCheckin && !playersLoading && notInSession.length > 0 && (
+        <div className="flex flex-wrap gap-2">
           {notInSession.map(p => (
             <Button
               key={p.id}
@@ -86,7 +100,7 @@ export default function QueueGrid({ session, queue, waitSeconds, selection, onSe
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-1">
+      <div className="grid auto-rows-min content-start flex-1 grid-cols-2 gap-3 overflow-y-auto lg:grid-cols-3 xl:grid-cols-4">
         {waiting.map(entry => (
           <PlayerCard
             key={entry.id}
@@ -98,23 +112,7 @@ export default function QueueGrid({ session, queue, waitSeconds, selection, onSe
         ))}
       </div>
 
-      {resting.length > 0 && (
-        <div className="mt-2">
-          <div className="text-[8px] text-muted-foreground/20 uppercase tracking-widest mb-0.5">Resting</div>
-          <div className="flex flex-wrap gap-1">
-            {resting.map(e => (
-              <Button
-                key={e.id}
-                variant="outline"
-                size="xs"
-                onClick={() => setEntryStatus(e.id, 'waiting')}
-              >
-                {e.name} ↩
-              </Button>
-            ))}
-          </div>
-        </div>
-      )}
+      <RestingTray entries={resting} onReturn={id => setEntryStatus(id, 'waiting')} />
     </div>
   )
 }
