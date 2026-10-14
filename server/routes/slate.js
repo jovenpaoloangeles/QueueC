@@ -1,7 +1,6 @@
 import { Hono } from 'hono'
 import db from '../db.js'
 import { broadcast } from './sse.js'
-import { validateTeamSlots } from './matches.js'
 
 const router = new Hono()
 
@@ -40,12 +39,45 @@ router.patch('/matches/:id/slate', async (c) => {
   const m = db.prepare("SELECT * FROM matches WHERE id = ? AND state = 'slated'").get(id)
   if (!m) return c.json({ error: 'Slate not found' }, 404)
   const b = await c.req.json().catch(() => ({}))
-  const currentIds = [m.team1_p1, m.team1_p2, m.team2_p1, m.team2_p2].filter(Boolean)
-  const check = validateTeamSlots(b, currentIds)
-  if (!check.ok) return c.json({ error: check.error }, 400)
-  const v = check.value
-  db.prepare('UPDATE matches SET team1_p1=?, team1_p2=?, team2_p1=?, team2_p2=? WHERE id=?')
-    .run(v.team1_p1, v.team1_p2, v.team2_p1, v.team2_p2, id)
+  const next = {
+    team1_p1: b.team1_p1 ?? null,
+    team1_p2: b.team1_p2 ?? null,
+    team2_p1: b.team2_p1 ?? null,
+    team2_p2: b.team2_p2 ?? null,
+  }
+  const newIds = [next.team1_p1, next.team1_p2, next.team2_p1, next.team2_p2].filter(Boolean)
+  if (newIds.length !== 4) return c.json({ error: 'A slate needs exactly 4 players' }, 400)
+  if (new Set(newIds).size !== newIds.length) return c.json({ error: 'duplicate entry in team slots' }, 400)
+
+  // Each target entry must belong to this session and be either waiting or
+  // already one of the slate's four entries (rearrangement). Anything else —
+  // staged elsewhere, playing, resting, left, foreign — is unavailable.
+  const oldIds = [m.team1_p1, m.team1_p2, m.team2_p1, m.team2_p2].filter(Boolean)
+  const oldSet = new Set(oldIds)
+  for (const entryId of newIds) {
+    if (oldSet.has(entryId)) continue
+    const e = db.prepare('SELECT status FROM queue_entries WHERE id = ? AND session_id = ?').get(entryId, m.session_id)
+    if (!e || e.status !== 'waiting') {
+      return c.json({ error: `entry ${entryId} is not available` }, 400)
+    }
+  }
+
+  const newSet = new Set(newIds)
+  const removed = oldIds.filter(entryId => !newSet.has(entryId))
+  const added = newIds.filter(entryId => !oldSet.has(entryId))
+  const now = Math.floor(Date.now() / 1000)
+
+  db.transaction(() => {
+    db.prepare('UPDATE matches SET team1_p1=?, team1_p2=?, team2_p1=?, team2_p2=? WHERE id=?')
+      .run(next.team1_p1, next.team1_p2, next.team2_p1, next.team2_p2, id)
+    if (removed.length > 0) {
+      let nextOrder = db.prepare('SELECT COALESCE(MAX(sort_order),0) AS n FROM queue_entries WHERE session_id = ?').get(m.session_id).n
+      const back = db.prepare("UPDATE queue_entries SET status = 'waiting', status_updated_at = ?, sort_order = ? WHERE id = ?")
+      for (const entryId of removed) back.run(now, ++nextOrder, entryId)
+    }
+    const mark = db.prepare("UPDATE queue_entries SET status = 'staged', status_updated_at = ? WHERE id = ?")
+    for (const entryId of added) mark.run(now, entryId)
+  })()
   broadcast()
   return c.json({ slate: db.prepare('SELECT * FROM matches WHERE id = ?').get(id) })
 })

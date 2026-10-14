@@ -4,6 +4,16 @@ import assert from 'node:assert/strict'
 const BASE = process.env.BASE_URL ?? 'http://localhost:3001/api'
 const SUFFIX = Date.now().toString(36)
 
+// Read the current SSE state snapshot (first message on connect)
+async function readState() {
+  const res = await fetch(`${BASE}/sse`)
+  const reader = res.body.getReader()
+  const chunk = new TextDecoder().decode((await reader.read()).value)
+  await reader.cancel()
+  const dataLine = chunk.split('\n').find(l => l.startsWith('data: '))
+  return JSON.parse(dataLine.slice(6))
+}
+
 async function run() {
   // End any stray unended session first
   const active = await fetch(`${BASE}/sessions/active`).then(r => r.json())
@@ -117,6 +127,98 @@ async function run() {
     assert.equal(patched.team1_p2, e3.id, 'Expected team1_p2 updated to e3.id')
     assert.equal(patched.team2_p1, e0.id, 'Expected team2_p1 updated to e0.id')
     assert.equal(patched.team2_p2, e1.id, 'Expected team2_p2 updated to e1.id')
+
+    // 6b) Substitution: a 5th player checks in and swaps into the slated match
+    const subPlayer = (await fetch(`${BASE}/players`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: `SlateSub-${SUFFIX}`, skill_level: 'intermediate' })
+    }).then(r => r.json())).player
+    const subEntry = (await fetch(`${BASE}/sessions/${session.id}/checkin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ player_id: subPlayer.id })
+    }).then(r => r.json())).entry
+    assert.equal(subEntry.status, 'waiting', 'Expected freshly checked-in entry to be waiting')
+
+    // Entry that belongs to a *different* session → 400 naming the entry as unavailable
+    const otherSession = (await fetch(`${BASE}/sessions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'SlateOther', scheduled_start: 1000, scheduled_end: 2000, court_count: 1 })
+    }).then(r => r.json())).session
+    const foreignPlayer = (await fetch(`${BASE}/players`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: `SlateForeign-${SUFFIX}`, skill_level: 'intermediate' })
+    }).then(r => r.json())).player
+    const foreignEntry = (await fetch(`${BASE}/sessions/${otherSession.id}/checkin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ player_id: foreignPlayer.id })
+    }).then(r => r.json())).entry
+
+    const foreignRes = await fetch(`${BASE}/matches/${slate.id}/slate`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ team1_p1: e2.id, team1_p2: e3.id, team2_p1: e0.id, team2_p2: foreignEntry.id })
+    })
+    assert.equal(foreignRes.status, 400, 'Expected 400 when entry belongs to another session')
+    const foreignBody = await foreignRes.json()
+    assert.ok(String(foreignBody.error).includes(String(foreignEntry.id)), `Expected error to name entry ${foreignEntry.id}, got: ${foreignBody.error}`)
+    assert.match(foreignBody.error, /not available/, 'Expected "not available" error message')
+    await fetch(`${BASE}/sessions/${otherSession.id}/end`, { method: 'PATCH' })
+
+    // Empty slot (one null) → 400
+    const nullRes = await fetch(`${BASE}/matches/${slate.id}/slate`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ team1_p1: e2.id, team1_p2: null, team2_p1: e0.id, team2_p2: e1.id })
+    })
+    assert.equal(nullRes.status, 400, 'Expected 400 when a slot is null')
+    assert.match((await nullRes.json()).error, /A slate needs exactly 4 players/, 'Expected exactly-4-players error message')
+
+    // Duplicate id across slots → 400
+    const dupPatchRes = await fetch(`${BASE}/matches/${slate.id}/slate`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ team1_p1: e2.id, team1_p2: e2.id, team2_p1: e0.id, team2_p2: e1.id })
+    })
+    assert.equal(dupPatchRes.status, 400, 'Expected 400 on duplicate entry in PATCH slate')
+    assert.match((await dupPatchRes.json()).error, /duplicate entry in team slots/, 'Expected duplicate error message')
+
+    // Now the real substitution: swap staged e3 out for the waiting subEntry
+    const beforeSub = await readState()
+    const maxSortBefore = Math.max(0, ...beforeSub.queue.map(q => q.sort_order))
+
+    const subRes = await fetch(`${BASE}/matches/${slate.id}/slate`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ team1_p1: e2.id, team1_p2: subEntry.id, team2_p1: e0.id, team2_p2: e1.id })
+    })
+    assert.equal(subRes.status, 200, `Expected 200 on substitution PATCH, got ${subRes.status}`)
+    const { slate: subbed } = await subRes.json()
+    assert.equal(subbed.team1_p1, e2.id, 'Expected team1_p1 to stay e2.id')
+    assert.equal(subbed.team1_p2, subEntry.id, 'Expected team1_p2 to become the substitute')
+    assert.equal(subbed.team2_p1, e0.id, 'Expected team2_p1 to stay e0.id')
+    assert.equal(subbed.team2_p2, e1.id, 'Expected team2_p2 to stay e1.id')
+
+    // Removed entry is waiting again, appended after the current MAX(sort_order)
+    const afterSub = await readState()
+    const returned = afterSub.queue.find(q => q.id === e3.id)
+    assert.ok(returned, 'Expected substituted-out entry back in the queue')
+    assert.equal(returned.status, 'waiting', 'Expected substituted-out entry status waiting')
+    assert.ok(returned.sort_order > maxSortBefore,
+      `Expected sort_order ${returned.sort_order} to exceed previous max ${maxSortBefore}`)
+
+    // Added entry is staged: the server refuses to rest a player drafted into a slated match
+    const stagedProbe = await fetch(`${BASE}/queue/${subEntry.id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'resting' })
+    })
+    assert.equal(stagedProbe.status, 409, 'Expected 409 — substituted-in entry is staged into the slate')
+    assert.match((await stagedProbe.json()).error, /drafted into a slated match/, 'Expected staged/drafted error message')
 
     // 7) DELETE /matches/:id/slate → 204. Verify entries are back to waiting and can be slated again
     const delRes = await fetch(`${BASE}/matches/${slate.id}/slate`, { method: 'DELETE' })
