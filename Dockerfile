@@ -9,7 +9,7 @@ FROM node:22-alpine
 RUN apk add --no-cache python3 make g++
 WORKDIR /app
 COPY server/package*.json ./server/
-RUN cd server && npm ci --omit=dev
+RUN cd server && npm_config_nodedir=/usr/local npm ci --omit=dev
 COPY server ./server
 COPY --from=build-client /app/client/dist ./public
 COPY players.json ./players.json
