@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useSSE } from './hooks/useSSE.js'
 import { useTimers } from './hooks/useTimers.js'
-import { startMatch, setQueueOrder } from './api.js'
+import { startMatch, setQueueOrder, endSession } from './api.js'
 import { Button } from '@/components/ui/button'
 import Header from './components/Header.jsx'
 import CourtsRow from './components/CourtsRow.jsx'
@@ -60,7 +60,11 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-background">
-      <Header session={session} onNewSession={() => setShowCreate(true)} />
+      <Header
+        session={session}
+        onNewSession={() => setShowCreate(true)}
+        onEndSession={session ? () => endSession(session.id).catch(() => {}) : undefined}
+      />
       {session && session.started_at == null && (
         <SetupScreen session={session} queue={queue} courts={courts} />
       )}

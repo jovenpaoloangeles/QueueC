@@ -3,7 +3,7 @@ import { fmtDur } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
-export default function Header({ session, onNewSession }) {
+export default function Header({ session, onNewSession, onEndSession }) {
   const [elapsed, setElapsed] = useState(0)
 
   useEffect(() => {
@@ -41,6 +41,11 @@ export default function Header({ session, onNewSession }) {
           <Badge variant="outline" className="text-2xs uppercase tracking-wider text-muted-foreground">
             Not started
           </Badge>
+        )}
+        {session && onEndSession && (
+          <Button size="sm" variant="destructive" onClick={onEndSession}>
+            End Session
+          </Button>
         )}
         <Button size="sm" onClick={onNewSession}>
           + Session
