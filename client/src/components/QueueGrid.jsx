@@ -2,10 +2,20 @@ import { useState, useEffect, useMemo } from 'react'
 import { drag, moveBefore } from '@/lib/dnd'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import PlayerCard from './PlayerCard.jsx'
 import RestingTray from './RestingTray.jsx'
+import { useToast } from './Toast.jsx'
 import { checkinPlayer, getPlayers, getSuggestion, setEntryStatus } from '../api.js'
+
+// mockup .queue-tabs: All = waiting + resting (playing entries live on courts),
+// Wait = waiting only, Rest = resting only
+const TABS = [
+  { id: 'all', label: 'All', testid: 'queue-tab-all' },
+  { id: 'wait', label: 'Wait', testid: 'queue-tab-wait' },
+  { id: 'rest', label: 'Rest', testid: 'queue-tab-rest' },
+]
 
 export default function QueueGrid({ session, queue, waitSeconds, playSeconds, selection, draftedIds = new Set(), onSelectionChange, onReorder, playersVersion = 0 }) {
   const [mode, setMode] = useState('smart')
@@ -13,6 +23,9 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
   const [playersLoading, setPlayersLoading] = useState(true)
   const [showCheckin, setShowCheckin] = useState(false)
   const [order, setOrder] = useState([])
+  const [tab, setTab] = useState('all')
+  const [filter, setFilter] = useState('')
+  const toast = useToast()
 
   // order survives SSE pushes (every 1s): initialise once from the first
   // non-empty queue, thereafter only append genuinely new entry ids
@@ -59,8 +72,19 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
   // benching must also leave the selection, or handleStartMatch would put a
   // resting player on court
   function bench(id) {
-    setEntryStatus(id, 'resting')
+    setEntryStatus(id, 'resting').catch(err => toast(err?.data?.error ?? 'Could not update', 'error'))
     onSelectionChange(selection.filter(s => s !== id))
+  }
+
+  // Rest/Wake toggle on a queue row: waiting → resting (also leaves the
+  // selection), resting → waiting. 409s (playing/staged) surface as toasts.
+  function toggleRest(entry) {
+    const next = entry.status === 'resting' ? 'waiting' : 'resting'
+    setEntryStatus(entry.id, next)
+      .then(() => {
+        if (next === 'resting') onSelectionChange(selection.filter(s => s !== entry.id))
+      })
+      .catch(err => toast(err?.data?.error ?? 'Could not update', 'error'))
   }
 
   const waiting = queue.filter(e => e.status === 'waiting')
@@ -71,8 +95,13 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
 
   const list = useMemo(() => {
     const idx = new Map(order.map((id, i) => [id, i]))
-    return [...waiting].sort((a, b) => (idx.get(a.id) ?? 1e9) - (idx.get(b.id) ?? 1e9))
-  }, [waiting, order])
+    const byOrder = (a, b) => (idx.get(a.id) ?? 1e9) - (idx.get(b.id) ?? 1e9)
+    const base = tab === 'wait' ? waiting : tab === 'rest' ? resting : [...waiting, ...resting]
+    const q = filter.trim().toLowerCase()
+    return base
+      .filter(e => !q || (e.name ?? '').toLowerCase().includes(q))
+      .sort(byOrder)
+  }, [waiting, resting, order, tab, filter])
 
   function handleDropOnPlayer(dragId, targetId) {
     if (drag.current?.status === 'resting') {
@@ -88,6 +117,8 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
     const playingIds = queue.filter(e => e.status === 'playing').map(e => e.id)
     onReorder([...waitingInOrder, ...restingIds, ...playingIds])
   }
+
+  const tabCount = id => (id === 'wait' ? waiting.length : id === 'rest' ? resting.length : waiting.length + resting.length)
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
@@ -126,6 +157,32 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
         </div>
       </div>
 
+      {/* mockup panel-head controls: filter search + All/Wait/Rest segmented tabs */}
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <Input
+          type="search"
+          aria-label="Filter queue"
+          placeholder="Filter queue…"
+          value={filter}
+          onChange={e => setFilter(e.target.value)}
+          className="h-7 w-44 text-xs"
+        />
+        <div className="flex items-center gap-1 rounded-lg border bg-muted/40 p-1">
+          {TABS.map(t => (
+            <Button
+              key={t.id}
+              variant={tab === t.id ? 'outline' : 'ghost'}
+              size="xs"
+              data-testid={t.testid}
+              className={cn('text-2xs', tab === t.id && 'bg-background shadow-sm')}
+              onClick={() => setTab(t.id)}
+            >
+              {t.label} ({tabCount(t.id)})
+            </Button>
+          ))}
+        </div>
+      </div>
+
       {showCheckin && playersLoading && (
         <div className="flex flex-wrap gap-2">
           <Skeleton className="h-6 w-24" />
@@ -157,15 +214,20 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
             waitSecs={waitSeconds.get(entry.id) ?? 0}
             playSecs={playSeconds?.get(entry.id) ?? 0}
             selectionIndex={selection.indexOf(entry.id)}
-            onClick={e => e.shiftKey ? bench(entry.id) : toggleSelect(entry.id)}
+            drafted={draftedIds.has(entry.id)}
+            onClick={e => {
+              if (entry.status !== 'waiting') return // resting rows are not selectable
+              e.shiftKey ? bench(entry.id) : toggleSelect(entry.id)
+            }}
             onDropOn={handleDropOnPlayer}
+            onToggleRest={toggleRest}
           />
         ))}
       </div>
 
       <RestingTray
         entries={resting}
-        onReturn={id => setEntryStatus(id, 'waiting')}
+        onReturn={id => setEntryStatus(id, 'waiting').catch(err => toast(err?.data?.error ?? 'Could not update', 'error'))}
         onDropEntry={bench}
       />
     </div>

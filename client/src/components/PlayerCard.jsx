@@ -2,25 +2,33 @@ import { useState } from 'react'
 import { drag, valid, useDragSource } from '@/lib/dnd'
 import { cn, fmtClock, fmtMins, SKILL_BADGE } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 
 const WAIT_HIGH_PRIORITY_THRESHOLD_SECS = 15 * 60 // configurable default: 15:00
 
-export default function PlayerCard({ entry, waitSecs, selectionIndex, playSecs, onClick, onDropOn }) {
+export default function PlayerCard({ entry, waitSecs, selectionIndex, playSecs, drafted = false, onClick, onDropOn, onToggleRest }) {
   const dragProps = useDragSource(() => ({ kind: 'player', entryId: entry.id, status: entry.status }))
   const [over, setOver] = useState(false)
   const isSelected = selectionIndex !== undefined && selectionIndex !== -1
 
   const isPlaying = entry.status === 'playing'
   const isWaiting = entry.status === 'waiting'
+  const isResting = entry.status === 'resting'
   const wait = waitSecs ?? 0
   const highPriority = isWaiting && wait >= WAIT_HIGH_PRIORITY_THRESHOLD_SECS
   const gamesPlayed = entry.games_played ?? 0
+  const fairness = entry.fairness
+  const avgRating = entry.avg_rating
 
   let statusLabel, statusSeconds, statusClass
   if (isPlaying) {
     statusLabel = 'In Game'
     statusSeconds = playSecs ?? 0
     statusClass = 'bg-green-100 text-green-800 border-green-200'
+  } else if (isResting) {
+    statusLabel = 'Resting'
+    statusSeconds = wait
+    statusClass = 'bg-muted text-muted-foreground border-border'
   } else if (highPriority) {
     statusLabel = 'Overdue'
     statusSeconds = wait
@@ -42,18 +50,23 @@ export default function PlayerCard({ entry, waitSecs, selectionIndex, playSecs, 
         const p = drag.current
         if (valid('queue')) onDropOn(p.entryId, entry.id)
       }}
-      data-entry-id={entry.id}
+      // resting rows render in the All/Rest filter tabs but are NOT selectable /
+      // queue-manageable — they only carry data-resting-id so the queue grid's
+      // [data-entry-id] set stays "waiting entries" (tests 9.6 / 18.4)
+      {...(isResting ? { 'data-resting-id': entry.id } : { 'data-entry-id': entry.id })}
       className={cn(
-        'flex h-full min-h-[110px] cursor-pointer select-none flex-col justify-between gap-3 rounded-lg border p-3 transition-colors',
+        'flex h-full min-h-[110px] cursor-pointer select-none flex-col justify-between gap-2 rounded-lg border p-3 transition-colors',
         isSelected
           ? 'border-accent-foreground/30 bg-accent ring-2 ring-primary/30'
           : 'border-border bg-card shadow-sm hover:border-border/80 hover:bg-muted/40',
+        drafted && 'opacity-60',
+        isResting && 'bg-muted/60 opacity-70',
         over && valid('queue') && 'border-drop-target-border bg-drop-target',
         over && drag.current && !valid('queue') && 'border-drop-invalid-border bg-drop-invalid'
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           {isSelected && (
             <span className="flex size-5 items-center justify-center rounded-full bg-primary font-mono text-xs font-semibold text-primary-foreground">
               {selectionIndex + 1}
@@ -66,17 +79,68 @@ export default function PlayerCard({ entry, waitSecs, selectionIndex, playSecs, 
           >
             [{gamesPlayed}]
           </span>
-          <span className="text-base font-medium text-foreground">{entry.name}</span>
+          <span className="truncate text-base font-medium text-foreground">{entry.name}</span>
         </div>
-        <Badge data-testid="skill-badge" className={cn('border-0 text-2xs', SKILL_BADGE[entry.skill_level] ?? SKILL_BADGE.intermediate)}>
-          {entry.skill_level?.replace('_', ' ') ?? ''}
-        </Badge>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {drafted && (
+            <span data-testid="drafted-tag" className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
+              in lineup
+            </span>
+          )}
+          {isResting && (
+            <span data-testid="resting-tag" className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
+              resting
+            </span>
+          )}
+          <Badge data-testid="skill-badge" className={cn('border-0 text-2xs', SKILL_BADGE[entry.skill_level] ?? SKILL_BADGE.intermediate)}>
+            {entry.skill_level?.replace('_', ' ') ?? ''}
+          </Badge>
+        </div>
       </div>
-      <div className="flex items-baseline justify-between">
+      <div className="flex items-baseline justify-between gap-2">
         <Badge variant="outline" className={cn('font-mono tabular-nums text-2xs border', statusClass)} data-testid="status-timer-badge">
           {isPlaying ? '🟢' : (highPriority ? '🔴' : '🟡')} {fmtClock(statusSeconds)} ({statusLabel})
         </Badge>
         <span className="text-xs text-muted-foreground">{fmtMins(entry.total_seconds_played ?? 0)} played</span>
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+        <div className="flex flex-wrap items-center gap-x-2 text-2xs text-muted-foreground">
+          <span data-testid="fairness" className="text-muted-foreground">
+            fairness{' '}
+            {fairness != null ? (
+              <span className="font-semibold tabular-nums text-foreground">{Number(fairness).toFixed(1)}</span>
+            ) : (
+              <span className="text-muted-foreground/60">—</span>
+            )}
+          </span>
+          <span>
+            <span className="font-semibold text-foreground">{gamesPlayed}</span> games
+          </span>
+          <span data-testid="avg-rating" className={cn(avgRating != null ? 'font-semibold text-amber-500' : 'text-muted-foreground/60')}>
+            {avgRating != null ? `★ ${avgRating}` : '—'}
+          </span>
+        </div>
+        {isWaiting && (
+          <Button
+            variant="ghost"
+            size="xs"
+            data-testid="rest-toggle"
+            disabled={drafted}
+            onClick={e => { e.stopPropagation(); onToggleRest?.(entry) }}
+          >
+            Rest
+          </Button>
+        )}
+        {isResting && (
+          <Button
+            variant="ghost"
+            size="xs"
+            data-testid="rest-toggle"
+            onClick={e => { e.stopPropagation(); onToggleRest?.(entry) }}
+          >
+            Wake
+          </Button>
+        )}
       </div>
     </div>
   )
