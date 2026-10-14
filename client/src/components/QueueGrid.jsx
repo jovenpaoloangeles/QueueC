@@ -72,8 +72,9 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
   // benching must also leave the selection, or handleStartMatch would put a
   // resting player on court
   function bench(id) {
-    setEntryStatus(id, 'resting').catch(err => toast(err?.data?.error ?? 'Could not update', 'error'))
-    onSelectionChange(selection.filter(s => s !== id))
+    setEntryStatus(id, 'resting')
+      .then(() => onSelectionChange(selection.filter(s => s !== id)))
+      .catch(err => toast(err?.data?.error ?? 'Could not update', 'error'))
   }
 
   // Rest/Wake toggle on a queue row: waiting → resting (also leaves the
@@ -106,6 +107,8 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
   function handleDropOnPlayer(dragId, targetId) {
     if (drag.current?.status === 'resting') {
       setEntryStatus(dragId, 'waiting')
+        .then(() => onSelectionChange(selection.filter(s => s !== dragId)))
+        .catch(err => toast(err?.data?.error ?? 'Could not update', 'error'))
       return
     }
     const next = moveBefore(order, dragId, targetId)
