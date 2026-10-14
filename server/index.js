@@ -7,6 +7,7 @@ import sessionsRouter from './routes/sessions.js'
 import playersRouter from './routes/players.js'
 import queueRouter from './routes/queue.js'
 import matchesRouter from './routes/matches.js'
+import slateRouter from './routes/slate.js'
 import statsRouter from './routes/stats.js'
 import sseRouter, { broadcast } from './routes/sse.js'
 import courtsRouter from './routes/courts.js'
@@ -17,6 +18,7 @@ app.use('*', cors())
 app.route('/api/sessions', sessionsRouter)
 app.route('/api/players', playersRouter)
 app.route('/api', queueRouter)
+app.route('/api', slateRouter)
 app.route('/api/matches', matchesRouter)
 app.route('/api', statsRouter)
 app.route('/api/sse', sseRouter)
