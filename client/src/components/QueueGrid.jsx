@@ -217,7 +217,11 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
             drafted={draftedIds.has(entry.id)}
             onClick={e => {
               if (entry.status !== 'waiting') return // resting rows are not selectable
-              e.shiftKey ? bench(entry.id) : toggleSelect(entry.id)
+              if (e.shiftKey) {
+                if (!draftedIds.has(entry.id)) bench(entry.id)
+              } else {
+                toggleSelect(entry.id)
+              }
             }}
             onDropOn={handleDropOnPlayer}
             onToggleRest={toggleRest}

@@ -136,6 +136,7 @@ export default function PlayerCard({ entry, waitSecs, selectionIndex, playSecs, 
             variant="ghost"
             size="xs"
             data-testid="rest-toggle"
+            disabled={drafted}
             onClick={e => { e.stopPropagation(); onToggleRest?.(entry) }}
           >
             Wake
