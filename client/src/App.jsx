@@ -13,6 +13,7 @@ import QueueGrid from './components/QueueGrid.jsx'
 import StatsSidebar from './components/StatsSidebar.jsx'
 import CreateSessionModal from './components/CreateSessionModal.jsx'
 import SetupScreen from './components/SetupScreen.jsx'
+import AddPlayerDialog from './components/AddPlayerDialog.jsx'
 
 export default function App() {
   const [sseData, setSseData] = useState({ session: null, queue: [], activeMatches: [], slatedMatches: [], courts: [], stats: null, serverTime: null })
@@ -26,7 +27,7 @@ export default function App() {
   // draftedIds so a court draft can't hold the same entry mid-edit
   const [slateDraftIds, setSlateDraftIds] = useState([])
   const [playersVersion, setPlayersVersion] = useState(0) // bumped after add-player so the pool refetches
-  const [showAddPlayer, setShowAddPlayer] = useState(false) // dialog itself lands in Task 15
+  const [showAddPlayer, setShowAddPlayer] = useState(false) // header "+ Add Player" → live add dialog
 
   const { session, queue, activeMatches, slatedMatches = [], courts, stats } = sseData
   const toast = useToast()
@@ -241,6 +242,13 @@ export default function App() {
             + Start New Session
           </Button>
         </div>
+      )}
+      {showAddPlayer && session && session.started_at != null && (
+        <AddPlayerDialog
+          session={session}
+          queue={queue}
+          onClose={() => setShowAddPlayer(false)}
+        />
       )}
       {confirmNew && (
         <Dialog open onOpenChange={open => !open && setConfirmNew(false)}>
