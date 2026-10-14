@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import db from '../db.js'
+import { computeLeaderboard } from './stats.js'
 
 const router = new Hono()
 const clients = new Set()
@@ -81,18 +82,7 @@ export function currentState() {
     'SELECT COALESCE(SUM(new_shuttles), 0) as new, COALESCE(SUM(used_shuttles), 0) as used FROM matches WHERE session_id = ?'
   ).get(session.id)
 
-  const leaderboard = db.prepare(`
-    SELECT p.id as player_id, p.name,
-      SUM(CASE
-        WHEN (m.team1_p1 = qe.id OR m.team1_p2 = qe.id) AND m.team1_score > m.team2_score THEN 1
-        WHEN (m.team2_p1 = qe.id OR m.team2_p2 = qe.id) AND m.team2_score > m.team1_score THEN 1
-        ELSE 0 END) as wins
-    FROM matches m
-    JOIN queue_entries qe ON (qe.id = m.team1_p1 OR qe.id = m.team1_p2 OR qe.id = m.team2_p1 OR qe.id = m.team2_p2)
-    JOIN players p ON p.id = qe.player_id
-    WHERE m.session_id = ? AND m.ended_at IS NOT NULL
-    GROUP BY p.id ORDER BY wins DESC LIMIT 5
-  `).all(session.id)
+  const leaderboard = computeLeaderboard(session.id)
 
   return {
     session,

@@ -5,7 +5,21 @@ import { broadcast } from './sse.js'
 const router = new Hono()
 
 router.get('/', (c) => {
-  const players = db.prepare('SELECT * FROM players ORDER BY name').all()
+  const players = db.prepare(`
+    SELECT p.*,
+      (SELECT MAX(m.ended_at) FROM matches m
+         JOIN queue_entries qe ON qe.player_id = p.id
+         WHERE m.ended_at IS NOT NULL AND m.state = 'active'
+           AND (m.team1_p1=qe.id OR m.team1_p2=qe.id OR m.team2_p1=qe.id OR m.team2_p2=qe.id)
+      ) AS last_played_at,
+      (SELECT COUNT(*) FROM matches m
+         JOIN queue_entries qe ON qe.player_id = p.id
+         WHERE m.ended_at IS NOT NULL AND m.state = 'active'
+           AND (m.team1_p1=qe.id OR m.team1_p2=qe.id OR m.team2_p1=qe.id OR m.team2_p2=qe.id)
+      ) AS games_total
+    FROM players p
+    ORDER BY (last_played_at IS NULL), last_played_at DESC, p.name
+  `).all()
   return c.json({ players })
 })
 
