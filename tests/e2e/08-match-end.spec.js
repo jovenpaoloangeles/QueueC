@@ -20,17 +20,20 @@ test('8.1 End Match button opens modal', async ({ page }) => {
 
 test('8.2 modal title shows court label', async ({ page }) => {
   await page.getByRole('button', { name: 'End Match' }).first().click()
+  await page.getByTestId('confirm-end-end').click() // pass the confirm gate
   await expect(page.getByRole('dialog').locator('text=Court')).toBeVisible()
 })
 
 test('8.3 score inputs default to 0', async ({ page }) => {
   await page.getByRole('button', { name: 'End Match' }).first().click()
+  await page.getByTestId('confirm-end-end').click() // pass the confirm gate
   await expect(page.getByLabel('Team 1')).toHaveValue('0')
   await expect(page.getByLabel('Team 2')).toHaveValue('0')
 })
 
 test('8.4 score inputs accept 0–99', async ({ page }) => {
   await page.getByRole('button', { name: 'End Match' }).first().click()
+  await page.getByTestId('confirm-end-end').click() // pass the confirm gate
   await page.getByLabel('Team 1').fill('21')
   await expect(page.getByLabel('Team 1')).toHaveValue('21')
 })
@@ -47,12 +50,15 @@ test('8.7 court returns to idle state', async ({ page }) => {
 
 test('8.10 cancel keeps match running', async ({ page }) => {
   await page.getByRole('button', { name: 'End Match' }).first().click()
+  await expect(page.getByTestId('confirm-end-end')).toBeVisible() // confirm gate opened
   await page.getByRole('button', { name: 'Cancel' }).click()
-  await expect(page.getByRole('button', { name: 'End Match' })).toBeVisible()
+  await expect(page.getByRole('dialog')).not.toBeVisible() // gate dismissed (unmounts)
+  await expect(page.getByRole('button', { name: 'End Match' })).toBeVisible() // match still live
 })
 
 test('8.11 score 0–0 accepted', async ({ page }) => {
   await page.getByRole('button', { name: 'End Match' }).first().click()
+  await page.getByTestId('confirm-end-end').click() // pass the confirm gate
   await page.getByRole('button', { name: 'Confirm' }).click()
   await page.waitForTimeout(400)
   await expect(page.locator('text=Select 2 or 4 players').first()).toBeVisible()

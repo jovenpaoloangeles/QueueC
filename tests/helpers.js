@@ -51,6 +51,9 @@ export async function fullSetup(page, { courts = 2, playerNames = DEFAULT_PLAYER
 export async function endMatch(page, courtLabel, { team1 = 21, team2 = 15 } = {}) {
   // Use 'End Match' button directly (avoids strict-mode issues with partial court label matches)
   await page.getByRole('button', { name: 'End Match' }).first().click()
+  // two-step flow: the confirm gate appears first, then the finalization form
+  const confirmEnd = page.getByTestId('confirm-end-end')
+  if (await confirmEnd.isVisible().catch(() => false)) await confirmEnd.click()
   await page.getByLabel('Team 1').fill(String(team1))
   await page.getByLabel('Team 2').fill(String(team2))
   await page.getByRole('button', { name: 'Confirm' }).click()

@@ -149,6 +149,7 @@ test('20.9 expired court mid-match shows Last Game badge and persists until matc
 
   // end the match → expired court remains in view as the extend panel
   await page.getByRole('button', { name: 'End Match' }).first().click()
+  await page.getByTestId('confirm-end-end').click() // pass the confirm gate
   await page.getByRole('button', { name: 'Confirm' }).click()
   await page.waitForTimeout(1200)
   await expect(page.locator('text=Court 1')).toBeVisible()
@@ -255,6 +256,7 @@ test('20.17 games played increments after a match ends', async ({ page }) => {
   await page.getByRole('button', { name: 'Start Match' }).first().click()
   await page.waitForTimeout(600)
   await page.getByRole('button', { name: 'End Match' }).first().click()
+  await page.getByTestId('confirm-end-end').click() // pass the confirm gate
   await page.getByLabel('Team 1').fill('21')
   await page.getByLabel('Team 2').fill('15')
   await page.getByRole('button', { name: 'Confirm' }).click()

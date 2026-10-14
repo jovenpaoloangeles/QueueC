@@ -23,6 +23,7 @@ test('16.2 end match form submits on Enter', async ({ page }) => {
   await page.getByRole('button', { name: 'Start Match' }).first().click()
   await page.waitForTimeout(600)
   await page.getByRole('button', { name: 'End Match' }).first().click()
+  await page.getByTestId('confirm-end-end').click() // pass the confirm gate → finalization form
   await page.keyboard.press('Enter')
   await page.waitForTimeout(400)
   await expect(page.getByRole('dialog')).not.toBeVisible()
@@ -48,6 +49,7 @@ test('16.4 score inputs Tab-navigable', async ({ page }) => {
   await page.getByRole('button', { name: 'Start Match' }).first().click()
   await page.waitForTimeout(600)
   await page.getByRole('button', { name: 'End Match' }).first().click()
+  await page.getByTestId('confirm-end-end').click() // pass the confirm gate
   await page.getByLabel('Team 1').focus()
   await page.keyboard.press('Tab')
   const focused = await page.evaluate(() => document.activeElement?.id)

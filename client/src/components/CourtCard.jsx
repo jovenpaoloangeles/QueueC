@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { updateMatchTeams, updateCourt, bumpShuttles, extendCourt } from '../api.js'
 import { useToast } from '@/components/Toast'
 import EndMatchModal from './EndMatchModal.jsx'
+import ConfirmEndDialog from './ConfirmEndDialog.jsx'
 
 function playerName(queue, entryId) {
   return queue.find(e => e.id === entryId)?.name ?? '?'
@@ -201,6 +202,7 @@ export default function CourtCard({
   draft = [], draftedIds = new Set(), onDropSlot, onClearSlot, onClearDraft,
 }) {
   const [showEnd, setShowEnd] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
   const [over, setOver] = useState(false)
   const toast = useToast()
   const isActive = !!match
@@ -294,7 +296,7 @@ export default function CourtCard({
           )}
           {isActive && <span className="font-mono text-sm tabular-nums text-foreground">{fmtClock(secs)}</span>}
           {isActive && (
-            <Button variant="destructive" size="sm" onClick={() => setShowEnd(true)}>End Match</Button>
+            <Button variant="destructive" size="sm" onClick={() => setShowConfirm(true)}>End Match</Button>
           )}
         </div>
       </CardHeader>
@@ -406,6 +408,11 @@ export default function CourtCard({
         </CardContent>
       )}
 
+      <ConfirmEndDialog
+        open={showConfirm}
+        onOpenChange={setShowConfirm}
+        onConfirm={() => { setShowConfirm(false); setShowEnd(true) }}
+      />
       {showEnd && match && <EndMatchModal match={match} onClose={() => setShowEnd(false)} />}
     </Card>
   )

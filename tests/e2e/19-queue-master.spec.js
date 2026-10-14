@@ -128,12 +128,14 @@ test('QM.7 two matches end simultaneously — all 8 players return to queue', as
   await expect(page.getByRole('button', { name: 'End Match' })).toHaveCount(2)
 
   await page.getByRole('button', { name: 'End Match' }).first().click()
+  await page.getByTestId('confirm-end-end').click() // pass the confirm gate
   await page.getByLabel('Team 1').fill('21')
   await page.getByLabel('Team 2').fill('15')
   await page.getByRole('button', { name: 'Confirm' }).click()
   await page.waitForTimeout(400)
 
   await page.getByRole('button', { name: 'End Match' }).first().click()
+  await page.getByTestId('confirm-end-end').click() // pass the confirm gate
   await page.getByLabel('Team 1').fill('21')
   await page.getByLabel('Team 2').fill('15')
   await page.getByRole('button', { name: 'Confirm' }).click()
