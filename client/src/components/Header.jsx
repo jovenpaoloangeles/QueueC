@@ -101,6 +101,7 @@ export default function Header({ session, sseData, onSmartMatch, onAddPlayer, on
           size="sm"
           data-testid="btn-smart-match"
           title="Auto-match across all free courts"
+          disabled={!session || session.started_at == null}
           onClick={() => onSmartMatch?.()}
         >
           ✨ Smart Match

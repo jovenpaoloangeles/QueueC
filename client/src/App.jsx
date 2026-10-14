@@ -31,7 +31,7 @@ export default function App() {
       const r = await autoMatch(session.id)
       toast(`Started ${r.started} match(es)${r.slated ? ', slated next' : ''}`, 'success')
     } catch (err) {
-      toast(err?.data?.error ?? 'Nothing to auto-match', 'error')
+      toast(err?.data?.error ?? (err?.status ? err.message : 'Auto-match failed'), 'error')
     }
   }
 
