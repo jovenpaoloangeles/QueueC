@@ -8,13 +8,14 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import Header from './components/Header.jsx'
 import CourtsRow from './components/CourtsRow.jsx'
+import OnDeckStrip from './components/OnDeckStrip.jsx'
 import QueueGrid from './components/QueueGrid.jsx'
 import StatsSidebar from './components/StatsSidebar.jsx'
 import CreateSessionModal from './components/CreateSessionModal.jsx'
 import SetupScreen from './components/SetupScreen.jsx'
 
 export default function App() {
-  const [sseData, setSseData] = useState({ session: null, queue: [], activeMatches: [], courts: [], stats: null, serverTime: null })
+  const [sseData, setSseData] = useState({ session: null, queue: [], activeMatches: [], slatedMatches: [], courts: [], stats: null, serverTime: null })
   const [showCreate, setShowCreate] = useState(false)
   const [confirmNew, setConfirmNew] = useState(false) // both "+ Session" entry points gate on this
   const [selection, setSelection] = useState([])
@@ -24,7 +25,7 @@ export default function App() {
   const [playersVersion, setPlayersVersion] = useState(0) // bumped after add-player so the pool refetches
   const [showAddPlayer, setShowAddPlayer] = useState(false) // dialog itself lands in Task 15
 
-  const { session, queue, activeMatches, courts, stats } = sseData
+  const { session, queue, activeMatches, slatedMatches = [], courts, stats } = sseData
   const toast = useToast()
 
   // header "✨ Smart Match": fill every free court, then slate one more lineup
@@ -203,6 +204,9 @@ export default function App() {
                 serverTime={sseData.serverTime ?? Math.floor(Date.now() / 1000)}
               />
             </div>
+            {(slatedMatches?.length ?? 0) > 0 && (
+              <OnDeckStrip slatedMatches={slatedMatches} draftedIds={draftedIds} />
+            )}
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
               <QueueGrid
                 session={session}
