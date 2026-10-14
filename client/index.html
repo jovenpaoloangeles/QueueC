@@ -11,9 +11,13 @@
          font-family here: an unlayered one outranks the Geist theme font. -->
     <style>
       html, body {
-        background: #f4f6f3;
-        color: #1a221e;
+        background: var(--background, #f4f6f3);
+        color: var(--foreground, #1a221e);
         min-height: 100vh;
+      }
+      html.dark, html.dark body {
+        background: var(--background, #12160f);
+        color: var(--foreground, #e9ede7);
       }
     </style>
   </head>
