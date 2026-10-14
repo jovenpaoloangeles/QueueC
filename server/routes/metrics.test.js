@@ -107,6 +107,89 @@ async function run() {
     assert.equal(extend2Res.status, 400, 'Expected 400 when extending untimed Court 2')
     const extend2Body = await extend2Res.json()
     assert.equal(extend2Body.error, 'Court has no rental timer', 'Expected error === "Court has no rental timer"')
+
+    // 1) PATCH /api/queue/:id/status with { status: 'resting' } on a 'playing' entry -> 409 ('Cannot rest a player who is on court')
+    const restPlayingRes = await fetch(`${BASE}/queue/${entries[0].id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'resting' })
+    })
+    assert.equal(restPlayingRes.status, 409, 'Expected 409 when resting a playing entry')
+    const restPlayingBody = await restPlayingRes.json()
+    assert.equal(restPlayingBody.error, 'Cannot rest a player who is on court')
+
+    // 2) PATCH /api/queue/:id/status with { status: 'waiting' } on a 'playing' entry -> 409 ('Player must finish the match first')
+    const waitPlayingRes = await fetch(`${BASE}/queue/${entries[0].id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'waiting' })
+    })
+    assert.equal(waitPlayingRes.status, 409, 'Expected 409 when setting a playing entry to waiting')
+    const waitPlayingBody = await waitPlayingRes.json()
+    assert.equal(waitPlayingBody.error, 'Player must finish the match first')
+
+    // 3) Check in 4 more players, create a slated match with them (POST /api/matches/slate), then PATCH /api/queue/:id/status with { status: 'resting' } on one of the 'staged' entries -> 409 ('Cannot rest a player drafted into a slated match')
+    for (let i = 2; i < 6; i++) {
+      const p = (await fetch(`${BASE}/players`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: `MetricsP${i}-${SUFFIX}`, skill_level: 'intermediate' })
+      }).then(r => r.json())).player
+      const e = (await fetch(`${BASE}/sessions/${session.id}/checkin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ player_id: p.id })
+      }).then(r => r.json())).entry
+      entries.push(e)
+    }
+
+    const slateRes = await fetch(`${BASE}/matches/slate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session_id: session.id,
+        team1_p1: entries[2].id,
+        team1_p2: entries[3].id,
+        team2_p1: entries[4].id,
+        team2_p2: entries[5].id
+      })
+    })
+    assert.equal(slateRes.status, 201, 'Expected 201 when creating slated match')
+
+    const restStagedRes = await fetch(`${BASE}/queue/${entries[2].id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'resting' })
+    })
+    assert.equal(restStagedRes.status, 409, 'Expected 409 when resting a staged entry')
+    const restStagedBody = await restStagedRes.json()
+    assert.equal(restStagedBody.error, 'Cannot rest a player drafted into a slated match')
+
+    // 4) End the active match on Court 1, then PATCH /api/queue/:id/status { status: 'resting' } on a 'waiting' entry -> 200, and PATCH /api/queue/:id/status { status: 'waiting' } on that 'resting' entry -> 200
+    const endMatchRes = await fetch(`${BASE}/matches/${match.id}/end`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ team1_score: 21, team2_score: 18 })
+    })
+    assert.equal(endMatchRes.status, 200, 'Expected 200 when ending active match')
+
+    const restWaitingRes = await fetch(`${BASE}/queue/${entries[0].id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'resting' })
+    })
+    assert.equal(restWaitingRes.status, 200, 'Expected 200 when resting a waiting entry')
+    const restWaitingBody = await restWaitingRes.json()
+    assert.equal(restWaitingBody.entry.status, 'resting')
+
+    const wakeRestingRes = await fetch(`${BASE}/queue/${entries[0].id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'waiting' })
+    })
+    assert.equal(wakeRestingRes.status, 200, 'Expected 200 when waking a resting entry')
+    const wakeRestingBody = await wakeRestingRes.json()
+    assert.equal(wakeRestingBody.entry.status, 'waiting')
   } finally {
     // Clean up (end session)
     await fetch(`${BASE}/sessions/${session.id}/end`, { method: 'PATCH' })

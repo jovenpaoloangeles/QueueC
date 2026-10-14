@@ -60,10 +60,20 @@ router.delete('/queue/:entryId', (c) => {
 router.patch('/queue/:entryId/status', async (c) => {
   const entryId = c.req.param('entryId')
   const { status } = await c.req.json().catch(() => ({}))
+  const cur = db.prepare('SELECT * FROM queue_entries WHERE id = ?').get(entryId)
+  if (!cur) return c.json({ error: 'Entry not found' }, 404)
+  if (status === 'resting' && cur.status === 'playing') {
+    return c.json({ error: 'Cannot rest a player who is on court' }, 409)
+  }
+  if (status === 'resting' && cur.status === 'staged') {
+    return c.json({ error: 'Cannot rest a player drafted into a slated match' }, 409)
+  }
+  if (cur.status === 'playing' && status === 'waiting') {
+    return c.json({ error: 'Player must finish the match first' }, 409)
+  }
   const now = Math.floor(Date.now() / 1000)
   db.prepare('UPDATE queue_entries SET status = ?, status_updated_at = ? WHERE id = ?').run(status, now, entryId)
   const entry = db.prepare('SELECT * FROM queue_entries WHERE id = ?').get(entryId)
-  if (!entry) return c.json({ error: 'Entry not found' }, 404)
   broadcast()
   return c.json({ entry })
 })
