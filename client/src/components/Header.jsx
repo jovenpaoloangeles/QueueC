@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { fmtDur } from '@/lib/utils'
+import { cn, fmtDur, fmtClock } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { toggleTheme } from '@/lib/theme'
 
-export default function Header({ session, onNewSession, onEndSession }) {
+export default function Header({ session, sseData, onSmartMatch, onAddPlayer, onNewSession, onEndSession }) {
   const [elapsed, setElapsed] = useState(0)
 
   useEffect(() => {
@@ -16,8 +17,34 @@ export default function Header({ session, onNewSession, onEndSession }) {
 
   const fmtTime = ts => ts ? new Date(ts * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'
 
+  // ---- live indicators, all derived client-side from the SSE payload ----
+  const queue = sseData?.queue ?? []
+  const courts = sseData?.courts ?? []
+  const stats = sseData?.stats
+  const serverTime = sseData?.serverTime ?? Math.floor(Date.now() / 1000)
+
+  const courtsLive = courts.filter(c =>
+    c.enabled &&
+    (c.expires_at == null || serverTime < c.expires_at) &&
+    (c.active_from == null || serverTime >= c.active_from) &&
+    (c.active_until == null || serverTime < c.active_until)
+  ).length
+
+  // staged entries are excluded server-side from the SSE queue
+  const waiting = queue.filter(e => e.status === 'waiting')
+  const longest = waiting.reduce(
+    (best, e) => {
+      const secs = serverTime - (e.checked_in_at ?? serverTime)
+      return secs > best.secs ? { secs, name: e.name } : best
+    },
+    { secs: 0, name: null }
+  )
+
+  const Sep = <span className="mx-2 h-3.5 w-px shrink-0 bg-border" aria-hidden="true" />
+
   return (
     <div className="flex h-14 shrink-0 items-center justify-between gap-4 bg-card px-4">
+      {/* brand */}
       <div className="flex items-baseline gap-3">
         <span className="text-base font-semibold text-foreground">🏸 QueueC</span>
         {session ? (
@@ -31,7 +58,35 @@ export default function Header({ session, onNewSession, onEndSession }) {
           <span className="text-2xs uppercase tracking-wider text-muted-foreground">No active session</span>
         )}
       </div>
-      <div className="flex items-center gap-3">
+
+      {/* live status indicators — mockup `.indicators`, hidden under lg */}
+      <div className="hidden lg:flex items-center gap-1 rounded-xl border border-border bg-muted px-3 py-1.5 text-xs">
+        <span className="inline-block size-1.5 shrink-0 animate-pulse rounded-full bg-green-600" aria-hidden="true" />
+        <span className="text-muted-foreground">Courts:</span>
+        <b data-testid="hdr-courts" className="font-extrabold tabular-nums">{courtsLive} / {courts.length}</b>
+        {Sep}
+        <span className="inline-block size-1.5 shrink-0 rounded-full bg-amber-500" aria-hidden="true" />
+        <span className="text-muted-foreground">Waiting:</span>
+        <b data-testid="hdr-waiting" className="font-extrabold tabular-nums text-amber-600 dark:text-amber-400">
+          {waiting.length}
+        </b>
+        {Sep}
+        <span className="inline-block size-1.5 shrink-0 rounded-full bg-red-500" aria-hidden="true" />
+        <span className="text-muted-foreground">Longest:</span>
+        <b data-testid="hdr-longest" className={cn('font-extrabold', !longest.name && 'text-muted-foreground')}>
+          {longest.name
+            ? <>{longest.name} <span className="font-mono font-semibold text-amber-600 dark:text-amber-400">({fmtDur(longest.secs)})</span></>
+            : '—'}
+        </b>
+        {Sep}
+        <span className="text-muted-foreground">Avg wait:</span>
+        <b data-testid="hdr-avg" className="font-mono font-extrabold tabular-nums">
+          {fmtClock(stats?.avg_wait_seconds)}
+        </b>
+      </div>
+
+      {/* quick actions + session controls */}
+      <div className="flex items-center gap-2">
         {session && session.started_at != null && (
           <Badge variant="outline" className="font-mono tabular-nums text-primary border-primary/30">
             ● {fmtDur(elapsed)}
@@ -42,14 +97,50 @@ export default function Header({ session, onNewSession, onEndSession }) {
             Not started
           </Badge>
         )}
+        <Button
+          size="sm"
+          data-testid="btn-smart-match"
+          title="Auto-match across all free courts"
+          onClick={() => onSmartMatch?.()}
+        >
+          ✨ Smart Match
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          data-testid="btn-add-player"
+          title="Add player to active session"
+          onClick={() => onAddPlayer?.()}
+        >
+          + Add Player
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          data-testid="btn-new-session"
+          title="Reset to new session setup"
+          onClick={() => onNewSession?.()}
+        >
+          ⟳ New Session
+          {/* legacy locator shim: tests/helpers.js + e2e specs still target "+ Session" */}
+          <span className="sr-only">+ Session</span>
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          data-testid="btn-dark-toggle"
+          aria-label="Toggle dark mode"
+          title="Toggle dark mode"
+          className="px-2"
+          onClick={() => toggleTheme()}
+        >
+          ☾
+        </Button>
         {session && onEndSession && (
           <Button size="sm" variant="destructive" onClick={onEndSession}>
             End Session
           </Button>
         )}
-        <Button size="sm" onClick={onNewSession}>
-          + Session
-        </Button>
       </div>
     </div>
   )

@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useSSE } from './hooks/useSSE.js'
 import { useTimers } from './hooks/useTimers.js'
-import { startMatch, setQueueOrder, endSession } from './api.js'
+import { startMatch, setQueueOrder, endSession, autoMatch } from './api.js'
+import { useToast } from '@/components/Toast'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import Header from './components/Header.jsx'
@@ -18,8 +19,21 @@ export default function App() {
   const [selection, setSelection] = useState([])
   const [armedCourt, setArmedCourt] = useState(null)
   const [playersVersion, setPlayersVersion] = useState(0) // bumped after add-player so the pool refetches
+  const [showAddPlayer, setShowAddPlayer] = useState(false) // dialog itself lands in Task 15
 
   const { session, queue, activeMatches, courts, stats } = sseData
+  const toast = useToast()
+
+  // header "✨ Smart Match": fill every free court, then slate one more lineup
+  async function handleSmartMatch() {
+    if (!session) return
+    try {
+      const r = await autoMatch(session.id)
+      toast(`Started ${r.started} match(es)${r.slated ? ', slated next' : ''}`, 'success')
+    } catch (err) {
+      toast(err?.data?.error ?? 'Nothing to auto-match', 'error')
+    }
+  }
 
   async function handleStartMatch(courtNumber, sel) {
     if (!session) return
@@ -65,6 +79,9 @@ export default function App() {
     <div className="flex flex-col h-screen overflow-hidden bg-background">
       <Header
         session={session}
+        sseData={sseData}
+        onSmartMatch={handleSmartMatch}
+        onAddPlayer={() => setShowAddPlayer(true)}
         onNewSession={() => setConfirmNew(true)}
         onEndSession={session ? () => endSession(session.id).catch(() => {}) : undefined}
       />
