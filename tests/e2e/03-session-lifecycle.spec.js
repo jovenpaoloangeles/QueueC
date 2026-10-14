@@ -19,19 +19,19 @@ test('3.2 "Not started" badge in header', async ({ page }) => {
 
 test('3.3 Start disabled with 0 players', async ({ page }) => {
   await createSession(page)
-  await expect(page.getByRole('button', { name: 'Start Session' })).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'Finish Setup' })).toBeDisabled()
 })
 
 test('3.4 Start disabled with 1 player', async ({ page }) => {
   await createSession(page)
   await checkinPlayers(page, ['Inter C1'])
-  await expect(page.getByRole('button', { name: 'Start Session' })).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'Finish Setup' })).toBeDisabled()
 })
 
 test('3.5 Start enabled with 2+ players', async ({ page }) => {
   await createSession(page)
   await checkinPlayers(page, ['Inter C1', 'Inter C2'])
-  await expect(page.getByRole('button', { name: 'Start Session' })).toBeEnabled()
+  await expect(page.getByRole('button', { name: 'Finish Setup' })).toBeEnabled()
 })
 
 test('3.6 Start transitions to live view', async ({ page }) => {

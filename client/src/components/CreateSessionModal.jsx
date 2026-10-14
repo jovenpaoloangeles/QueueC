@@ -20,6 +20,7 @@ const DURATION_OPTIONS = [
   { value: '150', label: '2.5 Hours (150 mins)' },
   { value: '180', label: '3 Hours (180 mins)' },
   { value: '240', label: '4 Hours (240 mins)' },
+  { value: 'custom', label: 'Custom…' },
 ]
 
 function syncCourtRows(prevRows, count) {
@@ -27,7 +28,7 @@ function syncCourtRows(prevRows, count) {
   const next = prevRows.slice(0, n)
   while (next.length < n) {
     const idx = next.length + 1
-    next.push({ label: `Court ${idx}`, duration_minutes: '' })
+    next.push({ label: `Court ${idx}`, duration_minutes: '', custom_minutes: 180 })
   }
   return next
 }
@@ -52,7 +53,9 @@ export default function CreateSessionModal({ onClose }) {
     const count = Number(form.courts)
     const courtsPayload = syncCourtRows(courtConfigs, count).map((c, idx) => ({
       label: c.label?.trim() || `Court ${idx + 1}`,
-      duration_minutes: c.duration_minutes === '' ? null : Number(c.duration_minutes),
+      duration_minutes: c.duration_minutes === 'custom'
+        ? (c.custom_minutes === '' ? null : Number(c.custom_minutes))
+        : (c.duration_minutes === '' ? null : Number(c.duration_minutes)),
     }))
     await createSession({
       name: form.name,
@@ -67,7 +70,7 @@ export default function CreateSessionModal({ onClose }) {
 
   return (
     <Dialog open onOpenChange={open => !open && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>New Session</DialogTitle>
         </DialogHeader>
@@ -118,10 +121,16 @@ export default function CreateSessionModal({ onClose }) {
                     value={cfg.label}
                     onChange={e => updateCourtConfig(idx, { label: e.target.value })}
                   />
+                  <span
+                    className="flex-1 text-right font-mono text-2xs text-muted-foreground"
+                    aria-label={`Court ${idx + 1} session window`}
+                  >
+                    {form.start} → {form.end}
+                  </span>
                   <select
                     tabIndex={-1}
                     aria-label={`Court ${idx + 1} duration`}
-                    className="flex-1 rounded border border-border bg-background px-2 py-1 text-xs text-foreground"
+                    className="w-44 rounded border border-border bg-background px-2 py-1 text-xs text-foreground"
                     value={cfg.duration_minutes}
                     onChange={e => updateCourtConfig(idx, { duration_minutes: e.target.value })}
                   >
@@ -129,6 +138,18 @@ export default function CreateSessionModal({ onClose }) {
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
                     ))}
                   </select>
+                  {cfg.duration_minutes === 'custom' && (
+                    <input
+                      type="number"
+                      tabIndex={-1}
+                      aria-label={`Court ${idx + 1} custom minutes`}
+                      className="w-20 rounded border border-border bg-background px-2 py-1 text-xs text-foreground"
+                      step="15"
+                      min="15"
+                      value={cfg.custom_minutes}
+                      onChange={e => updateCourtConfig(idx, { custom_minutes: e.target.value })}
+                    />
+                  )}
                 </div>
               ))}
             </div>

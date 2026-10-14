@@ -40,7 +40,7 @@ test('20.3 custom court label respected on create', async ({ page }) => {
 test('20.4 per-court duration selector present in modal', async ({ page }) => {
   const dur = page.getByLabel('Court 1 duration')
   await expect(dur).toBeVisible()
-  await expect(dur.locator('option')).toHaveCount(7) // no-timer + 6 presets
+  await expect(dur.locator('option')).toHaveCount(8) // no-timer + 6 presets + Custom
 })
 
 // --- Per-Court Countdown & Expiry ---

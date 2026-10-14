@@ -32,7 +32,7 @@ export async function checkinPlayers(page, names = DEFAULT_PLAYERS) {
 }
 
 export async function startSession(page) {
-  await page.getByRole('button', { name: 'Start Session' }).click()
+  await page.getByRole('button', { name: 'Finish Setup' }).click()
   await page.waitForSelector('text=Queue', { timeout: 5000 })
 }
 
