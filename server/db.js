@@ -49,7 +49,7 @@ db.exec(`
     session_id INTEGER NOT NULL REFERENCES sessions(id),
     player_id INTEGER NOT NULL REFERENCES players(id),
     checked_in_at INTEGER NOT NULL,
-    status TEXT NOT NULL DEFAULT 'waiting' CHECK(status IN ('waiting','playing','resting','left')),
+    status TEXT NOT NULL DEFAULT 'waiting' CHECK(status IN ('waiting','playing','resting','left','staged')),
     last_played_at INTEGER,
     total_seconds_played INTEGER NOT NULL DEFAULT 0,
     sort_order INTEGER NOT NULL DEFAULT 0,
@@ -60,7 +60,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS matches (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id INTEGER NOT NULL REFERENCES sessions(id),
-    court_number INTEGER NOT NULL,
+    court_number INTEGER,
     format TEXT NOT NULL CHECK(format IN ('singles','doubles')),
     team1_p1 INTEGER NOT NULL REFERENCES queue_entries(id),
     team1_p2 INTEGER REFERENCES queue_entries(id),
@@ -69,7 +69,12 @@ db.exec(`
     team1_score INTEGER,
     team2_score INTEGER,
     started_at INTEGER NOT NULL,
-    ended_at INTEGER
+    ended_at INTEGER,
+    state TEXT NOT NULL DEFAULT 'active',
+    slate_seq INTEGER,
+    new_shuttles INTEGER NOT NULL DEFAULT 0,
+    used_shuttles INTEGER NOT NULL DEFAULT 0,
+    rating INTEGER
   );
 
   CREATE TABLE IF NOT EXISTS courts (
@@ -117,6 +122,81 @@ if (!qeCols.has('games_played')) {
 if (!qeCols.has('status_updated_at')) {
   db.exec('ALTER TABLE queue_entries ADD COLUMN status_updated_at INTEGER')
   db.exec('UPDATE queue_entries SET status_updated_at = COALESCE(last_played_at, checked_in_at) WHERE status_updated_at IS NULL')
+}
+
+// Upgrade queue_entries CHECK constraint to include 'staged'
+const qeSql = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='queue_entries'").get()?.sql ?? ''
+if (!qeSql.includes("'staged'")) {
+  db.exec('PRAGMA foreign_keys = OFF')
+  db.transaction(() => db.exec(`
+    CREATE TABLE queue_entries_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      session_id INTEGER NOT NULL REFERENCES sessions(id),
+      player_id INTEGER NOT NULL REFERENCES players(id),
+      checked_in_at INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'waiting' CHECK(status IN ('waiting','playing','resting','left','staged')),
+      last_played_at INTEGER,
+      total_seconds_played INTEGER NOT NULL DEFAULT 0,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      games_played INTEGER NOT NULL DEFAULT 0,
+      status_updated_at INTEGER
+    );
+    INSERT INTO queue_entries_new (id, session_id, player_id, checked_in_at, status, last_played_at, total_seconds_played, sort_order, games_played, status_updated_at)
+      SELECT id, session_id, player_id, checked_in_at, status, last_played_at, total_seconds_played, sort_order, games_played, status_updated_at FROM queue_entries;
+    DROP TABLE queue_entries;
+    ALTER TABLE queue_entries_new RENAME TO queue_entries;
+  `))()
+  db.exec('PRAGMA foreign_keys = ON')
+}
+
+// one-shot column additions and court_number relaxation for matches
+const matchCols = new Set(db.prepare("PRAGMA table_info(matches)").all().map(c => c.name))
+if (!matchCols.has('state')) {
+  db.exec("ALTER TABLE matches ADD COLUMN state TEXT NOT NULL DEFAULT 'active'")
+}
+if (!matchCols.has('slate_seq')) {
+  db.exec('ALTER TABLE matches ADD COLUMN slate_seq INTEGER')
+}
+if (!matchCols.has('new_shuttles')) {
+  db.exec('ALTER TABLE matches ADD COLUMN new_shuttles INTEGER NOT NULL DEFAULT 0')
+}
+if (!matchCols.has('used_shuttles')) {
+  db.exec('ALTER TABLE matches ADD COLUMN used_shuttles INTEGER NOT NULL DEFAULT 0')
+}
+if (!matchCols.has('rating')) {
+  db.exec('ALTER TABLE matches ADD COLUMN rating INTEGER')
+}
+
+const courtNumberCol = db.prepare('PRAGMA table_info(matches)').all()
+  .find(c => c.name === 'court_number')
+if (courtNumberCol?.notnull === 1) {
+  db.exec('PRAGMA foreign_keys = OFF')
+  db.transaction(() => db.exec(`
+    CREATE TABLE matches_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      session_id INTEGER NOT NULL REFERENCES sessions(id),
+      court_number INTEGER,
+      format TEXT NOT NULL CHECK(format IN ('singles','doubles')),
+      team1_p1 INTEGER NOT NULL REFERENCES queue_entries(id),
+      team1_p2 INTEGER REFERENCES queue_entries(id),
+      team2_p1 INTEGER NOT NULL REFERENCES queue_entries(id),
+      team2_p2 INTEGER REFERENCES queue_entries(id),
+      team1_score INTEGER,
+      team2_score INTEGER,
+      started_at INTEGER NOT NULL,
+      ended_at INTEGER,
+      state TEXT NOT NULL DEFAULT 'active',
+      slate_seq INTEGER,
+      new_shuttles INTEGER NOT NULL DEFAULT 0,
+      used_shuttles INTEGER NOT NULL DEFAULT 0,
+      rating INTEGER
+    );
+    INSERT INTO matches_new (id, session_id, court_number, format, team1_p1, team1_p2, team2_p1, team2_p2, team1_score, team2_score, started_at, ended_at, state, slate_seq, new_shuttles, used_shuttles, rating)
+      SELECT id, session_id, court_number, format, team1_p1, team1_p2, team2_p1, team2_p2, team1_score, team2_score, started_at, ended_at, state, slate_seq, new_shuttles, used_shuttles, rating FROM matches;
+    DROP TABLE matches;
+    ALTER TABLE matches_new RENAME TO matches;
+  `))()
+  db.exec('PRAGMA foreign_keys = ON')
 }
 
 // one-shot column additions for courts (duration_minutes, expires_at)
