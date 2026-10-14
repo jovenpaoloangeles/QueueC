@@ -45,6 +45,16 @@ router.post('/sessions/:id/checkin', (req, res) => {
   res.status(201).json({ entry })
 })
 
+router.delete('/queue/:entryId', (req, res) => {
+  const entry = db.prepare('SELECT * FROM queue_entries WHERE id = ?').get(req.params.entryId)
+  if (!entry) return res.status(404).json({ error: 'Entry not found' })
+  // a playing entry's match would be orphaned — removal is for check-in undo only
+  if (entry.status === 'playing') return res.status(409).json({ error: 'Cannot remove a playing entry' })
+  db.prepare('DELETE FROM queue_entries WHERE id = ?').run(req.params.entryId)
+  broadcast()
+  res.json({ ok: true })
+})
+
 router.patch('/queue/:entryId/status', (req, res) => {
   const { status } = req.body
   db.prepare('UPDATE queue_entries SET status = ? WHERE id = ?').run(status, req.params.entryId)

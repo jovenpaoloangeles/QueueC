@@ -40,18 +40,30 @@ test('5.5 remove all courts shows empty message', async ({ page }) => {
   await expect(page.locator('text=No courts yet')).toBeVisible()
 })
 
-test('5.6 set active_from time', async ({ page }) => {
+test('5.6 set active_from hour', async ({ page }) => {
   const row = page.locator('text=Courts').locator('../..').locator('[class*="rounded-md border"]').first()
-  await row.locator('input[type="time"]').first().fill('18:00')
+  const sel = row.getByLabel('Court 1 active from')
+  await sel.selectOption({ label: '18:00' })
   await page.waitForTimeout(400)
-  await expect(row.locator('input[type="time"]').first()).toHaveValue('18:00')
+  // controlled by server round-trip — still showing the chosen hour
+  expect(await sel.evaluate(el => el.selectedOptions[0]?.textContent)).toBe('18:00')
 })
 
-test('5.7 set active_until time', async ({ page }) => {
+test('5.7 set active_until hour', async ({ page }) => {
   const row = page.locator('text=Courts').locator('../..').locator('[class*="rounded-md border"]').first()
-  await row.locator('input[type="time"]').nth(1).fill('21:00')
+  const sel = row.getByLabel('Court 1 active until')
+  await sel.selectOption({ label: '21:00' })
   await page.waitForTimeout(400)
-  await expect(row.locator('input[type="time"]').nth(1)).toHaveValue('21:00')
+  expect(await sel.evaluate(el => el.selectedOptions[0]?.textContent)).toBe('21:00')
+})
+
+test('5.11 hour options span session window', async ({ page }) => {
+  const row = page.locator('text=Courts').locator('../..').locator('[class*="rounded-md border"]').first()
+  const sel = row.getByLabel('Court 1 active from')
+  // default session 18:00–21:00 → blank + 4 exact hours
+  await expect(sel.locator('option')).toHaveCount(5)
+  const labels = await sel.locator('option').allTextContents()
+  expect(labels).toEqual(['—', '18:00', '19:00', '20:00', '21:00'])
 })
 
 test('5.8 disable court — checkbox unchecked', async ({ page }) => {

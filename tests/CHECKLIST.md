@@ -43,12 +43,15 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 ### 04 · Player check-in (setup screen)
 - [x] 4.1 Player pool loads — all 20 fixture players appear as chips
 - [x] 4.2 Each chip shows player name and skill badge
-- [x] 4.3 Check in one player — chip moves to queue list
+- [x] 4.3 Select one player + Check In — chip moves to queue list
 - [x] 4.4 Queue counter updates — "Queue · 1" increments
 - [x] 4.5 Checked-in player no longer appears in pool
 - [x] 4.6 Check in 8 players — all 8 in queue in check-in order
 - [x] 4.7 Pool shows "All registered players are in the queue" when pool empties
 - [x] 4.8 Player check-in via setup screen reflects in live queue after start
+- [x] 4.9 Chip click toggles selection on/off (aria-pressed; deselect commits nothing)
+- [x] 4.10 Batch check-in — 3 selected, single "Check In (3)" click commits all
+- [x] 4.11 Remove from queue (×) — player returns to pool
 
 ### 05 · Courts — setup screen
 - [x] 5.1 Default courts — 2 courts listed matching court_count
@@ -56,11 +59,12 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 - [x] 5.3 Add court — "+ Add Court" creates "Court 3"
 - [x] 5.4 Remove court — "Remove" deletes it immediately
 - [x] 5.5 Remove all courts — list shows "No courts yet."
-- [x] 5.6 Set active_from time — input persists without error
-- [x] 5.7 Set active_until time — input persists without error
+- [x] 5.6 Set active_from hour — exact-hour select persists after SSE round-trip
+- [x] 5.7 Set active_until hour — exact-hour select persists after SSE round-trip
 - [x] 5.8 Toggle "On" off — court disabled; persists on page reload
 - [x] 5.9 Disabled court in setup does not appear in live courts row
 - [x] 5.10 Re-enable court — court reappears in live courts row
+- [x] 5.11 Hour options span the session window (blank + 18:00–21:00 default)
 
 ### 06 · Queue grid — selection
 - [x] 6.1 Click player — selected; badge shows position number (1)
@@ -244,8 +248,8 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 | Landing | 6 | 6 |
 | Create session modal | 12 | 12 |
 | Session lifecycle | 10 | 10 |
-| Check-in (setup) | 8 | 8 |
-| Courts (setup) | 10 | 10 |
+| Check-in (setup) | 11 | 11 |
+| Courts (setup) | 11 | 11 |
 | Queue selection | 7 | 7 |
 | Match start | 16 | 16 |
 | Match end | 13 | 13 |
@@ -263,4 +267,4 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 | Unit: dnd.valid | 11 | 11 |
 | Unit: api.error | 4 | 4 |
 | Unit: timer | 5 | 5 |
-| **Total** | **186** | **186** |
+| **Total** | **190** | **190** |

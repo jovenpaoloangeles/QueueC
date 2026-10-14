@@ -17,12 +17,17 @@ export async function createSession(page, { name = 'Test Session', courts = 2 } 
 }
 
 export async function checkinPlayers(page, names = DEFAULT_PLAYERS) {
+  // Setup screen uses multi-select: clicking a chip toggles it, then the
+  // batch "Check In (N)" button commits them all.
   for (const name of names) {
     const btn = page.getByRole('button', { name, exact: false }).first()
     // center the button — minimal scroll leaves lower rows under the sticky header
     await btn.evaluate(el => el.scrollIntoView({ block: 'center' }))
     await btn.click()
-    await page.waitForTimeout(200) // allow SSE to propagate
+  }
+  if (names.length) {
+    await page.getByRole('button', { name: /^Check In/ }).click()
+    await page.waitForTimeout(500) // batch check-ins + SSE to propagate
   }
 }
 

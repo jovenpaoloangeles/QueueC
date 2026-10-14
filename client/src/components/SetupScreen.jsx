@@ -4,18 +4,23 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { checkinPlayer, getPlayers, startSession, addCourt, deleteCourt, updateCourt } from '../api.js'
+import { checkinPlayer, getPlayers, startSession, addCourt, deleteCourt, updateCourt, removeEntry } from '../api.js'
 
-const fmtTimeInput = ts => {
-  if (!ts) return ''
-  const d = new Date(ts * 1000)
-  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
+// Exact-hour slots spanning the session window (reservations are by the hour).
+const hourSlots = session => {
+  const out = []
+  const start = new Date(session.scheduled_start * 1000)
+  start.setMinutes(0, 0, 0)
+  const end = new Date(session.scheduled_end * 1000)
+  end.setMinutes(59, 59, 999)
+  for (let t = start.getTime(); t <= end.getTime(); t += 3600 * 1000) {
+    out.push(Math.floor(t / 1000))
+  }
+  return out
 }
 
-const timeToUnix = (dateRef, timeStr) => {
-  const dateStr = new Date(dateRef * 1000).toISOString().split('T')[0]
-  return Math.floor(new Date(`${dateStr}T${timeStr}`).getTime() / 1000)
-}
+const fmtHour = ts =>
+  `${String(new Date(ts * 1000).getHours()).padStart(2, '0')}:00`
 
 const fmtTime = ts =>
   ts ? new Date(ts * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'
@@ -33,6 +38,16 @@ export default function SetupScreen({ session, queue, courts }) {
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState(false)
   const [starting, setStarting] = useState(false)
+  const [picked, setPicked] = useState([]) // pool player ids toggled for batch check-in
+
+  function togglePick(id) {
+    setPicked(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id])
+  }
+
+  async function checkInPicked() {
+    for (const id of picked) await checkinPlayer(session.id, id).catch(() => {})
+    setPicked([])
+  }
 
   function loadPlayers() {
     setLoading(true)
@@ -50,6 +65,7 @@ export default function SetupScreen({ session, queue, courts }) {
   const inQueue = new Set(queue.map(e => e.player_id))
   const pool = players.filter(p => !inQueue.has(p.id))
   const canStart = queue.length >= 2
+  const hours = hourSlots(session)
 
   async function handleStart() {
     setStarting(true)
@@ -86,7 +102,12 @@ export default function SetupScreen({ session, queue, courts }) {
           </div>
 
           <div className="flex flex-col gap-2">
-            <span className="text-sm font-semibold text-foreground">Player pool</span>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-foreground">Player pool</span>
+              <Button size="xs" disabled={picked.length === 0} onClick={checkInPicked}>
+                Check In{picked.length > 0 ? ` (${picked.length})` : ''}
+              </Button>
+            </div>
             {loading && (
               <div className="flex flex-wrap gap-2">
                 <Skeleton className="h-6 w-24" />
@@ -103,13 +124,14 @@ export default function SetupScreen({ session, queue, courts }) {
             {!loading && !fetchError && pool.length === 0 && (
               <span className="text-xs text-muted-foreground">All registered players are in the queue.</span>
             )}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2" data-testid="player-pool">
               {pool.map(p => (
                 <Button
                   key={p.id}
-                  variant="outline"
+                  variant={picked.includes(p.id) ? 'default' : 'outline'}
                   size="xs"
-                  onClick={() => checkinPlayer(session.id, p.id).catch(() => {})}
+                  aria-pressed={picked.includes(p.id)}
+                  onClick={() => togglePick(p.id)}
                 >
                   {p.name}
                   <SkillChip level={p.skill_level} />
@@ -134,6 +156,15 @@ export default function SetupScreen({ session, queue, courts }) {
                   <span className="font-mono text-xs text-muted-foreground">{i + 1}</span>
                   <span className="font-medium text-foreground">{e.name}</span>
                   <SkillChip level={e.skill_level} />
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    className="ml-auto h-5 w-5 p-0 text-muted-foreground"
+                    aria-label={`Remove ${e.name}`}
+                    onClick={() => removeEntry(e.id).catch(() => {})}
+                  >
+                    ×
+                  </Button>
                 </li>
               ))}
             </ol>
@@ -161,25 +192,33 @@ export default function SetupScreen({ session, queue, courts }) {
                 >
                   <span className="min-w-[64px] font-medium text-foreground">{c.label}</span>
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <input
-                      type="time"
+                    <select
+                      aria-label={`${c.label} active from`}
                       className="rounded border border-border bg-background px-1 py-0.5 text-xs"
-                      value={fmtTimeInput(c.active_from)}
-                      placeholder={fmtTimeInput(session.scheduled_start)}
+                      value={c.active_from ?? ''}
                       onChange={e => updateCourt(c.id, {
-                        active_from: e.target.value ? timeToUnix(session.scheduled_start, e.target.value) : null
+                        active_from: e.target.value === '' ? null : Number(e.target.value)
                       }).catch(() => {})}
-                    />
+                    >
+                      <option value="">—</option>
+                      {hours.map(t => (
+                        <option key={t} value={t}>{fmtHour(t)}</option>
+                      ))}
+                    </select>
                     <span>–</span>
-                    <input
-                      type="time"
+                    <select
+                      aria-label={`${c.label} active until`}
                       className="rounded border border-border bg-background px-1 py-0.5 text-xs"
-                      value={fmtTimeInput(c.active_until)}
-                      placeholder={fmtTimeInput(session.scheduled_end)}
+                      value={c.active_until ?? ''}
                       onChange={e => updateCourt(c.id, {
-                        active_until: e.target.value ? timeToUnix(session.scheduled_start, e.target.value) : null
+                        active_until: e.target.value === '' ? null : Number(e.target.value)
                       }).catch(() => {})}
-                    />
+                    >
+                      <option value="">—</option>
+                      {hours.map(t => (
+                        <option key={t} value={t}>{fmtHour(t)}</option>
+                      ))}
+                    </select>
                   </div>
                   <label className="flex items-center gap-1 text-xs text-muted-foreground">
                     <input
