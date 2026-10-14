@@ -21,7 +21,7 @@ async function run() {
   await fetch(`${BASE}/sessions/${session.id}/start`, { method: 'PATCH' })
 
   const entries = []
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 8; i++) {
     const p = (await fetch(`${BASE}/players`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -35,7 +35,7 @@ async function run() {
     entries.push(e)
   }
 
-  const [e0, e1, e2, e3, e4] = entries
+  const [e0, e1, e2, e3, e4, e5, e6, e7] = entries
 
   try {
     // 2) Duplicate player in POST /matches/slate → 400, error mentions duplicate entry in team slots
@@ -139,8 +139,95 @@ async function run() {
     assert.equal(reslateRes.status, 201, 'Expected 201 when slating again after cancel')
     const { slate: reslated } = await reslateRes.json()
     await fetch(`${BASE}/matches/${reslated.id}/slate`, { method: 'DELETE' })
+
+    // 8) Auto-promotion on match end + finalization fields (shuttles, rating)
+    const { courts } = await fetch(`${BASE}/sessions/${session.id}/courts`).then(r => r.json())
+    const court1 = courts[0]
+
+    // Create + start a match on Court 1 with [e0, e1, e2, e3]
+    const activeMatchRes = await fetch(`${BASE}/matches`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session_id: session.id,
+        court_number: court1.id,
+        team1_p1: e0.id,
+        team1_p2: e1.id,
+        team2_p1: e2.id,
+        team2_p2: e3.id
+      })
+    })
+    assert.equal(activeMatchRes.status, 201, 'Expected 201 when starting match on Court 1')
+    const { match: activeMatch } = await activeMatchRes.json()
+
+    // Create a slated match with [e4, e5, e6, e7]
+    const nextSlateRes = await fetch(`${BASE}/matches/slate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session_id: session.id,
+        team1_p1: e4.id,
+        team1_p2: e5.id,
+        team2_p1: e6.id,
+        team2_p2: e7.id
+      })
+    })
+    assert.equal(nextSlateRes.status, 201, 'Expected 201 when creating slated match')
+    const { slate: nextSlate } = await nextSlateRes.json()
+
+    // Try PATCH /matches/:id/end with invalid rating: 9 → 400
+    const badRatingRes = await fetch(`${BASE}/matches/${activeMatch.id}/end`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        team1_score: 21,
+        team2_score: 15,
+        rating: 9
+      })
+    })
+    assert.equal(badRatingRes.status, 400, 'Expected 400 on invalid rating 9')
+
+    // PATCH /matches/:id/end with valid finalization fields → 200
+    const endRes = await fetch(`${BASE}/matches/${activeMatch.id}/end`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        team1_score: 21,
+        team2_score: 15,
+        new_shuttles: 2,
+        used_shuttles: 1,
+        rating: 4
+      })
+    })
+    assert.equal(endRes.status, 200, 'Expected 200 on valid match end')
+    const { match: endedMatch } = await endRes.json()
+    assert.equal(endedMatch.new_shuttles, 2, 'Expected new_shuttles === 2')
+    assert.equal(endedMatch.used_shuttles, 1, 'Expected used_shuttles === 1')
+    assert.equal(endedMatch.rating, 4, 'Expected rating === 4')
+
+    // Verify auto-promotion via SSE state (or DB state)
+    const sseRes = await fetch(`${BASE}/sse`)
+    const reader = sseRes.body.getReader()
+    const chunk = new TextDecoder().decode((await reader.read()).value)
+    await reader.cancel()
+    const dataLine = chunk.split('\n').find(l => l.startsWith('data: '))
+    const state = JSON.parse(dataLine.slice(6))
+
+    assert.equal(state.slatedMatches.length, 0, 'Expected no slated matches remaining')
+    const promoted = state.activeMatches.find(m => m.id === nextSlate.id)
+    assert.ok(promoted, 'Expected slated match to be promoted to activeMatches')
+    assert.equal(promoted.state, 'active', 'Expected promoted match state === active')
+    assert.equal(promoted.court_number, court1.id, 'Expected promoted match court_number === court1.id')
+    assert.ok(promoted.started_at > 0, 'Expected promoted match started_at > 0')
+    assert.equal(promoted.slate_seq, null, 'Expected promoted match slate_seq === null')
+
+    for (const eid of [e4.id, e5.id, e6.id, e7.id]) {
+      const qEntry = state.queue.find(q => q.id === eid)
+      assert.ok(qEntry, `Expected entry ${eid} in queue`)
+      assert.equal(qEntry.status, 'playing', `Expected entry ${eid} status === playing`)
+    }
   } finally {
-    // 8) Clean up (end session)
+    // 9) Clean up (end session)
     await fetch(`${BASE}/sessions/${session.id}/end`, { method: 'PATCH' })
   }
 

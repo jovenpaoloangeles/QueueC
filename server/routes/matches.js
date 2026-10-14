@@ -67,30 +67,62 @@ router.post('/', async (c) => {
 
 router.patch('/:id/end', async (c) => {
   const id = c.req.param('id')
-  const { team1_score, team2_score } = await c.req.json().catch(() => ({}))
+  const { team1_score, team2_score, new_shuttles, used_shuttles, rating } = await c.req.json().catch(() => ({}))
+  if (rating !== undefined && rating !== null) {
+    if (typeof rating !== 'number' || !Number.isFinite(rating) || rating < 1 || rating > 5) {
+      return c.json({ error: 'rating must be between 1 and 5' }, 400)
+    }
+  }
   const now = Math.floor(Date.now() / 1000)
 
-  const match = db.prepare('SELECT * FROM matches WHERE id = ?').get(id)
+  const match = db.prepare("SELECT * FROM matches WHERE id = ? AND state = 'active'").get(id)
   if (!match) return c.json({ error: 'Match not found' }, 404)
 
   const duration = now - match.started_at
 
-  db.prepare(
-    'UPDATE matches SET team1_score = ?, team2_score = ?, ended_at = ? WHERE id = ?'
-  ).run(team1_score, team2_score, now, id)
+  db.transaction(() => {
+    db.prepare(`
+      UPDATE matches
+      SET team1_score = ?,
+          team2_score = ?,
+          new_shuttles = COALESCE(?, new_shuttles),
+          used_shuttles = COALESCE(?, used_shuttles),
+          rating = COALESCE(?, rating),
+          ended_at = ?
+      WHERE id = ?
+    `).run(team1_score, team2_score, new_shuttles ?? null, used_shuttles ?? null, rating ?? null, now, id)
 
-  // Update queue entries: back to waiting, last_played_at, total_seconds_played, games_played, status_updated_at
-  const playerEntryIds = [match.team1_p1, match.team1_p2, match.team2_p1, match.team2_p2].filter(Boolean)
-  const updateEntry = db.prepare(`
-    UPDATE queue_entries
-    SET status = 'waiting',
-        last_played_at = ?,
-        status_updated_at = ?,
-        total_seconds_played = total_seconds_played + ?,
-        games_played = games_played + 1
-    WHERE id = ?
-  `)
-  for (const entryId of playerEntryIds) updateEntry.run(now, now, duration, entryId)
+    // Update queue entries: back to waiting, last_played_at, total_seconds_played, games_played, status_updated_at
+    const playerEntryIds = [match.team1_p1, match.team1_p2, match.team2_p1, match.team2_p2].filter(Boolean)
+    const updateEntry = db.prepare(`
+      UPDATE queue_entries
+      SET status = 'waiting',
+          last_played_at = ?,
+          status_updated_at = ?,
+          total_seconds_played = total_seconds_played + ?,
+          games_played = games_played + 1
+      WHERE id = ?
+    `)
+    for (const entryId of playerEntryIds) updateEntry.run(now, now, duration, entryId)
+
+    const freed = match.court_number
+    const court = db.prepare('SELECT * FROM courts WHERE id = ?').get(freed)
+    const usable = court && court.enabled &&
+      (court.expires_at == null || now < court.expires_at) &&
+      (court.active_until == null || now < court.active_until)
+    if (usable) {
+      const next = db.prepare(
+        "SELECT * FROM matches WHERE session_id = ? AND state = 'slated' AND ended_at IS NULL ORDER BY slate_seq, id LIMIT 1"
+      ).get(match.session_id)
+      if (next) {
+        db.prepare("UPDATE matches SET state = 'active', court_number = ?, started_at = ?, slate_seq = NULL WHERE id = ?")
+          .run(freed, now, next.id)
+        const slatedEntryIds = [next.team1_p1, next.team1_p2, next.team2_p1, next.team2_p2].filter(Boolean)
+        const toPlay = db.prepare("UPDATE queue_entries SET status = 'playing', status_updated_at = ? WHERE id = ?")
+        for (const eid of slatedEntryIds) toPlay.run(now, eid)
+      }
+    }
+  })()
 
   const updated = db.prepare('SELECT * FROM matches WHERE id = ?').get(id)
   broadcast()
