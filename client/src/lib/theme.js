@@ -1,5 +1,10 @@
 export function initTheme() {
-  const dark = typeof localStorage !== 'undefined' && localStorage.getItem('queuec-theme') === 'dark'
+  let dark = false
+  try {
+    dark = typeof localStorage !== 'undefined' && localStorage.getItem('queuec-theme') === 'dark'
+  } catch {
+    dark = false
+  }
   if (typeof document !== 'undefined') {
     document.documentElement.classList.toggle('dark', dark)
   }

@@ -38,8 +38,7 @@ export const getSuggestion = (sessionId, mode) =>
   req('GET', `/sessions/${sessionId}/suggest?mode=${mode}`)
 export const addCourt = (sessionId, label, duration_minutes = null) =>
   req('POST', `/sessions/${sessionId}/courts`, { label, duration_minutes })
-export const deleteCourt = courtId =>
-  fetch(`${BASE}/courts/${courtId}`, { method: 'DELETE' })
+export const deleteCourt = courtId => req('DELETE', `/courts/${courtId}`)
 export const updateCourt = (courtId, patch) =>
   req('PATCH', `/courts/${courtId}`, patch)
 export const slateMatch = data => req('POST', '/matches/slate', data)
