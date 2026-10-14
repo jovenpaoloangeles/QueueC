@@ -25,6 +25,8 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 - [x] 2.8 Submit with custom name — header shows custom name
 - [x] 2.9 Submit creates session with correct court_count
 - [x] 2.10 Modal closes automatically after successful create (via SSE)
+- [x] 2.11 Confirm dialog cancel closes without opening form
+- [x] 2.12 Confirm dialog shows replace warning when a session is active
 
 ### 03 · Session lifecycle
 - [x] 3.1 Setup screen appears after session creation
@@ -240,7 +242,7 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 | Area | Scenarios | Done |
 |------|-----------|------|
 | Landing | 6 | 6 |
-| Create session modal | 10 | 10 |
+| Create session modal | 12 | 12 |
 | Session lifecycle | 10 | 10 |
 | Check-in (setup) | 8 | 8 |
 | Courts (setup) | 10 | 10 |
@@ -261,4 +263,4 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 | Unit: dnd.valid | 11 | 11 |
 | Unit: api.error | 4 | 4 |
 | Unit: timer | 5 | 5 |
-| **Total** | **184** | **184** |
+| **Total** | **186** | **186** |

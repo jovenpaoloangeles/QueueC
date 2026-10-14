@@ -8,6 +8,7 @@ test.beforeEach(async ({ page }) => {
   if (session) await page.request.fetch(`${BASE}/api/sessions/${session.id}/end`, { method: 'PATCH' })
   await page.reload()
   await page.getByRole('button', { name: '+ Start New Session' }).click()
+  await page.getByRole('button', { name: 'Continue' }).click() // confirm dialog gate
   await page.waitForSelector('[role="dialog"]')
 })
 
@@ -64,4 +65,21 @@ test('2.9 court_count respected', async ({ page }) => {
 test('2.10 modal closes automatically via SSE', async ({ page }) => {
   await page.getByRole('button', { name: 'Create Session' }).click()
   await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 5000 })
+})
+
+test('2.11 confirm dialog cancel closes without opening form', async ({ page }) => {
+  await page.reload() // back to landing — beforeEach already passed the confirm gate
+  await page.getByRole('button', { name: '+ Start New Session' }).click()
+  await page.getByRole('button', { name: 'Cancel' }).first().click()
+  await expect(page.getByRole('dialog')).not.toBeVisible()
+  await expect(page.getByLabel('Name')).toHaveCount(0)
+})
+
+test('2.12 confirm dialog shows replace warning when a session is active', async ({ page }) => {
+  // beforeEach ended the session and opened the form — create one, then
+  // reopen the confirm gate with a live session to hit the warning path
+  await page.getByRole('button', { name: 'Create Session' }).click()
+  await page.waitForSelector('text=Not started')
+  await page.getByRole('button', { name: '+ Session' }).click()
+  await expect(page.getByText('The current session will be replaced in the header.')).toBeVisible()
 })

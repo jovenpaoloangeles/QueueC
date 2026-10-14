@@ -187,6 +187,7 @@ test('QM.9 full session cycle — create, check-in, start, match, end match, end
   await expect(page.locator('text=No active session')).toBeVisible()
 
   await page.getByRole('button', { name: '+ Session' }).click()
+  await page.getByRole('button', { name: 'Continue' }).click()
   await page.getByLabel('Name').fill('Session 2')
   await page.getByRole('button', { name: 'Create Session' }).click()
   await page.waitForSelector('text=Not started', { timeout: 5000 })

@@ -28,9 +28,11 @@ test('1.4 Courts and queue areas absent', async ({ page }) => {
   await expect(page.locator('text=Queue ·')).not.toBeVisible()
 })
 
-test('1.5 Header "+ Session" button opens modal', async ({ page }) => {
+test('1.5 Header "+ Session" button opens confirm then modal', async ({ page }) => {
   await page.getByRole('button', { name: '+ Session' }).click()
-  await expect(page.getByRole('dialog')).toBeVisible()
+  await expect(page.getByText('Start a new session?')).toBeVisible()
+  await page.getByRole('button', { name: 'Continue' }).click()
+  await expect(page.getByLabel('Name')).toBeVisible()
 })
 
 test('1.6 page title is QueueC', async ({ page }) => {

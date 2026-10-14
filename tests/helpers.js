@@ -8,6 +8,7 @@ const DEFAULT_PLAYERS = [
 export async function createSession(page, { name = 'Test Session', courts = 2 } = {}) {
   await page.goto('/')
   await page.getByRole('button', { name: '+ Session' }).click()
+  await page.getByRole('button', { name: 'Continue' }).click() // confirm dialog gate
   await page.getByLabel('Name').fill(name)
   await page.getByLabel('Courts').fill(String(courts))
   await page.getByRole('button', { name: 'Create Session' }).click()

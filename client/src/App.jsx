@@ -3,6 +3,7 @@ import { useSSE } from './hooks/useSSE.js'
 import { useTimers } from './hooks/useTimers.js'
 import { startMatch, setQueueOrder, endSession } from './api.js'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import Header from './components/Header.jsx'
 import CourtsRow from './components/CourtsRow.jsx'
 import QueueGrid from './components/QueueGrid.jsx'
@@ -13,6 +14,7 @@ import SetupScreen from './components/SetupScreen.jsx'
 export default function App() {
   const [sseData, setSseData] = useState({ session: null, queue: [], activeMatches: [], courts: [], stats: null, serverTime: null })
   const [showCreate, setShowCreate] = useState(false)
+  const [confirmNew, setConfirmNew] = useState(false) // both "+ Session" entry points gate on this
   const [selection, setSelection] = useState([])
   const [armedCourt, setArmedCourt] = useState(null)
   const [playersVersion, setPlayersVersion] = useState(0) // bumped after add-player so the pool refetches
@@ -63,7 +65,7 @@ export default function App() {
     <div className="flex flex-col h-screen overflow-hidden bg-background">
       <Header
         session={session}
-        onNewSession={() => setShowCreate(true)}
+        onNewSession={() => setConfirmNew(true)}
         onEndSession={session ? () => endSession(session.id).catch(() => {}) : undefined}
       />
       {session && session.started_at == null && (
@@ -106,10 +108,30 @@ export default function App() {
       )}
       {!session && (
         <div className="flex flex-1 items-center justify-center">
-          <Button size="lg" onClick={() => setShowCreate(true)}>
+          <Button size="lg" onClick={() => setConfirmNew(true)}>
             + Start New Session
           </Button>
         </div>
+      )}
+      {confirmNew && (
+        <Dialog open onOpenChange={open => !open && setConfirmNew(false)}>
+          <DialogContent className="sm:max-w-xs">
+            <DialogHeader>
+              <DialogTitle>Start a new session?</DialogTitle>
+            </DialogHeader>
+            {session && (
+              <p className="text-xs text-muted-foreground">
+                The current session will be replaced in the header.
+              </p>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => setConfirmNew(false)}>Cancel</Button>
+              <Button size="sm" onClick={() => { setConfirmNew(false); setShowCreate(true) }}>
+                Continue
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
       {showCreate && <CreateSessionModal onClose={() => setShowCreate(false)} />}
     </div>
