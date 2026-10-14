@@ -34,8 +34,11 @@ export default function CourtsRow({
       {liveCourts.map(court => {
         const draft = drafts[court.id] ?? EMPTY_DRAFT
         const filled = draft.filter(Boolean)
-        // click-flow (selection) wins over drag-flow (draft) when both hold players
-        const startPlayers = canStartSelection ? selection : filled
+        // drag-flow (draft) wins over click-flow (selection) when the draft can
+        // start a match on its own (2 → singles, 4 → doubles); a half-built
+        // draft (1 or 3) never silently discards a startable selection
+        const useDraft = filled.length === 2 || filled.length === 4
+        const startPlayers = useDraft ? filled : selection
         return (
           <CourtCard
             key={court.id}
@@ -43,12 +46,13 @@ export default function CourtsRow({
             match={activeMatches.find(m => m.court_number === court.id) ?? null}
             queue={queue}
             playSeconds={playSeconds}
-            canStart={canStartSelection || filled.length === 2 || filled.length === 4}
-            onStartClick={() => onStartMatch(court.id, startPlayers)}
-            onStartSingles={() => onStartMatch(court.id, [filled[0], filled[1]])}
+            canStart={useDraft || canStartSelection}
+            onStartClick={() => onStartMatch(court.id, startPlayers, useDraft ? 'draft' : 'selection')}
+            onStartSingles={() => onStartMatch(court.id, [filled[0], filled[1]], 'draft')}
             onDropPlayer={onDropPlayer}
             canDropPlayer={entryId => !draftedIds.has(entryId) && filled.length < 4}
             draft={draft}
+            draftedIds={draftedIds}
             onDropSlot={(slotIdx, entryId) => onDropSlot(court.id, slotIdx, entryId)}
             onClearSlot={slotIdx => onClearSlot(court.id, slotIdx)}
             onClearDraft={() => onClearDraft(court.id)}

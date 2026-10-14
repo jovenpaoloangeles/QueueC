@@ -66,6 +66,21 @@ async function run() {
     assert.equal(matchRes.status, 201, 'Expected 201 when starting singles match')
     const { match } = await matchRes.json()
 
+    // Backstop: an entry already 'playing' cannot be double-booked onto another court
+    const doubleBookRes = await fetch(`${BASE}/matches`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session_id: session.id,
+        court_number: court2.id,
+        team1_p1: entries[0].id,
+        team2_p1: entries[1].id
+      })
+    })
+    assert.equal(doubleBookRes.status, 400, 'Expected 400 when starting a match with a playing entry')
+    const doubleBookBody = await doubleBookRes.json()
+    assert.equal(doubleBookBody.error, `entry ${entries[0].id} is not waiting`, 'Expected double-booking backstop error')
+
     // PATCH /api/matches/:id/shuttles with { delta_new: 1, delta_used: -1 } -> 200, match.new_shuttles === 1, match.used_shuttles === 0 (clamped at 0)
     const shuttles1Res = await fetch(`${BASE}/matches/${match.id}/shuttles`, {
       method: 'PATCH',

@@ -54,6 +54,27 @@ export default function App() {
     setDrafts(prev => (Object.keys(prev).length ? {} : prev))
   }, [session?.id])
 
+  // Stale-draft pruning: a draft slot can outlive its entry (started elsewhere,
+  // check-in undone, slated into a match). Keep waiting/resting entries — the
+  // QM may still be assembling that lineup. Runs every SSE tick; identity-stable
+  // when nothing needs pruning so it never causes a render loop.
+  useEffect(() => {
+    const status = new Map(queue.map(e => [e.id, e.status]))
+    setDrafts(prev => {
+      let changed = false
+      const next = {}
+      for (const [courtId, slots] of Object.entries(prev)) {
+        const pruned = slots.map(id => {
+          const st = id != null ? status.get(id) : 'waiting'
+          if (st !== 'waiting' && st !== 'resting') { changed = true; return null }
+          return id
+        })
+        next[courtId] = pruned
+      }
+      return changed ? next : prev
+    })
+  }, [queue])
+
   // Every entry id currently sitting in any court's draft — excluded from the
   // header waiting count so drafted players don't look available.
   const draftedIds = useMemo(
@@ -62,10 +83,21 @@ export default function App() {
   )
 
   // sel: 2 ids → singles (each on its own team), 4 ids → doubles in slot order.
-  // A failed start keeps the selection/draft so the QM can fix and retry.
-  async function handleStartMatch(courtNumber, sel) {
+  // source: 'draft' | 'selection' — only the lineup actually used is cleared on
+  // success, so a draft-based start never wipes an unrelated selection (and vice
+  // versa). A failed start keeps the selection/draft so the QM can fix and retry.
+  async function handleStartMatch(courtNumber, sel, source = 'selection') {
     if (!session) return false
-    const mapped = sel.length === 2 ? [sel[0], null, sel[1], null] : sel
+    // Stale guard: a draft slot or selection can reference a player who already
+    // started elsewhere since the last SSE tick — never double-book them.
+    const status = new Map(queue.map(e => [e.id, e.status]))
+    const validIds = sel.filter(id => status.get(id) === 'waiting')
+    // anything but a full 2 or 4 lineup can't start (3 is a partial doubles)
+    if (validIds.length !== 2 && validIds.length !== 4) {
+      toast('Not enough available players', 'error')
+      return false
+    }
+    const mapped = validIds.length === 2 ? [validIds[0], null, validIds[1], null] : validIds
     const [t1p1, t1p2, t2p1, t2p2] = mapped
     try {
       await startMatch({
@@ -74,8 +106,8 @@ export default function App() {
         team1_p1: t1p1, team1_p2: t1p2 ?? null,
         team2_p1: t2p1, team2_p2: t2p2 ?? null
       })
-      setSelection([])
-      clearDraft(courtNumber)
+      if (source === 'draft') clearDraft(courtNumber)
+      else setSelection([])
       return true
     } catch (err) {
       toast(err?.data?.error ?? 'Could not start match', 'error')
@@ -96,7 +128,7 @@ export default function App() {
 
     const occupied = activeMatches.some(m => m.court_number === courtId)
     if (!occupied) {
-      await handleStartMatch(courtId, next) // clears the draft on success
+      await handleStartMatch(courtId, next, 'draft') // clears the draft on success
       return
     }
     try {

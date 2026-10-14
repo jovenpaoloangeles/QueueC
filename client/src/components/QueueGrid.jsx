@@ -31,19 +31,24 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
       .finally(() => setPlayersLoading(false))
   }, [playersVersion])
 
-  // Apply smart suggestion when mode switches to smart or the waiting set
-  // changes (queue.length never changes — playing entries stay in the array)
+  // Apply smart suggestion when mode switches to smart, the waiting set
+  // changes (queue.length never changes — playing entries stay in the array),
+  // or a court draft claims players out from under the selection
   const waitingSig = queue.filter(e => e.status === 'waiting').map(e => e.id).join(',')
   useEffect(() => {
     if (mode !== 'smart' || !session) return
     const waiting = queue.filter(e => e.status === 'waiting')
     const modeStr = waiting.length >= 4 ? 'doubles' : 'singles'
     getSuggestion(session.id, modeStr).then(d => {
-      if (d.suggestion?.length) onSelectionChange(d.suggestion.filter(Boolean))
+      // drafted players are already committed to a court — never (re-)select them
+      if (d.suggestion?.length) {
+        onSelectionChange(d.suggestion.filter(Boolean).filter(id => !draftedIds.has(id)))
+      }
     })
-  }, [mode, waitingSig, session?.id])
+  }, [mode, waitingSig, session?.id, draftedIds])
 
   function toggleSelect(entryId) {
+    if (draftedIds.has(entryId)) return // already drafted onto a court — selecting would double-book them
     if (selection.includes(entryId)) {
       onSelectionChange(selection.filter(id => id !== entryId))
     } else if (selection.length < 4) {

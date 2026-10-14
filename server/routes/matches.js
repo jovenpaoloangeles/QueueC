@@ -48,6 +48,15 @@ router.post('/', async (c) => {
     if (court.active_until != null && now >= court.active_until) return c.json({ error: 'Court reservation has ended' }, 400)
   }
 
+  // Backstop against double-booking: every entry must belong to this session
+  // and still be waiting (mirrors the slate route's check)
+  for (const id of [team1_p1, team1_p2, team2_p1, team2_p2].filter(Boolean)) {
+    const e = db.prepare('SELECT status FROM queue_entries WHERE id = ? AND session_id = ?').get(id, session_id)
+    if (!e || e.status !== 'waiting') {
+      return c.json({ error: `entry ${id} is not waiting` }, 400)
+    }
+  }
+
   const format = team1_p2 ? 'doubles' : 'singles'
 
   const { lastInsertRowid } = db.prepare(`

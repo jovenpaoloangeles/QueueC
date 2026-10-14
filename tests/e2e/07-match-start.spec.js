@@ -131,13 +131,15 @@ test('7.14 drag playing player to idle court — rejected', async ({ page }) => 
   await expect(page.locator('[data-team-side="1"]')).toContainText('Inter C1')
 })
 
-test('7.15 drag resting player to court — rejected', async ({ page }) => {
+test('7.15 drag resting player to court — lands in a lineup slot', async ({ page }) => {
   const name = (await getQueueNames(page))[0].trim()
   await page.locator('[data-entry-id]').first().click({ modifiers: ['Shift'] })
   await page.waitForTimeout(400)
   await syntheticDrag(page, '[data-drop="resting"] button', '[data-drop^="court-"]', { toIndex: -1 })
+  // the court-level drop routes into the first empty slot (slots take resting
+  // players straight out of rest), so the player shows up there…
+  const slot0 = page.locator('[data-drop^="court-"]').last().locator('[data-testid="slot-0"]')
+  await expect(slot0).toContainText(name)
+  // …but stays resting until woken — no match can start from the lineup yet
   await expect(page.getByRole('button', { name: 'Start Singles' })).toHaveCount(0)
-  await expect(page.locator('text=selected')).toHaveCount(0)
-  // chip still benched
-  await expect(page.locator('[data-drop="resting"]')).toContainText(name)
 })

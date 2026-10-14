@@ -27,6 +27,7 @@ function TeamPlayer({ entryId, name }) {
 function TeamPanel({ side, entryIds, queue, matchId, match }) {
   const dragProps = useDragSource(() => ({ kind: 'team', matchId, side }))
   const [over, setOver] = useState(false)
+  const toast = useToast()
   const sideOf = id =>
     [match.team1_p1, match.team1_p2].includes(id) ? 1
     : [match.team2_p1, match.team2_p2].includes(id) ? 2 : null
@@ -50,12 +51,14 @@ function TeamPanel({ side, entryIds, queue, matchId, match }) {
         if (!q) return
         if (q.kind === 'team') {
           if (valid('team') && q.matchId === matchId && q.side !== side) {
-            updateMatchTeams(match.id, rearrange(match, q.side, side)).catch(() => {})
+            updateMatchTeams(match.id, rearrange(match, q.side, side))
+              .catch(err => toast(err?.data?.error ?? 'Could not update teams', 'error'))
           }
         } else if (q.kind === 'player') {
           const from = sideOf(q.entryId)
           if (from != null && from !== side) {
-            updateMatchTeams(match.id, rearrange(match, from, side, q.entryId)).catch(() => {})
+            updateMatchTeams(match.id, rearrange(match, from, side, q.entryId))
+              .catch(err => toast(err?.data?.error ?? 'Could not update teams', 'error'))
           }
         }
       }}
@@ -78,11 +81,13 @@ function TeamPanel({ side, entryIds, queue, matchId, match }) {
 }
 
 /** One lineup slot — drop target for a waiting/resting player, clearable once filled. */
-function Slot({ courtId, idx, entryId, name, disabled, onDropSlot, onClearSlot }) {
+function Slot({ courtId, idx, entryId, name, draftedIds = new Set(), draft = [], onDropSlot, onClearSlot }) {
   const [over, setOver] = useState(false)
   const payload = drag.current // read live: drop can run before a dragover re-render flushes
   const filled = entryId != null
-  const canDrop = !disabled && !filled && valid('slot', payload)
+  // a player already drafted anywhere (here or another court) can't be dropped again
+  const droppable = p => valid('slot', p) && !draftedIds.has(p.entryId) && !draft.includes(p.entryId)
+  const canDrop = !filled && !!payload && droppable(payload)
 
   return (
     <div
@@ -90,14 +95,14 @@ function Slot({ courtId, idx, entryId, name, disabled, onDropSlot, onClearSlot }
       data-court-id={courtId}
       data-slot-idx={idx}
       data-testid={`slot-${idx}`}
-      onDragOver={e => { e.preventDefault(); e.stopPropagation(); if (!disabled) setOver(true) }}
+      onDragOver={e => { e.preventDefault(); e.stopPropagation(); setOver(true) }}
       onDragLeave={() => setOver(false)}
       onDrop={e => {
         // stopPropagation: this drop is consumed by the slot, not the court-level zone
         e.preventDefault(); e.stopPropagation(); setOver(false)
         const p = drag.current
-        if (disabled || filled || !p) return
-        if (valid('slot', p)) onDropSlot(idx, p.entryId)
+        if (filled || !p) return
+        if (droppable(p)) onDropSlot(idx, p.entryId)
       }}
       className={cn(
         'grid min-h-[30px] place-items-center rounded-lg border-[1.5px] border-dashed px-2 py-1 text-center text-2xs font-semibold transition-colors',
@@ -119,13 +124,13 @@ function Slot({ courtId, idx, entryId, name, disabled, onDropSlot, onClearSlot }
             className="font-bold text-muted-foreground hover:text-destructive"
           >×</button>
         </span>
-      ) : (disabled ? '—' : 'Drop…')}
+      ) : 'Drop…'}
     </div>
   )
 }
 
 /** 2×2 lineup matrix (mockup .slots): Team A = slots 0,1; Team B = slots 2,3. */
-function SlotsMatrix({ courtId, draft, queue, title, disabled = false, onDropSlot, onClearSlot, onClearDraft }) {
+function SlotsMatrix({ courtId, draft, draftedIds = new Set(), queue, title, onDropSlot, onClearSlot, onClearDraft }) {
   const filled = draft.filter(Boolean).length
   const column = (label, idxs, sideB) => (
     <div className={cn('flex flex-col gap-1.5', sideB && 'b')}>
@@ -139,7 +144,8 @@ function SlotsMatrix({ courtId, draft, queue, title, disabled = false, onDropSlo
           idx={i}
           entryId={draft[i]}
           name={draft[i] ? playerName(queue, draft[i]) : null}
-          disabled={disabled}
+          draftedIds={draftedIds}
+          draft={draft}
           onDropSlot={onDropSlot}
           onClearSlot={onClearSlot}
         />
@@ -192,7 +198,7 @@ export default function CourtCard({
   court, match, queue, playSeconds, serverTime,
   onStartClick, onStartSingles, canStart,
   onDropPlayer, canDropPlayer,
-  draft = [], onDropSlot, onClearSlot, onClearDraft,
+  draft = [], draftedIds = new Set(), onDropSlot, onClearSlot, onClearDraft,
 }) {
   const [showEnd, setShowEnd] = useState(false)
   const [over, setOver] = useState(false)
@@ -209,8 +215,13 @@ export default function CourtCard({
   const draftFilled = draft.filter(Boolean)
   const canStartSingles = !isActive && draftFilled.length === 2 // any two slots → singles
 
-  // live check: drop may run before the dragover re-render flushes (batched), so never snapshot it
-  const dropAllowed = () => valid('court') && canDropPlayer(drag.current?.entryId)
+  // live check: drop may run before the dragover re-render flushes (batched), so never snapshot it.
+  // Resting players are welcome too — a lineup slot takes them straight out of rest.
+  const dropAllowed = () => {
+    const p = drag.current
+    const isPlayer = p?.kind === 'player' && (p.status === 'waiting' || p.status === 'resting')
+    return isPlayer && canDropPlayer(p.entryId)
+  }
   const canAcceptNewMatch = !isExpired
 
   async function handleExtend() {
@@ -321,6 +332,7 @@ export default function CourtCard({
           <SlotsMatrix
             courtId={court.id}
             draft={draft}
+            draftedIds={draftedIds}
             queue={queue}
             title="Next match lineup"
             onDropSlot={onDropSlot}
@@ -360,6 +372,7 @@ export default function CourtCard({
               <SlotsMatrix
                 courtId={court.id}
                 draft={draft}
+                draftedIds={draftedIds}
                 queue={queue}
                 title="2×2 Match Lineup"
                 onDropSlot={onDropSlot}
