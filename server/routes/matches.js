@@ -152,4 +152,15 @@ router.patch('/:id/teams', async (c) => {
   return c.json({ match: updated })
 })
 
+router.patch('/:id/shuttles', async (c) => {
+  const id = c.req.param('id')
+  const b = await c.req.json().catch(() => ({}))
+  const m = db.prepare("SELECT * FROM matches WHERE id = ? AND state = 'active' AND ended_at IS NULL").get(id)
+  if (!m) return c.json({ error: 'Active match not found' }, 404)
+  db.prepare('UPDATE matches SET new_shuttles = MAX(0, new_shuttles + ?), used_shuttles = MAX(0, used_shuttles + ?) WHERE id = ?')
+    .run(Number(b.delta_new ?? 0), Number(b.delta_used ?? 0), id)
+  broadcast()
+  return c.json({ match: db.prepare('SELECT * FROM matches WHERE id = ?').get(id) })
+})
+
 export default router

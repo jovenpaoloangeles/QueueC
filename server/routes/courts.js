@@ -78,4 +78,16 @@ router.delete('/courts/:id', (c) => {
   return c.body(null, 204)
 })
 
+router.patch('/courts/:id/extend', async (c) => {
+  const id = c.req.param('id')
+  const b = await c.req.json().catch(() => ({}))
+  const court = db.prepare('SELECT * FROM courts WHERE id = ?').get(id)
+  if (!court) return c.json({ error: 'Court not found' }, 404)
+  if (court.expires_at == null) return c.json({ error: 'Court has no rental timer' }, 400)
+  const mins = Number(b.minutes ?? 60)
+  db.prepare('UPDATE courts SET expires_at = expires_at + ? WHERE id = ?').run(mins * 60, id)
+  broadcast()
+  return c.json({ court: db.prepare('SELECT * FROM courts WHERE id = ?').get(id) })
+})
+
 export default router
