@@ -14,7 +14,7 @@ export default defineConfig({
     viewport: { width: 1280, height: 800 },
   },
   webServer: {
-    command: 'node server/index.js',
+    command: 'bun server/index.js',
     cwd: root,
     port: 3003,
     reuseExistingServer: false,

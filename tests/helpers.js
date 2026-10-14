@@ -2,7 +2,7 @@ export const BASE = 'http://localhost:3003'
 
 const DEFAULT_PLAYERS = [
   'Inter C1', 'Inter C2', 'Inter C3', 'Inter C4',
-  'Advanced E1', 'Advanced E2', 'Upper D1', 'Upper D2',
+  'Expert E1', 'Expert E2', 'Upper D1', 'Upper D2',
 ]
 
 export async function createSession(page, { name = 'Test Session', courts = 2 } = {}) {

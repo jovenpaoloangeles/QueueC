@@ -8,9 +8,9 @@ test.beforeEach(async ({ page }) => {
   await createSession(page)
 })
 
-test('4.1 all 20 fixture players appear in pool', async ({ page }) => {
+test('4.1 all 22 fixture players appear in pool', async ({ page }) => {
   const chips = page.locator('[data-testid="player-pool"] button')
-  await expect(chips).toHaveCount(20)
+  await expect(chips).toHaveCount(22)
 })
 
 test('4.2 chip shows name and skill badge', async ({ page }) => {
@@ -39,7 +39,7 @@ test('4.5 checked-in player removed from pool', async ({ page }) => {
 })
 
 test('4.6 check in 8 players — all in queue in order', async ({ page }) => {
-  const names = ['Inter C1','Inter C2','Inter C3','Inter C4','Advanced E1','Advanced E2','Upper D1','Upper D2']
+  const names = ['Inter C1','Inter C2','Inter C3','Inter C4','Expert E1','Expert E2','Upper D1','Upper D2']
   await checkinPlayers(page, names)
   await expect(page.locator('text=Queue · 8')).toBeVisible()
   const items = page.locator('ol li')

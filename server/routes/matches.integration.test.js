@@ -1,4 +1,5 @@
 const BASE = 'http://localhost:3001/api'
+const SUFFIX = Date.now().toString(36)
 
 async function run() {
   // Setup: session + 4 players + check them in
@@ -7,7 +8,7 @@ async function run() {
     body: JSON.stringify({ name: 'T', scheduled_start: 1000, scheduled_end: 2000, court_count: 2 })
   }).then(r => r.json())).session
 
-  const names = ['P1','P2','P3','P4']
+  const names = [`P1-${SUFFIX}`,`P2-${SUFFIX}`,`P3-${SUFFIX}`,`P4-${SUFFIX}`]
   const entries = []
   for (const name of names) {
     const p = (await fetch(`${BASE}/players`, {
@@ -20,6 +21,9 @@ async function run() {
     }).then(r => r.json())).entry
     entries.push(e)
   }
+
+  // Start the session (matches are rejected on drafts)
+  await fetch(`${BASE}/sessions/${session.id}/start`, { method: 'PATCH' })
 
   // Start doubles match
   const m = (await fetch(`${BASE}/matches`, {

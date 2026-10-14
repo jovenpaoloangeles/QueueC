@@ -1,11 +1,12 @@
 const BASE = 'http://localhost:3001/api'
+const UNIQUE = `TestPlayer-${Date.now().toString(36)}`
 
 async function run() {
   // Create player
   const r1 = await fetch(`${BASE}/players`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: 'TestPlayer', skill_level: 'intermediate' })
+    body: JSON.stringify({ name: UNIQUE, skill_level: 'intermediate' })
   }).then(r => r.json())
   console.assert(r1.player.id, 'Expected player id')
 

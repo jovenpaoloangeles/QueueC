@@ -1,9 +1,9 @@
-import { Router } from 'express'
+import { Hono } from 'hono'
 import db from '../db.js'
 import { suggestPlayers } from '../logic/smartQueue.js'
 import { broadcast } from './sse.js'
 
-const router = Router()
+const router = new Hono()
 
 /** Next sort_order for a new entry in a session that already has `existingOrders`. */
 export function assignSortOrder(existingOrders) {
@@ -24,48 +24,52 @@ export function normalizeOrder(order, allowed) {
   return out
 }
 
-router.post('/sessions/:id/checkin', (req, res) => {
-  const { player_id } = req.body
+router.post('/sessions/:id/checkin', async (c) => {
+  const id = c.req.param('id')
+  const { player_id } = await c.req.json().catch(() => ({}))
   const now = Math.floor(Date.now() / 1000)
   const existing = db.prepare(
     'SELECT id FROM queue_entries WHERE session_id = ? AND player_id = ?'
-  ).get(req.params.id, player_id)
-  if (existing) return res.status(409).json({ error: 'Player already checked in' })
+  ).get(id, player_id)
+  if (existing) return c.json({ error: 'Player already checked in' }, 409)
 
   const existingOrders = db.prepare(
     'SELECT sort_order FROM queue_entries WHERE session_id = ?'
-  ).all(req.params.id).map(r => r.sort_order)
+  ).all(id).map(r => r.sort_order)
 
   const { lastInsertRowid } = db.prepare(
-    'INSERT INTO queue_entries (session_id, player_id, checked_in_at, sort_order) VALUES (?, ?, ?, ?)'
-  ).run(req.params.id, player_id, now, assignSortOrder(existingOrders))
+    'INSERT INTO queue_entries (session_id, player_id, checked_in_at, sort_order, status_updated_at) VALUES (?, ?, ?, ?, ?)'
+  ).run(id, player_id, now, assignSortOrder(existingOrders), now)
 
   const entry = db.prepare('SELECT * FROM queue_entries WHERE id = ?').get(lastInsertRowid)
   broadcast()
-  res.status(201).json({ entry })
+  return c.json({ entry }, 201)
 })
 
-router.delete('/queue/:entryId', (req, res) => {
-  const entry = db.prepare('SELECT * FROM queue_entries WHERE id = ?').get(req.params.entryId)
-  if (!entry) return res.status(404).json({ error: 'Entry not found' })
+router.delete('/queue/:entryId', (c) => {
+  const entryId = c.req.param('entryId')
+  const entry = db.prepare('SELECT * FROM queue_entries WHERE id = ?').get(entryId)
+  if (!entry) return c.json({ error: 'Entry not found' }, 404)
   // a playing entry's match would be orphaned — removal is for check-in undo only
-  if (entry.status === 'playing') return res.status(409).json({ error: 'Cannot remove a playing entry' })
-  db.prepare('DELETE FROM queue_entries WHERE id = ?').run(req.params.entryId)
+  if (entry.status === 'playing') return c.json({ error: 'Cannot remove a playing entry' }, 409)
+  db.prepare('DELETE FROM queue_entries WHERE id = ?').run(entryId)
   broadcast()
-  res.json({ ok: true })
+  return c.json({ ok: true })
 })
 
-router.patch('/queue/:entryId/status', (req, res) => {
-  const { status } = req.body
-  db.prepare('UPDATE queue_entries SET status = ? WHERE id = ?').run(status, req.params.entryId)
-  const entry = db.prepare('SELECT * FROM queue_entries WHERE id = ?').get(req.params.entryId)
-  if (!entry) return res.status(404).json({ error: 'Entry not found' })
+router.patch('/queue/:entryId/status', async (c) => {
+  const entryId = c.req.param('entryId')
+  const { status } = await c.req.json().catch(() => ({}))
+  const now = Math.floor(Date.now() / 1000)
+  db.prepare('UPDATE queue_entries SET status = ?, status_updated_at = ? WHERE id = ?').run(status, now, entryId)
+  const entry = db.prepare('SELECT * FROM queue_entries WHERE id = ?').get(entryId)
+  if (!entry) return c.json({ error: 'Entry not found' }, 404)
   broadcast()
-  res.json({ entry })
+  return c.json({ entry })
 })
 
-router.patch('/queue/order', (req, res) => {
-  const { session_id, order } = req.body
+router.patch('/queue/order', async (c) => {
+  const { session_id, order } = await c.req.json().catch(() => ({}))
   const allowed = db.prepare(
     'SELECT id FROM queue_entries WHERE session_id = ?'
   ).all(session_id).map(r => r.id)
@@ -76,19 +80,20 @@ router.patch('/queue/order', (req, res) => {
   tx(normalized)
 
   broadcast()
-  res.json({ ok: true })
+  return c.json({ ok: true })
 })
 
-router.get('/sessions/:id/suggest', (req, res) => {
-  const { mode } = req.query
+router.get('/sessions/:id/suggest', (c) => {
+  const id = c.req.param('id')
+  const mode = c.req.query('mode')
   if (mode !== 'singles' && mode !== 'doubles') {
-    return res.status(400).json({ error: 'mode must be singles or doubles' })
+    return c.json({ error: 'mode must be singles or doubles' }, 400)
   }
   const entries = db.prepare(
     "SELECT qe.*, p.skill_level FROM queue_entries qe JOIN players p ON p.id = qe.player_id WHERE qe.session_id = ? AND qe.status = 'waiting'"
-  ).all(req.params.id)
+  ).all(id)
   const suggestion = suggestPlayers(entries, mode)
-  res.json({ suggestion })
+  return c.json({ suggestion })
 })
 
 export default router

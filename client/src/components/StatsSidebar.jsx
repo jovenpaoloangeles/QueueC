@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { Trophy } from 'lucide-react'
 import { createPlayer } from '../api.js'
-import { cn, fmtClock } from '@/lib/utils'
+import { cn, fmtClock, SKILL_TIERS } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 
-const SKILL_LEVELS = ['newbie', 'beginner', 'intermediate', 'upper_intermediate', 'advanced']
+
 
 export default function StatsSidebar({ stats, onPlayerAdded }) {
   const [showAdd, setShowAdd] = useState(false)
@@ -88,7 +88,7 @@ export default function StatsSidebar({ stats, onPlayerAdded }) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {SKILL_LEVELS.map(s => (
+                    {SKILL_TIERS.map(s => (
                       <SelectItem key={s} value={s}>{s.replace('_',' ')}</SelectItem>
                     ))}
                   </SelectContent>

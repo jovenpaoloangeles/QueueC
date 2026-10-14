@@ -51,12 +51,9 @@ test('17.5 queue grid scrollable with many players', async ({ page }) => {
   // blows the default 30s budget
   const { session } = await (await page.request.get(`${BASE}/api/sessions/active`)).json()
   if (session) await page.request.fetch(`${BASE}/api/sessions/${session.id}/end`, { method: 'PATCH' })
-  const all = []
-  for (const tier of ['A', 'B', 'C', 'D', 'E']) {
-    const label = { A: 'Newbie', B: 'Beginner', C: 'Inter', D: 'Upper', E: 'Advanced' }[tier]
-    for (let i = 1; i <= 4; i++) all.push(`${label} ${tier}${i}`)
-  }
-  await fullSetup(page, { playerNames: all })
+  // use every registered fixture player (22 across all 7 tiers)
+  const { players } = await (await page.request.get(`${BASE}/api/players`)).json()
+  await fullSetup(page, { playerNames: players.map(p => p.name) })
   await page.setViewportSize({ width: 1000, height: 500 })
   await page.waitForTimeout(300)
   // last overflow container in main = queue grid (first is CourtsRow, fixed height)

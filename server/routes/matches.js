@@ -1,8 +1,8 @@
-import { Router } from 'express'
+import { Hono } from 'hono'
 import db from '../db.js'
 import { broadcast } from './sse.js'
 
-const router = Router()
+const router = new Hono()
 
 /**
  * Validate a proposed team arrangement against the entries currently on court.
@@ -34,12 +34,20 @@ export function validateTeamSlots(body, currentIds) {
   return { ok: true, value }
 }
 
-router.post('/', (req, res) => {
-  const { session_id, court_number, team1_p1, team1_p2, team2_p1, team2_p2 } = req.body
+router.post('/', async (c) => {
+  const { session_id, court_number, team1_p1, team1_p2, team2_p1, team2_p2 } = await c.req.json().catch(() => ({}))
   const session = db.prepare('SELECT * FROM sessions WHERE id = ?').get(session_id)
-  if (!session) return res.status(404).json({ error: 'Session not found' })
-  if (session.started_at == null) return res.status(400).json({ error: 'Session not started' })
+  if (!session) return c.json({ error: 'Session not found' }, 404)
+  if (session.started_at == null) return c.json({ error: 'Session not started' }, 400)
   const now = Math.floor(Date.now() / 1000)
+
+  const court = db.prepare('SELECT * FROM courts WHERE id = ? AND session_id = ?').get(court_number, session_id)
+  if (court) {
+    if (!court.enabled) return c.json({ error: 'Court is disabled' }, 400)
+    if (court.expires_at != null && now >= court.expires_at) return c.json({ error: 'Court has expired' }, 400)
+    if (court.active_until != null && now >= court.active_until) return c.json({ error: 'Court reservation has ended' }, 400)
+  }
+
   const format = team1_p2 ? 'doubles' : 'singles'
 
   const { lastInsertRowid } = db.prepare(`
@@ -49,60 +57,67 @@ router.post('/', (req, res) => {
 
   // Mark all involved players as playing
   const playerEntryIds = [team1_p1, team1_p2, team2_p1, team2_p2].filter(Boolean)
-  const setPlaying = db.prepare('UPDATE queue_entries SET status = ? WHERE id = ?')
-  for (const id of playerEntryIds) setPlaying.run('playing', id)
+  const setPlaying = db.prepare('UPDATE queue_entries SET status = ?, status_updated_at = ? WHERE id = ?')
+  for (const id of playerEntryIds) setPlaying.run('playing', now, id)
 
   const match = db.prepare('SELECT * FROM matches WHERE id = ?').get(lastInsertRowid)
   broadcast()
-  res.status(201).json({ match })
+  return c.json({ match }, 201)
 })
 
-router.patch('/:id/end', (req, res) => {
-  const { team1_score, team2_score } = req.body
+router.patch('/:id/end', async (c) => {
+  const id = c.req.param('id')
+  const { team1_score, team2_score } = await c.req.json().catch(() => ({}))
   const now = Math.floor(Date.now() / 1000)
 
-  const match = db.prepare('SELECT * FROM matches WHERE id = ?').get(req.params.id)
-  if (!match) return res.status(404).json({ error: 'Match not found' })
+  const match = db.prepare('SELECT * FROM matches WHERE id = ?').get(id)
+  if (!match) return c.json({ error: 'Match not found' }, 404)
 
   const duration = now - match.started_at
 
   db.prepare(
     'UPDATE matches SET team1_score = ?, team2_score = ?, ended_at = ? WHERE id = ?'
-  ).run(team1_score, team2_score, now, req.params.id)
+  ).run(team1_score, team2_score, now, id)
 
-  // Update queue entries: back to waiting, last_played_at, total_seconds_played
+  // Update queue entries: back to waiting, last_played_at, total_seconds_played, games_played, status_updated_at
   const playerEntryIds = [match.team1_p1, match.team1_p2, match.team2_p1, match.team2_p2].filter(Boolean)
   const updateEntry = db.prepare(`
     UPDATE queue_entries
-    SET status = 'waiting', last_played_at = ?, total_seconds_played = total_seconds_played + ?
+    SET status = 'waiting',
+        last_played_at = ?,
+        status_updated_at = ?,
+        total_seconds_played = total_seconds_played + ?,
+        games_played = games_played + 1
     WHERE id = ?
   `)
-  for (const id of playerEntryIds) updateEntry.run(now, duration, id)
+  for (const entryId of playerEntryIds) updateEntry.run(now, now, duration, entryId)
 
-  const updated = db.prepare('SELECT * FROM matches WHERE id = ?').get(req.params.id)
+  const updated = db.prepare('SELECT * FROM matches WHERE id = ?').get(id)
   broadcast()
-  res.json({ match: updated })
+  return c.json({ match: updated })
 })
 
-router.patch('/:id/teams', (req, res) => {
-  const match = db.prepare('SELECT * FROM matches WHERE id = ?').get(req.params.id)
-  if (!match) return res.status(404).json({ error: 'Match not found' })
-  if (match.ended_at) return res.status(404).json({ error: 'Match already ended' })
+router.patch('/:id/teams', async (c) => {
+  const id = c.req.param('id')
+  const match = db.prepare('SELECT * FROM matches WHERE id = ?').get(id)
+  if (!match) return c.json({ error: 'Match not found' }, 404)
+  if (match.ended_at) return c.json({ error: 'Match already ended' }, 404)
 
+  const body = await c.req.json().catch(() => ({}))
   const currentIds = [match.team1_p1, match.team1_p2, match.team2_p1, match.team2_p2].filter(Boolean)
-  const check = validateTeamSlots(req.body, currentIds)
-  if (!check.ok) return res.status(400).json({ error: check.error })
+  const check = validateTeamSlots(body, currentIds)
+  if (!check.ok) return c.json({ error: check.error }, 400)
 
   const v = check.value
   db.prepare(`
     UPDATE matches
     SET team1_p1 = ?, team1_p2 = ?, team2_p1 = ?, team2_p2 = ?
     WHERE id = ?
-  `).run(v.team1_p1, v.team1_p2, v.team2_p1, v.team2_p2, req.params.id)
+  `).run(v.team1_p1, v.team1_p2, v.team2_p1, v.team2_p2, id)
 
-  const updated = db.prepare('SELECT * FROM matches WHERE id = ?').get(req.params.id)
+  const updated = db.prepare('SELECT * FROM matches WHERE id = ?').get(id)
   broadcast()
-  res.json({ match: updated })
+  return c.json({ match: updated })
 })
 
 export default router

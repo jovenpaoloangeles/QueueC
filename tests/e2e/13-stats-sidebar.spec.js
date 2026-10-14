@@ -29,11 +29,11 @@ test('13.9 "+ Add Player" shows form', async ({ page }) => {
   await expect(page.locator('input[placeholder], input[type="text"]').last()).toBeVisible()
 })
 
-test('13.11 skill-level select has 5 options', async ({ page }) => {
+test('13.11 skill-level select has 7 options', async ({ page }) => {
   await page.getByRole('button', { name: /Add Player/i }).click()
   await page.locator('button[role="combobox"]').last().click()
   const options = page.locator('[role="option"], [role="listitem"]')
-  await expect(options).toHaveCount(5)
+  await expect(options).toHaveCount(7)
 })
 
 test('13.4 avg wait tile shows mm:ss before any match ends', async ({ page }) => {

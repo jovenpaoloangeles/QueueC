@@ -94,6 +94,7 @@ export default function App() {
                 session={session}
                 queue={queue}
                 waitSeconds={waitSeconds}
+                playSeconds={playSeconds}
                 selection={selection}
                 onSelectionChange={setSelection}
                 onReorder={handleReorder}

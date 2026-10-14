@@ -1,4 +1,4 @@
-// Run with: node server/routes/sessions.test.js (server must be running on :3001)
+// Run with: bun server/routes/sessions.test.js (server must be running on :3001)
 import assert from 'node:assert/strict'
 
 const BASE = 'http://localhost:3001/api'

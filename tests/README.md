@@ -5,34 +5,34 @@ Self-contained test suite. Runs Playwright E2E tests against a local server and
 
 ## Requirements
 
-- Node ≥ 22
-- `npx playwright` available (Playwright 1.64+)
-- Chromium browser: run `npx playwright install chromium` if missing
+- Bun ≥ 1.1
+- `bunx playwright` available (Playwright 1.64+)
+- Chromium browser: run `bunx playwright install chromium` if missing
 
 ## Run all tests
 
 From this directory (`tests/`):
 
 ```bash
-npm test
+bun test
 ```
 
 ## Run only E2E
 
 ```bash
-npm run test:e2e
+bun run test:e2e
 ```
 
 ## Run a single spec
 
 ```bash
-npx playwright test e2e/01-landing.spec.js --config=playwright.config.js
+bunx playwright test e2e/01-landing.spec.js --config=playwright.config.js
 ```
 
 ## Run only unit tests
 
 ```bash
-npm run test:unit
+bun run test:unit
 ```
 
 ## Configuration
@@ -44,7 +44,7 @@ npm run test:unit
 
 ## CI
 
-The `npm test` command exits non-zero on any failure. Playwright writes an HTML
+The `bun run test` command exits non-zero on any failure. Playwright writes an HTML
 report to `playwright-report/` (not committed).
 
 ## Test DB

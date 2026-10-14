@@ -1,15 +1,14 @@
-FROM node:22-alpine AS build-client
+FROM oven/bun:1-alpine AS build-client
 WORKDIR /app
-COPY client/package*.json ./client/
-RUN cd client && npm ci
+COPY client/package.json client/bun.lock ./client/
+RUN cd client && bun install --frozen-lockfile
 COPY client ./client
-RUN cd client && npm run build
+RUN cd client && bun run build
 
-FROM node:22-alpine
-RUN apk add --no-cache python3 make g++
+FROM oven/bun:1-alpine
 WORKDIR /app
-COPY server/package*.json ./server/
-RUN cd server && npm_config_nodedir=/usr/local npm ci --omit=dev
+COPY server/package.json server/bun.lock ./server/
+RUN cd server && bun install --frozen-lockfile --production
 COPY server ./server
 COPY --from=build-client /app/client/dist ./public
 COPY players.json ./players.json
@@ -19,4 +18,4 @@ ENV PORT=3001
 ENV DB_PATH=/data/queuec.db
 
 EXPOSE 3001
-CMD ["node", "server/index.js"]
+CMD ["bun", "server/index.js"]

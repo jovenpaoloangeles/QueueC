@@ -17,8 +17,8 @@ test('11.1 "+ Check In" button visible', async ({ page }) => {
 
 test('11.2 panel shows players not in session', async ({ page }) => {
   await page.getByRole('button', { name: '+ Check In' }).click()
-  // Advanced E1 was not checked in — should be in panel
-  await expect(page.locator('text=Advanced E1')).toBeVisible()
+  // Expert E1 was not checked in — should be in panel
+  await expect(page.locator('text=Expert E1')).toBeVisible()
 })
 
 test('11.3 checking in appends to queue end', async ({ page }) => {
@@ -26,23 +26,23 @@ test('11.3 checking in appends to queue end', async ({ page }) => {
   await page.locator('[data-entry-id]').first().waitFor()
   const beforeCount = await page.locator('[data-entry-id]').count()
   await page.getByRole('button', { name: '+ Check In' }).click()
-  await page.getByRole('button', { name: 'Advanced E1', exact: false }).click()
+  await page.getByRole('button', { name: 'Expert E1', exact: false }).click()
   await page.waitForTimeout(400)
   await expect(page.locator('[data-entry-id]')).toHaveCount(beforeCount + 1)
 })
 
 test('11.4 panel closes after check-in', async ({ page }) => {
   await page.getByRole('button', { name: '+ Check In' }).click()
-  await page.getByRole('button', { name: 'Advanced E1', exact: false }).click()
+  await page.getByRole('button', { name: 'Expert E1', exact: false }).click()
   await page.waitForTimeout(400)
-  await expect(page.locator('text=Advanced E1').locator('../..').getByRole('button', { name: 'Advanced E1', exact: false })).toHaveCount(0)
+  await expect(page.locator('text=Expert E1').locator('../..').getByRole('button', { name: 'Expert E1', exact: false })).toHaveCount(0)
 })
 
 test('11.5 checked-in player absent from panel', async ({ page }) => {
   await page.getByRole('button', { name: '+ Check In' }).click()
-  await page.getByRole('button', { name: 'Advanced E1', exact: false }).click()
+  await page.getByRole('button', { name: 'Expert E1', exact: false }).click()
   await page.waitForTimeout(400)
   await page.getByRole('button', { name: '+ Check In' }).click()
-  // Check that Advanced E1 is not in the check-in panel (buttons); they may appear in the queue grid
-  await expect(page.getByRole('button', { name: 'Advanced E1', exact: false })).toHaveCount(0)
+  // Check that Expert E1 is not in the check-in panel (buttons); they may appear in the queue grid
+  await expect(page.getByRole('button', { name: 'Expert E1', exact: false })).toHaveCount(0)
 })

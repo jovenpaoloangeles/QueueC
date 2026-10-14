@@ -1,14 +1,24 @@
-import { Router } from 'express'
+import { Hono } from 'hono'
 import db from '../db.js'
 
-const router = Router()
+const router = new Hono()
 const clients = new Set()
 
 export function broadcast() {
   if (clients.size === 0) return
   const payload = currentState()
-  const data = `event: state\ndata: ${JSON.stringify(payload)}\n\n`
-  for (const res of clients) res.write(data)
+  const data = `event: state
+data: ${JSON.stringify(payload)}
+
+`
+  for (const ctrl of clients) {
+    try {
+      ctrl.write(data)
+      ctrl.flush()
+    } catch {
+      clients.delete(ctrl)
+    }
+  }
 }
 
 function currentState() {
@@ -63,17 +73,38 @@ function currentState() {
   }
 }
 
-router.get('/', (req, res) => {
-  res.setHeader('Content-Type', 'text/event-stream')
-  res.setHeader('Cache-Control', 'no-cache')
-  res.setHeader('Connection', 'keep-alive')
-  res.flushHeaders()
+router.get('/', (c) => {
+  let ctrl
+  const stream = new ReadableStream({
+    type: 'direct',
+    pull(controller) {
+      ctrl = controller
+      clients.add(ctrl)
+      // Send immediately on connect
+      ctrl.write(`event: state
+data: ${JSON.stringify(currentState())}
 
-  // Send immediately on connect
-  res.write(`event: state\ndata: ${JSON.stringify(currentState())}\n\n`)
-  clients.add(res)
+`)
+      ctrl.flush()
+      return new Promise((resolve) => {
+        c.req.raw.signal.addEventListener('abort', () => {
+          clients.delete(ctrl)
+          resolve()
+        })
+      })
+    },
+    cancel() {
+      clients.delete(ctrl)
+    }
+  })
 
-  req.on('close', () => clients.delete(res))
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    }
+  })
 })
 
 export default router

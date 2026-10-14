@@ -1,10 +1,10 @@
-import { Router } from 'express'
+import { Hono } from 'hono'
 import db from '../db.js'
 
-const router = Router()
+const router = new Hono()
 
-router.get('/sessions/:id/stats', (req, res) => {
-  const sid = req.params.id
+router.get('/sessions/:id/stats', (c) => {
+  const sid = c.req.param('id')
   const now = Math.floor(Date.now() / 1000)
 
   const player_count = db.prepare(
@@ -41,11 +41,11 @@ router.get('/sessions/:id/stats', (req, res) => {
     LIMIT 5
   `).all(sid)
 
-  res.json({ stats: { player_count, match_count, avg_wait_seconds, leaderboard } })
+  return c.json({ stats: { player_count, match_count, avg_wait_seconds, leaderboard } })
 })
 
-router.get('/players/:id/history', (req, res) => {
-  const pid = req.params.id
+router.get('/players/:id/history', (c) => {
+  const pid = c.req.param('id')
 
   const rows = db.prepare(`
     SELECT
@@ -63,7 +63,7 @@ router.get('/players/:id/history', (req, res) => {
     (r.team === 2 && r.team2_score > r.team1_score)
   ).length
 
-  res.json({ history: { wins, losses: rows.length - wins, matches_played: rows.length } })
+  return c.json({ history: { wins, losses: rows.length - wins, matches_played: rows.length } })
 })
 
 export default router

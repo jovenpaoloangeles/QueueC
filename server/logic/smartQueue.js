@@ -1,4 +1,25 @@
-const SKILL_MAP = { newbie: 1, beginner: 2, intermediate: 3, upper_intermediate: 4, advanced: 5 }
+// 7-tier skill weights (100–700) + legacy 'advanced' alias (600)
+export const SKILL_WEIGHT_MAP = {
+  newbie: 100,
+  beginner: 200,
+  lower_intermediate: 300,
+  intermediate: 400,
+  upper_intermediate: 500,
+  expert: 600,
+  advanced: 600,
+  professional: 700,
+}
+
+const SKILL_MAP = {
+  newbie: 1,
+  beginner: 2,
+  lower_intermediate: 3,
+  intermediate: 4,
+  upper_intermediate: 5,
+  expert: 6,
+  advanced: 6,
+  professional: 7,
+}
 
 function waitSeconds(entry) {
   const now = Math.floor(Date.now() / 1000)
@@ -6,7 +27,7 @@ function waitSeconds(entry) {
 }
 
 function skillValue(entry) {
-  return SKILL_MAP[entry.skill_level] ?? 3
+  return SKILL_MAP[entry.skill_level] ?? 4
 }
 
 // For singles: return the 2 entries with longest wait

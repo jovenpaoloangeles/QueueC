@@ -20,12 +20,35 @@ export function fmtMins(s) {
   return `${Math.floor(Math.max(0, s ?? 0) / 60)}m`
 }
 
-// ponytail: five static class pairs in one place beats five CSS variables
-export const SKILL_BADGE = {
-  newbie: 'bg-zinc-100 text-zinc-700',
-  beginner: 'bg-amber-100 text-amber-800',
-  intermediate: 'bg-blue-100 text-blue-800',
-  upper_intermediate: 'bg-green-100 text-green-800',
-  advanced: 'bg-emerald-100 text-emerald-800',
+// 7-Tier Skill Taxonomy (plus legacy 'advanced' alias)
+export const SKILL_TIERS = [
+  'newbie',
+  'beginner',
+  'lower_intermediate',
+  'intermediate',
+  'upper_intermediate',
+  'expert',
+  'professional',
+]
+
+export const SKILL_WEIGHTS = {
+  newbie: 100,
+  beginner: 200,
+  lower_intermediate: 300,
+  intermediate: 400,
+  upper_intermediate: 500,
+  expert: 600,
+  advanced: 600,
+  professional: 700,
 }
 
+export const SKILL_BADGE = {
+  newbie: 'bg-slate-100 text-slate-700',              // #64748B Slate / Gray (100)
+  beginner: 'bg-sky-100 text-sky-800',                // #0EA5E9 Sky Blue (200)
+  lower_intermediate: 'bg-emerald-100 text-emerald-800', // #10B981 Emerald Green (300)
+  intermediate: 'bg-amber-100 text-amber-800',        // #F59E0B Amber / Gold (400)
+  upper_intermediate: 'bg-orange-100 text-orange-800',// #F97316 Orange (500)
+  expert: 'bg-rose-100 text-rose-800',                // #E11D48 Rose / Crimson (600)
+  advanced: 'bg-rose-100 text-rose-800',              // legacy alias → Expert
+  professional: 'bg-purple-100 text-purple-800',      // #7C3AED Royal Purple (700)
+}

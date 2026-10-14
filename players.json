@@ -7,6 +7,8 @@
   { "name": "Beginner B2", "skill_level": "beginner" },
   { "name": "Beginner B3", "skill_level": "beginner" },
   { "name": "Beginner B4", "skill_level": "beginner" },
+  { "name": "Lower C1", "skill_level": "lower_intermediate" },
+  { "name": "Lower C2", "skill_level": "lower_intermediate" },
   { "name": "Inter C1", "skill_level": "intermediate" },
   { "name": "Inter C2", "skill_level": "intermediate" },
   { "name": "Inter C3", "skill_level": "intermediate" },
@@ -15,8 +17,8 @@
   { "name": "Upper D2", "skill_level": "upper_intermediate" },
   { "name": "Upper D3", "skill_level": "upper_intermediate" },
   { "name": "Upper D4", "skill_level": "upper_intermediate" },
-  { "name": "Advanced E1", "skill_level": "advanced" },
-  { "name": "Advanced E2", "skill_level": "advanced" },
-  { "name": "Advanced E3", "skill_level": "advanced" },
-  { "name": "Advanced E4", "skill_level": "advanced" }
+  { "name": "Expert E1", "skill_level": "expert" },
+  { "name": "Expert E2", "skill_level": "expert" },
+  { "name": "Pro F1", "skill_level": "professional" },
+  { "name": "Pro F2", "skill_level": "professional" }
 ]

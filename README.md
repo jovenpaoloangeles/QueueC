@@ -19,18 +19,18 @@ A self-hosted badminton queue manager for gym sessions. One screen, one queue ma
 | Layer | Tech |
 |-------|------|
 | Frontend | React 18, Vite, Tailwind CSS v4, shadcn/ui (Base UI) |
-| Backend | Node.js (ESM), Express |
-| Database | SQLite via `better-sqlite3` |
+| Backend | Bun, Hono |
+| Database | SQLite via `bun:sqlite` |
 | Real-time | Server-Sent Events |
 
 ## Local Development
 
 ```bash
 # Install all deps (root + server + client)
-npm run install:all
+bun run install:all
 
 # Start server (port 3001) + client dev server (port 3003) concurrently
-npm run dev
+bun run dev
 ```
 
 The client dev server proxies `/api` to `localhost:3001`. Open `http://localhost:3003`.
@@ -69,9 +69,9 @@ services:
 ```
 QueueC/
 ├── server/
-│   ├── index.js          # Express app entry
-│   ├── db.js             # SQLite setup and migrations
-│   └── routes/           # sessions, players, queue, matches, stats, sse
+│   ├── index.js          # Hono + Bun.serve app entry
+│   ├── db.js             # SQLite setup and migrations (bun:sqlite)
+│   └── routes/           # sessions, players, queue, matches, stats, sse, courts
 ├── client/
 │   └── src/
 │       ├── App.jsx

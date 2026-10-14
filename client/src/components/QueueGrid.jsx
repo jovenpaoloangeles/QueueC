@@ -7,7 +7,7 @@ import PlayerCard from './PlayerCard.jsx'
 import RestingTray from './RestingTray.jsx'
 import { checkinPlayer, getPlayers, getSuggestion, setEntryStatus } from '../api.js'
 
-export default function QueueGrid({ session, queue, waitSeconds, selection, onSelectionChange, onReorder, playersVersion = 0 }) {
+export default function QueueGrid({ session, queue, waitSeconds, playSeconds, selection, onSelectionChange, onReorder, playersVersion = 0 }) {
   const [mode, setMode] = useState('smart')
   const [allPlayers, setAllPlayers] = useState([])
   const [playersLoading, setPlayersLoading] = useState(true)
@@ -148,6 +148,7 @@ export default function QueueGrid({ session, queue, waitSeconds, selection, onSe
             key={entry.id}
             entry={entry}
             waitSecs={waitSeconds.get(entry.id) ?? 0}
+            playSecs={playSeconds?.get(entry.id) ?? 0}
             selectionIndex={selection.indexOf(entry.id)}
             onClick={e => e.shiftKey ? bench(entry.id) : toggleSelect(entry.id)}
             onDropOn={handleDropOnPlayer}
