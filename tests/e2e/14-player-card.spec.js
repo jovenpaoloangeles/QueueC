@@ -1,6 +1,7 @@
 // tests/e2e/14-player-card.spec.js
 import { test, expect } from '@playwright/test'
-import { BASE, fullSetup } from '../helpers.js'
+import { execSync } from 'node:child_process'
+import { BASE, fullSetup, getQueueNames, startDoubles, endMatch } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
   const { session } = await (await page.request.get(`${BASE}/api/sessions/active`)).json()
@@ -27,4 +28,22 @@ test('14.2 wait timer increments each second', async ({ page }) => {
 test('14.4 selection badge shows 1-based index', async ({ page }) => {
   for (let i = 0; i < 3; i++) await page.locator('[data-entry-id]').nth(i).click()
   await expect(page.locator('[class*="rounded-full"][class*="bg-primary"]').locator('text=3')).toBeVisible()
+})
+
+test('14.3 playing players absent from queue grid', async ({ page }) => {
+  const names = await getQueueNames(page)
+  const playing = names.slice(0, 4)
+  await startDoubles(page)
+  const now = await getQueueNames(page)
+  for (const p of playing) expect(now).not.toContain(p)
+  expect(now.length).toBe(4)
+})
+
+test('14.5 after returning from a match, min played reflects duration', async ({ page }) => {
+  const name = (await getQueueNames(page))[0].trim() // first waiting player → played in startDoubles
+  await startDoubles(page)
+  // backdate via sqlite so the ended duration is ~10 min (WAL: server sees the write)
+  execSync(`sqlite3 /tmp/queuec-test.db "UPDATE matches SET started_at = started_at - 600 WHERE ended_at IS NULL"`)
+  await endMatch(page, 'Court')
+  await expect(page.locator('[data-entry-id]').filter({ hasText: name })).toContainText('10m played')
 })

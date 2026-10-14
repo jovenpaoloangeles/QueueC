@@ -17,7 +17,10 @@ export async function createSession(page, { name = 'Test Session', courts = 2 } 
 
 export async function checkinPlayers(page, names = DEFAULT_PLAYERS) {
   for (const name of names) {
-    await page.getByRole('button', { name, exact: false }).first().click()
+    const btn = page.getByRole('button', { name, exact: false }).first()
+    // center the button — minimal scroll leaves lower rows under the sticky header
+    await btn.evaluate(el => el.scrollIntoView({ block: 'center' }))
+    await btn.click()
     await page.waitForTimeout(200) // allow SSE to propagate
   }
 }
@@ -52,4 +55,34 @@ export async function getQueueNames(page) {
   return page.locator('[data-entry-id]').evaluateAll(els =>
     els.map(el => el.querySelector('.text-base.font-medium')?.textContent?.trim()).filter(Boolean)
   )
+}
+
+/** Synthetic HTML5 drag between two elements (CSS selectors).
+ *  Playwright's dragTo does NOT fire React's HTML5 drag handlers; native
+ *  DragEvents dispatched on the elements do. dataTransfer must be attached
+ *  via defineProperty — the DragEvent constructor silently drops it.
+ *  toIndex: -1 = last matching element (default). */
+export async function syntheticDrag(page, fromSel, toSel, { fromIndex = 0, toIndex = -1 } = {}) {
+  await page.evaluate(({ fromSel, toSel, fromIndex, toIndex }) => {
+    const all = document.querySelectorAll(fromSel)
+    const from = all[fromIndex < 0 ? all.length + fromIndex : fromIndex]
+    const toAll = document.querySelectorAll(toSel)
+    const to = toAll[toIndex < 0 ? toAll.length + toIndex : toIndex]
+    const mk = type => {
+      const ev = new DragEvent(type, { bubbles: true, cancelable: true })
+      Object.defineProperty(ev, 'dataTransfer', { value: new DataTransfer() })
+      return ev
+    }
+    from.dispatchEvent(mk('dragstart'))
+    to.dispatchEvent(mk('dragover'))
+    to.dispatchEvent(mk('drop'))
+    from.dispatchEvent(mk('dragend'))
+  }, { fromSel, toSel, fromIndex, toIndex })
+}
+
+/** Click-select the first n queue cards, then Start Match (court 1). */
+export async function startDoubles(page) {
+  for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
+  await page.getByRole('button', { name: 'Start Match' }).first().click()
+  await page.waitForTimeout(500)
 }

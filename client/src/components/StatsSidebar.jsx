@@ -9,7 +9,7 @@ import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 
 const SKILL_LEVELS = ['newbie', 'beginner', 'intermediate', 'upper_intermediate', 'advanced']
 
-export default function StatsSidebar({ stats }) {
+export default function StatsSidebar({ stats, onPlayerAdded }) {
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState({ name: '', skill_level: 'intermediate' })
   const [saving, setSaving] = useState(false)
@@ -21,6 +21,7 @@ export default function StatsSidebar({ stats }) {
     setForm({ name: '', skill_level: 'intermediate' })
     setSaving(false)
     setShowAdd(false)
+    onPlayerAdded?.()
   }
 
   const tiles = [

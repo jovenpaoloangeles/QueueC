@@ -1,6 +1,6 @@
 // tests/e2e/10-smart-manual-mode.spec.js
 import { test, expect } from '@playwright/test'
-import { BASE, fullSetup } from '../helpers.js'
+import { BASE, fullSetup, endMatch } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
   const { session } = await (await page.request.get(`${BASE}/api/sessions/active`)).json()
@@ -40,4 +40,16 @@ test('10.6 switch back to Smart re-populates', async ({ page }) => {
   const selected = page.locator('[class*="ring-2"][class*="ring-primary"]')
   const count = await selected.count()
   expect(count).toBeGreaterThanOrEqual(2)
+})
+
+test('10.3 smart re-suggests after match ends and queue changes', async ({ page }) => {
+  await page.getByRole('button', { name: '● Smart' }).click()
+  await page.waitForTimeout(800)
+  await page.getByRole('button', { name: 'Start Match' }).first().click()
+  await page.waitForTimeout(500)
+  // tweak the auto-selection, then end the match — re-suggestion must overwrite the tweak
+  await page.locator('[class*="ring-2"][class*="ring-primary"]').first().click()
+  await expect(page.locator('text=3 selected')).toBeVisible()
+  await endMatch(page, 'Court')
+  await expect(page.locator('text=4 selected → Doubles')).toBeVisible({ timeout: 5000 })
 })

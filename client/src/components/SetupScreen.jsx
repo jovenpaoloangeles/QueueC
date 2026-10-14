@@ -63,8 +63,10 @@ export default function SetupScreen({ session, queue, courts }) {
   }
 
   return (
-    <div className="flex flex-1 items-center justify-center overflow-y-auto p-4">
-      <Card className="w-full max-w-xl border-border bg-card shadow-sm">
+    <div className="flex flex-1 overflow-y-auto p-4">
+      {/* m-auto not items-center: centered flex overflow clips the card's top under
+          the header once the pool is tall, making top buttons unclickable */}
+      <Card className="m-auto w-full max-w-xl border-border bg-card shadow-sm">
         <CardHeader className="gap-1">
           <CardTitle className="text-lg">Session Setup</CardTitle>
           <span className="text-2xs uppercase tracking-wider text-muted-foreground">

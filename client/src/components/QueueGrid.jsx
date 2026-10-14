@@ -7,7 +7,7 @@ import PlayerCard from './PlayerCard.jsx'
 import RestingTray from './RestingTray.jsx'
 import { checkinPlayer, getPlayers, getSuggestion, setEntryStatus } from '../api.js'
 
-export default function QueueGrid({ session, queue, waitSeconds, selection, onSelectionChange, onReorder }) {
+export default function QueueGrid({ session, queue, waitSeconds, selection, onSelectionChange, onReorder, playersVersion = 0 }) {
   const [mode, setMode] = useState('smart')
   const [allPlayers, setAllPlayers] = useState([])
   const [playersLoading, setPlayersLoading] = useState(true)
@@ -29,9 +29,11 @@ export default function QueueGrid({ session, queue, waitSeconds, selection, onSe
     getPlayers()
       .then(d => setAllPlayers(d.players))
       .finally(() => setPlayersLoading(false))
-  }, [])
+  }, [playersVersion])
 
-  // Apply smart suggestion when mode switches to smart or queue changes
+  // Apply smart suggestion when mode switches to smart or the waiting set
+  // changes (queue.length never changes — playing entries stay in the array)
+  const waitingSig = queue.filter(e => e.status === 'waiting').map(e => e.id).join(',')
   useEffect(() => {
     if (mode !== 'smart' || !session) return
     const waiting = queue.filter(e => e.status === 'waiting')
@@ -39,7 +41,7 @@ export default function QueueGrid({ session, queue, waitSeconds, selection, onSe
     getSuggestion(session.id, modeStr).then(d => {
       if (d.suggestion?.length) onSelectionChange(d.suggestion.filter(Boolean))
     })
-  }, [mode, queue.length, session?.id])
+  }, [mode, waitingSig, session?.id])
 
   function toggleSelect(entryId) {
     if (selection.includes(entryId)) {

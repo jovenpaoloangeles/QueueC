@@ -12,7 +12,7 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 - [x] 1.3 "Start New Session" CTA button visible
 - [x] 1.4 Courts and queue areas absent
 - [x] 1.5 "+ Session" button in header also opens modal
-- [ ] 1.6 Page title / tab shows expected app name
+- [x] 1.6 Page title / tab shows expected app name
 
 ### 02 · Create session modal
 - [x] 2.1 Click "+ Session" — modal opens with default field values pre-filled
@@ -66,7 +66,7 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 - [x] 6.3 Select 4 — "4 selected → Doubles" shown
 - [x] 6.4 5th click does nothing (selection stays at 4)
 - [x] 6.5 Click selected player — deselects; counter decrements
-- [ ] 6.6 Selection persists while navigating between courts
+- [x] 6.6 Selection persists while navigating between courts
 - [x] 6.7 Selection badges show correct sequential numbers (1, 2, 3, 4)
 
 ### 07 · Starting a match
@@ -79,12 +79,12 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 - [x] 7.7 Court shows match format badge (singles/doubles)
 - [x] 7.8 Court shows elapsed match timer from 0:00
 - [x] 7.9 Match timer increments each second
-- [ ] 7.10 Drag 1 player to court — arms court, adds to selection
-- [ ] 7.11 Armed court shows player names in pill
-- [ ] 7.12 Armed court with 2 shows "Start Singles" button
-- [ ] 7.13 Drag 4th player to armed court — match auto-starts
-- [ ] 7.14 Drag playing player to court — rejected (invalid drop zone visual)
-- [ ] 7.15 Drag resting player to court — rejected
+- [x] 7.10 Drag 1 player to court — arms court, adds to selection
+- [x] 7.11 Armed court shows player names in pill
+- [x] 7.12 Armed court with 2 shows "Start Singles" button
+- [x] 7.13 Drag 4th player to armed court — match auto-starts
+- [x] 7.14 Drag playing player to court — rejected (invalid drop zone visual)
+- [x] 7.15 Drag resting player to court — rejected
 - [x] 7.16 Two courts can each have a match running simultaneously
 
 ### 08 · Ending a match
@@ -93,33 +93,33 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 - [x] 8.3 Score inputs default to 0
 - [x] 8.4 Score inputs accept values 0–99
 - [x] 8.5 Confirm — players returned to queue as "waiting"
-- [ ] 8.6 Returned players visible in queue grid
+- [x] 8.6 Returned players visible in queue grid
 - [x] 8.7 Court card returns to empty/idle state after confirm
-- [ ] 8.8 Match count stat tile increments
-- [ ] 8.9 `total_seconds_played` on player card updates (shows "X min played")
+- [x] 8.8 Match count stat tile increments
+- [x] 8.9 `total_seconds_played` on player card updates (shows "X min played")
 - [x] 8.10 Cancel — modal closes; match remains running
 - [x] 8.11 Score 0–0 accepted (no validation block)
-- [ ] 8.12 Team 1 win — winning team's players gain wins in leaderboard
-- [ ] 8.13 Tie score — no leaderboard win recorded for either side
+- [x] 8.12 Team 1 win — winning team's players gain wins in leaderboard
+- [x] 8.13 Tie score — no leaderboard win recorded for either side
 
 ### 09 · Queue management — reorder & resting
-- [ ] 9.1 Drag player A before player B — new order reflected in grid
-- [ ] 9.2 SSE push (1s tick) does not reset manual reorder
-- [ ] 9.3 Newly checked-in player appended to end of existing order
+- [x] 9.1 Drag player A before player B — new order reflected in grid
+- [x] 9.2 SSE push (1s tick) does not reset manual reorder
+- [x] 9.3 Newly checked-in player appended to end of existing order
 - [x] 9.4 Shift-click — player moves to resting tray
 - [x] 9.5 Resting tray shows benched player chip
 - [x] 9.6 Resting player absent from waiting queue grid
-- [ ] 9.7 Resting player absent from selection candidates
+- [x] 9.7 Resting player absent from selection candidates
 - [x] 9.8 Click "Return" chip — player back in waiting queue
-- [ ] 9.9 Drag player card to resting tray — benches them
-- [ ] 9.10 Drag resting chip back to queue — returns them to waiting
+- [x] 9.9 Drag player card to resting tray — benches them
+- [x] 9.10 Drag resting chip back to queue — returns them to waiting
 - [x] 9.11 Bench a selected player — removed from selection
 - [x] 9.12 Tray shows placeholder text "Drop a player here…" when empty
 
 ### 10 · Smart / Manual mode
 - [x] 10.1 Smart mode button active by default
 - [x] 10.2 Smart mode auto-populates selection on load (≥4 waiting players)
-- [ ] 10.3 Smart mode re-suggests after a match ends and queue changes
+- [x] 10.3 Smart mode re-suggests after a match ends and queue changes
 - [x] 10.4 Switch to Manual — selection cleared
 - [x] 10.5 Manual mode: clicks select freely up to 4
 - [x] 10.6 Switch back to Smart — selection auto-populated again
@@ -136,37 +136,37 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 - [x] 12.2 Uncheck "Open" — court card hidden from live view
 - [x] 12.3 Re-check "Open" — court card reappears
 - [x] 12.4 Disabling a court mid-match does not end the match
-- [ ] 12.5 Drag player from court team 1 to team 2 — teams rearranged
-- [ ] 12.6 Drag team 1 panel to team 2 — full team swap
-- [ ] 12.7 Drag own-team player to own team — no change
+- [x] 12.5 Drag player from court team 1 to team 2 — teams rearranged
+- [x] 12.6 Drag team 1 panel to team 2 — full team swap
+- [x] 12.7 Drag own-team player to own team — no change
 - [x] 12.8 Multiple courts: matches on two courts independent
 
 ### 13 · Stats sidebar
 - [x] 13.1 Player count tile matches number checked in
 - [x] 13.2 Match count tile starts at 0
 - [x] 13.3 Match count increments by 1 after each match ends
-- [ ] 13.4 Avg wait tile shows "—" or 0 before any match ends
-- [ ] 13.5 Avg wait shows a time string after first match ends
-- [ ] 13.6 Leaderboard empty before any match ends
-- [ ] 13.7 Winner of first match appears in leaderboard with 1 win
-- [ ] 13.8 Player with most wins ranks first in leaderboard
+- [x] 13.4 Avg wait tile shows 00:00 (mm:ss) before any match ends
+- [x] 13.5 Avg wait shows a time string after first match ends
+- [x] 13.6 Leaderboard empty before any match ends
+- [x] 13.7 Winner of first match appears in leaderboard with 1 win
+- [x] 13.8 Player with most wins ranks first in leaderboard
 - [x] 13.9 "+ Add Player" link shows add-player form
-- [ ] 13.10 Add player form has name field and skill-level select
+- [x] 13.10 Add player form has name field and skill-level select
 - [x] 13.11 Skill-level select has all 5 options
-- [ ] 13.12 Submit add-player form — player appears in check-in pool
-- [ ] 13.13 Added player persists across page reload
+- [x] 13.12 Submit add-player form — player appears in check-in pool
+- [x] 13.13 Added player persists across page reload
 
 ### 14 · Player card details
 - [x] 14.1 Player card shows name, skill badge, wait timer, minutes played
 - [x] 14.2 Wait timer increments each second for waiting players
-- [ ] 14.3 Playing players absent from queue grid (not visible)
+- [x] 14.3 Playing players absent from queue grid (not visible)
 - [x] 14.4 Selection number badge shows correct 1-based index
-- [ ] 14.5 After returning from a match, "X min played" reflects match duration
+- [x] 14.5 After returning from a match, "X min played" reflects match duration
 
 ### 15 · Header
 - [x] 15.1 Session name shown in header during active session
 - [x] 15.2 Scheduled time range (start–end) shown in header
-- [ ] 15.3 Elapsed timer badge (●) visible after session starts
+- [x] 15.3 Elapsed timer badge (●) visible after session starts
 - [x] 15.4 Elapsed timer not visible during setup (not-started)
 - [x] 15.5 "+ Session" button always visible in header
 
@@ -180,16 +180,16 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 - [x] 17.1 1-court session — single court card fills the courts band
 - [x] 17.2 2-court session — 2 columns in courts band
 - [x] 17.3 5-court session — 3-column grid in courts band
-- [ ] 17.4 Stats sidebar scrollable when leaderboard is long
-- [ ] 17.5 Queue grid scrollable when many players waiting
+- [x] 17.4 Stats sidebar scrollable when leaderboard is long
+- [x] 17.5 Queue grid scrollable when many players waiting
 
 ### 18 · Error states & edge cases
 - [x] 18.1 Page reload mid-session — session, queue, and matches restored via SSE
-- [ ] 18.2 Server restart — SSE reconnects and state resumes
-- [ ] 18.3 Starting match on disabled court not possible (no court card shown)
+- [x] 18.2 Server restart — SSE reconnects and state resumes
+- [x] 18.3 Starting match on disabled court not possible (no court card shown)
 - [x] 18.4 Empty queue — queue grid shows empty state message
-- [ ] 18.5 All players playing — queue grid empty; resting tray empty
-- [ ] 18.6 End session with active match — session ends; match state preserved in DB
+- [x] 18.5 All players playing — queue grid empty; resting tray empty
+- [x] 18.6 End session with active match — session ends; match state preserved in DB
 
 ### 19 · Queue master — real session scenarios
 - [x] QM.1  Late player joins mid-match — check in via live panel, immediately visible in queue
@@ -239,26 +239,26 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 
 | Area | Scenarios | Done |
 |------|-----------|------|
-| Landing | 6 | 5 |
+| Landing | 6 | 6 |
 | Create session modal | 10 | 10 |
 | Session lifecycle | 10 | 10 |
 | Check-in (setup) | 8 | 8 |
 | Courts (setup) | 10 | 10 |
-| Queue selection | 7 | 6 |
-| Match start | 16 | 10 |
-| Match end | 13 | 8 |
-| Queue reorder & resting | 12 | 6 |
-| Smart / Manual mode | 6 | 5 |
+| Queue selection | 7 | 7 |
+| Match start | 16 | 16 |
+| Match end | 13 | 13 |
+| Queue reorder & resting | 12 | 12 |
+| Smart / Manual mode | 6 | 6 |
 | Live check-in | 5 | 5 |
-| Live court controls | 8 | 5 |
-| Stats sidebar | 13 | 5 |
-| Player card details | 5 | 3 |
-| Header | 5 | 4 |
+| Live court controls | 8 | 8 |
+| Stats sidebar | 13 | 13 |
+| Player card details | 5 | 5 |
+| Header | 5 | 5 |
 | Accessibility & keyboard | 4 | 4 |
-| Responsiveness & layout | 5 | 3 |
-| Error states & edge cases | 6 | 2 |
+| Responsiveness & layout | 5 | 5 |
+| Error states & edge cases | 6 | 6 |
 | Queue master scenarios | 10 | 10 |
 | Unit: dnd.valid | 11 | 11 |
 | Unit: api.error | 4 | 4 |
 | Unit: timer | 5 | 5 |
-| **Total** | **184** | **139** |
+| **Total** | **184** | **184** |

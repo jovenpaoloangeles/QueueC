@@ -32,3 +32,7 @@ test('1.5 Header "+ Session" button opens modal', async ({ page }) => {
   await page.getByRole('button', { name: '+ Session' }).click()
   await expect(page.getByRole('dialog')).toBeVisible()
 })
+
+test('1.6 page title is QueueC', async ({ page }) => {
+  await expect(page).toHaveTitle('QueueC')
+})

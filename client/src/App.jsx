@@ -15,6 +15,7 @@ export default function App() {
   const [showCreate, setShowCreate] = useState(false)
   const [selection, setSelection] = useState([])
   const [armedCourt, setArmedCourt] = useState(null)
+  const [playersVersion, setPlayersVersion] = useState(0) // bumped after add-player so the pool refetches
 
   const { session, queue, activeMatches, courts, stats } = sseData
 
@@ -94,11 +95,12 @@ export default function App() {
                 selection={selection}
                 onSelectionChange={setSelection}
                 onReorder={handleReorder}
+                playersVersion={playersVersion}
               />
             </div>
           </main>
           <aside className="w-72 shrink-0 overflow-y-auto border-l border-border bg-card">
-            <StatsSidebar stats={stats} />
+            <StatsSidebar stats={stats} onPlayerAdded={() => setPlayersVersion(v => v + 1)} />
           </aside>
         </div>
       )}

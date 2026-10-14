@@ -1,6 +1,6 @@
 // tests/e2e/07-match-start.spec.js
 import { test, expect } from '@playwright/test'
-import { BASE, fullSetup } from '../helpers.js'
+import { BASE, fullSetup, getQueueNames, syntheticDrag, startDoubles } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
   const { session } = await (await page.request.get(`${BASE}/api/sessions/active`)).json()
@@ -82,4 +82,58 @@ test('7.16 two courts run simultaneously', async ({ page }) => {
   await page.getByRole('button', { name: 'Start Match' }).first().click()
   await page.waitForTimeout(600)
   await expect(page.locator('text=End Match')).toHaveCount(2)
+})
+
+// 7.10–7.13: drag-to-court arming. Court drop handler lives on the inactive
+// court's CardContent; last [data-drop^="court-"] is court 2's content area.
+test('7.10 drag 1 player to court — arms court, adds to selection', async ({ page }) => {
+  const name = (await getQueueNames(page))[0]
+  await syntheticDrag(page, '[data-entry-id]', '[data-drop^="court-"]', { toIndex: -1 })
+  await expect(page.locator('[data-drop^="court-"]').last().locator(`text=${name}`)).toBeVisible()
+  await expect(page.locator('text=1 selected')).toBeVisible()
+})
+
+test('7.11 armed court shows player names in pill', async ({ page }) => {
+  const names = await getQueueNames(page)
+  await syntheticDrag(page, '[data-entry-id]', '[data-drop^="court-"]', { toIndex: -1 })
+  const pill = page.locator('[data-drop^="court-"]').last().locator('span.rounded-full, [class*="rounded-full"]').filter({ hasText: names[0] })
+  await expect(pill.first()).toContainText(names[0])
+})
+
+test('7.12 armed court with 2 shows Start Singles', async ({ page }) => {
+  const names = await getQueueNames(page)
+  await syntheticDrag(page, '[data-entry-id]', '[data-drop^="court-"]', { toIndex: -1 })
+  await syntheticDrag(page, '[data-entry-id]', '[data-drop^="court-"]', { fromIndex: 1, toIndex: -1 })
+  await expect(page.getByRole('button', { name: 'Start Singles' })).toBeVisible()
+  await expect(page.locator('[data-drop^="court-"]').last().locator('text=/ \\+ /')).toContainText(names[1])
+})
+
+test('7.13 drag 4th player to armed court — match auto-starts', async ({ page }) => {
+  await syntheticDrag(page, '[data-entry-id]', '[data-drop^="court-"]', { toIndex: -1 })
+  await syntheticDrag(page, '[data-entry-id]', '[data-drop^="court-"]', { fromIndex: 1, toIndex: -1 })
+  await syntheticDrag(page, '[data-entry-id]', '[data-drop^="court-"]', { fromIndex: 2, toIndex: -1 })
+  await syntheticDrag(page, '[data-entry-id]', '[data-drop^="court-"]', { fromIndex: 3, toIndex: -1 })
+  // 4 players dropped → auto-start
+  await expect(page.getByRole('button', { name: 'End Match' })).toHaveCount(1)
+  await expect(page.locator('[data-entry-id]')).toHaveCount(4)
+})
+
+test('7.14 drag playing player to idle court — rejected', async ({ page }) => {
+  await startDoubles(page)
+  // court 2 is idle; drag a player from court 1's team panel onto it
+  await syntheticDrag(page, '[data-team-side="1"] span', '[data-drop^="court-"]', { fromIndex: -1, toIndex: -1 })
+  // no arm: no pill / Start Singles on court 2, court 1 teams unchanged
+  await expect(page.getByRole('button', { name: 'Start Singles' })).toHaveCount(0)
+  await expect(page.locator('[data-team-side="1"]')).toContainText('Inter C1')
+})
+
+test('7.15 drag resting player to court — rejected', async ({ page }) => {
+  const name = (await getQueueNames(page))[0].trim()
+  await page.locator('[data-entry-id]').first().click({ modifiers: ['Shift'] })
+  await page.waitForTimeout(400)
+  await syntheticDrag(page, '[data-drop="resting"] button', '[data-drop^="court-"]', { toIndex: -1 })
+  await expect(page.getByRole('button', { name: 'Start Singles' })).toHaveCount(0)
+  await expect(page.locator('text=selected')).toHaveCount(0)
+  // chip still benched
+  await expect(page.locator('[data-drop="resting"]')).toContainText(name)
 })

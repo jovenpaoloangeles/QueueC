@@ -32,3 +32,11 @@ test('15.5 "+ Session" always visible', async ({ page }) => {
   await startSession(page)
   await expect(page.getByRole('button', { name: '+ Session' })).toBeVisible()
 })
+
+test('15.3 elapsed timer badge visible after session starts', async ({ page }) => {
+  await createSession(page)
+  await checkinPlayers(page, ['Inter C1', 'Inter C2'])
+  await expect(page.locator('text=●')).toHaveCount(0) // not during setup
+  await startSession(page)
+  await expect(page.getByText(/● \d/)).toBeVisible()
+})

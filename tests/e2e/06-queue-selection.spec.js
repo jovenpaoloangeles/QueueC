@@ -43,3 +43,13 @@ test('6.7 badges show correct sequential numbers', async ({ page }) => {
     await expect(page.locator(`[class*="rounded-full"][class*="bg-primary"]`).locator(`text=${n}`)).toBeVisible()
   }
 })
+
+test('6.6 selection persists while interacting with courts', async ({ page }) => {
+  await page.locator('[data-entry-id]').nth(0).click()
+  await page.locator('[data-entry-id]').nth(1).click()
+  // single-page app: "navigating between courts" = interacting with court cards
+  await page.locator('text=Court 1').first().click()
+  await page.locator('text=Court 2').first().click()
+  await expect(page.locator('text=2 selected → Singles')).toBeVisible()
+  await expect(page.locator('[class*="rounded-full"][class*="bg-primary"]')).toHaveCount(2)
+})
