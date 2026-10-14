@@ -22,6 +22,9 @@ export default function App() {
   // per-court lineup drafts: { [courtId]: [team1_p1, team1_p2, team2_p1, team2_p2] }
   // drag-flow only — the click-to-select `selection` above stays untouched for that flow
   const [drafts, setDrafts] = useState({})
+  // live entry ids in the OnDeckStrip slate editor's draft — folded into
+  // draftedIds so a court draft can't hold the same entry mid-edit
+  const [slateDraftIds, setSlateDraftIds] = useState([])
   const [playersVersion, setPlayersVersion] = useState(0) // bumped after add-player so the pool refetches
   const [showAddPlayer, setShowAddPlayer] = useState(false) // dialog itself lands in Task 15
 
@@ -76,11 +79,12 @@ export default function App() {
     })
   }, [queue])
 
-  // Every entry id currently sitting in any court's draft — excluded from the
-  // header waiting count so drafted players don't look available.
+  // Every entry id currently sitting in any court's draft OR in the OnDeck
+  // strip's slate edit draft — excluded from the header waiting count so
+  // drafted players don't look available.
   const draftedIds = useMemo(
-    () => new Set(Object.values(drafts).flat().filter(Boolean)),
-    [drafts]
+    () => new Set([...Object.values(drafts).flat().filter(Boolean), ...slateDraftIds]),
+    [drafts, slateDraftIds]
   )
 
   // sel: 2 ids → singles (each on its own team), 4 ids → doubles in slot order.
@@ -204,8 +208,13 @@ export default function App() {
                 serverTime={sseData.serverTime ?? Math.floor(Date.now() / 1000)}
               />
             </div>
-            {(slatedMatches?.length ?? 0) > 0 && (
-              <OnDeckStrip slatedMatches={slatedMatches} draftedIds={draftedIds} />
+            {slatedMatches.length > 0 && (
+              <OnDeckStrip
+                slatedMatches={slatedMatches}
+                queue={queue}
+                draftedIds={draftedIds}
+                onEditDraftChange={setSlateDraftIds}
+              />
             )}
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
               <QueueGrid
