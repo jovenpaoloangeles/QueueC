@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { drag, valid, useDragSource, rearrange } from '@/lib/dnd'
 import { cn, fmtClock, fmtDur } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -207,6 +207,15 @@ export default function CourtCard({
   const toast = useToast()
   const isActive = !!match
   const secs = isActive ? (playSeconds.get(match.id) ?? 0) : 0
+
+  // A match can vanish mid-flow (ended on another client, slate promotion) —
+  // without this the stale flags would auto-open the dialog for the NEXT match
+  useEffect(() => {
+    if (!isActive) {
+      setShowEnd(false)
+      setShowConfirm(false)
+    }
+  }, [isActive])
 
   // Independent countdown expiration logic (remaining_ms = expires_at - now())
   const hasTimer = court.expires_at != null

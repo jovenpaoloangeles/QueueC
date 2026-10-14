@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { endMatch } from '../api.js'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
@@ -18,16 +18,24 @@ export default function EndMatchModal({ match, onClose }) {
   const [loading, setLoading] = useState(false)
   const toast = useToast()
 
+  // typed values bypass input min/max — clamp here so -5 or a blank field never reach the API
+  const toInt = (v, max) => {
+    const n = Math.round(Number(v))
+    if (!Number.isFinite(n)) return 0
+    return Math.min(Math.max(n, 0), max)
+  }
+
   async function submit(e) {
     e.preventDefault()
+    if (loading) return
     setLoading(true)
     try {
       await endMatch(match.id, {
-        team1_score: Number(scores.team1),
-        team2_score: Number(scores.team2),
-        new_shuttles: Number(shuttles.newShuttles),
-        used_shuttles: Number(shuttles.usedShuttles),
-        rating,
+        team1_score: toInt(scores.team1, 99),
+        team2_score: toInt(scores.team2, 99),
+        new_shuttles: toInt(shuttles.newShuttles, 999),
+        used_shuttles: toInt(shuttles.usedShuttles, 999),
+        rating: toInt(rating, 5),
       })
       onClose()
     } catch (err) {
@@ -41,6 +49,7 @@ export default function EndMatchModal({ match, onClose }) {
       <DialogContent className="sm:max-w-xs">
         <DialogHeader>
           <DialogTitle>End Match — Court {match.court_number}</DialogTitle>
+          <DialogDescription>Record the final score, shuttle usage and a 1-5 rating.</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="flex flex-col gap-4">
           <FieldGroup>
@@ -106,14 +115,22 @@ export default function EndMatchModal({ match, onClose }) {
             <FieldLabel className="text-2xs uppercase tracking-wider text-muted-foreground">
               Match Quality Rating (1-5)
             </FieldLabel>
-            <div className="flex items-center gap-1" data-rating={rating} data-testid="rating-row">
+            <div
+              role="radiogroup"
+              aria-label="Match Quality Rating"
+              className="flex items-center gap-1"
+              data-rating={rating}
+              data-testid="rating-row"
+            >
               {[1, 2, 3, 4, 5].map(i => (
                 <button
                   key={i}
                   type="button"
+                  role="radio"
                   data-testid={`rating-star-${i}`}
                   aria-label={`${i} star${i > 1 ? 's' : ''}`}
-                  aria-pressed={rating === i}
+                  aria-checked={rating === i}
+                  tabIndex={rating === i ? 0 : -1}
                   onClick={() => setRating(i)}
                   className={cn(
                     'px-0.5 text-xl leading-none transition-colors',

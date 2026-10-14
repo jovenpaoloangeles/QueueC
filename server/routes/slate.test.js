@@ -289,6 +289,22 @@ async function run() {
     })
     assert.equal(badRatingRes.status, 400, 'Expected 400 on invalid rating 9')
 
+    // Negative score → 400 (typed inputs bypass min/max client-side)
+    const badScoreRes = await fetch(`${BASE}/matches/${activeMatch.id}/end`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ team1_score: -1, team2_score: 15 })
+    })
+    assert.equal(badScoreRes.status, 400, 'Expected 400 on negative team1_score')
+
+    // Negative shuttle count → 400
+    const badShuttleRes = await fetch(`${BASE}/matches/${activeMatch.id}/end`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ team1_score: 21, team2_score: 15, new_shuttles: -2 })
+    })
+    assert.equal(badShuttleRes.status, 400, 'Expected 400 on negative new_shuttles')
+
     // PATCH /matches/:id/end with valid finalization fields → 200
     const endRes = await fetch(`${BASE}/matches/${activeMatch.id}/end`, {
       method: 'PATCH',

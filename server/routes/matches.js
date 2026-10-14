@@ -82,6 +82,18 @@ router.patch('/:id/end', async (c) => {
       return c.json({ error: 'rating must be between 1 and 5' }, 400)
     }
   }
+  for (const [name, v] of [['team1_score', team1_score], ['team2_score', team2_score]]) {
+    if (v !== undefined && v !== null &&
+        (typeof v !== 'number' || !Number.isInteger(v) || v < 0 || v > 99)) {
+      return c.json({ error: `${name} must be an integer between 0 and 99` }, 400)
+    }
+  }
+  for (const [name, v] of [['new_shuttles', new_shuttles], ['used_shuttles', used_shuttles]]) {
+    if (v !== undefined && v !== null &&
+        (typeof v !== 'number' || !Number.isInteger(v) || v < 0)) {
+      return c.json({ error: `${name} must be a non-negative integer` }, 400)
+    }
+  }
   const now = Math.floor(Date.now() / 1000)
 
   const match = db.prepare("SELECT * FROM matches WHERE id = ? AND state = 'active'").get(id)
