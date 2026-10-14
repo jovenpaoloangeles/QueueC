@@ -248,6 +248,7 @@ export default function App() {
           session={session}
           queue={queue}
           onClose={() => setShowAddPlayer(false)}
+          onPlayersChanged={() => setPlayersVersion(v => v + 1)}
         />
       )}
       {confirmNew && (

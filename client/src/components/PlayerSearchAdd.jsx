@@ -3,6 +3,7 @@ import { cn, SKILL_BADGE, SKILL_TIERS } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useToast } from '@/components/Toast'
 import { checkinPlayer, createPlayer } from '../api.js'
 
 export function SkillChip({ level }) {
@@ -20,6 +21,7 @@ export default function PlayerSearchAdd({ session, queue, players, onPlayersChan
   const [searchQuery, setSearchQuery] = useState('')
   const [newPlayerSkill, setNewPlayerSkill] = useState('intermediate')
   const [registering, setRegistering] = useState(false)
+  const toast = useToast()
 
   // Normalized search & duplicate checks
   const inQueue = new Set(queue.map(e => e.player_id))
@@ -36,9 +38,15 @@ export default function PlayerSearchAdd({ session, queue, players, onPlayersChan
     : []
 
   async function handleQuickCheckIn(playerId) {
-    await checkinPlayer(session.id, playerId).catch(() => {})
+    try {
+      await checkinPlayer(session.id, playerId)
+    } catch (err) {
+      toast(err?.data?.error ?? 'Could not check in', 'error')
+      return
+    }
     setSearchQuery('')
-    onCheckedIn?.(players.find(p => p.id === playerId) ?? { id: playerId })
+    const found = players.find(p => p.id === playerId)
+    if (found) onCheckedIn?.(found)
   }
 
   async function handleRegisterAndCheckIn(e) {
@@ -51,8 +59,10 @@ export default function PlayerSearchAdd({ session, queue, players, onPlayersChan
       await checkinPlayer(session.id, player.id)
       setSearchQuery('')
       onPlayersChanged?.()
-    } catch {
-      // ignore or refresh pool
+      onCheckedIn?.(player)
+    } catch (err) {
+      toast(err?.data?.error ?? 'Could not register player', 'error')
+      // refresh pool
       onPlayersChanged?.()
     } finally {
       setRegistering(false)
