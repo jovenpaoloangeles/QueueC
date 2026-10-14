@@ -34,10 +34,17 @@ function skillValue(entry) {
 // For doubles: find 4-player combo maximising total wait while minimising |avgSkill(t1) - avgSkill(t2)|
 // Returns [team1_p1_id, team1_p2_id|null, team2_p1_id, team2_p2_id|null]
 export function suggestPlayers(entries, mode) {
+  const GAMES_WEIGHT = 120
   const waiting = entries
     .filter(e => e.status === 'waiting')
-    .map(e => ({ ...e, wait: waitSeconds(e), skill: skillValue(e) }))
-    .sort((a, b) => b.wait - a.wait)
+    .map(e => ({
+      ...e,
+      wait: waitSeconds(e),
+      skill: skillValue(e),
+      games: e.games_played ?? 0,
+      priority: waitSeconds(e) - (e.games_played ?? 0) * GAMES_WEIGHT,
+    }))
+    .sort((a, b) => b.priority - a.priority)
 
   if (waiting.length < (mode === 'singles' ? 2 : 4)) return []
 
@@ -56,13 +63,13 @@ export function suggestPlayers(entries, mode) {
       for (let k = j + 1; k < waiting.length; k++) {
         for (let l = k + 1; l < waiting.length; l++) {
           const [a, b, c, d] = [waiting[i], waiting[j], waiting[k], waiting[l]]
-          // Try both team splits: (a+b vs c+d) and (a+c vs b+d)
-          for (const [t1, t2] of [[[a,b],[c,d]], [[a,c],[b,d]]]) {
-            const totalWait = [...t1,...t2].reduce((s, e) => s + e.wait, 0)
+          // Try all 3 team splits: (a+b vs c+d), (a+c vs b+d), and (a+d vs b+c)
+          for (const [t1, t2] of [[[a,b],[c,d]], [[a,c],[b,d]], [[a,d],[b,c]]]) {
+            const totalPriority = [...t1,...t2].reduce((s, e) => s + e.priority, 0)
             const skillDiff = Math.abs(
               (t1[0].skill + t1[1].skill) / 2 - (t2[0].skill + t2[1].skill) / 2
             )
-            const score = totalWait - skillDiff * SKILL_WEIGHT
+            const score = totalPriority - skillDiff * SKILL_WEIGHT
             if (score > bestScore) {
               bestScore = score
               best = [t1[0].id, t1[1].id, t2[0].id, t2[1].id]

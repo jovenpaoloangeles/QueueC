@@ -11,6 +11,7 @@ import slateRouter from './routes/slate.js'
 import statsRouter from './routes/stats.js'
 import sseRouter, { broadcast } from './routes/sse.js'
 import courtsRouter from './routes/courts.js'
+import automatchRouter from './routes/automatch.js'
 
 const app = new Hono()
 app.use('*', cors())
@@ -23,6 +24,7 @@ app.route('/api/matches', matchesRouter)
 app.route('/api', statsRouter)
 app.route('/api/sse', sseRouter)
 app.route('/api', courtsRouter)
+app.route('/api', automatchRouter)
 
 // Broadcast state every second for live timers
 setInterval(broadcast, 1000)
