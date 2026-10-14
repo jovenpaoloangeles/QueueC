@@ -93,19 +93,23 @@ test('7.10 drag 1 player to court — arms court, adds to selection', async ({ p
   await expect(page.locator('text=1 selected')).toBeVisible()
 })
 
-test('7.11 armed court shows player names in pill', async ({ page }) => {
+test('7.11 armed court fills slot 0 with the dropped player', async ({ page }) => {
   const names = await getQueueNames(page)
   await syntheticDrag(page, '[data-entry-id]', '[data-drop^="court-"]', { toIndex: -1 })
-  const pill = page.locator('[data-drop^="court-"]').last().locator('span.rounded-full, [class*="rounded-full"]').filter({ hasText: names[0] })
-  await expect(pill.first()).toContainText(names[0])
+  // court-level drop lands in the first empty slot of the last idle court
+  const slot0 = page.locator('[data-drop^="court-"]').last().locator('[data-testid="slot-0"]')
+  await expect(slot0).toBeVisible()
+  await expect(slot0).toContainText(names[0])
 })
 
 test('7.12 armed court with 2 shows Start Singles', async ({ page }) => {
   const names = await getQueueNames(page)
   await syntheticDrag(page, '[data-entry-id]', '[data-drop^="court-"]', { toIndex: -1 })
   await syntheticDrag(page, '[data-entry-id]', '[data-drop^="court-"]', { fromIndex: 1, toIndex: -1 })
-  await expect(page.getByRole('button', { name: 'Start Singles' })).toBeVisible()
-  await expect(page.locator('[data-drop^="court-"]').last().locator('text=/ \\+ /')).toContainText(names[1])
+  // second drop fills slot 1; exactly 2 filled slots arms Start Singles
+  const court = page.locator('[data-drop^="court-"]').last()
+  await expect(court.locator('[data-testid="slot-1"]')).toContainText(names[1])
+  await expect(page.getByTestId('btn-start-singles')).toBeVisible()
 })
 
 test('7.13 drag 4th player to armed court — match auto-starts', async ({ page }) => {

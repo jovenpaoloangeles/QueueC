@@ -1,7 +1,8 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useSSE } from './hooks/useSSE.js'
 import { useTimers } from './hooks/useTimers.js'
-import { startMatch, setQueueOrder, endSession, autoMatch } from './api.js'
+import { EMPTY_DRAFT } from './lib/dnd.js'
+import { startMatch, slateMatch, setQueueOrder, endSession, autoMatch } from './api.js'
 import { useToast } from '@/components/Toast'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -17,7 +18,9 @@ export default function App() {
   const [showCreate, setShowCreate] = useState(false)
   const [confirmNew, setConfirmNew] = useState(false) // both "+ Session" entry points gate on this
   const [selection, setSelection] = useState([])
-  const [armedCourt, setArmedCourt] = useState(null)
+  // per-court lineup drafts: { [courtId]: [team1_p1, team1_p2, team2_p1, team2_p2] }
+  // drag-flow only — the click-to-select `selection` above stays untouched for that flow
+  const [drafts, setDrafts] = useState({})
   const [playersVersion, setPlayersVersion] = useState(0) // bumped after add-player so the pool refetches
   const [showAddPlayer, setShowAddPlayer] = useState(false) // dialog itself lands in Task 15
 
@@ -35,31 +38,88 @@ export default function App() {
     }
   }
 
+  const clearDraft = useCallback(courtId => setDrafts(prev => {
+    if (!prev[courtId]?.some(Boolean)) return prev
+    return { ...prev, [courtId]: EMPTY_DRAFT }
+  }), [])
+
+  const clearSlot = useCallback((courtId, slotIdx) => setDrafts(prev => {
+    const cur = prev[courtId]
+    if (!cur || cur[slotIdx] == null) return prev
+    return { ...prev, [courtId]: cur.map((v, i) => (i === slotIdx ? null : v)) }
+  }), [])
+
+  // A new session invalidates every draft entry id (ids come from the old session's queue)
+  useEffect(() => {
+    setDrafts(prev => (Object.keys(prev).length ? {} : prev))
+  }, [session?.id])
+
+  // Every entry id currently sitting in any court's draft — excluded from the
+  // header waiting count so drafted players don't look available.
+  const draftedIds = useMemo(
+    () => new Set(Object.values(drafts).flat().filter(Boolean)),
+    [drafts]
+  )
+
+  // sel: 2 ids → singles (each on its own team), 4 ids → doubles in slot order.
+  // A failed start keeps the selection/draft so the QM can fix and retry.
   async function handleStartMatch(courtNumber, sel) {
-    if (!session) return
+    if (!session) return false
     const mapped = sel.length === 2 ? [sel[0], null, sel[1], null] : sel
     const [t1p1, t1p2, t2p1, t2p2] = mapped
-    await startMatch({
-      session_id: session.id,
-      court_number: courtNumber,
-      team1_p1: t1p1, team1_p2: t1p2 ?? null,
-      team2_p1: t2p1, team2_p2: t2p2 ?? null
-    })
-    setSelection([])
-    setArmedCourt(null) // after the await: a rejected start keeps the arm so the retry affordance survives
+    try {
+      await startMatch({
+        session_id: session.id,
+        court_number: courtNumber,
+        team1_p1: t1p1, team1_p2: t1p2 ?? null,
+        team2_p1: t2p1, team2_p2: t2p2 ?? null
+      })
+      setSelection([])
+      clearDraft(courtNumber)
+      return true
+    } catch (err) {
+      toast(err?.data?.error ?? 'Could not start match', 'error')
+      return false
+    }
   }
 
-  // arm-then-auto-start: accumulate the drop into selection; auto-start only at 4.
-  // A 5th NEW player onto a full selection is invalid — change nothing (ruling: doubles at 4, singles via button).
-  async function handleDropOnCourt(courtNumber, entryId) {
-    if (selection.length >= 4 && !selection.includes(entryId)) return
-    const next = selection.includes(entryId) ? selection : [...selection, entryId]
-    setSelection(next)
-    setArmedCourt(courtNumber)
-    if (next.length === 4) {
-      await handleStartMatch(courtNumber, next) // clears selection
-      setArmedCourt(null)
+  // Slot drop → per-court draft. Auto-start at 4 on an idle court; on an
+  // occupied court the 4th name slates the lineup for the next free court.
+  async function handleDropOnSlot(courtId, slotIdx, entryId) {
+    const draft = drafts[courtId] ?? EMPTY_DRAFT
+    if (draft[slotIdx] != null) return           // slot busy — clear it with ✕ first
+    if (draft.includes(entryId)) return          // already drafted on this court
+    if (draftedIds.has(entryId)) return          // drafted on another court
+    const next = draft.map((v, i) => (i === slotIdx ? entryId : v))
+    setDrafts(prev => ({ ...prev, [courtId]: next }))
+    if (next.filter(Boolean).length < 4) return
+
+    const occupied = activeMatches.some(m => m.court_number === courtId)
+    if (!occupied) {
+      await handleStartMatch(courtId, next) // clears the draft on success
+      return
     }
+    try {
+      await slateMatch({
+        session_id: session.id,
+        team1_p1: next[0], team1_p2: next[1],
+        team2_p1: next[2], team2_p2: next[3],
+      })
+      toast('Slated — plays on next free court', 'success')
+      clearDraft(courtId)
+    } catch (err) {
+      // keep the draft: the QM swaps the offending player and retries
+      toast(err?.data?.error ?? 'Could not slate', 'error')
+    }
+  }
+
+  // Legacy court-level drop target ([data-drop^="court-"]) → first empty slot.
+  // A full court changes nothing (doubles at 4, singles via the Start Singles button).
+  function handleDropOnCourt(courtId, entryId) {
+    const draft = drafts[courtId] ?? EMPTY_DRAFT
+    const idx = draft.findIndex(v => v == null)
+    if (idx === -1) return
+    handleDropOnSlot(courtId, idx, entryId)
   }
 
   const handleReorder = useCallback(newOrder => {
@@ -80,6 +140,7 @@ export default function App() {
       <Header
         session={session}
         sseData={sseData}
+        draftedIds={draftedIds}
         onSmartMatch={handleSmartMatch}
         onAddPlayer={() => setShowAddPlayer(true)}
         onNewSession={() => setConfirmNew(true)}
@@ -100,9 +161,13 @@ export default function App() {
                 queue={queue}
                 playSeconds={playSeconds}
                 selection={selection}
+                drafts={drafts}
+                draftedIds={draftedIds}
                 onStartMatch={handleStartMatch}
                 onDropPlayer={handleDropOnCourt}
-                armedCourt={armedCourt}
+                onDropSlot={handleDropOnSlot}
+                onClearSlot={clearSlot}
+                onClearDraft={clearDraft}
                 serverTime={sseData.serverTime ?? Math.floor(Date.now() / 1000)}
               />
             </div>
@@ -113,6 +178,7 @@ export default function App() {
                 waitSeconds={waitSeconds}
                 playSeconds={playSeconds}
                 selection={selection}
+                draftedIds={draftedIds}
                 onSelectionChange={setSelection}
                 onReorder={handleReorder}
                 playersVersion={playersVersion}

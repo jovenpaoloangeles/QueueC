@@ -3,6 +3,10 @@
  *  ponytail: module-level, no context — one operator, one window, no re-renders on dragover */
 export const drag = { current: null }
 
+/** Shared empty lineup draft: slot order = [team1_p1, team1_p2, team2_p1, team2_p2]
+ *  (Team A = slots 0,1; Team B = slots 2,3 — mockup .slotgrid). */
+export const EMPTY_DRAFT = [null, null, null, null]
+
 export function setDrag(payload) { drag.current = payload }
 export function clearDrag() { drag.current = null }
 
@@ -11,9 +15,11 @@ const ACCEPTS = {
   'resting':    p => p?.kind === 'player' && p.status === 'waiting',
   'queue':      p => p?.kind === 'player',
   'team':       p => p?.kind === 'team',
+  // a lineup slot also takes resting players — the QM is pulling them out of rest to play
+  'slot':       p => p?.kind === 'player' && (p.status === 'waiting' || p.status === 'resting'),
 }
 
-/** Can `payload` be dropped on `zone`? Zone is 'court' | 'resting' | 'queue' | 'team'. */
+/** Can `payload` be dropped on `zone`? Zone is 'court' | 'resting' | 'queue' | 'team' | 'slot'. */
 export function valid(zone, payload = drag.current) {
   return ACCEPTS[zone]?.(payload) ?? false
 }

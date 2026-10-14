@@ -67,7 +67,7 @@ test('20.6 court without duration shows no countdown', async ({ page }) => {
   await expect(page.locator('[data-testid="court-countdown"]')).toHaveCount(0)
 })
 
-test('20.7 expired idle court removed from live pool', async ({ page }) => {
+test('20.7 expired idle court stays visible with extend panel', async ({ page }) => {
   await page.getByLabel('Courts').fill('2')
   await page.getByLabel('Court 1 duration').selectOption('60')
   await page.getByRole('button', { name: 'Create Session' }).click()
@@ -84,8 +84,10 @@ test('20.7 expired idle court removed from live pool', async ({ page }) => {
     method: 'PATCH', data: { expires_at: Math.floor(Date.now() / 1000) - 60 },
   })
   await page.waitForTimeout(1200) // SSE tick
-  // idle expired court gone; court 2 (no timer) still live
-  await expect(page.locator('text=Court 1')).toHaveCount(0)
+  // expired court no longer accepts play: it stays in view as a red panel
+  // with the extend action; court 2 (no timer) is still live
+  await expect(page.locator('text=Court 1')).toBeVisible()
+  await expect(page.getByTestId('btn-extend-court')).toBeVisible()
   await expect(page.locator('text=Court 2')).toBeVisible()
 })
 
@@ -145,11 +147,12 @@ test('20.9 expired court mid-match shows Last Game badge and persists until matc
   await expect(page.locator('[data-testid="expiring-last-game-badge"]')).toBeVisible()
   await expect(page.getByRole('button', { name: 'End Match' })).toBeVisible()
 
-  // end the match → court removed from pool
+  // end the match → expired court remains in view as the extend panel
   await page.getByRole('button', { name: 'End Match' }).first().click()
   await page.getByRole('button', { name: 'Confirm' }).click()
   await page.waitForTimeout(1200)
-  await expect(page.locator('text=Court 1')).toHaveCount(0)
+  await expect(page.locator('text=Court 1')).toBeVisible()
+  await expect(page.getByTestId('btn-extend-court')).toBeVisible()
 })
 
 // --- Search-and-Add Combobox ---

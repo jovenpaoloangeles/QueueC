@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { toggleTheme } from '@/lib/theme'
 
-export default function Header({ session, sseData, onSmartMatch, onAddPlayer, onNewSession, onEndSession }) {
+export default function Header({ session, sseData, draftedIds = new Set(), onSmartMatch, onAddPlayer, onNewSession, onEndSession }) {
   const [elapsed, setElapsed] = useState(0)
 
   useEffect(() => {
@@ -30,8 +30,9 @@ export default function Header({ session, sseData, onSmartMatch, onAddPlayer, on
     (c.active_until == null || serverTime < c.active_until)
   ).length
 
-  // staged entries are excluded server-side from the SSE queue
-  const waiting = queue.filter(e => e.status === 'waiting')
+  // staged entries are excluded server-side from the SSE queue; drafted entries
+  // (sitting in a court's lineup slots) are held locally and don't read as available
+  const waiting = queue.filter(e => e.status === 'waiting' && !draftedIds.has(e.id))
   const longest = waiting.reduce(
     (best, e) => {
       const secs = serverTime - (e.checked_in_at ?? serverTime)

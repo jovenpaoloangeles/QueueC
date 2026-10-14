@@ -7,7 +7,7 @@ import PlayerCard from './PlayerCard.jsx'
 import RestingTray from './RestingTray.jsx'
 import { checkinPlayer, getPlayers, getSuggestion, setEntryStatus } from '../api.js'
 
-export default function QueueGrid({ session, queue, waitSeconds, playSeconds, selection, onSelectionChange, onReorder, playersVersion = 0 }) {
+export default function QueueGrid({ session, queue, waitSeconds, playSeconds, selection, draftedIds = new Set(), onSelectionChange, onReorder, playersVersion = 0 }) {
   const [mode, setMode] = useState('smart')
   const [allPlayers, setAllPlayers] = useState([])
   const [playersLoading, setPlayersLoading] = useState(true)
@@ -61,6 +61,8 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
   const waiting = queue.filter(e => e.status === 'waiting')
   const resting = queue.filter(e => e.status === 'resting')
   const notInSession = allPlayers.filter(p => !queue.some(e => e.player_id === p.id))
+  // click-selected OR drag-drafted players both count as "picked" for the header line
+  const pickedCount = new Set([...selection, ...draftedIds]).size
 
   const list = useMemo(() => {
     const idx = new Map(order.map((id, i) => [id, i]))
@@ -87,9 +89,9 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
       <div className="flex items-center justify-between gap-3">
         <span className="text-sm font-semibold text-foreground">
           Queue · <span className="font-mono tabular-nums">{waiting.length}</span> Waiting
-          {selection.length > 0 && (
+          {pickedCount > 0 && (
             <span className="ml-2 text-primary">
-              {selection.length} selected → {selection.length === 2 ? 'Singles' : selection.length === 4 ? 'Doubles' : '...'}
+              {pickedCount} selected → {pickedCount === 2 ? 'Singles' : pickedCount === 4 ? 'Doubles' : '...'}
             </span>
           )}
         </span>

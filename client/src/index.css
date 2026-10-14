@@ -148,3 +148,12 @@
     @apply font-sans;
     }
 }
+
+/* expired court: soft red halo breathing around the card (mockup @keyframes redpulse) */
+@layer utilities {
+  @keyframes redpulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgb(190 18 60 / 0.35); }
+    50%      { box-shadow: 0 0 0 5px rgb(190 18 60 / 0.08); }
+  }
+  .animate-redpulse { animation: redpulse 1.6s infinite; }
+}
