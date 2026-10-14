@@ -198,8 +198,11 @@ test('20.13 session duplicate blocks registration with inline error', async ({ p
   await search.fill('inter c1') // normalized duplicate (case-insensitive)
   await expect(page.locator('[data-testid="duplicate-session-error"]')).toContainText('already active in this session')
   await expect(page.locator('[data-testid="register-new-player-prompt"]')).toHaveCount(0)
-  // draft spec: duplicate attempt disables the Add button
-  await expect(page.getByRole('button', { name: 'Add Player' })).toBeDisabled()
+  // draft spec: duplicate attempt disables the Add button (scoped to the
+  // duplicate-error block — header '+ Add Player' has the same substring)
+  await expect(
+    page.locator('[data-testid="duplicate-session-error"]').getByRole('button', { name: 'Add Player' })
+  ).toBeDisabled()
 })
 
 test('20.14 database collision shows existing profile instead of duplicate create', async ({ page }) => {
