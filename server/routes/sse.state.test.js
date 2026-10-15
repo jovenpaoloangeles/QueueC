@@ -89,6 +89,9 @@ try {
   assert.ok(state.queue[0].fairness >= 0, 'Expected fairness >= 0')
   assert.equal(state.queue[0].avg_rating, 4, 'Expected avg_rating === 4')
 
+  // Fairness is net wait (rest + play aware): (600s - 150s rested) / 60 / (1+1) = 3.75
+  assert.equal(state.queue[0].fairness, 3.75, 'Expected fairness to subtract rested_seconds and total_seconds_played')
+
   // Stats check
   assert.equal(state.stats.match_count, 1, 'Expected match_count to count only active matches')
   assert.deepEqual(state.stats.shuttles, { new: 2, used: 1 }, 'Expected shuttles stats')
