@@ -149,8 +149,8 @@ function nextFreeCourt(courts, activeMatches, now) {
 
 export default function OnDeckStrip({
   slatedMatches, queue = [], draftedIds = new Set(), onEditDraftChange = NOOP,
-  onBuilderDraftChange = NOOP, selection = [], onSelectionChange = NOOP,
-  sessionId, courts = [], activeMatches = [], onSmartAdd = NOOP,
+  onBuilderDraftChange = NOOP, onSmartFill = NOOP,
+  sessionId, courts = [], activeMatches = [],
 }) {
   const toast = useToast()
   const [editingId, setEditingId] = useState(null)
@@ -255,18 +255,26 @@ export default function OnDeckStrip({
   const builderClear = idx => setNewDraft(prev => (
     prev[idx] == null ? prev : prev.map((v, i) => (i === idx ? null : v))
   ))
-  const waitingIds = new Set(queueRows.filter(e => e?.status === 'waiting').map(e => e.id))
-  const usable = selection.filter(id => waitingIds.has(id) && !newDraft.includes(id) && !draftedIds.has(id))
 
-  function fillFromSelection() {
-    if (!usable.length) { toast('Select waiting players in the queue first', 'info'); return }
-    const take = usable.slice(0, newDraft.filter(v => v == null).length)
-    setNewDraft(prev => {
-      const next = [...prev]
-      for (const id of take) next[next.indexOf(null)] = id
-      return next
-    })
-    onSelectionChange(selection.filter(id => !take.includes(id)))
+  // ✨ Smart Match: dry-run slate plan poured into the builder for review —
+  // NO confirm dialog and NO slating here; the QM edits the slots and presses
+  // "Add to on Deck". A player already claimed by another zone (court draft or
+  // slate-editor draft) leaves that slot empty rather than double-claiming;
+  // the builder's own previous contents are replaced wholesale.
+  const [filling, setFilling] = useState(false)
+  async function runSmartFill() {
+    if (filling) return
+    setFilling(true)
+    try {
+      const ids = await onSmartFill()
+      if (ids) {
+        setBuilding(true)
+        const other = new Set([...draftedIds].filter(id => !newDraft.includes(id)))
+        setNewDraft(ids.map(id => (other.has(id) ? null : id)))
+      }
+    } finally {
+      setFilling(false)
+    }
   }
 
   async function handleAdd() {
@@ -362,10 +370,10 @@ export default function OnDeckStrip({
       />
       <div className="flex flex-col gap-1.5">
         <p className="max-w-[16rem] text-2xs text-muted-foreground">
-          Drag 4 waiting players in, or select them in the queue and use the selection.
+          Drag 4 waiting players in, or ✨ Smart Match to fill from the waiting queue — review and adjust before adding.
         </p>
         <div className="flex gap-2">
-          <Button size="sm" variant="outline" data-testid="ondeck-use-selection" onClick={fillFromSelection}>Use selection</Button>
+          <Button size="sm" variant="outline" data-testid="ondeck-smart-fill" disabled={filling} onClick={runSmartFill}>✨ Smart Match</Button>
           <Button size="sm" data-testid="ondeck-add" disabled={filled !== 4 || adding} onClick={handleAdd}>Add to On Deck</Button>
         </div>
       </div>
@@ -386,7 +394,7 @@ export default function OnDeckStrip({
           >{rows.length}</span>
         </h2>
         <p className="min-w-0 flex-1 text-xs text-muted-foreground">Plays on the next free court · in order</p>
-        <Button size="sm" variant="outline" data-testid="ondeck-smart-add" onClick={onSmartAdd}>✨ Smart add</Button>
+        <Button size="sm" variant="outline" data-testid="ondeck-smart-add" disabled={filling} onClick={runSmartFill}>✨ Smart add</Button>
         <Button size="sm" variant={building ? 'secondary' : 'default'} data-testid="ondeck-builder-toggle" onClick={() => setBuilding(b => !b)}>
           {building ? 'Close builder' : '＋ Build lineup'}
         </Button>

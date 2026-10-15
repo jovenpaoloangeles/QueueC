@@ -65,23 +65,23 @@ export default function App() {
     }
   }
 
-  // On Deck panel "Smart add": slate-only dry run → confirm → post the plan
-  async function handleSmartAdd() {
-    if (!session) return
+  // On Deck "✨ Smart add" / builder "✨ Smart Match": slate-only dry run whose
+  // first slate is poured into the On Deck builder for review — the builder IS
+  // the review surface, so no confirm dialog and nothing is slated here.
+  // Returns the 4 entry ids to fill (or null after toasting why not).
+  async function handleSmartFill() {
+    if (!session) return null
     try {
       const { plan } = await autoMatch(session.id, { dry_run: true, slate_only: true })
-      if (!plan || !plan.slate.length) {
-        toast('Not enough waiting players to add a lineup (or On Deck is full)', 'info')
-        return
+      const ids = plan?.slate?.[0] ? [plan.slate[0].team1[0], plan.slate[0].team1[1], plan.slate[0].team2[0], plan.slate[0].team2[1]] : null
+      if (!ids || ids.some(id => id == null)) {
+        toast('Nothing to add — need 4 waiting players', 'info')
+        return null
       }
-      setPending({
-        kind: 'smart-slate',
-        plan,
-        matches: [],
-        slate: plan.slate.map(m => ({ format: m.format, team1: resolveTeam(m.team1), team2: resolveTeam(m.team2) })),
-      })
+      return ids
     } catch (err) {
       toast(err?.data?.error ?? (err?.status ? err.message : 'Smart add failed'), 'error')
+      return null
     }
   }
 
@@ -104,7 +104,6 @@ export default function App() {
   async function confirmPending() {
     if (!pending || pendingBusy) return
     if (pending.kind === 'smart') return confirmSmartMatch(pending.plan)
-    if (pending.kind === 'smart-slate') return confirmSmartMatch(pending.plan, true)
     const { courtId, sel, source } = pending
     setPendingBusy(true)
     try {
@@ -316,12 +315,10 @@ export default function App() {
               draftedIds={draftedIds}
               onEditDraftChange={setSlateDraftIds}
               onBuilderDraftChange={setBuilderDraftIds}
-              selection={selection}
-              onSelectionChange={setSelection}
+              onSmartFill={handleSmartFill}
               sessionId={session.id}
               courts={courts}
               activeMatches={activeMatches}
-              onSmartAdd={handleSmartAdd}
             />
             <div className="flex min-h-[220px] flex-1 flex-col overflow-hidden">
               <QueueGrid
@@ -356,8 +353,6 @@ export default function App() {
           onOpenChange={open => { if (!open && !pendingBusy) setPending(null) }}
           matches={pending.matches}
           slate={pending.slate}
-          title={pending.kind === 'smart-slate' ? 'Add to On Deck?' : undefined}
-          confirmText={pending.kind === 'smart-slate' ? (pending.slate.length > 1 ? `Add ${pending.slate.length} lineups` : 'Add to On Deck') : undefined}
           busy={pendingBusy}
           onConfirm={confirmPending}
         />

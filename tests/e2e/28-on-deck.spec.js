@@ -21,11 +21,10 @@ const openBuilder = async page => {
   }
   await expect(page.getByTestId('ondeck-builder')).toBeVisible()
 }
-// click-select the first 4 queue cards, pour them into the builder, add
-async function addViaSelection(page) {
+// ✨ Smart-fill the builder from the waiting queue, then add the lineup
+async function addViaSmartFill(page) {
   await openBuilder(page)
-  for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
-  await page.getByTestId('ondeck-use-selection').click()
+  await page.getByTestId('ondeck-smart-fill').click()
   for (let i = 0; i < 4; i++) await expect(page.getByTestId(`ondeck-new-slot-${i}`)).not.toHaveText('Drop…')
   await page.getByTestId('ondeck-add').click()
   await expect(page.getByTestId('ondeck-new-slot-0')).toHaveText('Drop…')
@@ -44,21 +43,30 @@ test('28.1 panel is always mounted: empty state, and still there after ending th
   await expect(page.getByTestId('on-deck-empty')).toBeVisible()
 })
 
-test('28.2 builder: click-to-fill from selection adds numbered cards; queue dims then releases', async ({ page }) => {
+test('28.2 builder: smart fill populates slots for review; queue dims then releases', async ({ page }) => {
   await startDoubles(page)
   const before = await page.locator('[data-entry-id]').count()
   await openBuilder(page)
-  for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
-  await page.getByTestId('ondeck-use-selection').click()
+  await page.getByTestId('ondeck-smart-fill').click()
+  for (let i = 0; i < 4; i++) await expect(page.getByTestId(`ondeck-new-slot-${i}`)).not.toHaveText('Drop…')
   await expect(page.getByTestId('drafted-tag')).toHaveCount(4)       // builder ids dim the queue
+  // fill ≠ slate: nothing on deck until the QM reviews and adds
+  await expect(page.getByTestId('on-deck-count')).toHaveText('0')
+  await expect(page.getByTestId('on-deck-empty')).toBeVisible()
+  expect((await liveState(page)).slatedMatches).toHaveLength(0)
+  // the slate card carries exactly the four reviewed slot players
+  const slotNames = []
+  for (let i = 0; i < 4; i++) slotNames.push((await page.getByTestId(`ondeck-new-slot-${i}`).innerText()).replace(/[\s×]+$/, '').trim())
   await page.getByTestId('ondeck-add').click()
   await expect(page.getByTestId('on-deck-pos-1')).toContainText('Up next')
   await expect(page.getByTestId('on-deck-count')).toHaveText('1')
   await expect(page.getByTestId('on-deck-empty')).toHaveCount(0)
+  const cardText = await page.locator('[data-testid^="slate-row-"]').first().innerText()
+  for (const n of slotNames) expect(cardText).toContain(n)
   await expect(page.locator('[data-entry-id]')).toHaveCount(before - 4)
   await expect(page.getByTestId('drafted-tag')).toHaveCount(0)
 
-  await addViaSelection(page)
+  await addViaSmartFill(page)
   await expect(page.getByTestId('on-deck-pos-2')).toBeVisible()
   await expect(page.getByTestId('on-deck-count')).toHaveText('2')
   await expect(page.getByTestId('on-deck-tag')).toHaveCount(2)
@@ -81,33 +89,39 @@ test('28.3 builder: drag from the queue fills slots; clear button empties one', 
   expect((await liveState(page)).slatedMatches).toHaveLength(1)
 })
 
-test('28.4 Smart add: dialog lists slates; Cancel changes nothing; Confirm creates them', async ({ page }) => {
+test('28.4 header Smart add: fills the builder for review (no dialog), then Add slates it', async ({ page }) => {
   await page.getByTestId('ondeck-smart-add').click()
-  const dlg = page.getByTestId('start-confirm-dialog')
-  await expect(dlg).toBeVisible()
-  await expect(dlg).toContainText('Add to On Deck?')
-  const rows = await page.getByTestId('start-confirm-slate-row').count()
-  expect(rows).toBeGreaterThanOrEqual(1)
-  await expect(page.getByTestId('start-confirm-row')).toHaveCount(0)   // slate-only: no court starts
-  await page.getByTestId('start-confirm-cancel').click()
-  await expect(dlg).toHaveCount(0)
-  let st = await liveState(page)
-  expect(st.slatedMatches).toHaveLength(0)
-  expect(st.activeMatches).toHaveLength(0)
+  // no confirm dialog — the builder IS the review surface
+  await expect(page.getByTestId('start-confirm-dialog')).toHaveCount(0)
+  await expect(page.getByTestId('ondeck-builder')).toBeVisible()
+  for (let i = 0; i < 4; i++) await expect(page.getByTestId(`ondeck-new-slot-${i}`)).not.toHaveText('Drop…')
+  expect((await liveState(page)).slatedMatches).toHaveLength(0)
+  expect((await liveState(page)).activeMatches).toHaveLength(0)
 
-  await page.getByTestId('ondeck-smart-add').click()
-  await confirmStart(page)
+  await page.getByTestId('ondeck-add').click()
   await expect(page.getByTestId('toast')).toContainText(/On Deck/)
   await expect(page.getByTestId('on-deck-pos-1')).toBeVisible()
-  st = await liveState(page)
-  expect(st.slatedMatches).toHaveLength(rows)
+  const st = await liveState(page)
+  expect(st.slatedMatches).toHaveLength(1)
   expect(st.activeMatches).toHaveLength(0)
+})
+
+test('28.4b smart fill with <4 waiting: toast and empty slots', async ({ page }) => {
+  // fresh session with only 3 check-ins — automatch can't plan a slate
+  const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
+  await page.request.fetch(`${base()}/api/sessions/${session.id}/end`, { method: 'PATCH' })
+  await fullSetup(page, { playerNames: NAMES.slice(0, 3) })
+  await openBuilder(page)
+  await page.getByTestId('ondeck-smart-fill').click()
+  await expect(page.getByTestId('toast')).toContainText('Nothing to add — need 4 waiting players')
+  for (let i = 0; i < 4; i++) await expect(page.getByTestId(`ondeck-new-slot-${i}`)).toHaveText('Drop…')
+  expect((await liveState(page)).slatedMatches).toHaveLength(0)
 })
 
 test('28.5 reorder: moving #2 up swaps the order', async ({ page }) => {
   await startDoubles(page)
-  await addViaSelection(page)
-  await addViaSelection(page)
+  await addViaSmartFill(page)
+  await addViaSmartFill(page)
   const names = async () => (await liveState(page)).slatedMatches.map(m => m.id)
   const [a, b] = await names()
   const textOf = id => page.getByTestId(`slate-row-${id}`).innerText()
@@ -126,8 +140,8 @@ test('28.5 reorder: moving #2 up swaps the order', async ({ page }) => {
 
 test('28.6 ending the live match promotes slate #1; the rest renumbers; panel stays mounted', async ({ page }) => {
   await startDoubles(page)
-  await addViaSelection(page)
-  await addViaSelection(page)
+  await addViaSmartFill(page)
+  await addViaSmartFill(page)
   const [first, second] = (await liveState(page)).slatedMatches.map(m => m.id)
   await endMatch(page, 'Court 1')
   await expect.poll(async () => (await liveState(page)).slatedMatches.map(m => m.id)).toEqual([second])
@@ -142,7 +156,7 @@ test('28.6 ending the live match promotes slate #1; the rest renumbers; panel st
 
 test('28.7 cancelling a slate returns its players to the queue', async ({ page }) => {
   await startDoubles(page)
-  await addViaSelection(page)
+  await addViaSmartFill(page)
   const before = await page.locator('[data-entry-id]').count()
   const [id] = (await liveState(page)).slatedMatches.map(m => m.id)
   await page.getByTestId(`slate-cancel-${id}`).click()
