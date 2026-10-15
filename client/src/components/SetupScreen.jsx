@@ -82,7 +82,7 @@ export default function SetupScreen({ session, queue, courts }) {
   }
 
   async function checkInPicked() {
-    for (const id of picked) await checkinPlayer(session.id, id).catch(() => {})
+    for (const id of activePicked) await checkinPlayer(session.id, id).catch(() => {})
     setPicked([])
   }
 
@@ -102,6 +102,9 @@ export default function SetupScreen({ session, queue, courts }) {
   const inQueue = new Set(queue.map(e => e.player_id))
   const pool = players.filter(p => !inQueue.has(p.id)).sort(byRecency)
   const visiblePool = tierFilter ? pool.filter(p => p.skill_level === tierFilter) : pool
+  // Picked ids can outlive their pool entry (player checked in elsewhere, or
+  // removed from the pool) — counts and check-in must only include live ones.
+  const activePicked = picked.filter(id => pool.some(p => p.id === id))
   const canStart = queue.length >= 2
   const hours = hourSlots(session)
 
@@ -131,7 +134,7 @@ export default function SetupScreen({ session, queue, courts }) {
         name: trimmed,
         skill_level: editForm.skill_level,
       })
-      setPlayers(prev => prev.map(p => (p.id === playerId ? player : p)))
+      setPlayers(prev => prev.map(p => (p.id === playerId ? { ...p, ...player } : p)))
       setEditingPlayerId(null)
     } catch (err) {
       setEditError(err?.data?.error || 'Failed to update player')
@@ -160,7 +163,7 @@ export default function SetupScreen({ session, queue, courts }) {
         <div className="flex flex-col items-center gap-1 text-center">
           <h1 className="text-xl font-bold tracking-tight text-foreground">Session Setup</h1>
           <span className="text-2xs uppercase tracking-wider text-muted-foreground">
-            {fmtTime(session.scheduled_start)}–{fmtTime(session.scheduled_end)} · {session.court_count} courts · Not started
+            {fmtTime(session.scheduled_start)}–{fmtTime(session.scheduled_end)} · {courts.length} courts · Not started
           </span>
         </div>
 
@@ -188,7 +191,15 @@ export default function SetupScreen({ session, queue, courts }) {
                   <span className="text-xs text-muted-foreground">No courts yet.</span>
                 )}
                 <div className="flex flex-col gap-2">
-                  {courts.map(c => (
+                  {courts.map(c => {
+                    // A court saved with custom minutes (e.g. 45) has no preset
+                    // match — inject an option or the select renders blank.
+                    const durationOptions = [...DURATION_OPTIONS]
+                    const cur = c.duration_minutes == null ? '' : String(c.duration_minutes)
+                    if (cur !== '' && !DURATION_OPTIONS.some(o => o.value === cur)) {
+                      durationOptions.push({ value: cur, label: `${c.duration_minutes} min (custom)` })
+                    }
+                    return (
                     <div
                       key={c.id}
                       className="flex items-center gap-3 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm"
@@ -230,7 +241,7 @@ export default function SetupScreen({ session, queue, courts }) {
                             duration_minutes: e.target.value === '' ? null : Number(e.target.value)
                           }).catch(() => {})}
                         >
-                          {DURATION_OPTIONS.map(opt => (
+                          {durationOptions.map(opt => (
                             <option key={opt.value} value={opt.value}>{opt.label}</option>
                           ))}
                         </select>
@@ -252,7 +263,8 @@ export default function SetupScreen({ session, queue, courts }) {
                         Remove
                       </Button>
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
               <p className="text-2xs text-muted-foreground">
@@ -281,8 +293,8 @@ export default function SetupScreen({ session, queue, courts }) {
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold text-foreground">Player pool</span>
-                  <Button size="xs" disabled={picked.length === 0} onClick={checkInPicked}>
-                    Check In{picked.length > 0 ? ` (${picked.length})` : ''}
+                  <Button size="xs" disabled={activePicked.length === 0} onClick={checkInPicked}>
+                    Check In{activePicked.length > 0 ? ` (${activePicked.length})` : ''}
                   </Button>
                 </div>
 
@@ -298,7 +310,7 @@ export default function SetupScreen({ session, queue, courts }) {
                     >
                       Select all
                     </Button>
-                    <span className="text-2xs text-muted-foreground">{picked.length} selected</span>
+                    <span className="text-2xs text-muted-foreground">{activePicked.length} selected</span>
                   </div>
                   <select
                     aria-label="Filter tier"

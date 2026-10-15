@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { useToast } from '@/components/Toast'
 
 function toUnix(dateStr, timeStr) {
   // timeStr: HH:MM (24h text input)
@@ -37,6 +38,7 @@ export default function CreateSessionModal({ onClose }) {
   const [form, setForm] = useState({ name: 'Evening Session', date: today, start: '18:00', end: '21:00', courts: 2 })
   const [courtConfigs, setCourtConfigs] = useState(() => syncCourtRows([], 2))
   const [loading, setLoading] = useState(false)
+  const toast = useToast()
 
   function handleCourtCountChange(val) {
     setForm(f => ({ ...f, courts: val }))
@@ -57,15 +59,20 @@ export default function CreateSessionModal({ onClose }) {
         ? (c.custom_minutes === '' ? null : Number(c.custom_minutes))
         : (c.duration_minutes === '' ? null : Number(c.duration_minutes)),
     }))
-    await createSession({
-      name: form.name,
-      scheduled_start: toUnix(form.date, form.start),
-      scheduled_end: toUnix(form.date, form.end),
-      court_count: count,
-      courts: courtsPayload,
-    })
-    // intentionally no onClose() here — App closes reactively via SSE
-    setLoading(false)
+    try {
+      await createSession({
+        name: form.name,
+        scheduled_start: toUnix(form.date, form.start),
+        scheduled_end: toUnix(form.date, form.end),
+        court_count: count,
+        courts: courtsPayload,
+      })
+      // intentionally no onClose() here — App closes reactively via SSE
+    } catch (err) {
+      toast(err?.data?.error ?? 'Could not create session', 'error')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -146,6 +153,7 @@ export default function CreateSessionModal({ onClose }) {
                       className="w-20 rounded border border-border bg-background px-2 py-1 text-xs text-foreground"
                       step="15"
                       min="15"
+                      required
                       value={cfg.custom_minutes}
                       onChange={e => updateCourtConfig(idx, { custom_minutes: e.target.value })}
                     />
