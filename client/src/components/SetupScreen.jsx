@@ -319,6 +319,17 @@ export default function SetupScreen({ draft }) {
 
               <div className="flex max-h-60 flex-col gap-2 overflow-y-auto pr-1" data-testid="court-rows">
                 <span className="text-xs font-semibold text-foreground">Court rental (hours)</span>
+                <div className="flex items-center gap-2 px-2 text-2xs text-muted-foreground" data-testid="court-cols">
+                  <span className="flex-1">Court</span>
+                  <span className="w-20 text-center">Rental</span>
+                  <span className="text-2xs">hrs</span>
+                  {courts.length > 1 && (
+                    <>
+                      <span className="w-16 text-center">Opens after</span>
+                      <span className="text-2xs">min</span>
+                    </>
+                  )}
+                </div>
                 {courts.map((c, i) => (
                   <div key={i} className="flex items-center gap-2 rounded-md border border-border bg-muted/30 p-2 text-xs" data-testid="court-row">
                     <Input
