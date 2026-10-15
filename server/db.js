@@ -64,6 +64,7 @@ db.exec(`
     sort_order INTEGER NOT NULL DEFAULT 0,
     games_played INTEGER NOT NULL DEFAULT 0,
     status_updated_at INTEGER,
+    -- vestigial since R7: rest no longer pauses wait accrual; columns unused
     rested_seconds INTEGER NOT NULL DEFAULT 0,
     rest_started_at INTEGER
   );
@@ -158,16 +159,6 @@ if (!qeSql.includes("'staged'")) {
     ALTER TABLE queue_entries_new RENAME TO queue_entries;
   `))()
   db.exec('PRAGMA foreign_keys = ON')
-}
-
-// one-shot column additions for rest-pause wait accrual (after the staged rebuild above,
-// so pre-staged DBs get them on the rebuilt table too)
-const qeRestCols = new Set(db.prepare("PRAGMA table_info(queue_entries)").all().map(c => c.name))
-if (!qeRestCols.has('rested_seconds')) {
-  db.exec('ALTER TABLE queue_entries ADD COLUMN rested_seconds INTEGER NOT NULL DEFAULT 0')
-}
-if (!qeRestCols.has('rest_started_at')) {
-  db.exec('ALTER TABLE queue_entries ADD COLUMN rest_started_at INTEGER')
 }
 
 // one-shot column additions and court_number relaxation for matches

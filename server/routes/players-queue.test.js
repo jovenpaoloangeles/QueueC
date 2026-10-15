@@ -46,10 +46,10 @@ async function run() {
     body: JSON.stringify({ status: 'resting' })
   }).then(r => r.json())
   console.assert(r6.entry.status === 'resting', 'Expected resting status')
-  console.assert(r6.entry.rest_started_at !== null, 'Expected rest_started_at stamped on rest')
-  console.assert(r6.entry.rested_seconds === 0, 'Expected rested_seconds 0 while resting')
+  console.assert(r6.entry.rest_started_at == null, 'Expected rest_started_at untouched (vestigial since R7)')
+  console.assert(r6.entry.rested_seconds === 0, 'Expected rested_seconds untouched at 0 (vestigial since R7)')
 
-  // Rest ~1.2s, then wake: rest time must be banked into rested_seconds
+  // Rest ~1.2s, then wake: rest time is NOT banked — wait clock kept running (R7)
   await new Promise(r => setTimeout(r, 1200))
   const r7 = await fetch(`${BASE}/queue/${r4.entry.id}/status`, {
     method: 'PATCH',
@@ -57,8 +57,8 @@ async function run() {
     body: JSON.stringify({ status: 'waiting' })
   }).then(r => r.json())
   console.assert(r7.entry.status === 'waiting', 'Expected waiting status after wake')
-  console.assert(r7.entry.rest_started_at === null, 'Expected rest_started_at cleared on wake')
-  console.assert(r7.entry.rested_seconds >= 1, `Expected rested_seconds >= 1 after rest, got ${r7.entry.rested_seconds}`)
+  console.assert(r7.entry.rest_started_at == null, 'Expected rest_started_at still null (vestigial since R7)')
+  console.assert(r7.entry.rested_seconds === 0, `Expected rested_seconds still 0 after rest, got ${r7.entry.rested_seconds}`)
 
   // Clean up
   await fetch(`${BASE}/sessions/${r3.session.id}/end`, { method: 'PATCH' })

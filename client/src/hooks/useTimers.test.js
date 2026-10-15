@@ -27,20 +27,17 @@ console.assert(waitSeconds.get(1) === 600, `Expected 600, got ${waitSeconds.get(
 console.assert(!waitSeconds.has(2), 'Playing player should not be in waitSeconds')
 console.assert(playSeconds.get(10) === 100, `Expected 100, got ${playSeconds.get(10)}`)
 
-// waitSeconds map: rested time excluded for a waiting player who rested then woke
+// waitSeconds map: rest no longer pauses the clock (R7) — a vestigial
+// rested_seconds field is ignored, so wait equals a same-check-in waiting player
 const restedQueue = [
   { id: 3, status: 'waiting', checked_in_at: 400, total_seconds_played: 0, rested_seconds: 100 },
 ]
-console.assert(computeTimers(now, restedQueue, []).waitSeconds.get(3) === 500, `Expected 500, got ${computeTimers(now, restedQueue, []).waitSeconds.get(3)}`)
+console.assert(computeTimers(now, restedQueue, []).waitSeconds.get(3) === 600, `Expected 600, got ${computeTimers(now, restedQueue, []).waitSeconds.get(3)}`)
 
 // netWait: playing time is subtracted so a finished player's wait restarts
 console.assert(netWait(1000, { checked_in_at: 400, total_seconds_played: 500 }) === 100, 'netWait subtracts total_seconds_played')
 console.assert(netWait(1000, { checked_in_at: 400 }) === 600, 'netWait defaults total_seconds_played to 0')
 console.assert(netWait(1000, { checked_in_at: 900, total_seconds_played: 500 }) === 0, 'netWait clamps at 0')
 console.assert(netWait(1000, {}) === 0, 'netWait without checked_in_at is 0')
-
-// netWait: rested time is subtracted so resting does not accrue wait
-console.assert(netWait(1000, { checked_in_at: 400, total_seconds_played: 0, rested_seconds: 150 }) === 450, 'netWait subtracts rested_seconds')
-console.assert(netWait(1000, { checked_in_at: 400, rested_seconds: 700 }) === 0, 'netWait clamps at 0 with large rested_seconds')
 
 console.log('useTimers.test.js: all assertions passed')

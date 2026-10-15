@@ -50,14 +50,15 @@ const fairnessEntries = [
 const fairRes = suggestPlayers(fairnessEntries, 'doubles')
 console.assert(!fairRes.includes(20), `Expected player 20 (3 games played) to yield to 0-game players, got ${fairRes}`)
 
-// Rest-pause: rested_seconds subtract from wait, so a rested player yields priority
+// Rest no longer pauses wait (R7): a vestigial rested_seconds field is ignored,
+// so the earlier check-in wins on raw wait
 const restEntries = [
-  { id: 30, status: 'waiting', skill_level: 'intermediate', checked_in_at: now - 600, total_seconds_played: 0, games_played: 0 },
+  { id: 30, status: 'waiting', skill_level: 'intermediate', checked_in_at: now - 500, total_seconds_played: 0, games_played: 0 },
   { id: 31, status: 'waiting', skill_level: 'intermediate', checked_in_at: now - 600, total_seconds_played: 0, games_played: 0, rested_seconds: 300 },
-  { id: 32, status: 'waiting', skill_level: 'intermediate', checked_in_at: now - 600, total_seconds_played: 0, games_played: 0 },
-  { id: 33, status: 'waiting', skill_level: 'intermediate', checked_in_at: now - 600, total_seconds_played: 0, games_played: 0 },
+  { id: 32, status: 'waiting', skill_level: 'intermediate', checked_in_at: now - 400, total_seconds_played: 0, games_played: 0 },
+  { id: 33, status: 'waiting', skill_level: 'intermediate', checked_in_at: now - 300, total_seconds_played: 0, games_played: 0 },
 ]
 const restRes = suggestPlayers(restEntries, 'singles')
-console.assert(restRes[0] === 30, `Expected rested player 31 to yield slot 1 to 30, got ${restRes}`)
+console.assert(restRes[0] === 31, `Expected 31 (checked in 600s ago, rested_seconds ignored) to take slot 1, got ${restRes}`)
 
 console.log('smartQueue.test.js: all assertions passed')

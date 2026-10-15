@@ -33,7 +33,7 @@ export function currentState() {
 
   const queue = db.prepare(`
     SELECT qe.*, p.name, p.skill_level,
-           ROUND(MAX(0, ? - qe.checked_in_at - qe.total_seconds_played - qe.rested_seconds) / 60.0 / (qe.games_played + 1), 2) AS fairness,
+           ROUND(MAX(0, ? - qe.checked_in_at - qe.total_seconds_played) / 60.0 / (qe.games_played + 1), 2) AS fairness,
            (SELECT ROUND(AVG(m.rating), 1) FROM matches m
              WHERE m.session_id = qe.session_id AND m.rating IS NOT NULL
                AND (m.team1_p1 = qe.id OR m.team1_p2 = qe.id
@@ -75,7 +75,7 @@ export function currentState() {
 
   const waiters = queue.filter(e => e.status === 'waiting')
   const avg_wait_seconds = waiters.length
-    ? Math.round(waiters.reduce((s, e) => s + (now - e.checked_in_at - e.total_seconds_played - (e.rested_seconds ?? 0)), 0) / waiters.length)
+    ? Math.round(waiters.reduce((s, e) => s + (now - e.checked_in_at - e.total_seconds_played), 0) / waiters.length)
     : 0
 
   const match_count = db.prepare(

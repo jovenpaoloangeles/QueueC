@@ -63,10 +63,10 @@ router.get('/sessions/:id/stats', (c) => {
   ).get(sid).c
 
   const waiters = db.prepare(
-    "SELECT checked_in_at, total_seconds_played, rested_seconds FROM queue_entries WHERE session_id = ? AND status = 'waiting'"
+    "SELECT checked_in_at, total_seconds_played FROM queue_entries WHERE session_id = ? AND status = 'waiting'"
   ).all(sid)
   const avg_wait_seconds = waiters.length
-    ? Math.round(waiters.reduce((sum, e) => sum + (now - e.checked_in_at - e.total_seconds_played - (e.rested_seconds ?? 0)), 0) / waiters.length)
+    ? Math.round(waiters.reduce((sum, e) => sum + (now - e.checked_in_at - e.total_seconds_played), 0) / waiters.length)
     : 0
 
   const shuttles = db.prepare(

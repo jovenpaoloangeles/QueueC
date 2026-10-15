@@ -38,7 +38,8 @@ try {
     pids.push(pid)
   }
 
-  // Seed 5 queue_entries: first 4 staged, 5th waiting (checked in 10 mins ago)
+  // Seed 6 queue_entries: first 4 staged, 5th waiting (checked in 10 mins ago),
+  // 6th resting (checked in at the same time)
   for (let i = 0; i < 4; i++) {
     const { lastInsertRowid: eid } = db.prepare(
       'INSERT INTO queue_entries (session_id, player_id, checked_in_at, status) VALUES (?, ?, ?, ?)'
@@ -46,9 +47,17 @@ try {
     eids.push(eid)
   }
   const { lastInsertRowid: waitingEid } = db.prepare(
-    'INSERT INTO queue_entries (session_id, player_id, checked_in_at, status, games_played, rested_seconds) VALUES (?, ?, ?, ?, ?, ?)'
-  ).run(sid, pids[4], now - 600, 'waiting', 1, 150)
+    'INSERT INTO queue_entries (session_id, player_id, checked_in_at, status, games_played) VALUES (?, ?, ?, ?, ?)'
+  ).run(sid, pids[4], now - 600, 'waiting', 1)
   eids.push(waitingEid)
+  const { lastInsertRowid: restingPid } = db.prepare(
+    "INSERT INTO players (name, skill_level, created_at) VALUES (?, 'intermediate', ?)"
+  ).run(`__sse_p6_${now}__`, now)
+  pids.push(restingPid)
+  const { lastInsertRowid: restingEid } = db.prepare(
+    'INSERT INTO queue_entries (session_id, player_id, checked_in_at, status, games_played) VALUES (?, ?, ?, ?, ?)'
+  ).run(sid, restingPid, now - 600, 'resting', 1)
+  eids.push(restingEid)
 
   // Seed 1 slated match with the 4 staged entries (in deliberately non-id order: eids[2], eids[0], eids[3], eids[1])
   slatedMid = db.prepare(
@@ -82,24 +91,30 @@ try {
     'Expected slatedMatch.team2_names'
   )
 
-  // Queue excludes staged entries and includes waiting entry
-  assert.equal(state.queue.length, 1, 'Expected queue to exclude 4 staged entries and have 1 waiting entry')
+  // Queue excludes staged entries and includes waiting + resting entries
+  assert.equal(state.queue.length, 2, 'Expected queue to exclude 4 staged entries and have waiting + resting entries')
   assert.equal(state.queue[0].id, waitingEid, 'Expected waiting entry in queue')
   assert.equal(typeof state.queue[0].fairness, 'number', 'Expected numeric fairness')
   assert.ok(state.queue[0].fairness >= 0, 'Expected fairness >= 0')
   assert.equal(state.queue[0].avg_rating, 4, 'Expected avg_rating === 4')
 
-  // Fairness is net wait (rest + play aware): (600s - 150s rested) / 60 / (1+1) = 3.75
-  assert.equal(state.queue[0].fairness, 3.75, 'Expected fairness to subtract rested_seconds and total_seconds_played')
+  // Fairness is played-aware net wait (rest ignored since R7): 600s / 60 / (1+1) = 5
+  assert.equal(state.queue[0].fairness, 5, 'Expected fairness to be raw wait minus played time over games')
+
+  // Rest does not pause the wait clock (R7): the resting entry checked in at the
+  // same time accrues the same fairness as the waiting one
+  const restingRow = state.queue.find(e => e.id === restingEid)
+  assert.ok(restingRow, 'Expected resting entry in queue state')
+  assert.equal(restingRow.fairness, state.queue[0].fairness, 'Expected resting entry fairness to equal same-check-in waiting entry')
 
   // Stats check
   assert.equal(state.stats.match_count, 1, 'Expected match_count to count only active matches')
   assert.deepEqual(state.stats.shuttles, { new: 2, used: 1 }, 'Expected shuttles stats')
 
-  // avg wait excludes rested time: 600s since check-in minus 150s rested → ≈ 450
+  // avg wait counts the full time since check-in (rest no longer excluded): ≈ 600
   assert.ok(
-    Math.abs(state.stats.avg_wait_seconds - 450) <= 2,
-    `Expected avg_wait_seconds ≈ 450 (rest excluded), got ${state.stats.avg_wait_seconds}`
+    Math.abs(state.stats.avg_wait_seconds - 600) <= 2,
+    `Expected avg_wait_seconds ≈ 600 (rest included), got ${state.stats.avg_wait_seconds}`
   )
 
   console.log('sse.state.test.js: all assertions passed')

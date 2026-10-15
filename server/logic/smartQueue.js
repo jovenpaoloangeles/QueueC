@@ -23,7 +23,7 @@ const SKILL_MAP = {
 
 function waitSeconds(entry) {
   const now = Math.floor(Date.now() / 1000)
-  return now - entry.checked_in_at - entry.total_seconds_played - (entry.rested_seconds ?? 0)
+  return now - entry.checked_in_at - entry.total_seconds_played
 }
 
 function skillValue(entry) {

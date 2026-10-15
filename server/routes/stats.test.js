@@ -170,7 +170,7 @@ async function run() {
     assert.equal(neverFound.last_played_at, null, 'Expected neverPlayed.last_played_at === null')
     assert.equal(neverFound.games_total, 0, 'Expected neverPlayed.games_total === 0')
 
-    // 5) rested_seconds must not inflate avg wait (isolated session, single waiter)
+    // 5) rest must NOT subtract from avg wait — the clock keeps running during rest (R7)
     const restPlayer = (await fetch(`${BASE}/players`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -203,9 +203,11 @@ async function run() {
     assert.equal(restStatsRes.status, 200, 'Expected 200 from rest-session stats')
     const { stats: restStats } = await restStatsRes.json()
     const nowRef = Math.floor(Date.now() / 1000)
+    // avg wait covers the full time since check-in including the ~2s rest (±1s clock slack);
+    // under the old rest-pause behavior it would be ~2s lower and fail this bound
     assert.ok(
-      restStats.avg_wait_seconds <= nowRef - restCheckin.checked_in_at - 1,
-      `Expected rested time (>=2s) subtracted from avg wait: avg=${restStats.avg_wait_seconds}, upper bound=${nowRef - restCheckin.checked_in_at - 1}`
+      restStats.avg_wait_seconds >= nowRef - restCheckin.checked_in_at - 1,
+      `Expected rest time (>=2s) included in avg wait: avg=${restStats.avg_wait_seconds}, lower bound=${nowRef - restCheckin.checked_in_at - 1}`
     )
     await fetch(`${BASE}/sessions/${restSession.id}/end`, { method: 'PATCH' })
   } finally {
