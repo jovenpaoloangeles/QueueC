@@ -108,7 +108,10 @@ test('27.6 live court shows no lineup matrix; slating goes through the On Deck b
     await page.getByTestId('ondeck-builder-toggle').click()
   }
   for (let i = 0; i < 4; i++) {
-    await syntheticDrag(page, '[data-entry-id]', '[data-testid^="ondeck-new-slot-"]', { fromIndex: i, toIndex: i })
+    // drafted players leave the queue list (r7 item 6) — the next card is always index 0;
+    // wait for the slot to actually fill so the next drag reads a flushed list
+    await syntheticDrag(page, '[data-entry-id]', '[data-testid^="ondeck-new-slot-"]', { fromIndex: 0, toIndex: i })
+    await expect(page.locator('[data-testid^="ondeck-new-slot-"]').nth(i)).not.toHaveText('Drop…')
   }
   await page.getByTestId('ondeck-add').click()
   await expect(page.getByTestId('toast')).toContainText(/On Deck/)

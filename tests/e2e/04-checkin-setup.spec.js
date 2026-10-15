@@ -40,13 +40,14 @@ test('4.5 selected player stays in the pool, shown as pressed', async ({ page })
   await expect(poolBtn).toHaveAttribute('aria-checked', 'true')
 })
 
-test('4.6 8 selected players — all in live queue, in selection order', async ({ page }) => {
+test('4.6 8 selected players — all in live queue, alphabetized', async ({ page }) => {
   const names = ['Inter C1','Inter C2','Inter C3','Inter C4','Expert E1','Expert E2','Upper D1','Upper D2']
   await checkinPlayers(page, names)
   await startSession(page)
   await expect(page.locator('[data-entry-id]')).toHaveCount(8)
   const { queue } = await liveState(page)
-  expect(queue.map(e => e.name)).toEqual(names)
+  // check-ins slot alphabetically (r7 item 1) — selection order no longer applies
+  expect(queue.map(e => e.name)).toEqual([...names].sort((a, b) => a.localeCompare(b)))
 })
 
 test('4.7 select-all selects every pool player and all start in the queue', async ({ page }) => {

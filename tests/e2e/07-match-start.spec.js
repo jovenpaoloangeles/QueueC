@@ -99,7 +99,8 @@ test('7.11 armed court fills slot 0 with the dropped player', async ({ page }) =
 test('7.12 armed court with 2 shows Start Singles', async ({ page }) => {
   const names = await getQueueNames(page)
   await syntheticDrag(page, '[data-entry-id]', '[data-drop^="court-"]', { toIndex: -1 })
-  await syntheticDrag(page, '[data-entry-id]', '[data-drop^="court-"]', { fromIndex: 1, toIndex: -1 })
+  // drafted players leave the queue list (r7 item 6) — names[1] is now first
+  await syntheticDrag(page, '[data-entry-id]', '[data-drop^="court-"]', { fromIndex: 0, toIndex: -1 })
   // second drop fills slot 1; exactly 2 filled slots arms Start Singles
   const court = page.locator('[data-drop^="court-"]').last()
   await expect(court.locator('[data-testid="slot-1"]')).toContainText(names[1])
@@ -108,9 +109,10 @@ test('7.12 armed court with 2 shows Start Singles', async ({ page }) => {
 
 test('7.13 drag 4th player to armed court — asks to confirm, then starts', async ({ page }) => {
   await syntheticDrag(page, '[data-entry-id]', '[data-drop^="court-"]', { toIndex: -1 })
-  await syntheticDrag(page, '[data-entry-id]', '[data-drop^="court-"]', { fromIndex: 1, toIndex: -1 })
-  await syntheticDrag(page, '[data-entry-id]', '[data-drop^="court-"]', { fromIndex: 2, toIndex: -1 })
-  await syntheticDrag(page, '[data-entry-id]', '[data-drop^="court-"]', { fromIndex: 3, toIndex: -1 })
+  // each drop removes its player from the list, so the next card is always index 0
+  await syntheticDrag(page, '[data-entry-id]', '[data-drop^="court-"]', { fromIndex: 0, toIndex: -1 })
+  await syntheticDrag(page, '[data-entry-id]', '[data-drop^="court-"]', { fromIndex: 0, toIndex: -1 })
+  await syntheticDrag(page, '[data-entry-id]', '[data-drop^="court-"]', { fromIndex: 0, toIndex: -1 })
   // 4 players dropped → confirm dialog; nothing started yet
   await expect(page.getByTestId('start-confirm-dialog')).toBeVisible()
   await expect(page.getByRole('button', { name: 'End Match' })).toHaveCount(0)
