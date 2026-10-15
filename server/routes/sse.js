@@ -75,7 +75,7 @@ export function currentState() {
 
   const waiters = queue.filter(e => e.status === 'waiting')
   const avg_wait_seconds = waiters.length
-    ? Math.round(waiters.reduce((s, e) => s + (now - e.checked_in_at - e.total_seconds_played), 0) / waiters.length)
+    ? Math.round(waiters.reduce((s, e) => s + (now - e.checked_in_at - e.total_seconds_played - (e.rested_seconds ?? 0)), 0) / waiters.length)
     : 0
 
   const match_count = db.prepare(

@@ -1,9 +1,10 @@
 export { cn } from "cn"
 
 /** Net queue wait in seconds: time since check-in minus time already spent
- *  playing (the server adds total_seconds_played on match end). */
+ *  playing (the server adds total_seconds_played on match end) minus time
+ *  spent resting (the server accrues rested_seconds when a player wakes). */
 export function netWait(now, entry) {
-  return Math.max(0, now - (entry.checked_in_at ?? now) - (entry.total_seconds_played ?? 0))
+  return Math.max(0, now - (entry.checked_in_at ?? now) - (entry.total_seconds_played ?? 0) - (entry.rested_seconds ?? 0))
 }
 
 /** Duration in seconds → mm:ss. */

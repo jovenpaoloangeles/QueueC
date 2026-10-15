@@ -72,7 +72,19 @@ router.patch('/queue/:entryId/status', async (c) => {
     return c.json({ error: 'Player must finish the match first' }, 409)
   }
   const now = Math.floor(Date.now() / 1000)
-  db.prepare('UPDATE queue_entries SET status = ?, status_updated_at = ? WHERE id = ?').run(status, now, entryId)
+  // Settle rest time on every transition through the status route:
+  // entering resting stamps the start; leaving accrues into rested_seconds (one code path, defensive)
+  let restedSeconds = cur.rested_seconds ?? 0
+  let restStartedAt = cur.rest_started_at ?? null
+  if (status === 'resting' && cur.status !== 'resting') {
+    restStartedAt = now
+  } else if (cur.status === 'resting' && status !== 'resting' && restStartedAt != null) {
+    restedSeconds += Math.max(0, now - restStartedAt)
+    restStartedAt = null
+  }
+  db.prepare(
+    'UPDATE queue_entries SET status = ?, status_updated_at = ?, rested_seconds = ?, rest_started_at = ? WHERE id = ?'
+  ).run(status, now, restedSeconds, restStartedAt, entryId)
   const entry = db.prepare('SELECT * FROM queue_entries WHERE id = ?').get(entryId)
   broadcast()
   return c.json({ entry })

@@ -46,8 +46,8 @@ try {
     eids.push(eid)
   }
   const { lastInsertRowid: waitingEid } = db.prepare(
-    'INSERT INTO queue_entries (session_id, player_id, checked_in_at, status, games_played) VALUES (?, ?, ?, ?, ?)'
-  ).run(sid, pids[4], now - 600, 'waiting', 1)
+    'INSERT INTO queue_entries (session_id, player_id, checked_in_at, status, games_played, rested_seconds) VALUES (?, ?, ?, ?, ?, ?)'
+  ).run(sid, pids[4], now - 600, 'waiting', 1, 150)
   eids.push(waitingEid)
 
   // Seed 1 slated match with the 4 staged entries (in deliberately non-id order: eids[2], eids[0], eids[3], eids[1])
@@ -92,6 +92,12 @@ try {
   // Stats check
   assert.equal(state.stats.match_count, 1, 'Expected match_count to count only active matches')
   assert.deepEqual(state.stats.shuttles, { new: 2, used: 1 }, 'Expected shuttles stats')
+
+  // avg wait excludes rested time: 600s since check-in minus 150s rested → ≈ 450
+  assert.ok(
+    Math.abs(state.stats.avg_wait_seconds - 450) <= 2,
+    `Expected avg_wait_seconds ≈ 450 (rest excluded), got ${state.stats.avg_wait_seconds}`
+  )
 
   console.log('sse.state.test.js: all assertions passed')
 } finally {
