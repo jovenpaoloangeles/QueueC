@@ -93,12 +93,19 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
     const byOrder = (a, b) => (idx.get(a.id) ?? 1e9) - (idx.get(b.id) ?? 1e9)
     const base = tab === 'wait' ? waiting : tab === 'rest' ? resting : [...waiting, ...resting, ...playing]
     const q = filter.trim().toLowerCase()
+    if (tab === 'all') {
+      // groups stay intact (playing last); each group keeps its own order
+      return [waiting, resting, playing]
+        .map(g => g.filter(e => !q || (e.name ?? '').toLowerCase().includes(q)).sort(byOrder))
+        .flat()
+    }
     return base
       .filter(e => !q || (e.name ?? '').toLowerCase().includes(q))
       .sort(byOrder)
   }, [waiting, resting, playing, order, tab, filter])
 
   function handleDropOnPlayer(dragId, targetId) {
+    if (drag.current?.status === 'playing') return // playing cards don't reorder the queue
     if (drag.current?.status === 'resting') {
       setEntryStatus(dragId, 'waiting')
         .then(() => onSelectionChange(selection.filter(s => s !== dragId)))
