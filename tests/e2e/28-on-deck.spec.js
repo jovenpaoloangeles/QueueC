@@ -270,3 +270,32 @@ test('28.10 Start now: abort keeps the slate; disabled while no court is free', 
   const [reid] = (await liveState(page)).slatedMatches.map(m => m.id)
   await expect(page.getByTestId(`slate-start-${reid}`)).toBeEnabled()
 })
+
+test('28.11 editing participants: removing a slated player returns them to the waiting pool immediately', async ({ page }) => {
+  await startDoubles(page)
+  await addViaSmartFill(page)
+  const state = await liveState(page)
+  const slate = state.slatedMatches[0]
+  const removedId = slate.team1_p1
+  const removedName = slate.team1_p1_name
+  expect((await liveState(page)).queue.find(e => e.id === removedId)).toBeUndefined() // staged: out of the pool
+
+  // edit the lineup: clear slot 0, drop a waiting player in, save
+  await page.getByTestId(`slate-edit-${slate.id}`).click()
+  await page.getByTestId('slate-slot-clear-0').click()
+  await expect(page.getByTestId('slate-slot-0')).toContainText('Drop…')
+  const subId = await page.locator('[data-entry-id]').filter({ hasNot: page.getByTestId('drafted-tag') }).first().getAttribute('data-entry-id')
+  await syntheticDrag(page, `[data-entry-id="${subId}"]`, '[data-testid="slate-slot-0"]')
+  await page.getByTestId('slate-save').click()
+  await expect(page.getByTestId('slate-save')).toBeHidden() // editor closed on success
+
+  // the removed player is back in the waiting pool without a reload — via SSE,
+  // with no drafted/dimmed marker left on their card
+  await expect.poll(async () => (await liveState(page)).queue.find(e => e.id === removedId)?.status).toBe('waiting')
+  const card = page.locator(`[data-queue-list] [data-entry-id="${removedId}"]`)
+  await expect(card).toBeVisible()
+  await expect(card.locator('[data-testid="drafted-tag"]')).toHaveCount(0)
+  // and the slate really plays the substitute
+  const after = await liveState(page)
+  expect(after.slatedMatches[0].team1_p1).not.toBe(removedId)
+})
