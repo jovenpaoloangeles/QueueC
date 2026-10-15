@@ -16,7 +16,7 @@ test('2.1 setup screen is the landing view: hero, two cards, no dialog, no CTA b
   await expect(page.getByText('2 · Active Waiting Pool')).toBeVisible()
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(page.getByRole('button', { name: '+ Start New Session' })).toHaveCount(0)
-  await expect(page.getByTestId('btn-new-session')).toHaveCount(0) // nothing to end yet
+  await expect(page.getByTestId('btn-new-session')).toHaveCount(0) // never rendered anymore
 })
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -139,13 +139,13 @@ test('2.9 Start creates a live session: N courts, expires_at = hours from start,
   expect(sse.queue).toHaveLength(3)
 })
 
-test('2.10 header New Session confirms once, then returns to the setup screen', async ({ page }) => {
+test('2.10 End Session confirms once, then returns to the setup screen', async ({ page }) => {
   await createSession(page)
   await checkinPlayers(page, ['Inter C1', 'Inter C2'])
   await startSession(page)
-  await page.getByTestId('btn-new-session').click()
-  await expect(page.getByRole('dialog')).toContainText('End current session and start a new one?')
-  await page.getByTestId('confirm-new-session').click()
+  await page.getByRole('button', { name: 'End Session' }).click()
+  await expect(page.getByTestId('end-session-confirm-dialog')).toBeVisible()
+  await page.getByTestId('end-session-confirm').click()
   await expect(page.getByTestId('session-setup')).toBeVisible()
   await expect(page.getByTestId('start-session')).toBeDisabled()
 })

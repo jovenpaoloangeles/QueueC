@@ -19,7 +19,6 @@ import StartMatchConfirmDialog from './components/StartMatchConfirmDialog.jsx'
 
 export default function App() {
   const [sseData, setSseData] = useState({ session: null, queue: [], activeMatches: [], slatedMatches: [], courts: [], stats: null, serverTime: null })
-  const [confirmNew, setConfirmNew] = useState(false) // header "New Session": confirm ending the live session
   const [selection, setSelection] = useState([])
   // per-court lineup drafts: { [courtId]: [team1_p1, team1_p2, team2_p1, team2_p2] }
   // drag-flow only — the click-to-select `selection` above stays untouched for that flow
@@ -141,7 +140,7 @@ export default function App() {
   useEffect(() => {
     setDrafts(prev => (Object.keys(prev).length ? {} : prev))
     setSelection([]); setSlateDraftIds([]); setBuilderDraftIds([])
-    setShowAddPlayer(false); setConfirmNew(false)
+    setShowAddPlayer(false)
   }, [session?.id])
 
   // Stale-draft pruning: a draft slot can outlive its entry (started elsewhere,
@@ -297,7 +296,6 @@ export default function App() {
         draftedIds={draftedIds}
         onSmartMatch={handleSmartMatch}
         onAddPlayer={() => setShowAddPlayer(true)}
-        onNewSession={() => setConfirmNew(true)}
         onEndSession={session ? handleEndSession : undefined}
       />
       {!connected && (
@@ -407,29 +405,6 @@ export default function App() {
           busy={pendingBusy}
           onConfirm={confirmPending}
         />
-      )}
-      {confirmNew && session?.started_at != null && (
-        <Dialog open onOpenChange={open => !open && setConfirmNew(false)}>
-          <DialogContent className="sm:max-w-xs">
-            <DialogHeader>
-              <DialogTitle>End current session and start a new one?</DialogTitle>
-            </DialogHeader>
-            <p className="text-xs text-muted-foreground">
-              The live session will be ended and you&apos;ll return to the setup screen.
-            </p>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" size="sm" onClick={() => setConfirmNew(false)}>Cancel</Button>
-              <Button
-                size="sm"
-                variant="destructive"
-                data-testid="confirm-new-session"
-                onClick={() => { setConfirmNew(false); handleEndSession() }}
-              >
-                End &amp; New Session
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
       )}
     </div>
   )

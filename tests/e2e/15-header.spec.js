@@ -41,14 +41,15 @@ test('15.4 elapsed timer absent during setup', async ({ page }) => {
   await expect(page.locator('text=●')).not.toBeVisible()
 })
 
-test('15.5 "New Session" only while a session is live', async ({ page }) => {
+test('15.5 New Session button is gone; End Session is the only reset path', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByTestId('btn-new-session')).toHaveCount(0)
   await createSession(page)
-  await expect(page.getByTestId('btn-new-session')).toHaveCount(0)
   await checkinPlayers(page, ['Inter C1', 'Inter C2'])
   await startSession(page)
-  await expect(page.getByTestId('btn-new-session')).toBeVisible()
+  // no ⟳ New Session in the header even while a session is live
+  await expect(page.getByTestId('btn-new-session')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'New Session' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'End Session' })).toBeVisible()
 })
 
 test('15.3 elapsed timer badge visible after session starts', async ({ page }) => {

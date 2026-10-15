@@ -162,7 +162,7 @@ test('QM.9 full session cycle — create, check-in, start, match, end match, end
   await page.waitForTimeout(500)
   await expect(page.locator('text=No active session')).toBeVisible()
 
-  // after ending, the single-screen setup is the landing view (no New Session button)
+  // after ending, the single-screen setup is the landing view
   await expect(page.getByTestId('session-setup')).toBeVisible()
   await createSession(page, { name: 'Session 2' })
   await checkinPlayers(page, ['Inter C1', 'Inter C2'])

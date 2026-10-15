@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { toggleTheme } from '@/lib/theme'
 import EndSessionConfirmDialog from './EndSessionConfirmDialog.jsx'
 
-export default function Header({ session, sseData, draftedIds = new Set(), onSmartMatch, onAddPlayer, onNewSession, onEndSession }) {
+export default function Header({ session, sseData, draftedIds = new Set(), onSmartMatch, onAddPlayer, onEndSession }) {
   const [elapsed, setElapsed] = useState(0)
   const [confirmEnd, setConfirmEnd] = useState(false)
 
@@ -134,17 +134,6 @@ export default function Header({ session, sseData, draftedIds = new Set(), onSma
         >
           + Add Player
         </Button>
-        {session && session.started_at != null && (
-          <Button
-            size="sm"
-            variant="ghost"
-            data-testid="btn-new-session"
-            title="End this session and return to setup"
-            onClick={() => onNewSession?.()}
-          >
-            ⟳ New Session
-          </Button>
-        )}
         <Button
           size="sm"
           variant="ghost"

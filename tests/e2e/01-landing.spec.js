@@ -31,7 +31,7 @@ test('1.4 Courts and queue areas absent', async ({ page }) => {
 })
 
 test('1.5 no New Session button or dialogs without a live session', async ({ page }) => {
-  await expect(page.getByTestId('btn-new-session')).toHaveCount(0)
+  // the New Session button was removed entirely; nothing else to assert here
   await expect(page.getByRole('dialog')).toHaveCount(0)
 })
 
