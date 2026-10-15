@@ -51,7 +51,7 @@ function SlateSlot({ idx, entryId, name, draftedIds, draft, onDropSlot, onClearS
         if (droppable(p)) onDropSlot(idx, p.entryId)
       }}
       className={cn(
-        'grid min-h-[30px] place-items-center rounded-lg border-[1.5px] border-dashed px-2 py-1 text-center text-2xs font-semibold transition-colors',
+        'grid min-h-[44px] place-items-center rounded-lg border-[1.5px] border-dashed px-3 py-2 text-center text-sm font-semibold transition-colors',
         filled
           ? 'border-solid border-primary bg-accent text-foreground'
           : 'border-border bg-card text-muted-foreground',
@@ -67,7 +67,7 @@ function SlateSlot({ idx, entryId, name, draftedIds, draft, onDropSlot, onClearS
             data-testid={`${clearPrefix}-${idx}`}
             aria-label={`Remove ${name} from slate`}
             onClick={() => onClearSlot(idx)}
-            className="font-bold text-muted-foreground hover:text-destructive"
+            className="size-5 font-bold text-muted-foreground hover:text-destructive"
           >×</button>
         </span>
       ) : 'Drop…'}
