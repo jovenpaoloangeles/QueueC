@@ -1,6 +1,6 @@
 // tests/e2e/22-setup-pool.spec.js
 // Setup pool smoke: select-all toggling, tier filter + select-all scope,
-// and custom per-court duration rendering back in the setup court list.
+// and fractional-hours court timers.
 import { test, expect } from '../fixtures.js'
 import { base, createSession } from '../helpers.js'
 
@@ -27,13 +27,13 @@ test('22.1 select all toggles every pool chip on, then off', async ({ page }) =>
   await expect(chips).toHaveCount(total)
   expect(await chips.evaluateAll(els => els.every(el => el.getAttribute('aria-pressed') === 'true'))).toBe(true)
   await expect(page.getByText(`${total} selected`)).toBeVisible()
-  await expect(page.getByRole('button', { name: `Check In (${total})` })).toBeVisible()
+  await expect(page.getByTestId('start-session')).toBeEnabled()
 
   // second click clears the selection
   await page.getByTestId('select-all').click()
   expect(await chips.evaluateAll(els => els.every(el => el.getAttribute('aria-pressed') === 'false'))).toBe(true)
   await expect(page.getByText('0 selected')).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Check In', exact: true })).toBeDisabled()
+  await expect(page.getByTestId('start-session')).toBeDisabled()
 })
 
 test('22.2 tier filter shows only that tier; select-all only touches visible chips', async ({ page }) => {
@@ -67,22 +67,14 @@ test('22.2 tier filter shows only that tier; select-all only touches visible chi
   expect(states.filter(s => s === 'false')).toHaveLength(total - intermediateCount)
 })
 
-test('22.3 custom 75-minute court renders "75 min (custom)" in the court list', async ({ page }) => {
-  await page.goto('/')
-  await page.getByRole('button', { name: '+ Session' }).click()
-  await page.getByRole('button', { name: 'Continue' }).click()
-  await page.getByLabel('Courts').fill('1')
-  await page.getByLabel('Court 1 duration').selectOption('custom')
-  await page.getByLabel('Court 1 custom minutes').fill('75')
-  await page.getByLabel('Name').fill('Custom Duration Session')
-  await page.getByRole('button', { name: 'Create Session' }).click()
-  await page.waitForSelector('text=Not started', { timeout: 5000 })
-
-  // custom minutes survive into the setup screen select instead of a blank option
-  const dur = page.getByLabel('Court 1 duration')
-  await expect(dur).toHaveValue('75')
-  await expect(dur.locator('option:checked')).toHaveText('75 min (custom)')
-  // the select's displayed label (what the row renders) is the custom option,
-  // not the blank/placeholder state
-  expect(await dur.evaluate(el => el.selectedOptions[0]?.textContent)).toBe('75 min (custom)')
+test('22.3 fractional hours (1.5) become a 90-minute court timer', async ({ page }) => {
+  await createSession(page, { courts: 1, hours: 1.5, name: 'Custom Duration Session' })
+  await page.getByTestId('select-all').click()
+  await page.getByTestId('start-session').click()
+  await page.getByTestId('session-setup').waitFor({ state: 'detached' })
+  const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
+  const { courts } = await (await page.request.get(`${base()}/api/sessions/${session.id}/courts`)).json()
+  expect(courts).toHaveLength(1)
+  expect(courts[0].duration_minutes).toBe(90)
+  expect(courts[0].expires_at - session.started_at).toBe(5400)
 })

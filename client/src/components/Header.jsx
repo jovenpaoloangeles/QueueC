@@ -116,17 +116,17 @@ export default function Header({ session, sseData, draftedIds = new Set(), onSma
         >
           + Add Player
         </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          data-testid="btn-new-session"
-          title="Reset to new session setup"
-          onClick={() => onNewSession?.()}
-        >
-          ⟳ New Session
-          {/* legacy locator shim: tests/helpers.js + e2e specs still target "+ Session" */}
-          <span className="sr-only">+ Session</span>
-        </Button>
+        {session && session.started_at != null && (
+          <Button
+            size="sm"
+            variant="ghost"
+            data-testid="btn-new-session"
+            title="End this session and return to setup"
+            onClick={() => onNewSession?.()}
+          >
+            ⟳ New Session
+          </Button>
+        )}
         <Button
           size="sm"
           variant="ghost"

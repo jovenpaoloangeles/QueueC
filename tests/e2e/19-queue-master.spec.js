@@ -1,5 +1,5 @@
 import { test, expect } from '../fixtures.js'
-import { base, fullSetup, endMatch, getQueueNames } from '../helpers.js'
+import { base, fullSetup, createSession, checkinPlayers, startSession, endMatch, getQueueNames } from '../helpers.js'
 
 // Queue master — real session scenarios (section 19)
 
@@ -188,12 +188,11 @@ test('QM.9 full session cycle — create, check-in, start, match, end match, end
   await page.waitForTimeout(500)
   await expect(page.locator('text=No active session')).toBeVisible()
 
-  await page.getByRole('button', { name: '+ Session' }).click()
-  await page.getByRole('button', { name: 'Continue' }).click()
-  await page.getByLabel('Name').fill('Session 2')
-  await page.getByRole('button', { name: 'Create Session' }).click()
-  await page.waitForSelector('text=Not started', { timeout: 5000 })
-
+  // after ending, the single-screen setup is the landing view (no New Session button)
+  await expect(page.getByTestId('session-setup')).toBeVisible()
+  await createSession(page, { name: 'Session 2' })
+  await checkinPlayers(page, ['Inter C1', 'Inter C2'])
+  await startSession(page)
   await expect(page.locator('text=Session 2')).toBeVisible()
 })
 

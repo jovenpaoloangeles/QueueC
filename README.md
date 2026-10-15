@@ -6,7 +6,7 @@ A self-hosted badminton queue manager for gym sessions. One screen, one queue ma
 
 ## Features
 
-- **Setup flow** — pick courts, rate per hour, start time; build the waiting pool with search-and-add (presets grow from play history, select-all); **Finish Setup** starts the live session
+- **Setup flow** — one screen, no dialogs: start time, number of courts and rental hours per court; build the waiting pool with search-and-add (history-ordered, select-all, tier filter); **Start Session** creates the session, checks in the selection and starts the clocks
 - **Live courts** — per-court rental countdown with EXPIRED alert and **Extend +1h**; elapsed match timer; drag-and-drop 2x2 lineups
 - **Slate / On Deck** — queue upcoming matches (create, edit, cancel); drafted players leave the queue; slated matches auto-promote to a free court when a match ends
 - **Smart Match** — one click fills free courts / slates matches using wait time, games played, skill variance, team balance and pair redundancy

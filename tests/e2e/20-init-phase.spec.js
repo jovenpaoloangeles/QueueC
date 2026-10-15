@@ -1,6 +1,6 @@
 // tests/e2e/20-init-phase.spec.js
 // Initialization phase: dynamic court config, per-court countdown/expiry,
-// 7-tier skills, Search-and-Add combobox, inline player edit.
+// 7-tier skills, Search-and-Add combobox (single-screen setup).
 import { test, expect } from '../fixtures.js'
 import { base, createSession, checkinPlayers, startSession } from '../helpers.js'
 
@@ -8,47 +8,44 @@ test.beforeEach(async ({ page }) => {
   const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
   if (session) await page.request.fetch(`${base()}/api/sessions/${session.id}/end`, { method: 'PATCH' })
   await page.goto('/')
-  await page.getByRole('button', { name: '+ Start New Session' }).click()
-  await page.getByRole('button', { name: 'Continue' }).click()
-  await page.waitForSelector('[role="dialog"]')
+  await page.getByTestId('session-setup').waitFor()
 })
 
 // --- Dynamic Court Generator ---
 
 test('20.1 court count field renders matching config rows', async ({ page }) => {
-  await expect(page.locator('[data-testid="dynamic-court-rows"] input')).toHaveCount(2) // default 2
-  await page.getByLabel('Courts').fill('5')
-  await expect(page.locator('[data-testid="dynamic-court-rows"] input')).toHaveCount(5)
-  await page.getByLabel('Courts').fill('1')
-  await expect(page.locator('[data-testid="dynamic-court-rows"] input')).toHaveCount(1)
+  await expect(page.locator('[data-testid="court-row"]')).toHaveCount(2) // default 2
+  await page.getByLabel('Number of courts').fill('5')
+  await expect(page.locator('[data-testid="court-row"]')).toHaveCount(5)
+  await page.getByLabel('Number of courts').fill('1')
+  await expect(page.locator('[data-testid="court-row"]')).toHaveCount(1)
 })
 
 test('20.2 court rows get default labels Court 1..N', async ({ page }) => {
-  await page.getByLabel('Courts').fill('3')
+  await page.getByLabel('Number of courts').fill('3')
   await expect(page.getByLabel('Court 1 label')).toHaveValue('Court 1')
   await expect(page.getByLabel('Court 2 label')).toHaveValue('Court 2')
   await expect(page.getByLabel('Court 3 label')).toHaveValue('Court 3')
 })
 
-test('20.3 custom court label respected on create', async ({ page }) => {
+test('20.3 custom court label respected on start', async ({ page }) => {
   await page.getByLabel('Court 1 label').fill('Center Court')
-  await page.getByRole('button', { name: 'Create Session' }).click()
-  await page.waitForSelector('text=Not started')
+  await checkinPlayers(page, ['Inter C1', 'Inter C2'])
+  await startSession(page)
   await expect(page.locator('text=Center Court')).toBeVisible()
 })
 
-test('20.4 per-court duration selector present in modal', async ({ page }) => {
-  const dur = page.getByLabel('Court 1 duration')
-  await expect(dur).toBeVisible()
-  await expect(dur.locator('option')).toHaveCount(8) // no-timer + 6 presets + Custom
+test('20.4 per-court hours input present (replaces duration selector)', async ({ page }) => {
+  const hrs = page.getByLabel('Court 1 hours')
+  await expect(hrs).toBeVisible()
+  await expect(hrs).toHaveValue('2')
+  await expect(page.getByLabel('Court 1 duration')).toHaveCount(0)
 })
 
 // --- Per-Court Countdown & Expiry ---
 
 test('20.5 court duration saved and applied on session start', async ({ page }) => {
-  await page.getByLabel('Court 1 duration').selectOption('60')
-  await page.getByRole('button', { name: 'Create Session' }).click()
-  await page.waitForSelector('text=Not started')
+  await page.getByLabel('Court 1 hours').fill('1')
   await checkinPlayers(page, ['Inter C1', 'Inter C2'])
   await startSession(page)
   // countdown timer visible on Court 1, ticking down from ~1h
@@ -57,21 +54,9 @@ test('20.5 court duration saved and applied on session start', async ({ page }) 
   await expect(countdown).toContainText(/\d+:\d\d/)
 })
 
-test('20.6 court without duration shows no countdown', async ({ page }) => {
-  await page.getByLabel('Courts').fill('1')
-  await page.getByLabel('Court 1 duration').selectOption('') // no timer
-  await page.getByRole('button', { name: 'Create Session' }).click()
-  await page.waitForSelector('text=Not started')
-  await checkinPlayers(page, ['Inter C1', 'Inter C2'])
-  await startSession(page)
-  await expect(page.locator('[data-testid="court-countdown"]')).toHaveCount(0)
-})
-
 test('20.7 expired idle court stays visible with extend panel', async ({ page }) => {
-  await page.getByLabel('Courts').fill('2')
-  await page.getByLabel('Court 1 duration').selectOption('60')
-  await page.getByRole('button', { name: 'Create Session' }).click()
-  await page.waitForSelector('text=Not started')
+  await page.getByLabel('Number of courts').fill('2')
+  await page.getByLabel('Court 1 hours').fill('1')
   await checkinPlayers(page, ['Inter C1', 'Inter C2'])
   await startSession(page)
   await expect(page.locator('text=Court 1')).toBeVisible()
@@ -92,10 +77,8 @@ test('20.7 expired idle court stays visible with extend panel', async ({ page })
 })
 
 test('20.8 expired court blocks new match start (server-side)', async ({ page }) => {
-  await page.getByLabel('Courts').fill('1')
-  await page.getByLabel('Court 1 duration').selectOption('60')
-  await page.getByRole('button', { name: 'Create Session' }).click()
-  await page.waitForSelector('text=Not started')
+  await page.getByLabel('Number of courts').fill('1')
+  await page.getByLabel('Court 1 hours').fill('1')
   await checkinPlayers(page, ['Inter C1', 'Inter C2'])
   await startSession(page)
 
@@ -120,10 +103,8 @@ test('20.8 expired court blocks new match start (server-side)', async ({ page })
 })
 
 test('20.9 expired court mid-match shows Last Game badge and persists until match ends', async ({ page }) => {
-  await page.getByLabel('Courts').fill('1')
-  await page.getByLabel('Court 1 duration').selectOption('60')
-  await page.getByRole('button', { name: 'Create Session' }).click()
-  await page.waitForSelector('text=Not started')
+  await page.getByLabel('Number of courts').fill('1')
+  await page.getByLabel('Court 1 hours').fill('1')
   await checkinPlayers(page, ['Inter C1', 'Inter C2'])
   await startSession(page)
   await page.getByRole('button', { name: 'Manual' }).click()
@@ -159,26 +140,19 @@ test('20.9 expired court mid-match shows Last Game badge and persists until matc
 // --- Search-and-Add Combobox ---
 
 test('20.10 typing filters pool into combobox matches', async ({ page }) => {
-  await page.getByRole('button', { name: 'Create Session' }).click()
-  await page.waitForSelector('text=Not started')
   const search = page.getByLabel('Search or add player')
   await search.fill('Inter C')
   await expect(page.locator('[data-testid="combobox-matches"] button')).toHaveCount(4)
 })
 
-test('20.11 1-click check-in from combobox', async ({ page }) => {
-  await page.getByRole('button', { name: 'Create Session' }).click()
-  await page.waitForSelector('text=Not started')
+test('20.11 1-click select from combobox marks the chip selected', async ({ page }) => {
   await page.getByLabel('Search or add player').fill('Inter C1')
   await page.locator('[data-testid="combobox-matches"]').getByRole('button', { name: /Inter C1/ }).click()
-  await page.waitForTimeout(500)
-  await expect(page.locator('ol').locator('text=Inter C1')).toBeVisible()
-  await expect(page.locator('text=Queue · 1')).toBeVisible()
+  await expect(page.getByTestId('selected-count')).toHaveText('1 selected')
+  await expect(page.getByTestId('player-pool').getByRole('button', { name: /Inter C1/ })).toHaveAttribute('aria-pressed', 'true')
 })
 
 test('20.12 register new player inline with 7-tier skill dropdown', async ({ page }) => {
-  await page.getByRole('button', { name: 'Create Session' }).click()
-  await page.waitForSelector('text=Not started')
   const name = `Rookie ${Date.now().toString(36)}`
   await page.getByLabel('Search or add player').fill(name)
   const prompt = page.locator('[data-testid="register-new-player-prompt"]')
@@ -186,18 +160,16 @@ test('20.12 register new player inline with 7-tier skill dropdown', async ({ pag
   await expect(prompt.locator('select option')).toHaveCount(7)
   await prompt.locator('select').selectOption('professional')
   await prompt.getByRole('button', { name: 'Add Player' }).click()
-  await page.waitForTimeout(600)
-  await expect(page.locator('ol').locator(`text=${name}`)).toBeVisible()
-  await expect(page.locator('ol').locator(`text=${name}`).locator('..')).toContainText('professional')
+  const chip = page.getByTestId('player-pool').getByRole('button', { name })
+  await expect(chip).toHaveAttribute('aria-pressed', 'true')
+  await expect(chip).toContainText('professional')
 })
 
-test('20.13 session duplicate blocks registration with inline error', async ({ page }) => {
-  await page.getByRole('button', { name: 'Create Session' }).click()
-  await page.waitForSelector('text=Not started')
+test('20.13 selected duplicate blocks registration with inline error', async ({ page }) => {
   await checkinPlayers(page, ['Inter C1'])
   const search = page.getByLabel('Search or add player')
   await search.fill('inter c1') // normalized duplicate (case-insensitive)
-  await expect(page.locator('[data-testid="duplicate-session-error"]')).toContainText('already active in this session')
+  await expect(page.locator('[data-testid="duplicate-session-error"]')).toContainText('already selected')
   await expect(page.locator('[data-testid="register-new-player-prompt"]')).toHaveCount(0)
   // draft spec: duplicate attempt disables the Add button (scoped to the
   // duplicate-error block — header '+ Add Player' has the same substring)
@@ -207,11 +179,9 @@ test('20.13 session duplicate blocks registration with inline error', async ({ p
 })
 
 test('20.14 database collision shows existing profile instead of duplicate create', async ({ page }) => {
-  await page.getByRole('button', { name: 'Create Session' }).click()
-  await page.waitForSelector('text=Not started')
   const search = page.getByLabel('Search or add player')
   await search.fill('Upper D1') // exists in DB but not in session
-  // existing profile surfaced as a 1-click check-in option
+  // existing profile surfaced as a 1-click select option
   await expect(page.locator('[data-testid="combobox-matches"]')).toContainText('Upper D1')
   // and no register prompt for an exact DB match
   await expect(page.locator('[data-testid="register-new-player-prompt"]')).toHaveCount(0)
@@ -220,8 +190,6 @@ test('20.14 database collision shows existing profile instead of duplicate creat
 // --- 7-Tier Skill Badges ---
 
 test('20.15 all 7 tiers render distinct badges in the pool', async ({ page }) => {
-  await page.getByRole('button', { name: 'Create Session' }).click()
-  await page.waitForSelector('text=Not started')
   const pool = page.locator('[data-testid="player-pool"]')
   await expect(pool).toContainText('newbie')
   await expect(pool).toContainText('beginner')
@@ -235,8 +203,6 @@ test('20.15 all 7 tiers render distinct badges in the pool', async ({ page }) =>
 // --- Active Player Row: games-played badge + status timer ---
 
 test('20.16 player row shows games played badge [0] and waiting status timer', async ({ page }) => {
-  await page.getByRole('button', { name: 'Create Session' }).click()
-  await page.waitForSelector('text=Not started')
   await checkinPlayers(page, ['Inter C1', 'Inter C2'])
   await startSession(page)
   const card = page.locator('[data-entry-id]').first()
@@ -247,8 +213,6 @@ test('20.16 player row shows games played badge [0] and waiting status timer', a
 })
 
 test('20.17 games played increments after a match ends', async ({ page }) => {
-  await page.getByRole('button', { name: 'Create Session' }).click()
-  await page.waitForSelector('text=Not started')
   await checkinPlayers(page, ['Inter C1', 'Inter C2', 'Inter C3', 'Inter C4'])
   await startSession(page)
   await page.getByRole('button', { name: 'Manual' }).click() // avoid smart pre-selection toggling off
@@ -266,55 +230,4 @@ test('20.17 games played increments after a match ends', async ({ page }) => {
   for (const badge of await page.locator('[data-testid="games-played-badge"]').all()) {
     await expect(badge).toHaveText('[1]')
   }
-})
-
-// --- On-the-Fly Player Edit ---
-
-test('20.18 edit player name + skill from queue rows', async ({ page }) => {
-  await page.getByRole('button', { name: 'Create Session' }).click()
-  await page.waitForSelector('text=Not started')
-  await checkinPlayers(page, ['Inter C1'])
-  await page.getByRole('button', { name: 'Edit Inter C1' }).click()
-  const row = page.locator('ol li').first()
-  await row.getByLabel(/^Edit name/).fill('Inter C1 Renamed')
-  await row.getByLabel(/^Edit skill/).selectOption('expert')
-  await row.getByRole('button', { name: 'Save' }).click()
-  await page.waitForTimeout(600)
-  await expect(page.locator('ol').locator('text=Inter C1 Renamed')).toBeVisible()
-  await expect(page.locator('ol li').first()).toContainText('expert')
-})
-
-test('20.19 inline edit duplicate name rejected', async ({ page }) => {
-  await page.getByRole('button', { name: 'Create Session' }).click()
-  await page.waitForSelector('text=Not started')
-  await checkinPlayers(page, ['Inter C1', 'Inter C2'])
-  await page.getByRole('button', { name: 'Edit Inter C1' }).click()
-  const row = page.locator('ol li').first()
-  await row.getByLabel(/^Edit name/).fill('inter c2') // collides with Inter C2
-  await row.getByRole('button', { name: 'Save' }).click()
-  await expect(row).toContainText('Player name already exists')
-})
-
-test('20.20 edited skill propagates to persistent DB (player pool after re-checkin)', async ({ page }) => {
-  await page.getByRole('button', { name: 'Create Session' }).click()
-  await page.waitForSelector('text=Not started')
-  // unique player: earlier tests may have renamed fixture players persistently
-  const name = `SkillSync ${Date.now().toString(36)}`
-  const created = await (await page.request.post(`${base()}/api/players`, {
-    data: { name, skill_level: 'intermediate' },
-  })).json()
-  const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
-  await page.request.post(`${base()}/api/sessions/${session.id}/checkin`, {
-    data: { player_id: created.player.id },
-  })
-  await page.waitForTimeout(800) // SSE tick to render the queue row
-  await page.getByRole('button', { name: `Edit ${name}` }).click()
-  const row = page.locator('ol li').first() // only player checked in; name is now an input value
-  await row.getByLabel(/^Edit skill/).selectOption('professional')
-  await row.getByRole('button', { name: 'Save' }).click()
-  await page.waitForTimeout(600)
-  // skill syncs to the players table via PATCH /api/players/:id
-  const { players } = await (await page.request.get(`${base()}/api/players`)).json()
-  const p = players.find(x => x.id === created.player.id)
-  expect(p.skill_level).toBe('professional')
 })

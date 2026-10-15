@@ -1,6 +1,6 @@
 # Current Workflow (as implemented)
 
-1. **Setup** — set courts, hourly rate, start time; search/add players to the waiting pool (select-all available) → **Finish Setup**.
+1. **Setup** (single screen) — start time, number of courts, hours per court; search/add/select players for the waiting pool (select-all available) → **Start Session**. Nothing is created until Start; each court's timer runs its hours from that click.
 2. **Live** — header shows courts in use, waiting count, longest/avg wait; actions: Smart Match, Add Player, New Session, dark toggle.
    - **Courts**: drag players into Team A/B to start a match; countdown per court, Extend +1h when expired; shuttle +/-.
    - **On Deck**: slate matches for the next free court; auto-promoted when a court frees.

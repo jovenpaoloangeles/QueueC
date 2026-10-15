@@ -17,18 +17,24 @@ export function SkillChip({ level }) {
 // Unified Search-and-Add Combobox: 1-click check-in for pool matches,
 // register-and-check-in for brand-new names. Shared by SetupScreen and the
 // live Add Player dialog.
-export default function PlayerSearchAdd({ session, queue, players, onPlayersChanged, onCheckedIn }) {
+// Pre-session mode (no `session`): nothing is checked in yet — picking a match or
+// registering a new player calls `onPick(player)` so the setup screen can mark
+// the player selected; `selectedIds` plays the role of the queue for duplicates.
+export default function PlayerSearchAdd({ session, queue = [], players, onPlayersChanged, onCheckedIn, selectedIds = [], onPick }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [newPlayerSkill, setNewPlayerSkill] = useState('intermediate')
   const [registering, setRegistering] = useState(false)
   const toast = useToast()
 
   // Normalized search & duplicate checks
-  const inQueue = new Set(queue.map(e => e.player_id))
+  const pre = !session
+  const inQueue = new Set(pre ? selectedIds : queue.map(e => e.player_id))
   const pool = players.filter(p => !inQueue.has(p.id))
   const normQuery = searchQuery.trim().toLowerCase()
   const activeDuplicate = normQuery
-    ? queue.find(e => e.name.trim().toLowerCase() === normQuery)
+    ? (pre
+        ? players.find(p => inQueue.has(p.id) && p.name.trim().toLowerCase() === normQuery)
+        : queue.find(e => e.name.trim().toLowerCase() === normQuery))
     : null
   const exactPoolMatch = normQuery
     ? pool.find(p => p.name.trim().toLowerCase() === normQuery)
@@ -38,6 +44,12 @@ export default function PlayerSearchAdd({ session, queue, players, onPlayersChan
     : []
 
   async function handleQuickCheckIn(playerId) {
+    if (pre) {
+      const found = players.find(p => p.id === playerId)
+      setSearchQuery('')
+      if (found) onPick?.(found)
+      return
+    }
     try {
       await checkinPlayer(session.id, playerId)
     } catch (err) {
@@ -56,10 +68,11 @@ export default function PlayerSearchAdd({ session, queue, players, onPlayersChan
     setRegistering(true)
     try {
       const { player } = await createPlayer({ name: trimmed, skill_level: newPlayerSkill })
-      await checkinPlayer(session.id, player.id)
+      if (pre) onPick?.(player)
+      else await checkinPlayer(session.id, player.id)
       setSearchQuery('')
       onPlayersChanged?.()
-      onCheckedIn?.(player)
+      if (!pre) onCheckedIn?.(player)
     } catch (err) {
       toast(err?.data?.error ?? 'Could not register player', 'error')
       // refresh pool
@@ -73,7 +86,7 @@ export default function PlayerSearchAdd({ session, queue, players, onPlayersChan
     <div className="flex flex-col gap-2" data-testid="search-add-combobox">
       <Input
         type="text"
-        placeholder="Search player to check in, or type a new name to register..."
+        placeholder={pre ? 'Search player to select, or type a new name to register...' : 'Search player to check in, or type a new name to register...'}
         aria-label="Search or add player"
         value={searchQuery}
         onChange={e => setSearchQuery(e.target.value)}
@@ -82,7 +95,7 @@ export default function PlayerSearchAdd({ session, queue, players, onPlayersChan
         <div className="flex flex-col gap-2 rounded-md border border-border bg-muted/20 p-2 text-xs">
           {activeDuplicate && (
             <div className="flex items-center justify-between text-destructive" data-testid="duplicate-session-error">
-              <span>Player &ldquo;{activeDuplicate.name}&rdquo; is already active in this session.</span>
+              <span>Player &ldquo;{activeDuplicate.name}&rdquo; is already {pre ? 'selected' : 'active in this session'}.</span>
               <Button size="xs" disabled>Add Player</Button>
             </div>
           )}
@@ -90,7 +103,7 @@ export default function PlayerSearchAdd({ session, queue, players, onPlayersChan
           {matchingPool.length > 0 && (
             <div className="flex flex-col gap-1" data-testid="combobox-matches">
               <span className="text-2xs uppercase tracking-wider text-muted-foreground">
-                1-Click Check-In ({matchingPool.length})
+                {pre ? '1-Click Select' : '1-Click Check-In'} ({matchingPool.length})
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {matchingPool.map(p => {

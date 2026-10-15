@@ -19,8 +19,10 @@ test('1.2 "No active session" badge in header', async ({ page }) => {
   await expect(page.locator('text=No active session')).toBeVisible()
 })
 
-test('1.3 "Start New Session" CTA button visible', async ({ page }) => {
-  await expect(page.getByRole('button', { name: '+ Start New Session' })).toBeVisible()
+test('1.3 single-screen setup shown instead of a CTA button', async ({ page }) => {
+  await expect(page.getByTestId('session-setup')).toBeVisible()
+  await expect(page.getByRole('button', { name: '+ Start New Session' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Start Session' })).toBeDisabled()
 })
 
 test('1.4 Courts and queue areas absent', async ({ page }) => {
@@ -28,11 +30,9 @@ test('1.4 Courts and queue areas absent', async ({ page }) => {
   await expect(page.locator('text=Queue ·')).not.toBeVisible()
 })
 
-test('1.5 Header "+ Session" button opens confirm then modal', async ({ page }) => {
-  await page.getByRole('button', { name: '+ Session' }).click()
-  await expect(page.getByText('Start a new session?')).toBeVisible()
-  await page.getByRole('button', { name: 'Continue' }).click()
-  await expect(page.getByLabel('Name')).toBeVisible()
+test('1.5 no New Session button or dialogs without a live session', async ({ page }) => {
+  await expect(page.getByTestId('btn-new-session')).toHaveCount(0)
+  await expect(page.getByRole('dialog')).toHaveCount(0)
 })
 
 test('1.6 page title is QueueC', async ({ page }) => {

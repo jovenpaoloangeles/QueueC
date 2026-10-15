@@ -7,14 +7,15 @@ test.beforeEach(async ({ page }) => {
   if (session) await page.request.fetch(`${base()}/api/sessions/${session.id}/end`, { method: 'PATCH' })
 })
 
-test('16.1 create session form submits on Enter', async ({ page }) => {
+test('16.1 setup form: Enter in a field does not start without 2 players, labels are associated', async ({ page }) => {
   await page.goto('/')
-  await page.getByRole('button', { name: '+ Session' }).click()
-  await page.getByRole('button', { name: 'Continue' }).click()
-  await page.getByLabel('Name').fill('Enter Test')
+  for (const label of ['Session name', 'Start time', 'Number of courts', 'Court 1 label', 'Court 1 hours']) {
+    await expect(page.getByLabel(label)).toBeVisible()
+  }
+  await page.getByLabel('Session name').fill('Enter Test')
   await page.keyboard.press('Enter')
-  await page.waitForSelector('text=Not started', { timeout: 5000 })
-  await expect(page.locator('text=Enter Test')).toBeVisible()
+  await expect(page.getByTestId('session-setup')).toBeVisible()
+  await expect(page.getByTestId('start-session')).toBeDisabled()
 })
 
 test('16.2 end match form submits on Enter', async ({ page }) => {
@@ -29,18 +30,16 @@ test('16.2 end match form submits on Enter', async ({ page }) => {
   await expect(page.getByRole('dialog')).not.toBeVisible()
 })
 
-test('16.3 modal close buttons reachable by Tab', async ({ page }) => {
+test('16.3 setup controls reachable by Tab, Start Session last', async ({ page }) => {
   await page.goto('/')
-  await page.getByRole('button', { name: '+ Session' }).click()
-  await page.getByRole('button', { name: 'Continue' }).click()
-  // focus Name explicitly — focus restore from the unmounted confirm dialog
-  // otherwise leaves tab order starting outside the modal
-  await page.getByLabel('Name').focus()
-  // Tab through modal — Cancel should be focusable
-  // type=date uses 4 sub-fields, type=time uses 4 sub-fields each; Cancel is at Tab 14 from Name
-  for (let i = 0; i < 14; i++) await page.keyboard.press('Tab')
-  const focused = await page.evaluate(() => document.activeElement?.textContent)
-  expect(['Cancel', 'Create Session']).toContain(focused?.trim())
+  await checkinPlayers(page, ['Inter C1', 'Inter C2'])
+  await page.getByLabel('Session name').focus()
+  let reached = false
+  for (let i = 0; i < 80 && !reached; i++) {
+    await page.keyboard.press('Tab')
+    reached = await page.evaluate(() => document.activeElement?.getAttribute('data-testid') === 'start-session')
+  }
+  expect(reached).toBe(true)
 })
 
 test('16.4 score inputs Tab-navigable', async ({ page }) => {

@@ -9,11 +9,15 @@ test.beforeEach(async ({ page }) => {
 
 test('15.1 session name in header', async ({ page }) => {
   await createSession(page, { name: 'Header Test' })
+  await checkinPlayers(page, ['Inter C1', 'Inter C2'])
+  await startSession(page)
   await expect(page.locator('text=Header Test')).toBeVisible()
 })
 
 test('15.2 scheduled time range shown', async ({ page }) => {
-  await createSession(page, { name: 'Header Test' })
+  await createSession(page, { name: 'Header Test', startTime: '19:30', hours: 2 })
+  await checkinPlayers(page, ['Inter C1', 'Inter C2'])
+  await startSession(page)
   // Time range format: HH:MM–HH:MM (scoped to header to avoid SetupScreen duplicate)
   await expect(page.locator('[data-testid="header-time-range"]')).toBeVisible()
 })
@@ -23,14 +27,14 @@ test('15.4 elapsed timer absent during setup', async ({ page }) => {
   await expect(page.locator('text=●')).not.toBeVisible()
 })
 
-test('15.5 "+ Session" always visible', async ({ page }) => {
+test('15.5 "New Session" only while a session is live', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('button', { name: '+ Session' })).toBeVisible()
+  await expect(page.getByTestId('btn-new-session')).toHaveCount(0)
   await createSession(page)
-  await expect(page.getByRole('button', { name: '+ Session' })).toBeVisible()
+  await expect(page.getByTestId('btn-new-session')).toHaveCount(0)
   await checkinPlayers(page, ['Inter C1', 'Inter C2'])
   await startSession(page)
-  await expect(page.getByRole('button', { name: '+ Session' })).toBeVisible()
+  await expect(page.getByTestId('btn-new-session')).toBeVisible()
 })
 
 test('15.3 elapsed timer badge visible after session starts', async ({ page }) => {

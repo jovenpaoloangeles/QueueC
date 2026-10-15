@@ -1,6 +1,6 @@
-// tests/e2e/05-courts-setup.spec.js
+// tests/e2e/05-courts-setup.spec.js — court configuration on the single setup screen
 import { test, expect } from '../fixtures.js'
-import { base, createSession, checkinPlayers, startSession } from '../helpers.js'
+import { base, liveState, createSession, checkinPlayers, startSession } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
   const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
@@ -8,92 +8,61 @@ test.beforeEach(async ({ page }) => {
   await createSession(page, { courts: 2 })
 })
 
-test('5.1 2 courts listed by default', async ({ page }) => {
-  const courtRows = page.locator('text=Courts').locator('../..').locator('[class*="rounded-md border"]')
-  await expect(courtRows).toHaveCount(2)
+
+test('5.1 2 court rows by default', async ({ page }) => {
+  await expect(page.getByTestId('court-row')).toHaveCount(2)
 })
 
-test('5.2 court labels are Court 1 and Court 2', async ({ page }) => {
-  await expect(page.locator('text=Court 1')).toBeVisible()
-  await expect(page.locator('text=Court 2')).toBeVisible()
+test('5.2 default labels are Court 1 and Court 2', async ({ page }) => {
+  await expect(page.getByLabel('Court 1 label')).toHaveValue('Court 1')
+  await expect(page.getByLabel('Court 2 label')).toHaveValue('Court 2')
 })
 
-test('5.3 add court creates Court 3', async ({ page }) => {
-  await page.getByRole('button', { name: '+ Add Court' }).click()
-  await page.waitForTimeout(400)
-  await expect(page.locator('text=Court 3')).toBeVisible()
+test('5.3 raising the count adds Court 3 with 2 hours', async ({ page }) => {
+  await page.getByLabel('Number of courts').fill('3')
+  await expect(page.getByLabel('Court 3 label')).toHaveValue('Court 3')
+  await expect(page.getByLabel('Court 3 hours')).toHaveValue('2')
 })
 
-test('5.4 remove court deletes it', async ({ page }) => {
-  const rows = page.locator('text=Courts').locator('../..').locator('[class*="rounded-md border"]')
-  await rows.last().getByRole('button', { name: 'Remove' }).click()
-  await page.waitForTimeout(400)
-  await expect(rows).toHaveCount(1)
+test('5.4 lowering the count removes trailing rows', async ({ page }) => {
+  await page.getByLabel('Number of courts').fill('1')
+  await expect(page.getByTestId('court-row')).toHaveCount(1)
+  await expect(page.getByLabel('Court 2 label')).toHaveCount(0)
 })
 
-test('5.5 remove all courts shows empty message', async ({ page }) => {
-  const rows = page.locator('text=Courts').locator('../..').locator('[class*="rounded-md border"]')
-  await rows.nth(1).getByRole('button', { name: 'Remove' }).click()
-  await page.waitForTimeout(300)
-  await rows.nth(0).getByRole('button', { name: 'Remove' }).click()
-  await page.waitForTimeout(300)
-  await expect(page.locator('text=No courts yet')).toBeVisible()
-})
-
-test('5.6 set active_from hour', async ({ page }) => {
-  const row = page.locator('text=Courts').locator('../..').locator('[class*="rounded-md border"]').first()
-  const sel = row.getByLabel('Court 1 active from')
-  await sel.selectOption({ label: '18:00' })
-  await page.waitForTimeout(400)
-  // controlled by server round-trip — still showing the chosen hour
-  expect(await sel.evaluate(el => el.selectedOptions[0]?.textContent)).toBe('18:00')
-})
-
-test('5.7 set active_until hour', async ({ page }) => {
-  const row = page.locator('text=Courts').locator('../..').locator('[class*="rounded-md border"]').first()
-  const sel = row.getByLabel('Court 1 active until')
-  await sel.selectOption({ label: '21:00' })
-  await page.waitForTimeout(400)
-  expect(await sel.evaluate(el => el.selectedOptions[0]?.textContent)).toBe('21:00')
-})
-
-test('5.11 hour options span session window', async ({ page }) => {
-  const row = page.locator('text=Courts').locator('../..').locator('[class*="rounded-md border"]').first()
-  const sel = row.getByLabel('Court 1 active from')
-  // default session 18:00–21:00 → blank + 4 exact hours
-  await expect(sel.locator('option')).toHaveCount(5)
-  const labels = await sel.locator('option').allTextContents()
-  expect(labels).toEqual(['—', '18:00', '19:00', '20:00', '21:00'])
-})
-
-test('5.8 disable court — checkbox unchecked', async ({ page }) => {
-  const row = page.locator('text=Courts').locator('../..').locator('[class*="rounded-md border"]').first()
-  // Use click instead of uncheck: controlled component reverts before SSE, uncheck() misdetects state
-  await row.locator('input[type="checkbox"]').click()
-  await page.waitForTimeout(600)
-  await expect(row.locator('input[type="checkbox"]')).not.toBeChecked()
-})
-
-test('5.9 disabled court absent from live view', async ({ page }) => {
-  // Disable court 1
-  const row = page.locator('text=Courts').locator('../..').locator('[class*="rounded-md border"]').first()
-  await row.locator('input[type="checkbox"]').click()
-  await page.waitForTimeout(600)
-  // Check in 2 players and start session
+test('5.5 custom label and per-court hours reach the live courts', async ({ page }) => {
+  await page.getByLabel('Court 1 label').fill('Centre')
+  await page.getByLabel('Court 1 hours').fill('1.5')
+  await page.getByLabel('Court 2 hours').fill('3')
   await checkinPlayers(page, ['Inter C1', 'Inter C2'])
   await startSession(page)
-  // Court 1 should be absent (only Court 2 visible)
-  await expect(page.locator('text=Court 1')).toHaveCount(0)
-  await expect(page.locator('text=Court 2')).toBeVisible()
+  await expect(page.getByText('Centre').first()).toBeVisible()
+  const { courts, session } = await liveState(page)
+  expect(courts.map(c => c.label)).toEqual(['Centre', 'Court 2'])
+  expect(courts.map(c => c.expires_at - session.started_at)).toEqual([5400, 10800])
 })
 
-test('5.10 re-enabled court reappears in live view', async ({ page }) => {
-  const row = page.locator('text=Courts').locator('../..').locator('[class*="rounded-md border"]').first()
-  await row.locator('input[type="checkbox"]').click() // disable
-  await page.waitForTimeout(600)
-  await row.locator('input[type="checkbox"]').click() // re-enable
-  await page.waitForTimeout(600)
+test('5.6 hours input is a 0.5-step number between 0.5 and 12', async ({ page }) => {
+  const h = page.getByLabel('Court 1 hours')
+  await expect(h).toHaveAttribute('type', 'number')
+  await expect(h).toHaveAttribute('step', '0.5')
+  await expect(h).toHaveAttribute('min', '0.5')
+  await expect(h).toHaveAttribute('max', '12')
+})
+
+test('5.7 chosen start time becomes the session scheduled start', async ({ page }) => {
+  await page.getByLabel('Start time').fill('20:30')
   await checkinPlayers(page, ['Inter C1', 'Inter C2'])
   await startSession(page)
-  await expect(page.locator('text=Court 1')).toBeVisible()
+  const { session } = await liveState(page)
+  const d = new Date(session.scheduled_start * 1000)
+  expect([d.getHours(), d.getMinutes()]).toEqual([20, 30])
+  expect(session.scheduled_end - session.scheduled_start).toBe(2 * 3600)
+})
+
+test('5.8 all configured courts appear in the live view', async ({ page }) => {
+  await page.getByLabel('Number of courts').fill('4')
+  await checkinPlayers(page, ['Inter C1', 'Inter C2'])
+  await startSession(page)
+  for (const n of [1, 2, 3, 4]) await expect(page.getByText(`Court ${n}`).first()).toBeVisible()
 })

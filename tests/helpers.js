@@ -5,35 +5,40 @@ const DEFAULT_PLAYERS = [
   'Expert E1', 'Expert E2', 'Upper D1', 'Upper D2',
 ]
 
-export async function createSession(page, { name = 'Test Session', courts = 2 } = {}) {
+/** Fill the single-screen setup (no server state yet). `courts` = count or
+ *  [{label, hours}] rows; `hours` applies to every court when courts is a count;
+ *  `startTime` = 'HH:MM' (left at the screen's default when omitted). */
+export async function createSession(page, { name = 'Test Session', courts = 2, hours, startTime } = {}) {
   await page.goto('/')
-  await page.getByRole('button', { name: '+ Session' }).click()
-  await page.getByRole('button', { name: 'Continue' }).click() // confirm dialog gate
-  await page.getByLabel('Name').fill(name)
-  await page.getByLabel('Courts').fill(String(courts))
-  await page.getByRole('button', { name: 'Create Session' }).click()
-  // Modal closes reactively via SSE
-  await page.waitForSelector('text=Not started', { timeout: 5000 })
+  await page.getByLabel('Session name').fill(name)
+  const rows = Array.isArray(courts) ? courts : null
+  await page.getByLabel('Number of courts').fill(String(rows ? rows.length : courts))
+  if (startTime) await page.getByLabel('Start time').fill(startTime)
+  if (rows) {
+    for (const [i, r] of rows.entries()) {
+      if (r.label != null) await page.getByLabel(`Court ${i + 1} label`).fill(r.label)
+      if (r.hours != null) await page.getByLabel(`Court ${i + 1} hours`).fill(String(r.hours))
+    }
+  } else if (hours != null) {
+    for (let i = 0; i < courts; i++) await page.getByLabel(`Court ${i + 1} hours`).fill(String(hours))
+  }
 }
 
 export async function checkinPlayers(page, names = DEFAULT_PLAYERS) {
-  // Setup screen uses multi-select: clicking a chip toggles it, then the
-  // batch "Check In (N)" button commits them all.
+  // Setup screen: clicking a pool chip toggles it into the selection; the
+  // session check-in happens on Start Session.
   for (const name of names) {
-    const btn = page.getByRole('button', { name, exact: false }).first()
+    const btn = page.getByTestId('player-pool').getByRole('button', { name, exact: false }).first()
     // center the button — minimal scroll leaves lower rows under the sticky header
     await btn.evaluate(el => el.scrollIntoView({ block: 'center' }))
     await btn.click()
   }
-  if (names.length) {
-    await page.getByRole('button', { name: /^Check In/ }).click()
-    await page.waitForTimeout(500) // batch check-ins + SSE to propagate
-  }
 }
 
 export async function startSession(page) {
-  await page.getByRole('button', { name: 'Finish Setup' }).click()
-  await page.waitForSelector('text=Queue', { timeout: 5000 })
+  await page.getByRole('button', { name: 'Start Session' }).click()
+  // setup screen unmounts once the live session arrives via SSE
+  await page.getByTestId('session-setup').waitFor({ state: 'detached', timeout: 8000 })
 }
 
 export async function fullSetup(page, { courts = 2, playerNames = DEFAULT_PLAYERS } = {}) {
@@ -94,4 +99,12 @@ export async function startDoubles(page) {
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
   await page.getByRole('button', { name: 'Start Match' }).first().click()
   await page.waitForTimeout(500)
+}
+
+/** One snapshot of the SSE state payload ({session, queue, courts, ...}). */
+export function liveState(page) {
+  return page.evaluate(() => new Promise(res => {
+    const es = new EventSource('/api/sse')
+    es.addEventListener('state', e => { es.close(); res(JSON.parse(e.data)) })
+  }))
 }

@@ -7,31 +7,31 @@ test.beforeEach(async ({ page }) => {
   if (session) await page.request.fetch(`${base()}/api/sessions/${session.id}/end`, { method: 'PATCH' })
 })
 
-test('3.1 setup screen appears after create', async ({ page }) => {
+test('3.1 setup screen shows session fields', async ({ page }) => {
   await createSession(page)
   await expect(page.locator('text=Session Setup')).toBeVisible()
 })
 
-test('3.2 "Not started" badge in header', async ({ page }) => {
+test('3.2 header shows "No active session" until Start Session', async ({ page }) => {
   await createSession(page)
-  await expect(page.locator('header, [class*="h-14"]').locator('text=Not started')).toBeVisible()
+  await expect(page.locator('[class*="h-14"]').locator('text=No active session')).toBeVisible()
 })
 
 test('3.3 Start disabled with 0 players', async ({ page }) => {
   await createSession(page)
-  await expect(page.getByRole('button', { name: 'Finish Setup' })).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'Start Session' })).toBeDisabled()
 })
 
 test('3.4 Start disabled with 1 player', async ({ page }) => {
   await createSession(page)
   await checkinPlayers(page, ['Inter C1'])
-  await expect(page.getByRole('button', { name: 'Finish Setup' })).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'Start Session' })).toBeDisabled()
 })
 
 test('3.5 Start enabled with 2+ players', async ({ page }) => {
   await createSession(page)
   await checkinPlayers(page, ['Inter C1', 'Inter C2'])
-  await expect(page.getByRole('button', { name: 'Finish Setup' })).toBeEnabled()
+  await expect(page.getByRole('button', { name: 'Start Session' })).toBeEnabled()
 })
 
 test('3.6 Start transitions to live view', async ({ page }) => {

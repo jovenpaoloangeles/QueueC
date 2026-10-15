@@ -11,14 +11,12 @@ import CourtsRow from './components/CourtsRow.jsx'
 import OnDeckStrip from './components/OnDeckStrip.jsx'
 import QueueGrid from './components/QueueGrid.jsx'
 import StatsSidebar from './components/StatsSidebar.jsx'
-import CreateSessionModal from './components/CreateSessionModal.jsx'
 import SetupScreen from './components/SetupScreen.jsx'
 import AddPlayerDialog from './components/AddPlayerDialog.jsx'
 
 export default function App() {
   const [sseData, setSseData] = useState({ session: null, queue: [], activeMatches: [], slatedMatches: [], courts: [], stats: null, serverTime: null })
-  const [showCreate, setShowCreate] = useState(false)
-  const [confirmNew, setConfirmNew] = useState(false) // both "+ Session" entry points gate on this
+  const [confirmNew, setConfirmNew] = useState(false) // header "New Session": confirm ending the live session
   const [selection, setSelection] = useState([])
   // per-court lineup drafts: { [courtId]: [team1_p1, team1_p2, team2_p1, team2_p2] }
   // drag-flow only — the click-to-select `selection` above stays untouched for that flow
@@ -71,7 +69,7 @@ export default function App() {
   useEffect(() => {
     setDrafts(prev => (Object.keys(prev).length ? {} : prev))
     setSelection([]); setSlateDraftIds([])
-    setShowAddPlayer(false); setConfirmNew(false); setShowCreate(false)
+    setShowAddPlayer(false); setConfirmNew(false)
   }, [session?.id])
 
   // Stale-draft pruning: a draft slot can outlive its entry (started elsewhere,
@@ -187,11 +185,6 @@ export default function App() {
     document.title = session?.name ? `${session.name} · QueueC` : 'QueueC'
   }, [session?.name])
 
-  // close the "new session" modal as soon as SSE confirms a draft session arrived
-  useEffect(() => {
-    if (session != null) setShowCreate(false)
-  }, [session])
-
   const { waitSeconds, playSeconds } = useTimers(sseData.serverTime, sseData.queue, sseData.activeMatches)
 
   return (
@@ -210,8 +203,8 @@ export default function App() {
           Reconnecting…
         </div>
       )}
-      {session && session.started_at == null && (
-        <SetupScreen session={session} queue={queue} courts={courts} />
+      {(!session || session.started_at == null) && (
+        <SetupScreen draft={session} />
       )}
       {session && session.started_at != null && (
         <div className="flex flex-1 overflow-hidden">
@@ -262,13 +255,6 @@ export default function App() {
           </aside>
         </div>
       )}
-      {!session && (
-        <div className="flex flex-1 items-center justify-center">
-          <Button size="lg" onClick={() => setConfirmNew(true)}>
-            + Start New Session
-          </Button>
-        </div>
-      )}
       {showAddPlayer && session && session.started_at != null && (
         <AddPlayerDialog
           session={session}
@@ -277,27 +263,29 @@ export default function App() {
           onPlayersChanged={() => setPlayersVersion(v => v + 1)}
         />
       )}
-      {confirmNew && (
+      {confirmNew && session?.started_at != null && (
         <Dialog open onOpenChange={open => !open && setConfirmNew(false)}>
           <DialogContent className="sm:max-w-xs">
             <DialogHeader>
-              <DialogTitle>Start a new session?</DialogTitle>
+              <DialogTitle>End current session and start a new one?</DialogTitle>
             </DialogHeader>
-            {session && (
-              <p className="text-xs text-muted-foreground">
-                The current session will be replaced in the header.
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground">
+              The live session will be ended and you&apos;ll return to the setup screen.
+            </p>
             <div className="flex justify-end gap-2">
               <Button variant="outline" size="sm" onClick={() => setConfirmNew(false)}>Cancel</Button>
-              <Button size="sm" onClick={() => { setConfirmNew(false); setShowCreate(true) }}>
-                Continue
+              <Button
+                size="sm"
+                variant="destructive"
+                data-testid="confirm-new-session"
+                onClick={() => { setConfirmNew(false); handleEndSession() }}
+              >
+                End &amp; New Session
               </Button>
             </div>
           </DialogContent>
         </Dialog>
       )}
-      {showCreate && <CreateSessionModal onClose={() => setShowCreate(false)} />}
     </div>
   )
 }
