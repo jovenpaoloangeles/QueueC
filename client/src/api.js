@@ -34,8 +34,6 @@ export const endMatch = (id, scores) => req('PATCH', `/matches/${id}/end`, score
 export const updateMatchTeams = (id, teams) => req('PATCH', `/matches/${id}/teams`, teams)
 export const setQueueOrder = (sessionId, order) => req('PATCH', '/queue/order', { session_id: sessionId, order })
 export const getPlayerHistory = playerId => req('GET', `/players/${playerId}/history`)
-export const getSuggestion = (sessionId, mode) =>
-  req('GET', `/sessions/${sessionId}/suggest?mode=${mode}`)
 export const addCourt = (sessionId, label, duration_minutes = null) =>
   req('POST', `/sessions/${sessionId}/courts`, { label, duration_minutes })
 export const deleteCourt = courtId => req('DELETE', `/courts/${courtId}`)
