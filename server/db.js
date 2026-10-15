@@ -284,7 +284,7 @@ export function seedPlayersFromFile(rows) {
     'INSERT OR IGNORE INTO players (name, skill_level, created_at) SELECT ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM players WHERE LOWER(TRIM(name)) = LOWER(TRIM(?)))'
   )
   for (const { name, skill_level } of rows) {
-    if (!name?.trim()) continue
+    if (typeof name !== 'string' || !name.trim()) continue
     insert.run(name.trim(), normalizeSkill(skill_level), now, name.trim())
   }
 }
@@ -309,17 +309,35 @@ export function resetPlayersToPreset() {
   const rows = loadPresetRows()
   if (!rows) return
   db.transaction(() => {
-    const names = rows.filter(r => r?.name?.trim()).map(r => r.name.trim())
+    const valid = rows.filter(r => typeof r?.name === 'string' && r.name.trim())
+    const names = valid.map(r => r.name.trim())
     const placeholders = names.map(() => 'LOWER(TRIM(?))').join(',')
-    if (names.length) {
-      db.prepare(`DELETE FROM players WHERE LOWER(TRIM(name)) NOT IN (${placeholders})`).run(...names)
-    } else {
-      db.prepare('DELETE FROM players').run()
+
+    // Collect players leaving the pool BEFORE deleting anything, so their
+    // dependent rows can go first — queue_entries/matches reference players.id
+    // with no ON DELETE action and foreign_keys is ON.
+    const doomed = names.length
+      ? db.prepare(`SELECT id FROM players WHERE LOWER(TRIM(name)) NOT IN (${placeholders})`).all(...names)
+      : db.prepare('SELECT id FROM players').all()
+    if (doomed.length) {
+      const playerIds = doomed.map(r => r.id)
+      const idPh = playerIds.map(() => '?').join(',')
+      const entryIds = db.prepare(
+        `SELECT id FROM queue_entries WHERE player_id IN (${idPh})`
+      ).all(...playerIds).map(r => r.id)
+      if (entryIds.length) {
+        const entryPh = entryIds.map(() => '?').join(',')
+        db.prepare(
+          `DELETE FROM matches WHERE team1_p1 IN (${entryPh}) OR team1_p2 IN (${entryPh}) OR team2_p1 IN (${entryPh}) OR team2_p2 IN (${entryPh})`
+        ).run(...entryIds, ...entryIds, ...entryIds, ...entryIds)
+        db.prepare(`DELETE FROM queue_entries WHERE id IN (${entryPh})`).run(...entryIds)
+      }
+      db.prepare(`DELETE FROM players WHERE id IN (${idPh})`).run(...playerIds)
     }
+
     seedPlayersFromFile(rows)
     const update = db.prepare('UPDATE players SET skill_level = ? WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))')
-    for (const { name, skill_level } of rows) {
-      if (!name?.trim()) continue
+    for (const { name, skill_level } of valid) {
       update.run(normalizeSkill(skill_level), name.trim())
     }
   })()

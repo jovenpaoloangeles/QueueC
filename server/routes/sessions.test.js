@@ -1,6 +1,6 @@
 // Run with: bun server/routes/sessions.test.js (server must be running on :3001)
 import assert from 'node:assert/strict'
-import { readFileSync, rmSync } from 'fs'
+import { readFileSync, writeFileSync, rmSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { tmpdir } from 'os'
@@ -62,8 +62,20 @@ async function run() {
   const midPool = await fetch(`${BASE}/players`).then(res => res.json())
   assert.ok(midPool.players.some(p => p.name === UNIQUE), 'Expected mid-session registrant in pool while live')
 
-  // End it — pool resets to the preset
-  const ended = await fetch(`${BASE}/sessions/${created.session.id}/end`, { method: 'PATCH' }).then(res => res.json())
+  // Check them in but play nothing — the registrant now has a queue_entry row,
+  // which references players(id) with no ON DELETE action
+  const checkin = await fetch(`${BASE}/sessions/${created.session.id}/checkin`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ player_id: reg.player.id })
+  }).then(res => res.json())
+  assert.ok(checkin.entry?.id, 'Expected check-in to create a queue entry')
+  const entryId = checkin.entry.id
+
+  // End it — pool resets to the preset; must not FK-fail on the checked-in registrant
+  const endRes = await fetch(`${BASE}/sessions/${created.session.id}/end`, { method: 'PATCH' })
+  assert.ok(endRes.status < 500, `End session must not 500 with a checked-in registrant (got ${endRes.status})`)
+  const ended = await endRes.json()
   assert.ok(ended.session.ended_at !== null, 'Expected ended_at set')
 
   const afterPool = await fetch(`${BASE}/players`).then(res => res.json())
@@ -75,6 +87,10 @@ async function run() {
     assert.ok(names.has(n), `Expected preset player ${n} in pool after end`)
   }
 
+  // The registrant's queue_entry was removed with them (gone → 404)
+  const entryProbe = await fetch(`${BASE}/queue/${entryId}`, { method: 'DELETE' })
+  assert.equal(entryProbe.status, 404, 'Expected registrant queue entry gone after end')
+
   // Starting an ended session → 400
   const afterEnd = await fetch(`${BASE}/sessions/${created.session.id}/start`, { method: 'PATCH' })
   assert.equal(afterEnd.status, 400, 'Start after end must be 400')
@@ -84,6 +100,58 @@ async function run() {
   assert.equal(final.session, null, 'Expected null after end')
 
   console.log('sessions.test.js: all assertions passed')
+}
+
+// Checked-in players from OLD sessions with matches must be removable FK-safely
+// (in-process, temp DB + temp preset; query string busts the module cache so the
+// fresh DB_PATH/PLAYERS_PATH take effect)
+async function fkCleanupTest() {
+  const dbPath = join(tmpdir(), `queuec-reset-fk-${Date.now()}.db`)
+  const presetFile = join(tmpdir(), `queuec-reset-fk-preset-${Date.now()}.json`)
+  writeFileSync(presetFile, JSON.stringify([
+    { name: 'Fk Preset One', skill_level: 'beginner' },
+    { name: 'Fk Preset Two', skill_level: 'intermediate' },
+  ]))
+  process.env.DB_PATH = dbPath
+  process.env.PLAYERS_PATH = presetFile
+  const { default: db, resetPlayersToPreset } = await import('../db.js?fk-cleanup')
+  try {
+    const { lastInsertRowid: sessionId } = db.prepare(
+      'INSERT INTO sessions (name, scheduled_start, scheduled_end) VALUES (?, ?, ?)'
+    ).run('Old Session', 1, 2)
+    const insPlayer = db.prepare("INSERT INTO players (name, skill_level, created_at) VALUES (?, 'beginner', 1)")
+    const { lastInsertRowid: presetId } = insPlayer.run('Fk Preset One')
+    const { lastInsertRowid: strayA } = insPlayer.run('Fk Stray A')
+    const { lastInsertRowid: strayB } = insPlayer.run('Fk Stray B')
+    const insEntry = db.prepare(
+      'INSERT INTO queue_entries (session_id, player_id, checked_in_at, sort_order, status_updated_at) VALUES (?, ?, 1, 1, 1)'
+    )
+    const { lastInsertRowid: presetEntry } = insEntry.run(sessionId, presetId)
+    const { lastInsertRowid: entryA } = insEntry.run(sessionId, strayA)
+    const { lastInsertRowid: entryB } = insEntry.run(sessionId, strayB)
+    const { lastInsertRowid: strayMatch } = db.prepare(
+      "INSERT INTO matches (session_id, court_number, format, team1_p1, team2_p1, started_at) VALUES (?, 1, 'singles', ?, ?, 1)"
+    ).run(sessionId, entryA, entryB)
+    const { lastInsertRowid: presetMatch } = db.prepare(
+      "INSERT INTO matches (session_id, court_number, format, team1_p1, team2_p1, started_at) VALUES (?, 2, 'singles', ?, ?, 1)"
+    ).run(sessionId, presetEntry, presetEntry)
+
+    resetPlayersToPreset()
+
+    assert.ok(!db.prepare('SELECT id FROM players WHERE id = ?').get(strayA), 'Expected stray player A gone')
+    assert.ok(!db.prepare('SELECT id FROM players WHERE id = ?').get(strayB), 'Expected stray player B gone')
+    assert.ok(!db.prepare('SELECT id FROM queue_entries WHERE id = ?').get(entryA), 'Expected stray entry A gone')
+    assert.ok(!db.prepare('SELECT id FROM queue_entries WHERE id = ?').get(entryB), 'Expected stray entry B gone')
+    assert.ok(!db.prepare('SELECT id FROM matches WHERE id = ?').get(strayMatch), 'Expected match on stray entries gone')
+    assert.ok(db.prepare('SELECT id FROM players WHERE id = ?').get(presetId), 'Expected preset player kept')
+    assert.ok(db.prepare('SELECT id FROM queue_entries WHERE id = ?').get(presetEntry), 'Expected preset player entry kept')
+    assert.ok(db.prepare('SELECT id FROM matches WHERE id = ?').get(presetMatch), 'Expected preset player match kept')
+    console.log('sessions.test.js: FK-safe cleanup assertions passed')
+  } finally {
+    db.close()
+    for (const s of ['', '-wal', '-shm']) rmSync(dbPath + s, { force: true })
+    rmSync(presetFile, { force: true })
+  }
 }
 
 // Missing/unparseable preset file → reset is a no-op (in-process, temp DB)
@@ -105,5 +173,6 @@ async function resetNoPresetTest() {
 }
 
 run()
+  .then(fkCleanupTest)
   .then(resetNoPresetTest)
   .catch(e => { console.error(e); process.exit(1) })
