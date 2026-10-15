@@ -1,4 +1,4 @@
-export const BASE = 'http://localhost:3003'
+export const base = () => process.env.QC_BASE
 
 const DEFAULT_PLAYERS = [
   'Inter C1', 'Inter C2', 'Inter C3', 'Inter C4',

@@ -1,10 +1,10 @@
 // tests/e2e/07-match-start.spec.js
-import { test, expect } from '@playwright/test'
-import { BASE, fullSetup, getQueueNames, syntheticDrag, startDoubles } from '../helpers.js'
+import { test, expect } from '../fixtures.js'
+import { base, fullSetup, getQueueNames, syntheticDrag, startDoubles } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
-  const { session } = await (await page.request.get(`${BASE}/api/sessions/active`)).json()
-  if (session) await page.request.fetch(`${BASE}/api/sessions/${session.id}/end`, { method: 'PATCH' })
+  const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
+  if (session) await page.request.fetch(`${base()}/api/sessions/${session.id}/end`, { method: 'PATCH' })
   await fullSetup(page)
 })
 

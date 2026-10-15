@@ -1,18 +1,18 @@
 // tests/e2e/22-setup-pool.spec.js
 // Setup pool smoke: select-all toggling, tier filter + select-all scope,
 // and custom per-court duration rendering back in the setup court list.
-import { test, expect } from '@playwright/test'
-import { BASE, createSession } from '../helpers.js'
+import { test, expect } from '../fixtures.js'
+import { base, createSession } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
-  const { session } = await (await page.request.get(`${BASE}/api/sessions/active`)).json()
-  if (session) await page.request.fetch(`${BASE}/api/sessions/${session.id}/end`, { method: 'PATCH' })
+  const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
+  if (session) await page.request.fetch(`${base()}/api/sessions/${session.id}/end`, { method: 'PATCH' })
 })
 
 // Pool size comes from the API: the fixture seeds 22, but earlier specs
 // register players that persist in the shared DB for the whole run.
 async function poolTotal(page) {
-  const { players } = await (await page.request.get(`${BASE}/api/players`)).json()
+  const { players } = await (await page.request.get(`${base()}/api/players`)).json()
   return players.length
 }
 
@@ -42,7 +42,7 @@ test('22.2 tier filter shows only that tier; select-all only touches visible chi
   const total = await poolTotal(page)
   await expect(chips).toHaveCount(total)
 
-  const { players } = await (await page.request.get(`${BASE}/api/players`)).json()
+  const { players } = await (await page.request.get(`${base()}/api/players`)).json()
   const intermediateCount = players.filter(p => p.skill_level === 'intermediate').length
   expect(intermediateCount).toBeGreaterThan(0)
   expect(intermediateCount).toBeLessThan(total)

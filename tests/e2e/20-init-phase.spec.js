@@ -1,12 +1,12 @@
 // tests/e2e/20-init-phase.spec.js
 // Initialization phase: dynamic court config, per-court countdown/expiry,
 // 7-tier skills, Search-and-Add combobox, inline player edit.
-import { test, expect } from '@playwright/test'
-import { BASE, createSession, checkinPlayers, startSession } from '../helpers.js'
+import { test, expect } from '../fixtures.js'
+import { base, createSession, checkinPlayers, startSession } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
-  const { session } = await (await page.request.get(`${BASE}/api/sessions/active`)).json()
-  if (session) await page.request.fetch(`${BASE}/api/sessions/${session.id}/end`, { method: 'PATCH' })
+  const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
+  if (session) await page.request.fetch(`${base()}/api/sessions/${session.id}/end`, { method: 'PATCH' })
   await page.goto('/')
   await page.getByRole('button', { name: '+ Start New Session' }).click()
   await page.getByRole('button', { name: 'Continue' }).click()
@@ -77,10 +77,10 @@ test('20.7 expired idle court stays visible with extend panel', async ({ page })
   await expect(page.locator('text=Court 1')).toBeVisible()
 
   // Force-expire court 1 via API (backdate expires_at)
-  const { session } = await (await page.request.get(`${BASE}/api/sessions/active`)).json()
-  const { courts } = await (await page.request.get(`${BASE}/api/sessions/${session.id}/courts`)).json()
+  const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
+  const { courts } = await (await page.request.get(`${base()}/api/sessions/${session.id}/courts`)).json()
   const court1 = courts.find(c => c.label === 'Court 1')
-  await page.request.fetch(`${BASE}/api/courts/${court1.id}`, {
+  await page.request.fetch(`${base()}/api/courts/${court1.id}`, {
     method: 'PATCH', data: { expires_at: Math.floor(Date.now() / 1000) - 60 },
   })
   await page.waitForTimeout(1200) // SSE tick
@@ -99,17 +99,17 @@ test('20.8 expired court blocks new match start (server-side)', async ({ page })
   await checkinPlayers(page, ['Inter C1', 'Inter C2'])
   await startSession(page)
 
-  const { session } = await (await page.request.get(`${BASE}/api/sessions/active`)).json()
-  const { courts } = await (await page.request.get(`${BASE}/api/sessions/${session.id}/courts`)).json()
+  const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
+  const { courts } = await (await page.request.get(`${base()}/api/sessions/${session.id}/courts`)).json()
   const court1 = courts[0]
-  await page.request.fetch(`${BASE}/api/courts/${court1.id}`, {
+  await page.request.fetch(`${base()}/api/courts/${court1.id}`, {
     method: 'PATCH', data: { expires_at: Math.floor(Date.now() / 1000) - 60 },
   })
   const entries = await page.evaluate(async (sid) => {
     const r = await fetch(`/api/sessions/${sid}/suggest?mode=singles`)
     return (await r.json()).suggestion
   }, session.id)
-  const res = await page.request.post(`${BASE}/api/matches`, {
+  const res = await page.request.post(`${base()}/api/matches`, {
     data: {
       session_id: session.id, court_number: court1.id,
       team1_p1: entries[0], team2_p1: entries[2],
@@ -136,9 +136,9 @@ test('20.9 expired court mid-match shows Last Game badge and persists until matc
   await expect(page.getByRole('button', { name: 'End Match' })).toHaveCount(1)
 
   // expire the court mid-game
-  const { session } = await (await page.request.get(`${BASE}/api/sessions/active`)).json()
-  const { courts } = await (await page.request.get(`${BASE}/api/sessions/${session.id}/courts`)).json()
-  await page.request.fetch(`${BASE}/api/courts/${courts[0].id}`, {
+  const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
+  const { courts } = await (await page.request.get(`${base()}/api/sessions/${session.id}/courts`)).json()
+  await page.request.fetch(`${base()}/api/courts/${courts[0].id}`, {
     method: 'PATCH', data: { expires_at: Math.floor(Date.now() / 1000) - 10 },
   })
   await page.waitForTimeout(1200)
@@ -300,11 +300,11 @@ test('20.20 edited skill propagates to persistent DB (player pool after re-check
   await page.waitForSelector('text=Not started')
   // unique player: earlier tests may have renamed fixture players persistently
   const name = `SkillSync ${Date.now().toString(36)}`
-  const created = await (await page.request.post(`${BASE}/api/players`, {
+  const created = await (await page.request.post(`${base()}/api/players`, {
     data: { name, skill_level: 'intermediate' },
   })).json()
-  const { session } = await (await page.request.get(`${BASE}/api/sessions/active`)).json()
-  await page.request.post(`${BASE}/api/sessions/${session.id}/checkin`, {
+  const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
+  await page.request.post(`${base()}/api/sessions/${session.id}/checkin`, {
     data: { player_id: created.player.id },
   })
   await page.waitForTimeout(800) // SSE tick to render the queue row
@@ -314,7 +314,7 @@ test('20.20 edited skill propagates to persistent DB (player pool after re-check
   await row.getByRole('button', { name: 'Save' }).click()
   await page.waitForTimeout(600)
   // skill syncs to the players table via PATCH /api/players/:id
-  const { players } = await (await page.request.get(`${BASE}/api/players`)).json()
+  const { players } = await (await page.request.get(`${base()}/api/players`)).json()
   const p = players.find(x => x.id === created.player.id)
   expect(p.skill_level).toBe('professional')
 })

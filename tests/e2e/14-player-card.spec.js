@@ -1,11 +1,11 @@
 // tests/e2e/14-player-card.spec.js
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../fixtures.js'
 import { execSync } from 'node:child_process'
-import { BASE, fullSetup, getQueueNames, startDoubles, endMatch } from '../helpers.js'
+import { base, fullSetup, getQueueNames, startDoubles, endMatch } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
-  const { session } = await (await page.request.get(`${BASE}/api/sessions/active`)).json()
-  if (session) await page.request.fetch(`${BASE}/api/sessions/${session.id}/end`, { method: 'PATCH' })
+  const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
+  if (session) await page.request.fetch(`${base()}/api/sessions/${session.id}/end`, { method: 'PATCH' })
   await fullSetup(page)
 })
 
@@ -39,11 +39,11 @@ test('14.3 playing players absent from queue grid', async ({ page }) => {
   expect(now.length).toBe(4)
 })
 
-test('14.5 after returning from a match, min played reflects duration', async ({ page }) => {
+test('14.5 after returning from a match, min played reflects duration', async ({ page, server }) => {
   const name = (await getQueueNames(page))[0].trim() // first waiting player → played in startDoubles
   await startDoubles(page)
   // backdate via sqlite so the ended duration is ~10 min (WAL: server sees the write)
-  execSync(`sqlite3 /tmp/queuec-test.db "UPDATE matches SET started_at = started_at - 600 WHERE ended_at IS NULL"`)
+  execSync(`sqlite3 ${server.dbPath} "UPDATE matches SET started_at = started_at - 600 WHERE ended_at IS NULL"`)
   await endMatch(page, 'Court')
   await expect(page.locator('[data-entry-id]').filter({ hasText: name })).toContainText('10m played')
 })

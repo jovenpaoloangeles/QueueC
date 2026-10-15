@@ -1,13 +1,13 @@
 // tests/e2e/01-landing.spec.js
-import { test, expect } from '@playwright/test'
-import { BASE } from '../helpers.js'
+import { test, expect } from '../fixtures.js'
+import { base } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
   // End any stray active session
-  const res = await page.request.get(`${BASE}/api/sessions/active`)
+  const res = await page.request.get(`${base()}/api/sessions/active`)
   const { session } = await res.json()
-  if (session) await page.request.fetch(`${BASE}/api/sessions/${session.id}/end`, { method: 'PATCH' })
+  if (session) await page.request.fetch(`${base()}/api/sessions/${session.id}/end`, { method: 'PATCH' })
   await page.reload()
 })
 

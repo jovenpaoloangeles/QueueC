@@ -1,11 +1,11 @@
 // tests/e2e/08-match-end.spec.js
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../fixtures.js'
 import { execSync } from 'node:child_process'
-import { BASE, fullSetup, endMatch } from '../helpers.js'
+import { base, fullSetup, endMatch } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
-  const { session } = await (await page.request.get(`${BASE}/api/sessions/active`)).json()
-  if (session) await page.request.fetch(`${BASE}/api/sessions/${session.id}/end`, { method: 'PATCH' })
+  const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
+  if (session) await page.request.fetch(`${base()}/api/sessions/${session.id}/end`, { method: 'PATCH' })
   await fullSetup(page)
   // Start a doubles match on court 1
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
@@ -78,10 +78,10 @@ test('8.8 match count stat tile increments', async ({ page }) => {
   await expect(page.locator('text=Matches').locator('..').locator('[class*="font-mono"]')).toHaveText('1')
 })
 
-test('8.9 total_seconds_played reflected as X min played', async ({ page }) => {
+test('8.9 total_seconds_played reflected as X min played', async ({ page, server }) => {
   // backdate the match start so the ended duration is ~10 min; server computes
   // duration = end - started_at from the DB, and WAL makes the CLI write visible
-  execSync(`sqlite3 /tmp/queuec-test.db "UPDATE matches SET started_at = started_at - 600 WHERE ended_at IS NULL"`)
+  execSync(`sqlite3 ${server.dbPath} "UPDATE matches SET started_at = started_at - 600 WHERE ended_at IS NULL"`)
   const names = (await page.locator('[data-team-side="1"]').innerText()).split(' + ')
   await endMatch(page, 'Court')
   const card = page.locator('[data-entry-id]').filter({ hasText: names[0].trim() })

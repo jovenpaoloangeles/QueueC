@@ -1,10 +1,10 @@
 // tests/e2e/17-layout.spec.js
-import { test, expect } from '@playwright/test'
-import { BASE, createSession, checkinPlayers, startSession, fullSetup, startDoubles, endMatch } from '../helpers.js'
+import { test, expect } from '../fixtures.js'
+import { base, createSession, checkinPlayers, startSession, fullSetup, startDoubles, endMatch } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
-  const { session } = await (await page.request.get(`${BASE}/api/sessions/active`)).json()
-  if (session) await page.request.fetch(`${BASE}/api/sessions/${session.id}/end`, { method: 'PATCH' })
+  const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
+  if (session) await page.request.fetch(`${base()}/api/sessions/${session.id}/end`, { method: 'PATCH' })
 })
 
 test('17.1 1-court fills courts band', async ({ page }) => {
@@ -49,10 +49,10 @@ test('17.4 stats sidebar scrollable when content is long', async ({ page }) => {
 test('17.5 queue grid scrollable with many players', async ({ page }) => {
   // end the session beforeEach created; rebuilding with 20 players on top of it
   // blows the default 30s budget
-  const { session } = await (await page.request.get(`${BASE}/api/sessions/active`)).json()
-  if (session) await page.request.fetch(`${BASE}/api/sessions/${session.id}/end`, { method: 'PATCH' })
+  const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
+  if (session) await page.request.fetch(`${base()}/api/sessions/${session.id}/end`, { method: 'PATCH' })
   // use every registered fixture player (22 across all 7 tiers)
-  const { players } = await (await page.request.get(`${BASE}/api/players`)).json()
+  const { players } = await (await page.request.get(`${base()}/api/players`)).json()
   await fullSetup(page, { playerNames: players.map(p => p.name) })
   await page.setViewportSize({ width: 1000, height: 500 })
   await page.waitForTimeout(300)

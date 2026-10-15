@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "test": "bun run test:unit && bun run test:e2e",
-    "test:e2e": "bunx playwright test --config=playwright.config.js",
+    "build:client": "bun run --cwd ../client build",
+    "ensure-build": "bun scripts/ensure-build.js",
+    "test:e2e": "bun run ensure-build && bunx playwright test --config=playwright.config.js",
     "test:unit": "bun unit/dnd.valid.test.js && bun unit/api.error.test.js && bun unit/timer.test.js"
   },
   "devDependencies": {

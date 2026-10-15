@@ -1,10 +1,10 @@
 // tests/e2e/12-live-courts.spec.js
-import { test, expect } from '@playwright/test'
-import { BASE, fullSetup, syntheticDrag, startDoubles } from '../helpers.js'
+import { test, expect } from '../fixtures.js'
+import { base, fullSetup, syntheticDrag, startDoubles } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
-  const { session } = await (await page.request.get(`${BASE}/api/sessions/active`)).json()
-  if (session) await page.request.fetch(`${BASE}/api/sessions/${session.id}/end`, { method: 'PATCH' })
+  const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
+  if (session) await page.request.fetch(`${base()}/api/sessions/${session.id}/end`, { method: 'PATCH' })
   await fullSetup(page, { courts: 2 })
 })
 
@@ -26,10 +26,10 @@ test('12.3 re-check Open — court reappears', async ({ page }) => {
   await checkbox.click() // disables court 1; CourtCard is removed from DOM
   await page.waitForTimeout(400)
   // Court 1 is gone; re-enable it via the courts API directly
-  const { session } = await (await page.request.get(`${BASE}/api/sessions/active`)).json()
-  const { courts } = await (await page.request.get(`${BASE}/api/sessions/${session.id}/courts`)).json()
+  const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
+  const { courts } = await (await page.request.get(`${base()}/api/sessions/${session.id}/courts`)).json()
   const court1 = courts.find(c => c.label === 'Court 1')
-  await page.request.fetch(`${BASE}/api/courts/${court1.id}`, {
+  await page.request.fetch(`${base()}/api/courts/${court1.id}`, {
     method: 'PATCH', data: { enabled: 1 },
   })
   await page.waitForTimeout(400)
@@ -44,10 +44,10 @@ test('12.4 disabling court mid-match does not end it', async ({ page }) => {
   await checkbox.click() // disables court; CourtCard removed from DOM
   await page.waitForTimeout(400)
   // Re-enable via API since the card (and its checkbox) is gone
-  const { session } = await (await page.request.get(`${BASE}/api/sessions/active`)).json()
-  const { courts } = await (await page.request.get(`${BASE}/api/sessions/${session.id}/courts`)).json()
+  const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
+  const { courts } = await (await page.request.get(`${base()}/api/sessions/${session.id}/courts`)).json()
   const court1 = courts.find(c => c.label === 'Court 1')
-  await page.request.fetch(`${BASE}/api/courts/${court1.id}`, {
+  await page.request.fetch(`${base()}/api/courts/${court1.id}`, {
     method: 'PATCH', data: { enabled: 1 },
   })
   await page.waitForTimeout(400)

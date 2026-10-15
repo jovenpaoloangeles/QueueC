@@ -1,10 +1,10 @@
 // tests/e2e/15-header.spec.js
-import { test, expect } from '@playwright/test'
-import { BASE, createSession, checkinPlayers, startSession } from '../helpers.js'
+import { test, expect } from '../fixtures.js'
+import { base, createSession, checkinPlayers, startSession } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
-  const { session } = await (await page.request.get(`${BASE}/api/sessions/active`)).json()
-  if (session) await page.request.fetch(`${BASE}/api/sessions/${session.id}/end`, { method: 'PATCH' })
+  const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
+  if (session) await page.request.fetch(`${base()}/api/sessions/${session.id}/end`, { method: 'PATCH' })
 })
 
 test('15.1 session name in header', async ({ page }) => {

@@ -1,11 +1,11 @@
 // tests/e2e/02-create-session-modal.spec.js
-import { test, expect } from '@playwright/test'
-import { BASE } from '../helpers.js'
+import { test, expect } from '../fixtures.js'
+import { base } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
-  const { session } = await (await page.request.get(`${BASE}/api/sessions/active`)).json()
-  if (session) await page.request.fetch(`${BASE}/api/sessions/${session.id}/end`, { method: 'PATCH' })
+  const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
+  if (session) await page.request.fetch(`${base()}/api/sessions/${session.id}/end`, { method: 'PATCH' })
   await page.reload()
   await page.getByRole('button', { name: '+ Start New Session' }).click()
   await page.getByRole('button', { name: 'Continue' }).click() // confirm dialog gate

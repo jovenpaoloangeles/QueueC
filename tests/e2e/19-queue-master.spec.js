@@ -1,11 +1,11 @@
-import { test, expect } from '@playwright/test'
-import { BASE, fullSetup, endMatch, getQueueNames } from '../helpers.js'
+import { test, expect } from '../fixtures.js'
+import { base, fullSetup, endMatch, getQueueNames } from '../helpers.js'
 
 // Queue master — real session scenarios (section 19)
 
 test.beforeEach(async ({ page }) => {
-  const { session } = await (await fetch(`${BASE}/api/sessions/active`)).json()
-  if (session) await fetch(`${BASE}/api/sessions/${session.id}/end`, { method: 'PATCH' })
+  const { session } = await (await fetch(`${base()}/api/sessions/active`)).json()
+  if (session) await fetch(`${base()}/api/sessions/${session.id}/end`, { method: 'PATCH' })
 })
 
 // Get entry IDs from DOM (waiting queue)
@@ -40,7 +40,7 @@ test('QM.2 player removed via API — gone from queue', async ({ page }) => {
   expect(entryIds.length).toBeGreaterThan(0)
   const target = entryIds[0]
 
-  await fetch(`${BASE}/api/queue/${target}/status`, {
+  await fetch(`${base()}/api/queue/${target}/status`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status: 'left' }),
@@ -95,12 +95,12 @@ test('QM.5 court disabled mid-match — match persists; court hidden; re-enable 
   // Court 1's card (and its End Match) gone with it; re-enable must bring the match back
   await expect(page.getByRole('button', { name: 'End Match' })).toHaveCount(0)
 
-  const { session } = await (await page.request.get(`${BASE}/api/sessions/active`)).json()
+  const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
 
   // Re-enable via API (checkbox is gone with the card)
-  const { courts } = await (await page.request.get(`${BASE}/api/sessions/${session.id}/courts`)).json()
+  const { courts } = await (await page.request.get(`${base()}/api/sessions/${session.id}/courts`)).json()
   const court1 = courts.find(c => c.label === 'Court 1')
-  await page.request.fetch(`${BASE}/api/courts/${court1.id}`, {
+  await page.request.fetch(`${base()}/api/courts/${court1.id}`, {
     method: 'PATCH', data: { enabled: 1 },
   })
   await page.waitForTimeout(400)

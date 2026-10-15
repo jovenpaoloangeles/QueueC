@@ -1,10 +1,10 @@
 // tests/e2e/04-checkin-setup.spec.js
-import { test, expect } from '@playwright/test'
-import { BASE, createSession, checkinPlayers, startSession } from '../helpers.js'
+import { test, expect } from '../fixtures.js'
+import { base, createSession, checkinPlayers, startSession } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
-  const { session } = await (await page.request.get(`${BASE}/api/sessions/active`)).json()
-  if (session) await page.request.fetch(`${BASE}/api/sessions/${session.id}/end`, { method: 'PATCH' })
+  const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
+  if (session) await page.request.fetch(`${base()}/api/sessions/${session.id}/end`, { method: 'PATCH' })
   await createSession(page)
 })
 
@@ -48,10 +48,10 @@ test('4.6 check in 8 players — all in queue in order', async ({ page }) => {
 
 test('4.7 pool empty message when all checked in', async ({ page }) => {
   // Check in all 20 via API directly — clicking 20 buttons sequentially is too slow/fragile
-  const { session } = await (await page.request.get(`${BASE}/api/sessions/active`)).json()
-  const { players } = await (await page.request.get(`${BASE}/api/players`)).json()
+  const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
+  const { players } = await (await page.request.get(`${base()}/api/players`)).json()
   for (const p of players) {
-    await page.request.post(`${BASE}/api/sessions/${session.id}/checkin`, {
+    await page.request.post(`${base()}/api/sessions/${session.id}/checkin`, {
       data: { player_id: p.id },
     })
   }
