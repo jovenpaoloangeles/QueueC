@@ -78,6 +78,22 @@ async function main() {
     ['Beginner B1', 'Inter C1', 'Inter C2', 'Upper D1', 'Inter C3', 'Upper D2', 'Upper D3']
   )
 
+  // Manual reorder scrambles display order — insertion must scan DISPLAY order
+  // (first waiting entry that sorts after the new name), not re-sort by name.
+  // Reorder to put playing D1/D3 first, then scramble the waiting entries.
+  const order = [
+    entries['Upper D1'].id, entries['Upper D3'].id,
+    entries['Inter C3'].id, entries['Inter C2'].id,
+    entries['Beginner B1'].id, entries['Upper D2'].id, entries['Inter C1'].id,
+  ]
+  await api('/api/queue/order', 'PATCH', { session_id: session.id, order })
+  // "Beginner B3": display scan over WAITING entries hits Inter C3 (name > B3)
+  // first → B3 lands just before it (after the playing pair). Name-re-sorting
+  // would instead find Inter C1's position and drop B3 at the tail.
+  await checkin('Beginner B3')
+  const names = await queueNames()
+  assert.equal(names[2], 'Beginner B3', `B3 must slot before Inter C3 after scramble, got: ${names.join(', ')}`)
+
   // cleanup
   await api(`/api/sessions/${session.id}/end`, 'PATCH')
   console.log('alphabetical-insert.test.js: all assertions passed')

@@ -146,7 +146,11 @@ test('QM.8 drag reorder — order survives next SSE tick', async ({ page }) => {
   await page.request.fetch(`${base()}/api/sessions/${session.id}/checkin`, { method: 'POST', data: { player_id: late.id } })
   await expect(page.locator('[data-entry-id]')).toHaveCount(before.length + 1)
   const after = await getQueueNames(page)
-  expect(after.slice(0, 2)).toEqual([before[1], before[0]])
+  // the late check-in slots alphabetically (R7 item 1), but the manual swap of
+  // the first two entries must survive it — adjacent, in swapped order
+  const idx = after.indexOf(late.name)
+  expect(idx).toBeGreaterThanOrEqual(0)
+  expect(after.slice(idx + 1, idx + 3)).toEqual([before[1], before[0]])
 })
 
 test('QM.9 full session cycle — create, check-in, start, match, end match, end session, new session', async ({ page }) => {

@@ -27,14 +27,16 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
   const [filter, setFilter] = useState('')
   const toast = useToast()
 
-  // order survives SSE pushes (every 1s): initialise once from the first
-  // non-empty queue, thereafter only append genuinely new entry ids
+  // order survives SSE pushes (every 1s) so an optimistic drag doesn't snap
+  // back — but when the id SET changes (check-in insert, removal) the server's
+  // order is the truth: alphabetical inserts land mid-list, not at the end
   useEffect(() => {
     setOrder(prev => {
-      if (prev.length === 0) return queue.map(e => e.id)
+      const server = queue.map(e => e.id)
+      if (prev.length === 0) return server
       const known = new Set(prev)
-      const fresh = queue.map(e => e.id).filter(id => !known.has(id))
-      return fresh.length ? [...prev, ...fresh] : prev
+      const sameSet = server.length === prev.length && server.every(id => known.has(id))
+      return sameSet ? prev : server
     })
   }, [queue])
 

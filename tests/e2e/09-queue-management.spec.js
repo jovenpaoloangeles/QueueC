@@ -66,7 +66,11 @@ test('9.2 SSE tick does not reset manual reorder', async ({ page }) => {
   await page.request.fetch(`${base()}/api/sessions/${session.id}/checkin`, { method: 'POST', data: { player_id: late.id } })
   await expect(page.locator('[data-entry-id]')).toHaveCount(before.length + 1)
   const after = await getQueueNames(page)
-  expect(after.slice(0, 2)).toEqual([before[1], before[0]])
+  // the late check-in slots alphabetically (item 1), but the manual swap of the
+  // first two entries must survive it — they stay adjacent, in swapped order
+  const idx = after.indexOf(late.name)
+  expect(idx).toBeGreaterThanOrEqual(0)
+  expect(after.slice(idx + 1, idx + 3)).toEqual([before[1], before[0]])
 })
 
 test('9.3 newly checked-in player slots into alphabetical position', async ({ page }) => {
@@ -75,9 +79,8 @@ test('9.3 newly checked-in player slots into alphabetical position', async ({ pa
   await page.getByTestId('checkin-search').fill('Beginner B1')
   await page.getByTestId('combobox-matches').getByRole('button', { name: 'Beginner B1' }).click()
   await page.getByTestId('checkin-confirm-add').click()
-  await page.waitForTimeout(400)
-  const names = await getQueueNames(page)
-  expect(names[0]).toBe('Beginner B1')
+  // SSE ticks every 1s and the resync lands on the next tick — poll, don't sleep
+  await expect.poll(async () => (await getQueueNames(page))[0], { timeout: 4000 }).toBe('Beginner B1')
 })
 
 test('9.7 resting player absent from selection candidates', async ({ page }) => {

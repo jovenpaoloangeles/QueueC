@@ -13,10 +13,13 @@ export function assignSortOrder(existingOrders) {
 const baseCmp = (a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })
 
 /** sort_order at which an entry named `name` slots alphabetically among `waiting`
- *  ([{ sort_order, name }]) — null when it goes after all of them. */
+ *  ([{ sort_order, name }]) — null when it goes after all of them. Scans in
+ *  DISPLAY order: the new entry goes before the first waiting entry that sorts
+ *  after it by name. (Re-sorting by name first would be wrong once a manual
+ *  reorder has moved entries off alphabetical positions.) */
 export function alphabeticalSortOrder(waiting, name) {
-  const sorted = [...waiting].sort((a, b) => baseCmp(a.name, b.name) || a.sort_order - b.sort_order)
-  const after = sorted.find(e => baseCmp(e.name, name) > 0)
+  const inOrder = [...waiting].sort((a, b) => a.sort_order - b.sort_order)
+  const after = inOrder.find(e => baseCmp(e.name, name) > 0)
   return after ? after.sort_order : null
 }
 
