@@ -160,7 +160,30 @@ test('28.7 cancelling a slate returns its players to the queue', async ({ page }
   const before = await page.locator('[data-entry-id]').count()
   const [id] = (await liveState(page)).slatedMatches.map(m => m.id)
   await page.getByTestId(`slate-cancel-${id}`).click()
+  await expect(page.getByTestId('ondeck-cancel-dialog')).toBeVisible()
+  await page.getByTestId('ondeck-cancel-confirm').click()
   await expect(page.locator('[data-entry-id]')).toHaveCount(before + 4)
   await expect(page.getByTestId('on-deck-empty')).toBeVisible()
   await expect(panel(page)).toBeVisible()
+})
+
+test('28.8 cancelling a slate asks for confirmation; Keep aborts', async ({ page }) => {
+  await startDoubles(page)
+  await addViaSmartFill(page)
+  const before = await page.locator('[data-entry-id]').count()
+  const [id] = (await liveState(page)).slatedMatches.map(m => m.id)
+  await page.getByTestId(`slate-cancel-${id}`).click()
+  // destructive action must confirm first — nothing cancelled until confirmed
+  const dialog = page.getByTestId('ondeck-cancel-dialog')
+  await expect(dialog).toBeVisible()
+  await expect(dialog).toContainText('Cancel this lineup?')
+  await expect(dialog).toContainText('Players return to the queue.')
+  expect((await liveState(page)).slatedMatches).toHaveLength(1)
+  await expect(page.locator('[data-entry-id]')).toHaveCount(before) // still staged/dimmed
+  // Keep = abort: slate untouched
+  await page.getByTestId('ondeck-cancel-abort').click()
+  await expect(dialog).toBeHidden()
+  await expect(page.getByTestId(`slate-row-${id}`)).toBeVisible()
+  expect((await liveState(page)).slatedMatches).toHaveLength(1)
+  await expect(page.locator('[data-entry-id]')).toHaveCount(before)
 })

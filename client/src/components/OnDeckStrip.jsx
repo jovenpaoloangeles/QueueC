@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { drag, valid } from '@/lib/dnd'
 import { cn, titleCaseSkill, SKILL_BADGE, balanceHint, fmtClock } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { updateSlate, cancelSlate, moveSlate, slateMatch } from '../api.js'
 import { useToast } from '@/components/Toast'
 
@@ -157,6 +158,7 @@ export default function OnDeckStrip({
   const [editDraft, setEditDraft] = useState([null, null, null, null])
   const [saving, setSaving] = useState(false)
   const [cancelling, setCancelling] = useState(false)
+  const [pendingCancelId, setPendingCancelId] = useState(null) // confirm dialog target
   const [building, setBuilding] = useState(false)       // builder panel open
   const [newDraft, setNewDraft] = useState([null, null, null, null])
   const [adding, setAdding] = useState(false)
@@ -203,7 +205,11 @@ export default function OnDeckStrip({
       setEditingId(null)
       setEditDraft([null, null, null, null])
     }
-  }, [rows, editingId])
+    // same for the cancel-confirm target: close silently if the slate vanished
+    if (pendingCancelId != null && !rows.some(r => r.id === pendingCancelId)) {
+      setPendingCancelId(null)
+    }
+  }, [rows, editingId, pendingCancelId])
 
   // Stale-draft pruning: a slot can outlive its entry's availability (started
   // elsewhere, rested, slated into another match). Null it out — the Save-time
@@ -492,7 +498,7 @@ export default function OnDeckStrip({
                       className="text-destructive hover:text-destructive"
                       data-testid={`slate-cancel-${row.id}`}
                       disabled={cancelling}
-                      onClick={() => handleCancel(row)}
+                      onClick={() => setPendingCancelId(row.id)}
                     >
                       ✕ Cancel
                     </Button>
@@ -503,6 +509,39 @@ export default function OnDeckStrip({
           )
         })}
       </div>
+
+      {/* Cancel-confirm gate: destructive, so the ✕ only arms the dialog.
+          Esc/backdrop (onOpenChange false) = abort. One dialog strip-wide. */}
+      <Dialog open={pendingCancelId != null} onOpenChange={open => { if (!open) setPendingCancelId(null) }}>
+        <DialogContent className="sm:max-w-xs" data-testid="ondeck-cancel-dialog">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span aria-hidden="true">✕</span>
+              Cancel this lineup?
+            </DialogTitle>
+            <DialogDescription>Players return to the queue.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" size="sm" data-testid="ondeck-cancel-abort" onClick={() => setPendingCancelId(null)}>
+              Keep
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              data-testid="ondeck-cancel-confirm"
+              disabled={cancelling}
+              onClick={async () => {
+                const row = rows.find(r => r.id === pendingCancelId)
+                setPendingCancelId(null)
+                if (row) await handleCancel(row)
+              }}
+            >
+              Cancel lineup
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   )
 }
