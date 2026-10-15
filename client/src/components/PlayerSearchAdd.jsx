@@ -16,11 +16,13 @@ export function SkillChip({ level }) {
 
 // Unified Search-and-Add Combobox: 1-click check-in for pool matches,
 // register-and-check-in for brand-new names. Shared by SetupScreen and the
-// live Add Player dialog.
+// live check-in popover in QueueGrid.
 // Pre-session mode (no `session`): nothing is checked in yet — picking a match or
 // registering a new player calls `onPick(player)` so the setup screen can mark
 // the player selected; `selectedIds` plays the role of the queue for duplicates.
-export default function PlayerSearchAdd({ session, queue = [], players, onPlayersChanged, onCheckedIn, selectedIds = [], onPick }) {
+// `inputTestid`/`placeholder`/`hint`/`maxMatches` only decorate the embedding
+// surface (live popover) — setup keeps its defaults.
+export default function PlayerSearchAdd({ session, queue = [], players, onPlayersChanged, onCheckedIn, selectedIds = [], onPick, inputTestid, placeholder, hint, maxMatches = Infinity }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [newPlayerSkill, setNewPlayerSkill] = useState('intermediate')
   const [registering, setRegistering] = useState(false)
@@ -40,7 +42,7 @@ export default function PlayerSearchAdd({ session, queue = [], players, onPlayer
     ? pool.find(p => p.name.trim().toLowerCase() === normQuery)
     : null
   const matchingPool = normQuery
-    ? pool.filter(p => p.name.toLowerCase().includes(normQuery))
+    ? pool.filter(p => p.name.toLowerCase().includes(normQuery)).slice(0, maxMatches)
     : []
 
   async function handleQuickCheckIn(playerId) {
@@ -86,11 +88,15 @@ export default function PlayerSearchAdd({ session, queue = [], players, onPlayer
     <div className="flex flex-col gap-2" data-testid="search-add-combobox">
       <Input
         type="text"
-        placeholder={pre ? 'Search player to select, or type a new name to register...' : 'Search player to check in, or type a new name to register...'}
+        data-testid={inputTestid}
+        placeholder={placeholder ?? (pre ? 'Search player to select, or type a new name to register...' : 'Search player to check in, or type a new name to register...')}
         aria-label="Search or add player"
         value={searchQuery}
         onChange={e => setSearchQuery(e.target.value)}
       />
+      {!normQuery && hint && (
+        <div className="text-2xs text-muted-foreground" data-testid="checkin-hint">{hint}</div>
+      )}
       {normQuery && (
         <div className="flex flex-col gap-2 rounded-md border border-border bg-muted/20 p-2 text-xs">
           {activeDuplicate && (

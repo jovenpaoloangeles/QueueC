@@ -14,7 +14,6 @@ import QueueGrid from './components/QueueGrid.jsx'
 import Divider from './components/Divider.jsx'
 import StatsSidebar from './components/StatsSidebar.jsx'
 import SetupScreen from './components/SetupScreen.jsx'
-import AddPlayerDialog from './components/AddPlayerDialog.jsx'
 import StartMatchConfirmDialog from './components/StartMatchConfirmDialog.jsx'
 
 export default function App() {
@@ -28,8 +27,8 @@ export default function App() {
   const [slateDraftIds, setSlateDraftIds] = useState([])
   // live entry ids in the On Deck "Add to On Deck" builder (manual assign)
   const [builderDraftIds, setBuilderDraftIds] = useState([])
-  const [playersVersion, setPlayersVersion] = useState(0) // bumped after add-player so the pool refetches
-  const [showAddPlayer, setShowAddPlayer] = useState(false) // header "+ Add Player" → live add dialog
+  // bumped after a live register-new-player so QueueGrid refetches the pool
+  const [playersVersion, setPlayersVersion] = useState(0)
 
   const { session, queue, activeMatches, slatedMatches = [], courts, stats } = sseData
   const toast = useToast()
@@ -119,7 +118,7 @@ export default function App() {
     if (!session) return
     try {
       await endSession(session.id)
-      setDrafts({}); setSelection([]); setSlateDraftIds([]); setBuilderDraftIds([]); setShowAddPlayer(false)
+      setDrafts({}); setSelection([]); setSlateDraftIds([]); setBuilderDraftIds([])
     } catch (err) {
       toast(err?.data?.error ?? 'Could not end session', 'error')
     }
@@ -140,7 +139,6 @@ export default function App() {
   useEffect(() => {
     setDrafts(prev => (Object.keys(prev).length ? {} : prev))
     setSelection([]); setSlateDraftIds([]); setBuilderDraftIds([])
-    setShowAddPlayer(false)
   }, [session?.id])
 
   // Stale-draft pruning: a draft slot can outlive its entry (started elsewhere,
@@ -295,7 +293,6 @@ export default function App() {
         sseData={sseData}
         draftedIds={draftedIds}
         onSmartMatch={handleSmartMatch}
-        onAddPlayer={() => setShowAddPlayer(true)}
         onEndSession={session ? handleEndSession : undefined}
       />
       {!connected && (
@@ -371,6 +368,7 @@ export default function App() {
                 onSelectionChange={setSelection}
                 onReorder={handleReorder}
                 playersVersion={playersVersion}
+                onPlayersChanged={() => setPlayersVersion(v => v + 1)}
               />
             </div>
           </main>
@@ -387,14 +385,6 @@ export default function App() {
             <StatsSidebar stats={stats} />
           </aside>
         </div>
-      )}
-      {showAddPlayer && session && session.started_at != null && (
-        <AddPlayerDialog
-          session={session}
-          queue={queue}
-          onClose={() => setShowAddPlayer(false)}
-          onPlayersChanged={() => setPlayersVersion(v => v + 1)}
-        />
       )}
       {pending && (
         <StartMatchConfirmDialog

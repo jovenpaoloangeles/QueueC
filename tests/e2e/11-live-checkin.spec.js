@@ -15,10 +15,13 @@ test('11.1 "+ Check In" button visible', async ({ page }) => {
   await expect(page.getByRole('button', { name: '+ Check In' })).toBeVisible()
 })
 
-test('11.2 panel shows players not in session', async ({ page }) => {
+test('11.2 open panel lists nothing until a query is typed', async ({ page }) => {
   await page.getByRole('button', { name: '+ Check In' }).click()
-  // Expert E1 was not checked in — should be in panel
-  await expect(page.locator('text=Expert E1')).toBeVisible()
+  // empty query: hint only — no full registered-player dump
+  await expect(page.getByTestId('checkin-search')).toBeVisible()
+  await expect(page.getByTestId('checkin-hint')).toHaveText('Type to search registered players')
+  await expect(page.getByTestId('combobox-matches')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Expert E1', exact: false })).toHaveCount(0)
 })
 
 test('11.3 checking in appends to queue end', async ({ page }) => {
@@ -26,23 +29,30 @@ test('11.3 checking in appends to queue end', async ({ page }) => {
   await page.locator('[data-entry-id]').first().waitFor()
   const beforeCount = await page.locator('[data-entry-id]').count()
   await page.getByRole('button', { name: '+ Check In' }).click()
-  await page.getByRole('button', { name: 'Expert E1', exact: false }).click()
-  await page.waitForTimeout(400)
+  await page.getByTestId('checkin-search').fill('Expert E1')
+  await page.getByTestId('combobox-matches').getByRole('button', { name: 'Expert E1' }).click()
   await expect(page.locator('[data-entry-id]')).toHaveCount(beforeCount + 1)
 })
 
-test('11.4 panel closes after check-in', async ({ page }) => {
+test('11.4 search clears after check-in, panel stays open for multi-add', async ({ page }) => {
   await page.getByRole('button', { name: '+ Check In' }).click()
-  await page.getByRole('button', { name: 'Expert E1', exact: false }).click()
-  await page.waitForTimeout(400)
-  await expect(page.locator('text=Expert E1').locator('../..').getByRole('button', { name: 'Expert E1', exact: false })).toHaveCount(0)
+  const search = page.getByTestId('checkin-search')
+  await search.fill('Expert E1')
+  await page.getByTestId('combobox-matches').getByRole('button', { name: 'Expert E1' }).click()
+  await expect(page.locator('[data-entry-id]')).toHaveCount(5)
+  // panel stays open, query cleared, matches gone (player is now in the queue)
+  await expect(search).toBeVisible()
+  await expect(search).toHaveValue('')
+  await expect(page.getByTestId('combobox-matches')).toHaveCount(0)
 })
 
-test('11.5 checked-in player absent from panel', async ({ page }) => {
+test('11.5 checked-in player absent from matches', async ({ page }) => {
   await page.getByRole('button', { name: '+ Check In' }).click()
-  await page.getByRole('button', { name: 'Expert E1', exact: false }).click()
-  await page.waitForTimeout(400)
-  await page.getByRole('button', { name: '+ Check In' }).click()
-  // Check that Expert E1 is not in the check-in panel (buttons); they may appear in the queue grid
-  await expect(page.getByRole('button', { name: 'Expert E1', exact: false })).toHaveCount(0)
+  await page.getByTestId('checkin-search').fill('Expert')
+  await page.getByTestId('combobox-matches').getByRole('button', { name: 'Expert E1' }).click()
+  await expect(page.locator('[data-entry-id]')).toHaveCount(5)
+  // re-open (panel stays open) and search again — E1 is now in-session
+  await page.getByTestId('checkin-search').fill('Expert')
+  await expect(page.getByTestId('combobox-matches').getByRole('button', { name: 'Expert E1' })).toHaveCount(0)
+  await expect(page.getByTestId('combobox-matches').getByRole('button', { name: 'Expert E2' })).toBeVisible()
 })

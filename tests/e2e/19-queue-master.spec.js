@@ -27,7 +27,8 @@ test('QM.1 late player joins mid-match — visible in queue via live check-in', 
   const beforeCount = await page.locator('[data-entry-id]').count()
 
   await page.getByRole('button', { name: /Check In/i }).click()
-  await page.getByRole('button', { name: 'Newbie A1', exact: false }).first().click()
+  await page.getByTestId('checkin-search').fill('Newbie A1')
+  await page.getByTestId('combobox-matches').getByRole('button', { name: 'Newbie A1' }).first().click()
   await page.waitForTimeout(400)
 
   await expect(page.locator('[data-entry-id]')).toHaveCount(beforeCount + 1)

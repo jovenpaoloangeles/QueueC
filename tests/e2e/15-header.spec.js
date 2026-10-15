@@ -50,6 +50,9 @@ test('15.5 New Session button is gone; End Session is the only reset path', asyn
   await expect(page.getByTestId('btn-new-session')).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'New Session' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'End Session' })).toBeVisible()
+  // no + Add Player either — check-in lives in the queue panel now
+  await expect(page.getByTestId('btn-add-player')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: '+ Add Player' })).toHaveCount(0)
 })
 
 test('15.3 elapsed timer badge visible after session starts', async ({ page }) => {

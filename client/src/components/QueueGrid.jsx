@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import PlayerCard from './PlayerCard.jsx'
+import PlayerSearchAdd from './PlayerSearchAdd.jsx'
 import { useToast } from './Toast.jsx'
-import { checkinPlayer, getPlayers, setEntryStatus } from '../api.js'
+import { getPlayers, setEntryStatus } from '../api.js'
 
 // mockup .queue-tabs: All = waiting + resting (playing entries live on courts),
 // Wait = waiting only, Rest = resting only
@@ -16,7 +17,7 @@ const TABS = [
   { id: 'rest', label: 'Rest', testid: 'queue-tab-rest' },
 ]
 
-export default function QueueGrid({ session, queue, waitSeconds, playSeconds, selection, draftedIds = new Set(), onSelectionChange, onReorder, playersVersion = 0 }) {
+export default function QueueGrid({ session, queue, waitSeconds, playSeconds, selection, draftedIds = new Set(), onSelectionChange, onReorder, playersVersion = 0, onPlayersChanged }) {
   const [allPlayers, setAllPlayers] = useState([])
   const [playersLoading, setPlayersLoading] = useState(true)
   const [showCheckin, setShowCheckin] = useState(false)
@@ -73,7 +74,6 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
 
   const waiting = queue.filter(e => e.status === 'waiting')
   const resting = queue.filter(e => e.status === 'resting')
-  const notInSession = allPlayers.filter(p => !queue.some(e => e.player_id === p.id))
   // click-selected OR drag-drafted players both count as "picked" for the header line
   const pickedCount = new Set([...selection, ...draftedIds]).size
 
@@ -154,26 +154,31 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
         </div>
       </div>
 
-      {showCheckin && playersLoading && (
-        <div className="flex flex-wrap gap-2">
-          <Skeleton className="h-6 w-24" />
-          <Skeleton className="h-6 w-20" />
-          <Skeleton className="h-6 w-28" />
-        </div>
-      )}
-
-      {showCheckin && !playersLoading && notInSession.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {notInSession.map(p => (
-            <Button
-              key={p.id}
-              variant="outline"
-              size="xs"
-              onClick={async () => { await checkinPlayer(session.id, p.id); setShowCheckin(false) }}
-            >
-              {p.name}
-            </Button>
-          ))}
+      {/* search-driven check-in: nothing listed until the user types — the old
+          full pool dump is gone. Stays open for multi-add; PlayerSearchAdd
+          clears the query after each check-in / register. */}
+      {showCheckin && (
+        <div
+          data-testid="checkin-panel"
+          className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3 shadow-sm"
+        >
+          {playersLoading ? (
+            <div className="flex gap-2">
+              <Skeleton className="h-8 w-full" />
+            </div>
+          ) : (
+            <PlayerSearchAdd
+              session={session}
+              queue={queue}
+              players={allPlayers}
+              onPlayersChanged={onPlayersChanged}
+              onCheckedIn={p => toast(`Checked in: ${p.name}`, 'success')}
+              inputTestid="checkin-search"
+              placeholder="Search or add player…"
+              hint="Type to search registered players"
+              maxMatches={8}
+            />
+          )}
         </div>
       )}
 

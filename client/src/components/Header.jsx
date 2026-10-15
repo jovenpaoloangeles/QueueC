@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { toggleTheme } from '@/lib/theme'
 import EndSessionConfirmDialog from './EndSessionConfirmDialog.jsx'
 
-export default function Header({ session, sseData, draftedIds = new Set(), onSmartMatch, onAddPlayer, onEndSession }) {
+export default function Header({ session, sseData, draftedIds = new Set(), onSmartMatch, onEndSession }) {
   const [elapsed, setElapsed] = useState(0)
   const [confirmEnd, setConfirmEnd] = useState(false)
 
@@ -124,15 +124,6 @@ export default function Header({ session, sseData, draftedIds = new Set(), onSma
           onClick={() => onSmartMatch?.()}
         >
           ✨ Smart Match
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          data-testid="btn-add-player"
-          title="Add player to active session"
-          onClick={() => onAddPlayer?.()}
-        >
-          + Add Player
         </Button>
         <Button
           size="sm"
