@@ -12,7 +12,9 @@ export default defineConfig({
   },
   // Each worker owns a server + DB (see fixtures.js); files parallelize, tests within a file stay ordered.
   fullyParallel: false,
-  workers: process.env.PW_WORKERS ? Number(process.env.PW_WORKERS) : 5,
+  // 8 measured ~46-48s vs ~55s at 5 (both fully green, twice) — 8 servers +
+  // chromium instances fit this machine; PW_WORKERS still overrides.
+  workers: process.env.PW_WORKERS ? Number(process.env.PW_WORKERS) : 8,
   retries: 0,
   reporter: [['list'], ['html', { open: 'never' }]],
 })

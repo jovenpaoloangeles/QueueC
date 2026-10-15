@@ -1,9 +1,12 @@
 // tests/e2e/28-on-deck.spec.js — always-on On Deck panel: empty state, manual builder, multiple slates, smart add, reorder
+// Live matches / slates that are pure setup are seeded over the API (seedLiveMatch /
+// seedSlate); the real UI paths are kept where they are the thing under test:
+// 28.1 click-start, 28.2 smart-fill, 28.3 builder drags, 28.11 slate-editor drag.
 import { test, expect } from '../fixtures.js'
 import { readFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
-import { base, fullSetup, startDoubles, endMatch, liveState, syntheticDrag, confirmStart } from '../helpers.js'
+import { base, fullSetup, startDoubles, endMatch, liveState, syntheticDrag, seedSlate, seedLiveMatch } from '../helpers.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const NAMES = JSON.parse(readFileSync(join(here, '../fixtures/players.json'), 'utf8')).slice(0, 16).map(p => p.name)
@@ -128,9 +131,9 @@ test('28.4b smart fill with <4 waiting: toast and empty slots', async ({ page })
 })
 
 test('28.5 reorder: moving #2 up swaps the order', async ({ page }) => {
-  await startDoubles(page)
-  await addViaSmartFill(page)
-  await addViaSmartFill(page)
+  await seedLiveMatch(page)
+  await seedSlate(page)
+  await seedSlate(page)
   const names = async () => (await liveState(page)).slatedMatches.map(m => m.id)
   const [a, b] = await names()
   const textOf = id => page.getByTestId(`slate-row-${id}`).innerText()
@@ -148,9 +151,9 @@ test('28.5 reorder: moving #2 up swaps the order', async ({ page }) => {
 })
 
 test('28.6 ending the live match promotes slate #1; the rest renumbers; panel stays mounted', async ({ page }) => {
-  await startDoubles(page)
-  await addViaSmartFill(page)
-  await addViaSmartFill(page)
+  await seedLiveMatch(page)
+  await seedSlate(page)
+  await seedSlate(page)
   const [first, second] = (await liveState(page)).slatedMatches.map(m => m.id)
   await endMatch(page, 'Court 1')
   await expect.poll(async () => (await liveState(page)).slatedMatches.map(m => m.id)).toEqual([second])
@@ -164,8 +167,8 @@ test('28.6 ending the live match promotes slate #1; the rest renumbers; panel st
 })
 
 test('28.7 cancelling a slate returns its players to the queue', async ({ page }) => {
-  await startDoubles(page)
-  await addViaSmartFill(page)
+  await seedLiveMatch(page)
+  await seedSlate(page)
   const before = await page.locator('[data-entry-id]').count()
   const [id] = (await liveState(page)).slatedMatches.map(m => m.id)
   await page.getByTestId(`slate-cancel-${id}`).click()
@@ -177,8 +180,8 @@ test('28.7 cancelling a slate returns its players to the queue', async ({ page }
 })
 
 test('28.8 cancelling a slate asks for confirmation; Keep aborts', async ({ page }) => {
-  await startDoubles(page)
-  await addViaSmartFill(page)
+  await seedLiveMatch(page)
+  await seedSlate(page)
   const before = await page.locator('[data-entry-id]').count()
   const [id] = (await liveState(page)).slatedMatches.map(m => m.id)
   await page.getByTestId(`slate-cancel-${id}`).click()
@@ -198,8 +201,8 @@ test('28.8 cancelling a slate asks for confirmation; Keep aborts', async ({ page
 })
 
 test('28.9 Start now: a slated lineup goes live on a chosen free court immediately', async ({ page }) => {
-  await startDoubles(page) // Court 1 live
-  await addViaSmartFill(page) // 4 more checked in → slate on deck
+  await seedLiveMatch(page) // Court 1 live
+  await seedSlate(page) // 4 more checked in → slate on deck
   const [id] = (await liveState(page)).slatedMatches.map(m => m.id)
   const courts = (await liveState(page)).courts
   const freeCourt = courts.find(c => c.label === 'Court 2')
@@ -228,8 +231,8 @@ test('28.9 Start now: a slated lineup goes live on a chosen free court immediate
 })
 
 test('28.10 Start now: abort keeps the slate; disabled while no court is free', async ({ page }) => {
-  await startDoubles(page)
-  await addViaSmartFill(page)
+  await seedLiveMatch(page)
+  await seedSlate(page)
   const [id] = (await liveState(page)).slatedMatches.map(m => m.id)
 
   // abort path: Cancel in the dialog leaves the slate untouched
@@ -243,15 +246,11 @@ test('28.10 Start now: abort keeps the slate; disabled while no court is free', 
   expect((await liveState(page)).activeMatches).toHaveLength(1)
 
   // occupy Court 2 too → no free court → the button disables
-  // (select 4 waiting players, start on Court 2 via the header start flow)
-  const queueIds = await page.locator('[data-entry-id]').evaluateAll(els => els.map(el => el.getAttribute('data-entry-id')))
-  for (const qid of queueIds.slice(0, 4)) await page.locator(`[data-entry-id="${qid}"]`).click()
-  await page.getByRole('button', { name: 'Start Match' }).first().click()
-  await confirmStart(page)
+  await seedLiveMatch(page)
   await expect.poll(async () => (await liveState(page)).activeMatches).toHaveLength(2)
 
   // a third slate now has no free court → Start now disabled
-  await addViaSmartFill(page)
+  await seedSlate(page)
   const slateIds = (await liveState(page)).slatedMatches.map(m => m.id)
   const third = slateIds[slateIds.length - 1] // newest = highest seq (slateIds[0] is the first slate)
   await expect(page.getByTestId(`slate-start-${third}`)).toBeDisabled()
@@ -266,14 +265,14 @@ test('28.10 Start now: abort keeps the slate; disabled while no court is free', 
   }
   await endMatch(page, 'Court 1')
   await expect.poll(async () => (await liveState(page)).activeMatches).toHaveLength(1)
-  await addViaSmartFill(page)
+  await seedSlate(page)
   const [reid] = (await liveState(page)).slatedMatches.map(m => m.id)
   await expect(page.getByTestId(`slate-start-${reid}`)).toBeEnabled()
 })
 
 test('28.11 editing participants: removing a slated player returns them to the waiting pool immediately', async ({ page }) => {
-  await startDoubles(page)
-  await addViaSmartFill(page)
+  await seedLiveMatch(page)
+  await seedSlate(page)
   const state = await liveState(page)
   const slate = state.slatedMatches[0]
   const removedId = slate.team1_p1

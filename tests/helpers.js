@@ -197,3 +197,37 @@ export function liveState(page) {
 export function poolRow(page, name) {
   return page.getByTestId('player-pool').filter({ has: page.getByText(name, { exact: true }) }).first()
 }
+
+/** API-seeded On Deck slate from the first 4 waiting entries (pure setup — the
+ *  smart-fill/drag UI paths are exercised by the specs that test them). Waits
+ *  for the On Deck count so callers can assert immediately. Returns the slate. */
+export async function seedSlate(page) {
+  const st = await liveState(page)
+  const ids = st.queue.filter(e => e.status === 'waiting').slice(0, 4).map(e => e.id)
+  if (ids.length < 4) throw new Error(`seedSlate: only ${ids.length} waiting entries`)
+  await page.request.fetch(`${base()}/api/matches/slate`, {
+    method: 'POST',
+    data: { session_id: st.session.id, team1_p1: ids[0], team1_p2: ids[1], team2_p1: ids[2], team2_p2: ids[3] },
+  })
+  await expect(page.getByTestId('on-deck-count')).toHaveText(String(st.slatedMatches.length + 1), { timeout: 5000 })
+  return (await liveState(page)).slatedMatches.at(-1)
+}
+
+/** Seed a slate AND start it on the first free court over the API — replaces
+ *  the 4-click + Start Match + confirm UI chain where that is pure setup. */
+export async function seedLiveMatch(page, { courtId } = {}) {
+  const st = await liveState(page)
+  const busy = new Set(st.activeMatches.map(m => m.court_number))
+  const now = Math.floor(Date.now() / 1000)
+  const court = courtId
+    ? st.courts.find(c => c.id === courtId)
+    : st.courts.find(c => c.enabled && !busy.has(c.id) && (c.expires_at == null || now < c.expires_at))
+  if (!court) throw new Error('seedLiveMatch: no free court')
+  const slate = await seedSlate(page)
+  const res = await page.request.fetch(`${base()}/api/matches/${slate.id}/start`, {
+    method: 'POST', data: { court_id: court.id } })
+  if (!res.ok()) throw new Error(`seedLiveMatch: start → ${res.status()} ${await res.text()}`)
+  await expect.poll(async () => (await liveState(page)).activeMatches.length,
+    { timeout: 5000 }).toBe(st.activeMatches.length + 1)
+  return slate
+}
