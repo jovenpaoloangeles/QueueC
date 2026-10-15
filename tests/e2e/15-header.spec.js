@@ -7,11 +7,14 @@ test.beforeEach(async ({ page }) => {
   if (session) await page.request.fetch(`${base()}/api/sessions/${session.id}/end`, { method: 'PATCH' })
 })
 
-test('15.1 session name in header', async ({ page }) => {
+test('15.1 session name in header (no parens → single line)', async ({ page }) => {
   await createSession(page, { name: 'Header Test' })
   await checkinPlayers(page, ['Inter C1', 'Inter C2'])
   await startSession(page)
-  await expect(page.locator('text=Header Test')).toBeVisible()
+  // defensive path: no ' (' in the name → full name on the single name line, no date line
+  const block = page.getByTestId('header-session-name')
+  await expect(block).toBeVisible()
+  await expect(block).toHaveText('HEADER TEST') // name line only (uppercased), no date line
 })
 
 test('15.2 scheduled time range shown', async ({ page }) => {
@@ -20,6 +23,20 @@ test('15.2 scheduled time range shown', async ({ page }) => {
   await startSession(page)
   // Time range format: HH:MM–HH:MM (scoped to header to avoid SetupScreen duplicate)
   await expect(page.locator('[data-testid="header-time-range"]')).toBeVisible()
+})
+
+test('15.6 session name renders as ASTIRISK over date (two lines)', async ({ page }) => {
+  // empty name → server default "ASTIRISK (DD-Mon-YYYY)" → name line + date line
+  await createSession(page, { name: '' })
+  await checkinPlayers(page, ['Inter C1', 'Inter C2'])
+  await startSession(page)
+  const block = page.getByTestId('header-session-name')
+  const lines = block.locator('span')
+  await expect(lines).toHaveCount(2)
+  await expect(lines.nth(0)).toHaveText('ASTIRISK')
+  await expect(lines.nth(1)).toHaveText(/^\d{2}-[A-Z][a-z]{2}-\d{4}$/)
+  await expect(lines.nth(0)).toBeVisible()
+  await expect(lines.nth(1)).toBeVisible()
 })
 
 test('15.4 elapsed timer absent during setup', async ({ page }) => {

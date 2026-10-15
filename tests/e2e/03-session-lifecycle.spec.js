@@ -72,5 +72,5 @@ test('3.10 session name persists in header', async ({ page }) => {
   await createSession(page, { name: 'Persistence Test' })
   await checkinPlayers(page, ['Inter C1', 'Inter C2'])
   await startSession(page)
-  await expect(page.locator('text=Persistence Test')).toBeVisible()
+  await expect(page.getByTestId('header-session-name')).toHaveText('PERSISTENCE TEST')
 })
