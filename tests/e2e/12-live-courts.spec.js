@@ -1,6 +1,6 @@
 // tests/e2e/12-live-courts.spec.js
 import { test, expect } from '../fixtures.js'
-import { base, fullSetup, syntheticDrag, startDoubles } from '../helpers.js'
+import { base, fullSetup, syntheticDrag, startDoubles, clickStartMatch } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
   const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
@@ -15,10 +15,10 @@ test('12.1 court cards have no "Open" checkbox', async ({ page }) => {
 
 test('12.8 two courts independent', async ({ page }) => {
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
-  await page.getByRole('button', { name: 'Start Match' }).first().click()
+  await clickStartMatch(page)
   await page.waitForTimeout(600)
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
-  await page.getByRole('button', { name: 'Start Match' }).first().click()
+  await clickStartMatch(page)
   await page.waitForTimeout(600)
   await expect(page.getByRole('button', { name: 'End Match' })).toHaveCount(2)
 })

@@ -1,6 +1,6 @@
 // tests/e2e/09-queue-management.spec.js
 import { test, expect } from '../fixtures.js'
-import { base, fullSetup, getQueueNames, syntheticDrag } from '../helpers.js'
+import { base, fullSetup, getQueueNames, syntheticDrag, clickStartMatch } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
   const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
@@ -83,7 +83,7 @@ test('9.7 resting player absent from selection candidates', async ({ page }) => 
   // re-trigger smart suggestion
   await page.getByRole('button', { name: '● Smart' }).click()
   await page.waitForTimeout(800)
-  await page.getByRole('button', { name: 'Start Match' }).first().click()
+  await clickStartMatch(page)
   await page.waitForTimeout(500)
   // bench player never made it to court
   for (const side of await page.locator('[data-team-side]').allTextContents()) {

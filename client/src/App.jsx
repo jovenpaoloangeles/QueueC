@@ -13,6 +13,7 @@ import QueueGrid from './components/QueueGrid.jsx'
 import StatsSidebar from './components/StatsSidebar.jsx'
 import SetupScreen from './components/SetupScreen.jsx'
 import AddPlayerDialog from './components/AddPlayerDialog.jsx'
+import StartMatchConfirmDialog from './components/StartMatchConfirmDialog.jsx'
 
 export default function App() {
   const [sseData, setSseData] = useState({ session: null, queue: [], activeMatches: [], slatedMatches: [], courts: [], stats: null, serverTime: null })
@@ -29,18 +30,65 @@ export default function App() {
 
   const { session, queue, activeMatches, slatedMatches = [], courts, stats } = sseData
   const toast = useToast()
+  // Pending start awaiting confirmation:
+  //  { kind:'manual', courtId, sel, source, matches } | { kind:'smart', plan, matches, slate }
+  const [pending, setPending] = useState(null)
+  const [pendingBusy, setPendingBusy] = useState(false)
 
-  // header "✨ Smart Match": fill every free court, then slate one more lineup
+  const resolveTeam = ids => ids.map(id => {
+    const e = queue.find(q => q.id === id)
+    return { name: e?.name ?? '?', skill_level: e?.skill_level }
+  })
+
+  // header "✨ Smart Match": ask the server for a dry-run plan, confirm, then execute exactly it
   async function handleSmartMatch() {
     if (!session) return
     try {
-      const r = await autoMatch(session.id)
+      const { plan } = await autoMatch(session.id, { dry_run: true })
+      if (!plan || (!plan.matches.length && !plan.slate.length)) {
+        toast('Nothing to auto-match', 'info')
+        return
+      }
+      setPending({
+        kind: 'smart',
+        plan,
+        matches: plan.matches.map(m => ({
+          courtLabel: m.court_label ?? courts.find(c => c.id === m.court_id)?.label ?? `Court ${m.court_id}`,
+          format: m.format, team1: resolveTeam(m.team1), team2: resolveTeam(m.team2),
+        })),
+        slate: plan.slate.map(m => ({ format: m.format, team1: resolveTeam(m.team1), team2: resolveTeam(m.team2) })),
+      })
+    } catch (err) {
+      toast(err?.data?.error ?? (err?.status ? err.message : 'Auto-match failed'), 'error')
+    }
+  }
+
+  async function confirmSmartMatch(plan) {
+    setPendingBusy(true)
+    try {
+      const r = await autoMatch(session.id, { plan })
       const parts = []
       if (r.started) parts.push(`Matched ${r.started} court${r.started === 1 ? '' : 's'}`)
       if (r.slated) parts.push('slated next lineup')
       toast(parts.length ? parts.join(', ') : 'Nothing to auto-match', parts.length ? 'success' : 'info')
     } catch (err) {
       toast(err?.data?.error ?? (err?.status ? err.message : 'Auto-match failed'), 'error')
+    } finally {
+      setPendingBusy(false)
+      setPending(null)
+    }
+  }
+
+  async function confirmPending() {
+    if (!pending || pendingBusy) return
+    if (pending.kind === 'smart') return confirmSmartMatch(pending.plan)
+    const { courtId, sel, source } = pending
+    setPendingBusy(true)
+    try {
+      await handleStartMatch(courtId, sel, source)
+    } finally {
+      setPendingBusy(false)
+      setPending(null)
     }
   }
 
@@ -101,6 +149,31 @@ export default function App() {
     [drafts, slateDraftIds]
   )
 
+  // Manual start gate: validate, then open the confirm dialog. Nothing starts
+  // (and the draft/selection stays intact) until the user confirms.
+  function requestStartMatch(courtNumber, sel, source = 'selection') {
+    if (!session) return false
+    const status = new Map(queue.map(e => [e.id, e.status]))
+    const validIds = sel.filter(id => status.get(id) === 'waiting')
+    if (validIds.length !== 2 && validIds.length !== 4) {
+      toast('Not enough available players', 'error')
+      return false
+    }
+    const team1 = validIds.length === 2 ? [validIds[0]] : validIds.slice(0, 2)
+    const team2 = validIds.length === 2 ? [validIds[1]] : validIds.slice(2)
+    const court = courts.find(c => c.id === courtNumber)
+    setPending({
+      kind: 'manual', courtId: courtNumber, sel, source,
+      matches: [{
+        courtLabel: court?.label ?? `Court ${courtNumber}`,
+        format: validIds.length === 2 ? 'singles' : 'doubles',
+        team1: resolveTeam(team1), team2: resolveTeam(team2),
+      }],
+      slate: [],
+    })
+    return true
+  }
+
   // sel: 2 ids → singles (each on its own team), 4 ids → doubles in slot order.
   // source: 'draft' | 'selection' — only the lineup actually used is cleared on
   // success, so a draft-based start never wipes an unrelated selection (and vice
@@ -134,7 +207,7 @@ export default function App() {
     }
   }
 
-  // Slot drop → per-court draft. Auto-start at 4 on an idle court; on an
+  // Slot drop → per-court draft. Opens the start confirmation at 4 on an idle court; on an
   // occupied court the 4th name slates the lineup for the next free court.
   async function handleDropOnSlot(courtId, slotIdx, entryId) {
     const draft = drafts[courtId] ?? EMPTY_DRAFT
@@ -147,7 +220,7 @@ export default function App() {
 
     const occupied = activeMatches.some(m => m.court_number === courtId)
     if (!occupied) {
-      await handleStartMatch(courtId, next, 'draft') // clears the draft on success
+      requestStartMatch(courtId, next, 'draft') // confirm dialog; draft cleared on confirmed success
       return
     }
     try {
@@ -220,7 +293,7 @@ export default function App() {
                 selection={selection}
                 drafts={drafts}
                 draftedIds={draftedIds}
-                onStartMatch={handleStartMatch}
+                onStartMatch={requestStartMatch}
                 onDropPlayer={handleDropOnCourt}
                 onDropSlot={handleDropOnSlot}
                 onClearSlot={clearSlot}
@@ -261,6 +334,16 @@ export default function App() {
           queue={queue}
           onClose={() => setShowAddPlayer(false)}
           onPlayersChanged={() => setPlayersVersion(v => v + 1)}
+        />
+      )}
+      {pending && (
+        <StartMatchConfirmDialog
+          open
+          onOpenChange={open => { if (!open && !pendingBusy) setPending(null) }}
+          matches={pending.matches}
+          slate={pending.slate}
+          busy={pendingBusy}
+          onConfirm={confirmPending}
         />
       )}
       {confirmNew && session?.started_at != null && (

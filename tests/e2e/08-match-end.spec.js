@@ -1,7 +1,7 @@
 // tests/e2e/08-match-end.spec.js
 import { test, expect } from '../fixtures.js'
 import { execSync } from 'node:child_process'
-import { base, fullSetup, endMatch } from '../helpers.js'
+import { base, fullSetup, endMatch, clickStartMatch } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
   const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
   await fullSetup(page)
   // Start a doubles match on court 1
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
-  await page.getByRole('button', { name: 'Start Match' }).first().click()
+  await clickStartMatch(page)
   await page.waitForTimeout(600)
 })
 

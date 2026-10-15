@@ -1,6 +1,6 @@
 // tests/e2e/10-smart-manual-mode.spec.js
 import { test, expect } from '../fixtures.js'
-import { base, fullSetup, endMatch } from '../helpers.js'
+import { base, fullSetup, endMatch, clickStartMatch } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
   const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
@@ -45,7 +45,7 @@ test('10.6 switch back to Smart re-populates', async ({ page }) => {
 test('10.3 smart re-suggests after match ends and queue changes', async ({ page }) => {
   await page.getByRole('button', { name: '● Smart' }).click()
   await page.waitForTimeout(800)
-  await page.getByRole('button', { name: 'Start Match' }).first().click()
+  await clickStartMatch(page)
   await page.waitForTimeout(500)
   // tweak the auto-selection, then end the match — re-suggestion must overwrite the tweak
   await page.locator('[class*="ring-2"][class*="ring-primary"]').first().click()

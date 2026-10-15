@@ -44,6 +44,6 @@ export const updateCourt = (courtId, patch) =>
 export const slateMatch = data => req('POST', '/matches/slate', data)
 export const updateSlate = (id, data) => req('PATCH', `/matches/${id}/slate`, data)
 export const cancelSlate = id => req('DELETE', `/matches/${id}/slate`)
-export const autoMatch = sessionId => req('POST', `/sessions/${sessionId}/automatch`)
+export const autoMatch = (sessionId, body) => req('POST', `/sessions/${sessionId}/automatch`, body)
 export const bumpShuttles = (id, d) => req('PATCH', `/matches/${id}/shuttles`, d)
 export const extendCourt = (id, minutes = 60) => req('PATCH', `/courts/${id}/extend`, { minutes })

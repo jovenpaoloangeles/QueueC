@@ -2,7 +2,7 @@
 // Initialization phase: dynamic court config, per-court countdown/expiry,
 // 7-tier skills, Search-and-Add combobox (single-screen setup).
 import { test, expect } from '../fixtures.js'
-import { poolRow, base, createSession, checkinPlayers, startSession } from '../helpers.js'
+import { poolRow, base, createSession, checkinPlayers, startSession, clickStartMatch } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
   const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
@@ -112,7 +112,7 @@ test('20.9 expired court mid-match shows Last Game badge and persists until matc
   // start a singles match
   await page.locator('[data-entry-id]').nth(0).click()
   await page.locator('[data-entry-id]').nth(1).click()
-  await page.getByRole('button', { name: 'Start Match' }).first().click()
+  await clickStartMatch(page)
   await page.waitForTimeout(600)
   await expect(page.getByRole('button', { name: 'End Match' })).toHaveCount(1)
 
@@ -217,7 +217,7 @@ test('20.17 games played increments after a match ends', async ({ page }) => {
   await startSession(page)
   await page.getByRole('button', { name: 'Manual' }).click() // avoid smart pre-selection toggling off
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
-  await page.getByRole('button', { name: 'Start Match' }).first().click()
+  await clickStartMatch(page)
   await page.waitForTimeout(600)
   await page.getByRole('button', { name: 'End Match' }).first().click()
   await page.getByTestId('confirm-end-end').click() // pass the confirm gate

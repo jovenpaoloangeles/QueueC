@@ -1,6 +1,6 @@
 // tests/e2e/13-stats-sidebar.spec.js
 import { test, expect } from '../fixtures.js'
-import { base, fullSetup, endMatch, startDoubles } from '../helpers.js'
+import { base, fullSetup, endMatch, startDoubles, clickStartMatch } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
   const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
@@ -18,7 +18,7 @@ test('13.2 match count starts at 0', async ({ page }) => {
 
 test('13.3 match count increments after end', async ({ page }) => {
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
-  await page.getByRole('button', { name: 'Start Match' }).first().click()
+  await clickStartMatch(page)
   await page.waitForTimeout(600)
   await endMatch(page, 'Court')
   await expect(page.locator('text=Matches').locator('..').locator('[class*="font-mono"]')).toHaveText('1')
@@ -59,7 +59,7 @@ test('13.8 player with most wins ranks first', async ({ page }) => {
   for (const n of ['Inter C1', 'Inter C2', 'Upper D1', 'Upper D2']) {
     await page.locator('[data-entry-id]').filter({ hasText: n }).click()
   }
-  await page.getByRole('button', { name: 'Start Match' }).first().click()
+  await clickStartMatch(page)
   await page.waitForTimeout(500)
   await endMatch(page, 'Court', { team1: 21, team2: 15 })
   // double winners (2W) rank first — exact text so parent rows don't also match

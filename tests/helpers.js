@@ -96,10 +96,24 @@ export async function syntheticDrag(page, fromSel, toSel, { fromIndex = 0, toInd
   }, { fromSel, toSel, fromIndex, toIndex })
 }
 
+/** Confirm the "Start match(es)?" dialog if one opened (every start now asks first). */
+export async function confirmStart(page) {
+  const yes = page.getByTestId('start-confirm-yes')
+  await yes.waitFor({ state: 'visible', timeout: 3000 })
+  await yes.click()
+  await page.getByTestId('start-confirm-dialog').waitFor({ state: 'detached', timeout: 5000 })
+}
+
+/** Click the first Start Match button and confirm the dialog. */
+export async function clickStartMatch(page) {
+  await page.getByRole('button', { name: 'Start Match' }).first().click()
+  await confirmStart(page)
+}
+
 /** Click-select the first n queue cards, then Start Match (court 1). */
 export async function startDoubles(page) {
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
-  await page.getByRole('button', { name: 'Start Match' }).first().click()
+  await clickStartMatch(page)
   await page.waitForTimeout(500)
 }
 

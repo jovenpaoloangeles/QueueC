@@ -4,12 +4,98 @@ import assert from 'node:assert/strict'
 const BASE = process.env.BASE_URL ?? 'http://localhost:3001/api'
 const SUFFIX = Date.now().toString(36)
 
+async function mkSession(playerCount, courtCount) {
+  const session = (await fetch(`${BASE}/sessions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: 'AutomatchTest', scheduled_start: 1000, scheduled_end: 2000, court_count: courtCount })
+  }).then(r => r.json())).session
+  const entries = []
+  for (let i = 0; i < playerCount; i++) {
+    const p = (await fetch(`${BASE}/players`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: `PlanP${i}-${SUFFIX}`, skill_level: 'intermediate' })
+    }).then(r => r.json())).player
+    const e = (await fetch(`${BASE}/sessions/${session.id}/checkin`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ player_id: p.id })
+    }).then(r => r.json())).entry
+    entries.push(e)
+  }
+  await fetch(`${BASE}/sessions/${session.id}/start`, { method: 'PATCH' })
+  return session
+}
+
+async function snap() {
+  const r = await fetch(`${BASE}/sse`)
+  const reader = r.body.getReader()
+  const chunk = new TextDecoder().decode((await reader.read()).value)
+  await reader.cancel()
+  return JSON.parse(chunk.split('\n').find(l => l.startsWith('data: ')).slice(6))
+}
+
+// dry_run / plan contract
+async function planTests() {
+  const session = await mkSession(12, 2)
+  const post = body => fetch(`${BASE}/sessions/${session.id}/automatch`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  })
+  try {
+    const { courts } = await fetch(`${BASE}/sessions/${session.id}/courts`).then(r => r.json())
+    const dry = await post({ dry_run: true })
+    assert.equal(dry.status, 200)
+    const { plan } = await dry.json()
+    assert.deepEqual(plan.matches.map(m => m.court_id), courts.map(c => c.id))
+    assert.equal(plan.slate.length, 1)
+    for (const m of plan.matches) { assert.equal(m.format, 'doubles'); assert.equal(m.team1.length, 2); assert.equal(m.team2.length, 2) }
+    let st = await snap()
+    assert.equal(st.activeMatches.length, 0, 'dry run started nothing')
+    assert.equal(st.slatedMatches.length, 0, 'dry run slated nothing')
+    assert.equal(st.queue.filter(q => q.status === 'waiting').length, 12, 'dry run left everyone waiting')
+
+    // stale plan -> 409, nothing written
+    const victim = plan.matches[0].team1[0]
+    await fetch(`${BASE}/queue/${victim}/status`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'resting' }),
+    })
+    const staleRes = await post({ plan })
+    assert.equal(staleRes.status, 409, 'stale plan rejected')
+    assert.equal((await staleRes.json()).error, 'Queue changed — review and try again')
+    assert.equal((await snap()).activeMatches.length, 0, 'stale plan wrote nothing')
+    await fetch(`${BASE}/queue/${victim}/status`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'waiting' }),
+    })
+
+    // run with the returned plan reproduces it exactly
+    const plan2 = (await (await post({ dry_run: true })).json()).plan
+    const run = await post({ plan: plan2 })
+    assert.equal(run.status, 200)
+    assert.deepEqual(await run.json(), { started: 2, slated: true })
+    st = await snap()
+    for (const m of plan2.matches) {
+      const am = st.activeMatches.find(x => x.court_number === m.court_id)
+      assert.ok(am, 'planned court has a match')
+      assert.deepEqual([am.team1_p1, am.team1_p2].filter(Boolean), m.team1)
+      assert.deepEqual([am.team2_p1, am.team2_p2].filter(Boolean), m.team2)
+    }
+    const sl = st.slatedMatches[0]
+    assert.deepEqual([sl.team1_p1, sl.team1_p2], plan2.slate[0].team1)
+    assert.deepEqual([sl.team2_p1, sl.team2_p2], plan2.slate[0].team2)
+    // re-running the now-stale plan is rejected
+    assert.equal((await post({ plan: plan2 })).status, 409)
+  } finally {
+    await fetch(`${BASE}/sessions/${session.id}/end`, { method: 'PATCH' })
+  }
+}
+
 async function run() {
   // End any stray unended session first
   const active = await fetch(`${BASE}/sessions/active`).then(r => r.json())
   if (active.session) {
     await fetch(`${BASE}/sessions/${active.session.id}/end`, { method: 'PATCH' })
   }
+
+  await planTests()
 
   // 1) Create a session with 3 courts, check in 14 waiting players, start session, and disable Court 3
   const session = (await fetch(`${BASE}/sessions`, {

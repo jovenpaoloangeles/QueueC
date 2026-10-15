@@ -1,6 +1,6 @@
 // tests/e2e/16-accessibility.spec.js
 import { test, expect } from '../fixtures.js'
-import { base, createSession, checkinPlayers, startSession, fullSetup } from '../helpers.js'
+import { base, createSession, checkinPlayers, startSession, fullSetup, clickStartMatch } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
   const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
@@ -21,7 +21,7 @@ test('16.1 setup form: Enter in a field does not start without 2 players, labels
 test('16.2 end match form submits on Enter', async ({ page }) => {
   await fullSetup(page)
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
-  await page.getByRole('button', { name: 'Start Match' }).first().click()
+  await clickStartMatch(page)
   await page.waitForTimeout(600)
   await page.getByRole('button', { name: 'End Match' }).first().click()
   await page.getByTestId('confirm-end-end').click() // pass the confirm gate → finalization form
@@ -45,7 +45,7 @@ test('16.3 setup controls reachable by Tab, Start Session last', async ({ page }
 test('16.4 score inputs Tab-navigable', async ({ page }) => {
   await fullSetup(page)
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
-  await page.getByRole('button', { name: 'Start Match' }).first().click()
+  await clickStartMatch(page)
   await page.waitForTimeout(600)
   await page.getByRole('button', { name: 'End Match' }).first().click()
   await page.getByTestId('confirm-end-end').click() // pass the confirm gate

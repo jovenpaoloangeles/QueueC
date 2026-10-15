@@ -1,6 +1,6 @@
 // tests/e2e/07-match-start.spec.js
 import { test, expect } from '../fixtures.js'
-import { base, fullSetup, getQueueNames, syntheticDrag, startDoubles } from '../helpers.js'
+import { base, fullSetup, getQueueNames, syntheticDrag, startDoubles, clickStartMatch, confirmStart } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
   const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
@@ -25,14 +25,14 @@ test('7.3 court hints "Drop players here" with 2 selected', async ({ page }) => 
 test('7.4 singles start via button', async ({ page }) => {
   await page.locator('[data-entry-id]').nth(0).click()
   await page.locator('[data-entry-id]').nth(1).click()
-  await page.getByRole('button', { name: 'Start Match' }).first().click()
+  await clickStartMatch(page)
   await page.waitForTimeout(500)
   await expect(page.locator('text=singles').first()).toBeVisible()
 })
 
 test('7.5 doubles start via button', async ({ page }) => {
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
-  await page.getByRole('button', { name: 'Start Match' }).first().click()
+  await clickStartMatch(page)
   await page.waitForTimeout(500)
   await expect(page.locator('text=doubles').first()).toBeVisible()
 })
@@ -42,7 +42,7 @@ test('7.6 started players removed from queue', async ({ page }) => {
   const name = await firstCard.locator('.text-base.font-medium').textContent()
   await firstCard.click()
   await page.locator('[data-entry-id]').nth(1).click()
-  await page.getByRole('button', { name: 'Start Match' }).first().click()
+  await clickStartMatch(page)
   await page.waitForTimeout(500)
   await expect(page.locator('[data-entry-id]').locator(`text=${name?.trim()}`)).toHaveCount(0)
 })
@@ -50,21 +50,21 @@ test('7.6 started players removed from queue', async ({ page }) => {
 test('7.7 court shows format badge after match starts', async ({ page }) => {
   // doubles: 4 players
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
-  await page.getByRole('button', { name: 'Start Match' }).first().click()
+  await clickStartMatch(page)
   await page.waitForTimeout(500)
   await expect(page.locator('text=doubles').first()).toBeVisible()
 })
 
 test('7.8 court shows elapsed timer from 0:00', async ({ page }) => {
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
-  await page.getByRole('button', { name: 'Start Match' }).first().click()
+  await clickStartMatch(page)
   await page.waitForTimeout(500)
   await expect(page.locator('text=/0:0[012]/').first()).toBeVisible()
 })
 
 test('7.9 match timer increments', async ({ page }) => {
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
-  await page.getByRole('button', { name: 'Start Match' }).first().click()
+  await clickStartMatch(page)
   await page.waitForTimeout(500)
   const timer = page.locator('[class*="font-mono"][class*="tabular-nums"]').first()
   const t1 = await timer.textContent()
@@ -76,10 +76,10 @@ test('7.9 match timer increments', async ({ page }) => {
 test('7.16 two courts run simultaneously', async ({ page }) => {
   // Session has 2 courts; start a match on each
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
-  await page.getByRole('button', { name: 'Start Match' }).first().click()
+  await clickStartMatch(page)
   await page.waitForTimeout(600)
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
-  await page.getByRole('button', { name: 'Start Match' }).first().click()
+  await clickStartMatch(page)
   await page.waitForTimeout(600)
   await expect(page.locator('text=End Match')).toHaveCount(2)
 })
@@ -112,12 +112,15 @@ test('7.12 armed court with 2 shows Start Singles', async ({ page }) => {
   await expect(page.getByTestId('btn-start-singles')).toBeVisible()
 })
 
-test('7.13 drag 4th player to armed court — match auto-starts', async ({ page }) => {
+test('7.13 drag 4th player to armed court — asks to confirm, then starts', async ({ page }) => {
   await syntheticDrag(page, '[data-entry-id]', '[data-drop^="court-"]', { toIndex: -1 })
   await syntheticDrag(page, '[data-entry-id]', '[data-drop^="court-"]', { fromIndex: 1, toIndex: -1 })
   await syntheticDrag(page, '[data-entry-id]', '[data-drop^="court-"]', { fromIndex: 2, toIndex: -1 })
   await syntheticDrag(page, '[data-entry-id]', '[data-drop^="court-"]', { fromIndex: 3, toIndex: -1 })
-  // 4 players dropped → auto-start
+  // 4 players dropped → confirm dialog; nothing started yet
+  await expect(page.getByTestId('start-confirm-dialog')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'End Match' })).toHaveCount(0)
+  await confirmStart(page)
   await expect(page.getByRole('button', { name: 'End Match' })).toHaveCount(1)
   await expect(page.locator('[data-entry-id]')).toHaveCount(4)
 })

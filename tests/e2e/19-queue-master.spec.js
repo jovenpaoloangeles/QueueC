@@ -1,5 +1,5 @@
 import { test, expect } from '../fixtures.js'
-import { base, fullSetup, createSession, checkinPlayers, startSession, endMatch, getQueueNames } from '../helpers.js'
+import { base, fullSetup, createSession, checkinPlayers, startSession, endMatch, getQueueNames, clickStartMatch } from '../helpers.js'
 
 // Queue master — real session scenarios (section 19)
 
@@ -17,7 +17,7 @@ async function getDOMEntryIds(page) {
 async function startDoublesMatch(page) {
   const cards = page.locator('[data-entry-id]')
   for (let i = 0; i < 4; i++) await cards.nth(i).click()
-  await page.getByRole('button', { name: 'Start Match' }).first().click()
+  await clickStartMatch(page)
   await page.waitForTimeout(500)
 }
 
