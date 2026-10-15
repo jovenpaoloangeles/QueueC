@@ -80,9 +80,10 @@ test('9.7 resting player absent from selection candidates', async ({ page }) => 
   const name = (await getQueueNames(page))[0].trim()
   await page.locator('[data-entry-id]').first().click({ modifiers: ['Shift'] })
   await page.waitForTimeout(400)
-  // re-trigger smart suggestion
-  await page.getByRole('button', { name: '● Smart' }).click()
-  await page.waitForTimeout(800)
+  // select 4 waiting players manually (the benched player is not among them —
+  // resting rows leave the grid entirely)
+  const cards = page.locator('[data-entry-id]')
+  for (let i = 0; i < 4; i++) await cards.nth(i).click()
   await clickStartMatch(page)
   await page.waitForTimeout(500)
   // bench player never made it to court

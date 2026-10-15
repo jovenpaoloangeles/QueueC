@@ -47,12 +47,7 @@ export async function fullSetup(page, { courts = 2, playerNames = DEFAULT_PLAYER
   await createSession(page, { courts })
   await checkinPlayers(page, playerNames)
   await startSession(page)
-  // Switch to Manual mode so tests can do deterministic player selection
-  // (Smart mode pre-selects players, which confuses click-to-select tests)
-  // Switch to Manual so tests get deterministic click-to-select behavior
-  await page.getByRole('button', { name: 'Manual' }).click()
-  // Wait for Smart mode indicator to disappear (confirms mode switched)
-  await page.waitForTimeout(300)
+  // selection is always manual now — no mode toggle to switch
 }
 
 export async function endMatch(page, courtLabel, { team1 = 21, team2 = 15 } = {}) {

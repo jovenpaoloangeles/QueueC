@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import PlayerCard from './PlayerCard.jsx'
 import RestingTray from './RestingTray.jsx'
 import { useToast } from './Toast.jsx'
-import { checkinPlayer, getPlayers, getSuggestion, setEntryStatus } from '../api.js'
+import { checkinPlayer, getPlayers, setEntryStatus } from '../api.js'
 
 // mockup .queue-tabs: All = waiting + resting (playing entries live on courts),
 // Wait = waiting only, Rest = resting only
@@ -18,7 +18,6 @@ const TABS = [
 ]
 
 export default function QueueGrid({ session, queue, waitSeconds, playSeconds, selection, draftedIds = new Set(), onSelectionChange, onReorder, playersVersion = 0 }) {
-  const [mode, setMode] = useState('smart')
   const [allPlayers, setAllPlayers] = useState([])
   const [playersLoading, setPlayersLoading] = useState(true)
   const [showCheckin, setShowCheckin] = useState(false)
@@ -44,22 +43,6 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
       .catch(() => {})
       .finally(() => setPlayersLoading(false))
   }, [playersVersion])
-
-  // Apply smart suggestion when mode switches to smart, the waiting set
-  // changes (queue.length never changes — playing entries stay in the array),
-  // or a court draft claims players out from under the selection
-  const waitingSig = queue.filter(e => e.status === 'waiting').map(e => e.id).join(',')
-  useEffect(() => {
-    if (mode !== 'smart' || !session) return
-    const waiting = queue.filter(e => e.status === 'waiting')
-    const modeStr = waiting.length >= 4 ? 'doubles' : 'singles'
-    getSuggestion(session.id, modeStr).then(d => {
-      // drafted players are already committed to a court — never (re-)select them
-      if (d.suggestion?.length) {
-        onSelectionChange(d.suggestion.filter(Boolean).filter(id => !draftedIds.has(id)))
-      }
-    }).catch(() => {}) // suggestion is best-effort
-  }, [mode, waitingSig, session?.id, draftedIds])
 
   function toggleSelect(entryId) {
     if (draftedIds.has(entryId)) return // already drafted onto a court — selecting would double-book them
@@ -136,21 +119,6 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
           )}
         </span>
         <div className="flex gap-2">
-          <Button
-            variant={mode === 'manual' ? 'outline' : 'ghost'}
-            size="sm"
-            onClick={() => { setMode('manual'); onSelectionChange([]) }}
-          >
-            Manual
-          </Button>
-          <Button
-            variant={mode === 'smart' ? 'outline' : 'ghost'}
-            size="sm"
-            onClick={() => setMode('smart')}
-            className={cn(mode === 'smart' && 'border-accent text-primary')}
-          >
-            ● Smart
-          </Button>
           <Button
             variant="ghost"
             size="sm"

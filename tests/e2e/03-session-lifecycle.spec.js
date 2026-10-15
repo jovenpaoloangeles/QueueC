@@ -53,7 +53,7 @@ test('3.8 elapsed timer badge appears', async ({ page }) => {
   await createSession(page)
   await checkinPlayers(page, ['Inter C1', 'Inter C2'])
   await startSession(page)
-  // Scope to header to avoid matching the '● Smart' queue button
+  // Scope to header (the elapsed badge's ● dot)
   await expect(page.locator('[class*="h-14"]').locator('text=●')).toBeVisible()
 })
 

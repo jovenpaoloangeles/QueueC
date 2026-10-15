@@ -59,19 +59,22 @@ test('QM.3 smart mode skips players already on court', async ({ page }) => {
   const waitingCount = await page.locator('[data-entry-id]').count()
   expect(waitingCount).toBe(initialCount - 4)
 
-  // Smart can only suggest from waiting players — not the 4 on court
-  await page.getByRole('button', { name: '● Smart' }).click()
-  await page.waitForTimeout(400)
-
+  // Header Smart Match can only match from waiting players — not the 4 on
+  // court: with one court now busy it can propose at most the remaining court,
+  // and cancel leaves the queue untouched
+  await page.getByTestId('btn-smart-match').click()
+  const dialog = page.getByTestId('start-confirm-dialog')
+  await expect(dialog).toBeVisible()
+  await expect(page.getByTestId('start-confirm-row')).toHaveCount(1) // only the free court
+  await page.getByTestId('start-confirm-cancel').click()
+  await expect(dialog).toHaveCount(0)
   await expect(page.locator('[data-entry-id]')).toHaveCount(waitingCount)
 })
 
-test('QM.4 queue master overrides smart suggestion — manual picks different 4', async ({ page }) => {
+test('QM.4 queue master picks their own 4 — selection always manual', async ({ page }) => {
   await fullSetup(page)
-  await page.getByRole('button', { name: '● Smart' }).click()
-  await page.waitForTimeout(300)
-  await page.getByRole('button', { name: 'Manual' }).click()
-  await page.waitForTimeout(200)
+  // no auto-population: nobody is selected out of the box
+  await expect(page.locator('text=selected →')).toHaveCount(0)
 
   const cards = page.locator('[data-entry-id]')
   for (let i = 0; i < 4; i++) await cards.nth(i).click()

@@ -107,7 +107,6 @@ test('20.9 expired court mid-match shows Last Game badge and persists until matc
   await page.getByLabel('Court 1 hours').fill('1')
   await checkinPlayers(page, ['Inter C1', 'Inter C2'])
   await startSession(page)
-  await page.getByRole('button', { name: 'Manual' }).click()
 
   // start a singles match
   await page.locator('[data-entry-id]').nth(0).click()
@@ -215,7 +214,6 @@ test('20.16 player row shows games played badge [0] and waiting status timer', a
 test('20.17 games played increments after a match ends', async ({ page }) => {
   await checkinPlayers(page, ['Inter C1', 'Inter C2', 'Inter C3', 'Inter C4'])
   await startSession(page)
-  await page.getByRole('button', { name: 'Manual' }).click() // avoid smart pre-selection toggling off
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
   await clickStartMatch(page)
   await page.waitForTimeout(600)
