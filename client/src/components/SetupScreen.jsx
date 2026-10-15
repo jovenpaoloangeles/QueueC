@@ -358,7 +358,7 @@ export default function SetupScreen({ draft }) {
                 </span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col gap-4">
+            <CardContent className="flex flex-col min-h-0 gap-4">
               <PlayerSearchAdd
                 players={players}
                 selectedIds={activePicked}
@@ -409,7 +409,7 @@ export default function SetupScreen({ draft }) {
                 {!loading && !fetchError && pool.length > 0 && visiblePool.length === 0 && (
                   <span className="text-xs text-muted-foreground">No players in this tier.</span>
                 )}
-                <div className="max-h-[22rem] overflow-y-auto rounded-md border border-border pr-0.5" data-testid="player-list">
+                <div className="max-h-[34rem] flex-1 min-h-0 overflow-y-auto rounded-md border border-border pr-0.5" data-testid="player-list">
                   {groups.map(g => (
                     <div key={g.letter} data-testid="pool-group">
                       <div
