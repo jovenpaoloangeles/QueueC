@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { netWait } from '@/lib/utils'
 
 export function useTimers(serverTime, queue, activeMatches) {
   const [tick, setTick] = useState(0)
@@ -17,7 +18,7 @@ export function useTimers(serverTime, queue, activeMatches) {
   const waitSeconds = new Map()
   for (const e of queue ?? []) {
     if (e.status === 'waiting') {
-      waitSeconds.set(e.id, Math.max(0, now - e.checked_in_at - e.total_seconds_played))
+      waitSeconds.set(e.id, netWait(now, e))
     }
   }
 

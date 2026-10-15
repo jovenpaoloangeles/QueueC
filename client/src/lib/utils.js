@@ -1,5 +1,11 @@
 export { cn } from "cn"
 
+/** Net queue wait in seconds: time since check-in minus time already spent
+ *  playing (the server adds total_seconds_played on match end). */
+export function netWait(now, entry) {
+  return Math.max(0, now - (entry.checked_in_at ?? now) - (entry.total_seconds_played ?? 0))
+}
+
 /** Duration in seconds → mm:ss. */
 export function fmtClock(s) {
   const total = Math.max(0, Math.floor(s ?? 0))

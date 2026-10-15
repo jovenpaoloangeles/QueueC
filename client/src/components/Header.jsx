@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { cn, fmtDur, fmtClock } from '@/lib/utils'
+import { cn, fmtDur, fmtClock, netWait } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { toggleTheme } from '@/lib/theme'
@@ -35,7 +35,7 @@ export default function Header({ session, sseData, draftedIds = new Set(), onSma
   const waiting = queue.filter(e => e.status === 'waiting' && !draftedIds.has(e.id))
   const longest = waiting.reduce(
     (best, e) => {
-      const secs = serverTime - (e.checked_in_at ?? serverTime)
+      const secs = netWait(serverTime, e)
       return secs > best.secs ? { secs, name: e.name } : best
     },
     { secs: 0, name: null }

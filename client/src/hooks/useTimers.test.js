@@ -1,9 +1,11 @@
 // Simulate the timer computation logic (extracted from hook for testability)
+import { netWait } from '../lib/utils.js'
+
 function computeTimers(serverTime, queue, activeMatches) {
   const waitSeconds = new Map()
   for (const e of queue ?? []) {
     if (e.status === 'waiting') {
-      waitSeconds.set(e.id, Math.max(0, serverTime - e.checked_in_at - e.total_seconds_played))
+      waitSeconds.set(e.id, netWait(serverTime, e))
     }
   }
   const playSeconds = new Map()
@@ -24,5 +26,11 @@ const { waitSeconds, playSeconds } = computeTimers(now, queue, matches)
 console.assert(waitSeconds.get(1) === 600, `Expected 600, got ${waitSeconds.get(1)}`)
 console.assert(!waitSeconds.has(2), 'Playing player should not be in waitSeconds')
 console.assert(playSeconds.get(10) === 100, `Expected 100, got ${playSeconds.get(10)}`)
+
+// netWait: playing time is subtracted so a finished player's wait restarts
+console.assert(netWait(1000, { checked_in_at: 400, total_seconds_played: 500 }) === 100, 'netWait subtracts total_seconds_played')
+console.assert(netWait(1000, { checked_in_at: 400 }) === 600, 'netWait defaults total_seconds_played to 0')
+console.assert(netWait(1000, { checked_in_at: 900, total_seconds_played: 500 }) === 0, 'netWait clamps at 0')
+console.assert(netWait(1000, {}) === 0, 'netWait without checked_in_at is 0')
 
 console.log('useTimers.test.js: all assertions passed')
