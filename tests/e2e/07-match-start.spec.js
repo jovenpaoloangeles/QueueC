@@ -136,9 +136,11 @@ test('7.14 drag playing player to idle court — rejected', async ({ page }) => 
 
 test('7.15 drag resting player to court — lands in a lineup slot', async ({ page }) => {
   const name = (await getQueueNames(page))[0].trim()
-  await page.locator('[data-entry-id]').first().click({ modifiers: ['Shift'] })
-  await page.waitForTimeout(400)
-  await syntheticDrag(page, '[data-drop="resting"] button', '[data-drop^="court-"]', { toIndex: -1 })
+  // bench the player from the queue row (the tray is gone), then drag the
+  // resting row onto an idle court
+  await page.locator('[data-entry-id]').first().getByTestId('rest-toggle').click()
+  await expect(page.locator('[data-resting-id]')).toHaveCount(1)
+  await syntheticDrag(page, '[data-resting-id]', '[data-drop^="court-"]', { toIndex: -1 })
   // the court-level drop routes into the first empty slot (slots take resting
   // players straight out of rest), so the player shows up there…
   const slot0 = page.locator('[data-drop^="court-"]').last().locator('[data-testid="slot-0"]')

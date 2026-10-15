@@ -183,7 +183,8 @@ test('QM.10 benched player returned mid-match — appears at end of queue', asyn
 
   const beforeReturn = await page.locator('[data-entry-id]').count()
 
-  await page.locator('[data-drop="resting"]').getByRole('button', { name: /↩/ }).click()
+  // the resting row lives in the queue grid now (All tab) — Wake via its toggle
+  await page.locator('[data-resting-id]').getByTestId('rest-toggle').click()
   await page.waitForTimeout(400)
 
   await expect(page.locator('[data-entry-id]')).toHaveCount(beforeReturn + 1)

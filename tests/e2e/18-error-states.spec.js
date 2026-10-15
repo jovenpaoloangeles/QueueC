@@ -49,12 +49,12 @@ test('18.2 SSE reconnects and state resumes', async ({ page }) => {
   await expect(page.locator('[data-entry-id]')).toHaveCount(9)
 })
 
-test('18.5 all players playing — queue empty, resting tray empty', async ({ page }) => {
+test('18.5 all players playing — queue empty, Rest tab (0)', async ({ page }) => {
   await fullSetup(page, { courts: 2 })
   await startDoubles(page)
   await startDoubles(page)
   await expect(page.locator('[data-entry-id]')).toHaveCount(0)
-  await expect(page.locator('text=Drop a player here to bench them')).toBeVisible()
+  await expect(page.getByTestId('queue-tab-rest')).toContainText('(0)')
 })
 
 test('18.6 end session with active match — match preserved in DB', async ({ page, server }) => {

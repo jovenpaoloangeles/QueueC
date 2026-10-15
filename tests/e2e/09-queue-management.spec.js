@@ -13,13 +13,15 @@ test('9.4 shift-click benches player', async ({ page }) => {
   const name = await card.locator('.text-base.font-medium').textContent()
   await card.click({ modifiers: ['Shift'] })
   await page.waitForTimeout(400)
-  await expect(page.locator('[data-drop="resting"]').locator(`text=${name?.trim()}`)).toBeVisible()
+  await expect(page.locator('[data-resting-id]').locator(`text=${name?.trim()}`)).toBeVisible()
 })
 
-test('9.5 resting tray shows benched player', async ({ page }) => {
+test('9.5 Rest tab shows benched player', async ({ page }) => {
   await page.locator('[data-entry-id]').first().click({ modifiers: ['Shift'] })
   await page.waitForTimeout(400)
-  await expect(page.locator('[data-drop="resting"]').getByRole('button')).toHaveCount(1)
+  await expect(page.getByTestId('queue-tab-rest')).toContainText('(1)')
+  await page.getByTestId('queue-tab-rest').click()
+  await expect(page.locator('[data-resting-id]')).toHaveCount(1)
 })
 
 test('9.6 resting player absent from queue grid', async ({ page }) => {
@@ -30,12 +32,12 @@ test('9.6 resting player absent from queue grid', async ({ page }) => {
   await expect(page.locator('[data-entry-id]').locator(`text=${name?.trim()}`)).toHaveCount(0)
 })
 
-test('9.8 Return button restores to waiting', async ({ page }) => {
+test('9.8 Wake button restores to waiting', async ({ page }) => {
   const card = page.locator('[data-entry-id]').first()
   const name = await card.locator('.text-base.font-medium').textContent()
   await card.click({ modifiers: ['Shift'] })
   await page.waitForTimeout(400)
-  await page.locator('[data-drop="resting"]').getByRole('button', { name: /↩/ }).click()
+  await page.locator('[data-resting-id]').getByTestId('rest-toggle').click()
   await page.waitForTimeout(400)
   await expect(page.locator('[data-entry-id]').locator(`text=${name?.trim()}`)).toBeVisible()
 })
@@ -48,8 +50,8 @@ test('9.11 bench selected player removes from selection', async ({ page }) => {
   await expect(page.locator('text=1 selected')).toBeVisible()
 })
 
-test('9.12 tray shows placeholder when empty', async ({ page }) => {
-  await expect(page.locator('text=Drop a player here to bench them')).toBeVisible()
+test('9.12 Rest tab shows count zero when nobody is resting', async ({ page }) => {
+  await expect(page.getByTestId('queue-tab-rest')).toContainText('(0)')
 })
 
 test('9.1 drag player A after player B — order reflected in grid', async ({ page }) => {
@@ -90,21 +92,27 @@ test('9.7 resting player absent from selection candidates', async ({ page }) => 
   for (const side of await page.locator('[data-team-side]').allTextContents()) {
     expect(side).not.toContain(name)
   }
-  await expect(page.locator('[data-drop="resting"]')).toContainText(name)
+  await page.getByTestId('queue-tab-rest').click()
+  await expect(page.locator('[data-resting-id]')).toContainText(name)
 })
 
-test('9.9 drag player card to resting tray — benches them', async ({ page }) => {
+test('9.9 Rest button benches a player', async ({ page }) => {
   const name = (await getQueueNames(page))[0].trim()
-  await syntheticDrag(page, '[data-entry-id]', '[data-drop="resting"]', { toIndex: 0 })
-  await expect(page.locator('[data-drop="resting"]')).toContainText(name)
-  await expect(page.locator('[data-entry-id]')).toHaveCount(7)
+  await page.locator('[data-entry-id]').first().getByTestId('rest-toggle').click()
+  await expect(page.getByTestId('queue-tab-rest')).toContainText('(1)')
+  await page.getByTestId('queue-tab-rest').click()
+  await expect(page.locator('[data-resting-id]')).toContainText(name)
+  await expect(page.locator('[data-entry-id]')).toHaveCount(0)
 })
 
-test('9.10 drag resting chip back to queue — returns to waiting', async ({ page }) => {
+test('9.10 Wake button on a resting row returns them to waiting', async ({ page }) => {
   const name = (await getQueueNames(page))[0].trim()
-  await page.locator('[data-entry-id]').first().click({ modifiers: ['Shift'] })
-  await page.waitForTimeout(400)
-  await syntheticDrag(page, '[data-drop="resting"] button', '[data-entry-id]', { toIndex: 0 })
+  await page.locator('[data-entry-id]').first().getByTestId('rest-toggle').click()
+  await expect(page.getByTestId('queue-tab-rest')).toContainText('(1)')
+  await page.getByTestId('queue-tab-rest').click()
+  await page.locator('[data-resting-id]').getByTestId('rest-toggle').click()
+  // the player is now waiting — visible under All, not the Rest tab
+  await page.getByTestId('queue-tab-all').click()
   await expect(page.locator('[data-entry-id]').filter({ hasText: name })).toBeVisible()
-  await expect(page.locator('[data-drop="resting"]')).toContainText('Drop a player here')
+  await expect(page.locator('[data-resting-id]')).toHaveCount(0)
 })

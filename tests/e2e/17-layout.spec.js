@@ -56,8 +56,8 @@ test('17.5 queue grid scrollable with many players', async ({ page }) => {
   await fullSetup(page, { playerNames: players.map(p => p.name) })
   await page.setViewportSize({ width: 1000, height: 500 })
   await page.waitForTimeout(300)
-  // last overflow container in main = queue grid (first is CourtsRow, fixed height)
-  const grid = page.locator('main .overflow-y-auto').last()
+  // queue list itself is the scroll container (main is overflow-hidden now)
+  const grid = page.locator('[data-queue-list]')
   const { scrollHeight, clientHeight } = await grid.evaluate(el => ({
     scrollHeight: el.scrollHeight, clientHeight: el.clientHeight,
   }))

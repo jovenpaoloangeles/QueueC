@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import PlayerCard from './PlayerCard.jsx'
-import RestingTray from './RestingTray.jsx'
 import { useToast } from './Toast.jsx'
 import { checkinPlayer, getPlayers, setEntryStatus } from '../api.js'
 
@@ -209,12 +208,6 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
           />
         ))}
       </div>
-
-      <RestingTray
-        entries={resting}
-        onReturn={id => setEntryStatus(id, 'waiting').catch(err => toast(err?.data?.error ?? 'Could not update', 'error'))}
-        onDropEntry={bench}
-      />
     </div>
   )
 }
