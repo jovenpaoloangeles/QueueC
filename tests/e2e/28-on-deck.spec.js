@@ -12,9 +12,17 @@ test.beforeEach(async ({ page }) => {
   const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
   if (session) await page.request.fetch(`${base()}/api/sessions/${session.id}/end`, { method: 'PATCH' })
   await fullSetup(page, { playerNames: NAMES })
+  await expandDeck(page)
 })
 
 const panel = page => page.getByTestId('on-deck-strip')
+// deck starts collapsed by default (r5-2) — every test here drives the expanded panel
+const expandDeck = async page => {
+  if (!(await page.getByTestId('ondeck-body').isVisible().catch(() => false))) {
+    await page.getByTestId('ondeck-collapse').click()
+  }
+  await expect(page.getByTestId('ondeck-body')).toBeVisible()
+}
 const openBuilder = async page => {
   if (!(await page.getByTestId('ondeck-builder').isVisible().catch(() => false))) {
     await page.getByTestId('ondeck-builder-toggle').click()
@@ -111,6 +119,7 @@ test('28.4b smart fill with <4 waiting: toast and empty slots', async ({ page })
   const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
   await page.request.fetch(`${base()}/api/sessions/${session.id}/end`, { method: 'PATCH' })
   await fullSetup(page, { playerNames: NAMES.slice(0, 3) })
+  await expandDeck(page) // mid-test fullSetup reloads to collapsed default
   await openBuilder(page)
   await page.getByTestId('ondeck-smart-fill').click()
   await expect(page.getByTestId('toast')).toContainText('Nothing to add — need 4 waiting players')

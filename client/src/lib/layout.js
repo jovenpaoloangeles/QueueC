@@ -14,7 +14,7 @@ const KEY = 'queuec-layout'
 export const LAYOUT_DEFAULTS = {
   courtsH: 340,
   deckH: 220,
-  deckOpen: true,
+  deckOpen: false, // r5-2: On Deck starts collapsed — the slim bar; persisted toggles win
   sidebarW: 288, // the old w-72
 }
 
@@ -24,7 +24,7 @@ export const LAYOUT_LIMITS = {
   sidebarMin: 200,
   sidebarMax: 420,
   deckMin: 120,
-  queueMin: 160,
+  queueMin: 340, // floor fits ~4 rows of compact queue cards (+ tab/header rows)
 }
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))

@@ -55,7 +55,9 @@ export default function PlayerCard({ entry, waitSecs, selectionIndex, playSecs, 
       // [data-entry-id] set stays "waiting entries" (tests 9.6 / 18.4)
       {...(isResting ? { 'data-resting-id': entry.id } : { 'data-entry-id': entry.id })}
       className={cn(
-        'flex h-full min-h-[110px] cursor-pointer select-none flex-col justify-between gap-2 rounded-lg border p-3 transition-colors',
+        // r5-2 compact card: exactly 2 tight rows — Rest/Wake moved up beside the
+        // skill badge, "Xm played" folded into the meta row; no wrapping
+        'flex h-full cursor-pointer select-none flex-col gap-1 rounded-lg border p-1 transition-colors',
         isSelected
           ? 'border-accent-foreground/30 bg-accent ring-2 ring-primary/30'
           : 'border-border bg-card shadow-sm hover:border-border/80 hover:bg-muted/40',
@@ -65,7 +67,7 @@ export default function PlayerCard({ entry, waitSecs, selectionIndex, playSecs, 
         over && drag.current && !valid('queue') && 'border-drop-invalid-border bg-drop-invalid'
       )}
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           {isSelected && (
             <span className="flex size-5 items-center justify-center rounded-full bg-primary font-mono text-xs font-semibold text-primary-foreground">
@@ -95,53 +97,49 @@ export default function PlayerCard({ entry, waitSecs, selectionIndex, playSecs, 
           <Badge data-testid="skill-badge" className={cn('border-0 text-2xs', SKILL_BADGE[entry.skill_level] ?? SKILL_BADGE.intermediate)}>
             {titleCaseSkill(entry.skill_level)}
           </Badge>
+          {isWaiting && (
+            <Button
+              variant="ghost"
+              size="xs"
+              data-testid="rest-toggle"
+              disabled={drafted}
+              onClick={e => { e.stopPropagation(); onToggleRest?.(entry) }}
+            >
+              Rest
+            </Button>
+          )}
+          {isResting && (
+            <Button
+              variant="ghost"
+              size="xs"
+              data-testid="rest-toggle"
+              disabled={drafted}
+              onClick={e => { e.stopPropagation(); onToggleRest?.(entry) }}
+            >
+              Wake
+            </Button>
+          )}
         </div>
       </div>
-      <div className="flex items-baseline justify-between gap-2">
+      <div className="flex items-center gap-x-1.5 overflow-hidden whitespace-nowrap text-2xs text-muted-foreground">
         <Badge variant="outline" className={cn('font-mono tabular-nums text-2xs border', statusClass)} data-testid="status-timer-badge">
-          {isPlaying ? '🟢' : (highPriority ? '🔴' : '🟡')} {fmtClock(statusSeconds)} ({statusLabel})
+          {isPlaying ? '🟢' : (highPriority ? '🔴' : '🟡')} {fmtClock(statusSeconds)} {statusLabel}
         </Badge>
-        <span className="text-xs text-muted-foreground">{fmtMins(entry.total_seconds_played ?? 0)} played</span>
-      </div>
-      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-        <div className="flex flex-wrap items-center gap-x-2 text-2xs text-muted-foreground">
-          <span data-testid="fairness" className="text-muted-foreground">
-            fairness{' '}
-            {fairness != null ? (
-              <span className="font-semibold tabular-nums text-foreground">{Number(fairness).toFixed(1)}</span>
-            ) : (
-              <span className="text-muted-foreground/60">—</span>
-            )}
-          </span>
-          <span>
-            <span className="font-semibold text-foreground">{gamesPlayed}</span> games
-          </span>
-          <span data-testid="avg-rating" className={cn(avgRating != null ? 'font-semibold text-amber-500' : 'text-muted-foreground/60')}>
-            {avgRating != null ? `★ ${avgRating}` : '—'}
-          </span>
-        </div>
-        {isWaiting && (
-          <Button
-            variant="ghost"
-            size="xs"
-            data-testid="rest-toggle"
-            disabled={drafted}
-            onClick={e => { e.stopPropagation(); onToggleRest?.(entry) }}
-          >
-            Rest
-          </Button>
-        )}
-        {isResting && (
-          <Button
-            variant="ghost"
-            size="xs"
-            data-testid="rest-toggle"
-            disabled={drafted}
-            onClick={e => { e.stopPropagation(); onToggleRest?.(entry) }}
-          >
-            Wake
-          </Button>
-        )}
+        <span data-testid="fairness" className="shrink-0">
+          fairness{' '}
+          {fairness != null ? (
+            <span className="font-semibold tabular-nums text-foreground">{Number(fairness).toFixed(1)}</span>
+          ) : (
+            <span className="text-muted-foreground/60">—</span>
+          )}
+        </span>
+        <span className="shrink-0">
+          <span className="font-semibold text-foreground">{gamesPlayed}</span> games
+        </span>
+        <span data-testid="avg-rating" className={cn('shrink-0', avgRating != null ? 'font-semibold text-amber-500' : 'text-muted-foreground/60')}>
+          {avgRating != null ? `★ ${avgRating}` : null}
+        </span>
+        <span className="truncate">{fmtMins(entry.total_seconds_played ?? 0)} played</span>
       </div>
     </div>
   )

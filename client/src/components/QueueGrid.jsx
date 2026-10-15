@@ -107,7 +107,7 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
   const tabCount = id => (id === 'wait' ? waiting.length : id === 'rest' ? resting.length : waiting.length + resting.length)
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3">
+    <div className="flex min-h-0 flex-1 flex-col gap-2">
       <div className="flex items-center justify-between gap-3">
         <span className="text-sm font-semibold text-foreground">
           Queue · <span className="font-mono tabular-nums">{waiting.length}</span> Waiting
@@ -182,6 +182,7 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
         </div>
       )}
 
+      {/* 3 cols at xl (4-col cards wrap their meta row); 4 only from 2xl where cards stay wide */}
       <div
         data-queue-list
         // dropping a resting chip on empty list space wakes it (rows handle their own drops)
@@ -191,7 +192,7 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
           e.preventDefault()
           handleDropOnPlayer(drag.current.entryId, null)
         }}
-        className="grid auto-rows-min content-start flex-1 grid-cols-2 gap-3 overflow-y-auto lg:grid-cols-3 xl:grid-cols-4">
+        className="grid auto-rows-min content-start flex-1 grid-cols-2 gap-1.5 overflow-y-auto lg:grid-cols-3 2xl:grid-cols-4">
         {list.map(entry => (
           <PlayerCard
             key={entry.id}

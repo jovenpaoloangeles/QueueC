@@ -357,7 +357,7 @@ export default function App() {
                 applyDelta={growDeck}
               />
             )}
-            <div className="flex min-h-[160px] flex-1 flex-col overflow-hidden">
+            <div className="flex flex-1 flex-col overflow-hidden" style={{ minHeight: LAYOUT_LIMITS.queueMin }}>
               <QueueGrid
                 session={session}
                 queue={queue}

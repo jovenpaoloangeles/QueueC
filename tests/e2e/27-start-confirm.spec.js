@@ -99,6 +99,9 @@ test('27.6 live court shows no lineup matrix; slating goes through the On Deck b
   await expect(liveCard.locator('[data-drop="slot"]')).toHaveCount(0)
   await expect(liveCard.getByTestId('btn-clear-draft')).toHaveCount(0)
   // pre-building the next lineup lives in the On Deck builder instead
+  if (!(await page.getByTestId('ondeck-body').isVisible().catch(() => false))) {
+    await page.getByTestId('ondeck-collapse').click() // collapsed default (r5-2) — expand first
+  }
   if (!(await page.getByTestId('ondeck-builder').isVisible().catch(() => false))) {
     await page.getByTestId('ondeck-builder-toggle').click()
   }

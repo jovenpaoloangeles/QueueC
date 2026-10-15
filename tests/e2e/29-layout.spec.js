@@ -15,8 +15,10 @@ async function bandHeight(page, testid) {
 
 test('29.1 dividers exist', async ({ page }) => {
   await expect(page.getByTestId('divider-courts')).toBeVisible()
-  await expect(page.getByTestId('divider-deck')).toBeVisible()
   await expect(page.getByTestId('divider-sidebar')).toBeVisible()
+  // divider-deck only exists while On Deck is expanded (collapsed by default, r5-2)
+  await page.getByTestId('ondeck-collapse').click()
+  await expect(page.getByTestId('divider-deck')).toBeVisible()
 })
 
 async function courtsBandHeight(page) {
@@ -59,21 +61,26 @@ test('29.3 courts band height persists across reload', async ({ page }) => {
 })
 
 test('29.4 on deck collapse toggles and persists', async ({ page }) => {
-  // collapsed: slim bar shows ON DECK title + count, builder/slate rows hidden
-  await page.getByTestId('ondeck-collapse').click()
+  // collapsed BY DEFAULT (r5-2): slim bar shows ON DECK title + count, builder/slate rows hidden
   await expect(page.getByTestId('ondeck-body')).toBeHidden()
   await expect(page.getByTestId('on-deck-count')).toBeVisible()
   await expect(page.getByTestId('on-deck-strip')).toContainText('On Deck')
   await expect(page.getByTestId('divider-deck')).toHaveCount(0)
 
-  await page.reload()
-  await expect(page.locator('[data-entry-id]').first()).toBeVisible()
-  await expect(page.getByTestId('ondeck-body')).toBeHidden()
-
-  // expand again
+  // expand — persists across reload
   await page.getByTestId('ondeck-collapse').click()
   await expect(page.getByTestId('ondeck-body')).toBeVisible()
   await expect(page.getByTestId('divider-deck')).toBeVisible()
+  await page.reload()
+  await expect(page.locator('[data-entry-id]').first()).toBeVisible()
+  await expect(page.getByTestId('ondeck-body')).toBeVisible()
+
+  // collapse again — persists too
+  await page.getByTestId('ondeck-collapse').click()
+  await expect(page.getByTestId('ondeck-body')).toBeHidden()
+  await page.reload()
+  await expect(page.locator('[data-entry-id]').first()).toBeVisible()
+  await expect(page.getByTestId('ondeck-body')).toBeHidden()
 })
 
 test('29.5 keyboard arrows resize the courts band', async ({ page }) => {

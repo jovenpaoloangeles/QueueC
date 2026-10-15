@@ -421,7 +421,7 @@ export default function OnDeckStrip({
   )
 
   const collapsedHeader = (
-    <header className="flex min-h-[34px] flex-wrap items-center gap-x-3 gap-y-1">
+    <header className="flex min-h-7 flex-wrap items-center gap-x-3 gap-y-1">
       <h2 className="flex items-center gap-2 text-lg font-black uppercase tracking-wide text-primary">
         ⏭ On Deck
         <span
@@ -453,33 +453,44 @@ export default function OnDeckStrip({
     </header>
   )
 
+  const collapseBtn = (
+    /* collapse toggle: chevron + aria-expanded, persisted in the layout storage */
+    <button
+      type="button"
+      data-testid="ondeck-collapse"
+      aria-expanded={open}
+      aria-label={open ? 'Collapse On Deck' : 'Expand On Deck'}
+      onClick={onToggleOpen}
+      className="flex size-6 shrink-0 items-center justify-center rounded text-primary hover:bg-primary/10"
+    >
+      <span
+        aria-hidden="true"
+        className="inline-block transition-transform duration-200"
+        style={{ transform: open ? 'rotate(90deg)' : 'rotate(-90deg)' }}
+      >
+        ▸
+      </span>
+    </button>
+  )
+
   return (
     <section
       data-testid="on-deck-strip"
       className={cn(
         'flex shrink-0 flex-col rounded-2xl border-2 border-primary/60 bg-primary/5 shadow-md',
-        open ? 'gap-3 overflow-y-auto p-3' : 'gap-1 overflow-hidden px-3 py-1',
+        open ? 'gap-3 overflow-y-auto p-3' : 'gap-1 overflow-hidden px-3 py-0.5',
       )}
       style={open && height != null ? { height } : undefined}
     >
-      {/* collapse toggle: chevron + aria-expanded, persisted in the layout storage */}
-      <button
-        type="button"
-        data-testid="ondeck-collapse"
-        aria-expanded={open}
-        aria-label={open ? 'Collapse On Deck' : 'Expand On Deck'}
-        onClick={onToggleOpen}
-        className="flex size-6 shrink-0 items-center justify-center rounded text-primary hover:bg-primary/10"
-      >
-        <span
-          aria-hidden="true"
-          className="inline-block transition-transform duration-200"
-          style={{ transform: open ? 'rotate(90deg)' : 'rotate(-90deg)' }}
-        >
-          ▸
-        </span>
-      </button>
-      {open ? expandedHeader : collapsedHeader}
+      {/* collapsed: chevron inline with the header so the slim bar stays one row */}
+      {open ? (
+        <>
+          {collapseBtn}
+          {expandedHeader}
+        </>
+      ) : (
+        <div className="flex items-center gap-2">{collapseBtn}{collapsedHeader}</div>
+      )}
 
       <AnimatePresence initial={false}>
         {open && (
