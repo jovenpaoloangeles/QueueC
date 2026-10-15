@@ -344,6 +344,38 @@ async function run() {
       assert.ok(qEntry, `Expected entry ${eid} in queue`)
       assert.equal(qEntry.status, 'playing', `Expected entry ${eid} status === playing`)
     }
+
+    // 10) reorder + lowest-seq auto-promotion
+    const mk = async ids => (await (await fetch(`${BASE}/matches/slate`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: session.id, team1_p1: ids[0], team1_p2: ids[1], team2_p1: ids[2], team2_p2: ids[3] }),
+    })).json()).slate
+    const sl = async () => {
+      const reader = (await fetch(`${BASE}/sse`)).body.getReader()
+      const chunk = new TextDecoder().decode((await reader.read()).value)
+      await reader.cancel()
+      return JSON.parse(chunk.split('\n').find(l => l.startsWith('data: ')).slice(6)).slatedMatches
+    }
+    const mv = (id, move) => fetch(`${BASE}/matches/${id}/slate`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ move }),
+    })
+    const ids4 = []
+    for (let i = 0; i < 8; i++) {
+      const p = (await fetch(`${BASE}/players`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: `SlateMv${i}-${SUFFIX}`, skill_level: 'intermediate' }) }).then(r => r.json())).player
+      const e = (await fetch(`${BASE}/sessions/${session.id}/checkin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ player_id: p.id }) }).then(r => r.json())).entry
+      ids4.push(e.id)
+    }
+    const sA = await mk(ids4.slice(0, 4))
+    const sB = await mk(ids4.slice(4))
+    assert.ok(sB.slate_seq > sA.slate_seq, 'second slate gets a later seq')
+    assert.equal((await mv(sA.id, 'up')).status, 400, 'first cannot move up')
+    assert.equal((await mv(sB.id, 'down')).status, 400, 'last cannot move down')
+    assert.equal((await mv(sB.id, 'up')).status, 200)
+    let order = (await sl()).filter(x => [sA.id, sB.id].includes(x.id)).map(x => x.id)
+    assert.deepEqual(order, [sB.id, sA.id], 'B now ahead of A')
+    assert.equal((await mv(sB.id, 'down')).status, 200)
+    order = (await sl()).filter(x => [sA.id, sB.id].includes(x.id)).map(x => x.id)
+    assert.deepEqual(order, [sA.id, sB.id], 'swapped back')
   } finally {
     // 9) Clean up (end session)
     await fetch(`${BASE}/sessions/${session.id}/end`, { method: 'PATCH' })

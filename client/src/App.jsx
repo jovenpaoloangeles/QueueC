@@ -25,6 +25,8 @@ export default function App() {
   // live entry ids in the OnDeckStrip slate editor's draft — folded into
   // draftedIds so a court draft can't hold the same entry mid-edit
   const [slateDraftIds, setSlateDraftIds] = useState([])
+  // live entry ids in the On Deck "Add to On Deck" builder (manual assign)
+  const [builderDraftIds, setBuilderDraftIds] = useState([])
   const [playersVersion, setPlayersVersion] = useState(0) // bumped after add-player so the pool refetches
   const [showAddPlayer, setShowAddPlayer] = useState(false) // header "+ Add Player" → live add dialog
 
@@ -63,13 +65,33 @@ export default function App() {
     }
   }
 
-  async function confirmSmartMatch(plan) {
+  // On Deck panel "Smart add": slate-only dry run → confirm → post the plan
+  async function handleSmartAdd() {
+    if (!session) return
+    try {
+      const { plan } = await autoMatch(session.id, { dry_run: true, slate_only: true })
+      if (!plan || !plan.slate.length) {
+        toast('Not enough waiting players to add a lineup (or On Deck is full)', 'info')
+        return
+      }
+      setPending({
+        kind: 'smart-slate',
+        plan,
+        matches: [],
+        slate: plan.slate.map(m => ({ format: m.format, team1: resolveTeam(m.team1), team2: resolveTeam(m.team2) })),
+      })
+    } catch (err) {
+      toast(err?.data?.error ?? (err?.status ? err.message : 'Smart add failed'), 'error')
+    }
+  }
+
+  async function confirmSmartMatch(plan, slateOnly = false) {
     setPendingBusy(true)
     try {
-      const r = await autoMatch(session.id, { plan })
+      const r = await autoMatch(session.id, slateOnly ? { plan, slate_only: true } : { plan })
       const parts = []
       if (r.started) parts.push(`Matched ${r.started} court${r.started === 1 ? '' : 's'}`)
-      if (r.slated) parts.push('slated next lineup')
+      if (r.slated) parts.push(r.slated_count > 1 ? `added ${r.slated_count} lineups to On Deck` : 'added a lineup to On Deck')
       toast(parts.length ? parts.join(', ') : 'Nothing to auto-match', parts.length ? 'success' : 'info')
     } catch (err) {
       toast(err?.data?.error ?? (err?.status ? err.message : 'Auto-match failed'), 'error')
@@ -82,6 +104,7 @@ export default function App() {
   async function confirmPending() {
     if (!pending || pendingBusy) return
     if (pending.kind === 'smart') return confirmSmartMatch(pending.plan)
+    if (pending.kind === 'smart-slate') return confirmSmartMatch(pending.plan, true)
     const { courtId, sel, source } = pending
     setPendingBusy(true)
     try {
@@ -96,7 +119,7 @@ export default function App() {
     if (!session) return
     try {
       await endSession(session.id)
-      setDrafts({}); setSelection([]); setSlateDraftIds([]); setShowAddPlayer(false)
+      setDrafts({}); setSelection([]); setSlateDraftIds([]); setBuilderDraftIds([]); setShowAddPlayer(false)
     } catch (err) {
       toast(err?.data?.error ?? 'Could not end session', 'error')
     }
@@ -116,7 +139,7 @@ export default function App() {
   // A new session invalidates every draft entry id (ids come from the old session's queue)
   useEffect(() => {
     setDrafts(prev => (Object.keys(prev).length ? {} : prev))
-    setSelection([]); setSlateDraftIds([])
+    setSelection([]); setSlateDraftIds([]); setBuilderDraftIds([])
     setShowAddPlayer(false); setConfirmNew(false)
   }, [session?.id])
 
@@ -145,8 +168,8 @@ export default function App() {
   // strip's slate edit draft — excluded from the header waiting count so
   // drafted players don't look available.
   const draftedIds = useMemo(
-    () => new Set([...Object.values(drafts).flat().filter(Boolean), ...slateDraftIds]),
-    [drafts, slateDraftIds]
+    () => new Set([...Object.values(drafts).flat().filter(Boolean), ...slateDraftIds, ...builderDraftIds]),
+    [drafts, slateDraftIds, builderDraftIds]
   )
 
   // Manual start gate: validate, then open the confirm dialog. Nothing starts
@@ -281,7 +304,7 @@ export default function App() {
       )}
       {session && session.started_at != null && (
         <div className="flex flex-1 overflow-hidden">
-          <main className="flex min-w-0 flex-1 flex-col gap-4 overflow-hidden p-4">
+          <main className="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden p-4">
             {/* band heights from the target arrangement: courts h-[45%] min-h-[300px], queue flex-1 */}
             <div className="grid h-[45%] min-h-[300px] shrink-0 overflow-hidden">
               <CourtsRow
@@ -301,15 +324,21 @@ export default function App() {
                 serverTime={sseData.serverTime ?? Math.floor(Date.now() / 1000)}
               />
             </div>
-            {slatedMatches.length > 0 && (
-              <OnDeckStrip
-                slatedMatches={slatedMatches}
-                queue={queue}
-                draftedIds={draftedIds}
-                onEditDraftChange={setSlateDraftIds}
-              />
-            )}
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <OnDeckStrip
+              key={session.id}
+              slatedMatches={slatedMatches}
+              queue={queue}
+              draftedIds={draftedIds}
+              onEditDraftChange={setSlateDraftIds}
+              onBuilderDraftChange={setBuilderDraftIds}
+              selection={selection}
+              onSelectionChange={setSelection}
+              sessionId={session.id}
+              courts={courts}
+              activeMatches={activeMatches}
+              onSmartAdd={handleSmartAdd}
+            />
+            <div className="flex min-h-[220px] flex-1 flex-col overflow-hidden">
               <QueueGrid
                 session={session}
                 queue={queue}
@@ -342,6 +371,8 @@ export default function App() {
           onOpenChange={open => { if (!open && !pendingBusy) setPending(null) }}
           matches={pending.matches}
           slate={pending.slate}
+          title={pending.kind === 'smart-slate' ? 'Add to On Deck?' : undefined}
+          confirmText={pending.kind === 'smart-slate' ? (pending.slate.length > 1 ? `Add ${pending.slate.length} lineups` : 'Add to On Deck') : undefined}
           busy={pendingBusy}
           onConfirm={confirmPending}
         />

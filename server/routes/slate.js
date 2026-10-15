@@ -39,6 +39,22 @@ router.patch('/matches/:id/slate', async (c) => {
   const m = db.prepare("SELECT * FROM matches WHERE id = ? AND state = 'slated'").get(id)
   if (!m) return c.json({ error: 'Slate not found' }, 404)
   const b = await c.req.json().catch(() => ({}))
+  if (b.move === 'up' || b.move === 'down') {
+    // Reorder: swap slate_seq with the adjacent slated match in the same session
+    const nb = b.move === 'up'
+      ? db.prepare("SELECT * FROM matches WHERE session_id = ? AND state = 'slated' AND ended_at IS NULL AND (slate_seq < ? OR (slate_seq = ? AND id < ?)) ORDER BY slate_seq DESC, id DESC LIMIT 1").get(m.session_id, m.slate_seq, m.slate_seq, m.id)
+      : db.prepare("SELECT * FROM matches WHERE session_id = ? AND state = 'slated' AND ended_at IS NULL AND (slate_seq > ? OR (slate_seq = ? AND id > ?)) ORDER BY slate_seq, id LIMIT 1").get(m.session_id, m.slate_seq, m.slate_seq, m.id)
+    if (!nb) return c.json({ error: `Nothing to move ${b.move}` }, 400)
+    db.transaction(() => {
+      // equal seqs (shouldn't happen) still end up distinct and swapped
+      const a = m.slate_seq, z = nb.slate_seq
+      const [sa, sz] = a === z ? (b.move === 'up' ? [z, a + 1] : [z + 1, a]) : [z, a]
+      db.prepare('UPDATE matches SET slate_seq = ? WHERE id = ?').run(sa, m.id)
+      db.prepare('UPDATE matches SET slate_seq = ? WHERE id = ?').run(sz, nb.id)
+    })()
+    broadcast()
+    return c.json({ slate: db.prepare('SELECT * FROM matches WHERE id = ?').get(id) })
+  }
   const next = {
     team1_p1: b.team1_p1 ?? null,
     team1_p2: b.team1_p2 ?? null,

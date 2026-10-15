@@ -1,21 +1,8 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { cn, SKILL_WEIGHTS, SKILL_BADGE } from '@/lib/utils'
+import { cn, SKILL_BADGE, balanceHint } from '@/lib/utils'
 
-const avg = team => {
-  const ws = team.map(p => SKILL_WEIGHTS[p.skill_level]).filter(w => w != null)
-  return ws.length ? ws.reduce((a, b) => a + b, 0) / ws.length : null
-}
-
-/** Average-skill gap between the two sides → human hint. */
-export function balanceHint(m) {
-  const a = avg(m.team1), b = avg(m.team2)
-  if (a == null || b == null) return null
-  const d = Math.abs(a - b)
-  if (d <= 50) return { label: 'Even', tone: 'text-emerald-600' }
-  if (d <= 150) return { label: 'Slight edge', tone: 'text-amber-600' }
-  return { label: 'Lopsided', tone: 'text-rose-600' }
-}
+export { balanceHint }
 
 const names = team => team.map(p => p.name).join(' & ')
 
@@ -54,7 +41,7 @@ function Row({ m, testid }) {
  * Confirm gate before any match starts. Parent owns `open`.
  * matches: [{courtLabel, team1:[{name,skill_level}], team2:[...], format}]; slate: same shape (no courtLabel).
  */
-export default function StartMatchConfirmDialog({ open, onOpenChange, title, matches = [], slate = [], onConfirm, busy = false }) {
+export default function StartMatchConfirmDialog({ open, onOpenChange, title, confirmText, matches = [], slate = [], onConfirm, busy = false }) {
   const n = matches.length
   const confirmLabel = n > 1 ? `Start ${n} matches` : n === 1 ? 'Start' : 'Slate lineup'
   return (
@@ -88,7 +75,7 @@ export default function StartMatchConfirmDialog({ open, onOpenChange, title, mat
             Cancel
           </Button>
           <Button type="button" size="sm" autoFocus data-testid="start-confirm-yes" disabled={busy} onClick={onConfirm}>
-            {confirmLabel}
+            {confirmText ?? confirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

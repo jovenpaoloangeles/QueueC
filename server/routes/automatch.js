@@ -3,6 +3,9 @@ import db from '../db.js'
 import { suggestPlayers } from '../logic/smartQueue.js'
 import { broadcast } from './sse.js'
 
+/** Max lineups allowed on deck at once (existing + newly planned). */
+export const SLATE_CAP = 3
+
 const router = new Hono()
 
 router.post('/sessions/:id/automatch', async (c) => {
@@ -14,6 +17,7 @@ router.post('/sessions/:id/automatch', async (c) => {
   const now = Math.floor(Date.now() / 1000)
   const body = await c.req.json().catch(() => ({}))
   const dryRun = body?.dry_run === true
+  const slateOnly = body?.slate_only === true
   const givenPlan = body?.plan && typeof body.plan === 'object' ? body.plan : null
 
   const freeCourts = () => db.prepare(`
@@ -42,7 +46,7 @@ router.post('/sessions/:id/automatch', async (c) => {
     const matches = []
     const taken = new Set()
     const pool = () => getWaiting().filter(e => !taken.has(e.id))
-    for (const court of freeCourts()) {
+    for (const court of (slateOnly ? [] : freeCourts())) {
       const p = pool()
       const mode = p.length >= 4 ? 'doubles' : p.length >= 2 ? 'singles' : null
       if (!mode) break
@@ -57,13 +61,14 @@ router.post('/sessions/:id/automatch', async (c) => {
       for (const eid of ids) taken.add(eid)
     }
     const slate = []
-    const hasSlate = db.prepare("SELECT 1 FROM matches WHERE session_id = ? AND state = 'slated' AND ended_at IS NULL").get(id)
-    const remaining = pool()
-    if (!hasSlate && remaining.length >= 4) {
+    const existing = db.prepare("SELECT COUNT(*) AS n FROM matches WHERE session_id = ? AND state = 'slated' AND ended_at IS NULL").get(id).n
+    while (existing + slate.length < SLATE_CAP) {
+      const remaining = pool()
+      if (remaining.length < 4) break
       const slots = suggestPlayers(remaining, 'doubles')
-      if (slots.filter(Boolean).length === 4) {
-        slate.push({ format: 'doubles', team1: [slots[0], slots[1]], team2: [slots[2], slots[3]] })
-      }
+      if (slots.filter(Boolean).length !== 4) break
+      slate.push({ format: 'doubles', team1: [slots[0], slots[1]], team2: [slots[2], slots[3]] })
+      for (const eid of slots) taken.add(eid)
     }
     return { matches, slate }
   }
@@ -99,8 +104,8 @@ router.post('/sessions/:id/automatch', async (c) => {
       if (!okEntries([...m.team1, ...m.team2])) return stale()
     }
     if (pSlate.length) {
-      const hasSlate = db.prepare("SELECT 1 FROM matches WHERE session_id = ? AND state = 'slated' AND ended_at IS NULL").get(id)
-      if (hasSlate) return stale()
+      const have = db.prepare("SELECT COUNT(*) AS n FROM matches WHERE session_id = ? AND state = 'slated' AND ended_at IS NULL").get(id).n
+      if (have + pSlate.length > SLATE_CAP) return stale()
     }
     const labels = new Map(freeCourts().map(x => [x.id, x.label ?? null]))
     plan = {
@@ -110,7 +115,7 @@ router.post('/sessions/:id/automatch', async (c) => {
   }
 
   let started = 0
-  let slated = false
+  let slated = 0
   db.transaction(() => {
     const setPlaying = db.prepare("UPDATE queue_entries SET status = 'playing', status_updated_at = ? WHERE id = ?")
     for (const m of plan.matches) {
@@ -133,7 +138,7 @@ router.post('/sessions/:id/automatch', async (c) => {
         VALUES (?, NULL, 'doubles', 'slated', ?, ?, ?, ?, ?, 0)
       `).run(id, seq, t1p1, t1p2, t2p1, t2p2)
       for (const eid of [...m.team1, ...m.team2]) setStaged.run(now, eid)
-      slated = true
+      slated++
     }
   })()
 
@@ -142,7 +147,7 @@ router.post('/sessions/:id/automatch', async (c) => {
   }
 
   broadcast()
-  return c.json({ started, slated })
+  return c.json({ started, slated: slated > 0, slated_count: slated })
 })
 
 export default router

@@ -50,9 +50,13 @@ export function currentState() {
   const slatedRows = db.prepare(`
     SELECT m.*,
       (SELECT p.name FROM queue_entries qe JOIN players p ON p.id = qe.player_id WHERE qe.id = m.team1_p1) AS team1_p1_name,
+      (SELECT p.skill_level FROM queue_entries qe JOIN players p ON p.id = qe.player_id WHERE qe.id = m.team1_p1) AS team1_p1_skill,
       (SELECT p.name FROM queue_entries qe JOIN players p ON p.id = qe.player_id WHERE qe.id = m.team1_p2) AS team1_p2_name,
+      (SELECT p.skill_level FROM queue_entries qe JOIN players p ON p.id = qe.player_id WHERE qe.id = m.team1_p2) AS team1_p2_skill,
       (SELECT p.name FROM queue_entries qe JOIN players p ON p.id = qe.player_id WHERE qe.id = m.team2_p1) AS team2_p1_name,
-      (SELECT p.name FROM queue_entries qe JOIN players p ON p.id = qe.player_id WHERE qe.id = m.team2_p2) AS team2_p2_name
+      (SELECT p.skill_level FROM queue_entries qe JOIN players p ON p.id = qe.player_id WHERE qe.id = m.team2_p1) AS team2_p1_skill,
+      (SELECT p.name FROM queue_entries qe JOIN players p ON p.id = qe.player_id WHERE qe.id = m.team2_p2) AS team2_p2_name,
+      (SELECT p.skill_level FROM queue_entries qe JOIN players p ON p.id = qe.player_id WHERE qe.id = m.team2_p2) AS team2_p2_skill
     FROM matches m
     WHERE m.session_id = ? AND m.state = 'slated' AND m.ended_at IS NULL
     ORDER BY m.slate_seq, m.id

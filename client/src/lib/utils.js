@@ -60,3 +60,19 @@ export const SKILL_BADGE = {
   advanced: 'bg-rose-100 text-rose-800',              // legacy alias → Expert
   professional: 'bg-purple-100 text-purple-800',      // #7C3AED Royal Purple (700)
 }
+
+const avgSkill = team => {
+  const ws = team.map(p => SKILL_WEIGHTS[p.skill_level]).filter(w => w != null)
+  return ws.length ? ws.reduce((a, b) => a + b, 0) / ws.length : null
+}
+
+/** Average-skill gap between the two sides → human hint. m = { team1:[{skill_level}], team2:[...] }.
+ *  Thresholds: ≤50 Even · ≤150 Slight edge · else Lopsided. null when skill data is missing. */
+export function balanceHint(m) {
+  const a = avgSkill(m.team1), b = avgSkill(m.team2)
+  if (a == null || b == null) return null
+  const d = Math.abs(a - b)
+  if (d <= 50) return { label: 'Even', tone: 'text-emerald-600' }
+  if (d <= 150) return { label: 'Slight edge', tone: 'text-amber-600' }
+  return { label: 'Lopsided', tone: 'text-rose-600' }
+}

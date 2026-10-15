@@ -4,7 +4,7 @@ import assert from 'node:assert/strict'
 const BASE = process.env.BASE_URL ?? 'http://localhost:3001/api'
 const SUFFIX = Date.now().toString(36)
 
-async function mkSession(playerCount, courtCount) {
+async function mkSession(playerCount, courtCount, tag = "PlanP") {
   const session = (await fetch(`${BASE}/sessions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -14,7 +14,7 @@ async function mkSession(playerCount, courtCount) {
   for (let i = 0; i < playerCount; i++) {
     const p = (await fetch(`${BASE}/players`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: `PlanP${i}-${SUFFIX}`, skill_level: 'intermediate' })
+      body: JSON.stringify({ name: `${tag}${i}-${SUFFIX}`, skill_level: 'intermediate' })
     }).then(r => r.json())).player
     const e = (await fetch(`${BASE}/sessions/${session.id}/checkin`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -70,7 +70,7 @@ async function planTests() {
     const plan2 = (await (await post({ dry_run: true })).json()).plan
     const run = await post({ plan: plan2 })
     assert.equal(run.status, 200)
-    assert.deepEqual(await run.json(), { started: 2, slated: true })
+    assert.deepEqual(await run.json(), { started: 2, slated: true, slated_count: 1 })
     st = await snap()
     for (const m of plan2.matches) {
       const am = st.activeMatches.find(x => x.court_number === m.court_id)
@@ -88,6 +88,53 @@ async function planTests() {
   }
 }
 
+// multiple slates / SLATE_CAP / slate_only
+async function multiSlateTests() {
+  const session = await mkSession(20, 1, "MultiP")
+  const post = body => fetch(`${BASE}/sessions/${session.id}/automatch`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  })
+  try {
+    // 20 players, 1 court: 4 play, 16 left -> capped at 3 slates (12), 4 stay waiting
+    const { plan } = await (await post({ dry_run: true })).json()
+    assert.equal(plan.matches.length, 1)
+    assert.equal(plan.slate.length, 3, 'cap of 3 slates planned')
+    const all = [...plan.matches, ...plan.slate].flatMap(m => [...m.team1, ...m.team2])
+    assert.equal(new Set(all).size, 16, 'no player planned twice')
+    let st = await snap()
+    assert.equal(st.slatedMatches.length, 0, 'dry run wrote nothing')
+
+    // slate_only: no court starts, still capped
+    const so = (await (await post({ dry_run: true, slate_only: true })).json()).plan
+    assert.equal(so.matches.length, 0)
+    assert.equal(so.slate.length, 3)
+
+    // run slate_only plan: creates 3 slates, starts no match
+    const r = await post({ plan: so, slate_only: true })
+    assert.equal(r.status, 200)
+    const rb = await r.json()
+    assert.equal(rb.started, 0)
+    assert.equal(rb.slated_count, 3)
+    st = await snap()
+    assert.equal(st.slatedMatches.length, 3)
+    assert.equal(st.activeMatches.length, 0)
+    assert.deepEqual(st.slatedMatches.map(m => m.slate_seq), [1, 2, 3])
+
+    // existing slates count toward the cap: nothing more to plan, run -> 409
+    const again = (await (await post({ dry_run: true, slate_only: true })).json()).plan
+    assert.equal(again.slate.length, 0, 'cap includes existing slates')
+    assert.equal((await post({ slate_only: true })).status, 409)
+
+    // a plan that would exceed the cap is rejected as stale
+    assert.equal((await post({ plan: { matches: [], slate: so.slate.slice(0, 1) } })).status, 409)
+    // normal run fills the free court only (cap reached -> no extra slate)
+    const full = await post({})
+    assert.deepEqual(await full.json(), { started: 1, slated: false, slated_count: 0 })
+  } finally {
+    await fetch(`${BASE}/sessions/${session.id}/end`, { method: 'PATCH' })
+  }
+}
+
 async function run() {
   // End any stray unended session first
   const active = await fetch(`${BASE}/sessions/active`).then(r => r.json())
@@ -96,6 +143,7 @@ async function run() {
   }
 
   await planTests()
+  await multiSlateTests()
 
   // 1) Create a session with 3 courts, check in 14 waiting players, start session, and disable Court 3
   const session = (await fetch(`${BASE}/sessions`, {
@@ -137,7 +185,7 @@ async function run() {
     const autoRes1 = await fetch(`${BASE}/sessions/${session.id}/automatch`, { method: 'POST' })
     assert.equal(autoRes1.status, 200, 'Expected 200 on first automatch')
     const autoBody1 = await autoRes1.json()
-    assert.deepEqual(autoBody1, { started: 2, slated: true }, 'Expected { started: 2, slated: true }')
+    assert.deepEqual(autoBody1, { started: 2, slated: true, slated_count: 1 }, 'Expected { started: 2, slated: true }')
 
     // 3) Verify via SSE: 2 active matches on Courts 1 & 2 (none on Court 3), 1 slated match, 2 waiting players remaining
     const sseRes = await fetch(`${BASE}/sse`)
