@@ -6,13 +6,16 @@ A self-hosted badminton queue manager for gym sessions. One screen, one queue ma
 
 ## Features
 
-- **Session management** — create a session, set courts and scheduled time, start when ready
-- **Player pool** — register players with skill levels; check them in per session
-- **Smart queue** — auto-suggests balanced matchups using wait time, games played, skill variance, and pair redundancy
-- **Live courts** — drag players onto courts to start singles or doubles; end matches and record scores
-- **Resting tray** — players who stepped out stay tracked
-- **Real-time sync** — all connected browsers stay in sync via SSE (no polling)
-- **Stats sidebar** — per-session games played, wait time, and win/loss per player
+- **Setup flow** — pick courts, rate per hour, start time; build the waiting pool with search-and-add (presets grow from play history, select-all); **Finish Setup** starts the live session
+- **Live courts** — per-court rental countdown with EXPIRED alert and **Extend +1h**; elapsed match timer; drag-and-drop 2x2 lineups
+- **Slate / On Deck** — queue upcoming matches (create, edit, cancel); drafted players leave the queue; slated matches auto-promote to a free court when a match ends
+- **Smart Match** — one click fills free courts / slates matches using wait time, games played, skill variance, team balance and pair redundancy
+- **Shuttle counters** — live new/used shuttle +/- per match
+- **Two-step end match** — confirm, then record scores, final shuttles and a 1–5 star rating
+- **Player queue** — All / Wait / Rest tabs, fairness ordering, 7 skill tiers (Newbie → Professional), rest/wake with validation
+- **Leaderboard** — rank, games, W/L, win rate, point differential
+- **Header status, toasts, dark theme**
+- **Real-time sync** — all browsers stay in sync via SSE
 
 ## Stack
 
@@ -42,7 +45,7 @@ The client dev server proxies `/api` to `localhost:3001`. Open `http://localhost
 docker compose up -d --build
 ```
 
-The compose file is in `docker/compose.yml` (copy it anywhere — it builds from the repo path). The app runs on port `3001` and persists the database to `./data/queuec.db`.
+The app runs on port `3001` and persists the database to the mounted `/data` volume (`/data/queuec.db`). Migrations run automatically on startup; never wipe the volume.
 
 ```yaml
 # minimal compose.yml
@@ -71,7 +74,7 @@ QueueC/
 ├── server/
 │   ├── index.js          # Hono + Bun.serve app entry
 │   ├── db.js             # SQLite setup and migrations (bun:sqlite)
-│   └── routes/           # sessions, players, queue, matches, stats, sse, courts
+│   └── routes/           # sessions, players, queue, matches, slate, automatch, stats, sse, courts
 ├── client/
 │   └── src/
 │       ├── App.jsx
@@ -80,6 +83,42 @@ QueueC/
 │       └── hooks/        # useSSE, useTimers
 └── Dockerfile
 ```
+
+## API
+
+All under `/api`. Mutations broadcast an SSE update.
+
+| Method & path | Purpose |
+|---|---|
+| `GET /sessions/active`, `POST /sessions`, `PATCH /sessions/:id/start`, `/end` | Session lifecycle |
+| `GET/POST /sessions/:id/courts`, `PATCH/DELETE /courts/:id` | Courts (delete → 409 if it has matches) |
+| `PATCH /courts/:id/extend` | Extend rental (+60 min) |
+| `GET/POST /players`, `PATCH /players/:id`, `GET /players/:id/history` | Player pool (duplicate name → 409) |
+| `POST /sessions/:id/checkin`, `DELETE /queue/:entryId`, `PATCH /queue/order`, `GET /sessions/:id/suggest` | Queue |
+| `PATCH /queue/:entryId/status` | waiting/resting. 409 if resting a `playing` or `staged` player, or setting a `playing` player to waiting |
+| `POST /matches` | Start live match on a court |
+| `PATCH /matches/:id/end`, `/teams`, `/shuttles` | End (scores, shuttles, rating), edit teams, shuttle counts |
+| `POST /matches/slate`, `PATCH /matches/:id/slate`, `DELETE /matches/:id/slate` | Create / edit / cancel a slated (On Deck) match |
+| `POST /sessions/:id/automatch` | Smart Match (409 if no free court and <2 waiting, or <4 to slate) |
+| `GET /sessions/:id/stats` | Leaderboard: played, wins, win_rate, point_diff |
+| `GET /sse` | Event stream |
+
+## Testing
+
+```bash
+# Server tests — pure ones run standalone:
+bun server/db.test.js
+# HTTP-based ones need a running server; BASE_URL defaults to http://localhost:3001/api
+BASE_URL=http://localhost:3001/api bun server/routes/automatch.test.js
+
+# Client unit tests
+cd tests && bun run test:unit
+
+# E2E (Playwright). Each worker starts its own server + temp DB.
+cd tests && bun run test:e2e
+```
+
+E2E env: `PW_WORKERS` (default 5), `PW_BASE_PORT` (default 3410; worker N uses port+N). `ensure-build` rebuilds `client/dist` only if sources are newer. Note: HTTP-based server tests reset the active session, so don't point them at a server holding real data.
 
 ## License
 
