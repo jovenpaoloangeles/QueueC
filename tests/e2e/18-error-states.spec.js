@@ -49,16 +49,6 @@ test('18.2 SSE reconnects and state resumes', async ({ page }) => {
   await expect(page.locator('[data-entry-id]')).toHaveCount(9)
 })
 
-test('18.3 starting match on disabled court not possible', async ({ page }) => {
-  await fullSetup(page, { courts: 2 })
-  await page.locator('text=Open').locator('..').locator('input[type="checkbox"]').first().click()
-  await page.waitForTimeout(400)
-  await expect(page.locator('text=Court 1')).toHaveCount(0)
-  for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
-  // only the enabled court offers Start Match
-  await expect(page.getByRole('button', { name: 'Start Match' })).toHaveCount(1)
-})
-
 test('18.5 all players playing — queue empty, resting tray empty', async ({ page }) => {
   await fullSetup(page, { courts: 2 })
   await startDoubles(page)

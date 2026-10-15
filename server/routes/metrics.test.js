@@ -113,6 +113,20 @@ async function run() {
     const { court: extendedCourt1 } = await extend1Res.json()
     assert.equal(extendedCourt1.expires_at, court1.expires_at + 3600, 'Expected court.expires_at increased by 3600')
 
+    // Extending an already-expired court yields expires_at > now
+    await fetch(`${BASE}/courts/${court1.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ expires_at: Math.floor(Date.now() / 1000) - 7200 })
+    })
+    const extendExpRes = await fetch(`${BASE}/courts/${court1.id}/extend`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ minutes: 60 })
+    })
+    const { court: extendedExpired } = await extendExpRes.json()
+    assert.ok(extendedExpired.expires_at > Math.floor(Date.now() / 1000), 'Expected expired court extended to expires_at > now')
+
     // PATCH /api/courts/:court2Id/extend with { minutes: 60 } on untimed Court 2 -> 400, error === 'Court has no rental timer'
     const extend2Res = await fetch(`${BASE}/courts/${court2.id}/extend`, {
       method: 'PATCH',

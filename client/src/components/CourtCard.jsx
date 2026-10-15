@@ -4,7 +4,7 @@ import { cn, fmtClock, fmtDur } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { updateMatchTeams, updateCourt, bumpShuttles, extendCourt } from '../api.js'
+import { updateMatchTeams, bumpShuttles, extendCourt } from '../api.js'
 import { useToast } from '@/components/Toast'
 import EndMatchModal from './EndMatchModal.jsx'
 import ConfirmEndDialog from './ConfirmEndDialog.jsx'
@@ -284,14 +284,6 @@ export default function CourtCard({
           )}
         </div>
         <div className="flex items-center gap-3">
-          <label className="flex items-center gap-1 text-xs text-muted-foreground cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={!!court.enabled}
-              onChange={e => updateCourt(court.id, { enabled: e.target.checked ? 1 : 0 }).catch(() => {})}
-            />
-            Open
-          </label>
           {hasTimer && (
             <span
               className={cn(
@@ -302,6 +294,11 @@ export default function CourtCard({
             >
               ⏱ {fmtDur(remainingSecs)}
             </span>
+          )}
+          {isExpired && (
+            <Button variant="destructive" size="sm" data-testid="btn-extend-court" onClick={handleExtend}>
+              Extend Court (+1hr)?
+            </Button>
           )}
           {isActive && <span className="font-mono text-sm tabular-nums text-foreground">{fmtClock(secs)}</span>}
           {isActive && (
@@ -374,9 +371,6 @@ export default function CourtCard({
               <span className="text-xs font-bold text-red-700">
                 ⚠ Rental time has run out — court removed from the available pool
               </span>
-              <Button variant="destructive" size="sm" data-testid="btn-extend-court" onClick={handleExtend}>
-                Extend +1 Hour
-              </Button>
             </div>
           ) : (
             <>

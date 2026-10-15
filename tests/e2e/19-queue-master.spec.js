@@ -79,37 +79,6 @@ test('QM.4 queue master overrides smart suggestion — manual picks different 4'
   await expect(page.locator('text=/4 selected.*Doubles/i')).toBeVisible()
 })
 
-test('QM.5 court disabled mid-match — match persists; court hidden; re-enable restores', async ({ page }) => {
-  await fullSetup(page, { courts: 2 })
-  await startDoublesMatch(page)
-
-  await expect(page.locator('text=Court 1')).toBeVisible()
-  await expect(page.locator('text=Court 2')).toBeVisible()
-
-  // Disable Court 1 — card removed from DOM
-  const checkbox = page.locator('text=Open').locator('..').locator('input[type="checkbox"]').first()
-  await checkbox.click()
-  await page.waitForTimeout(400)
-  await expect(page.locator('text=Court 1')).toHaveCount(0)
-
-  // Court 1's card (and its End Match) gone with it; re-enable must bring the match back
-  await expect(page.getByRole('button', { name: 'End Match' })).toHaveCount(0)
-
-  const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
-
-  // Re-enable via API (checkbox is gone with the card)
-  const { courts } = await (await page.request.get(`${base()}/api/sessions/${session.id}/courts`)).json()
-  const court1 = courts.find(c => c.label === 'Court 1')
-  await page.request.fetch(`${base()}/api/courts/${court1.id}`, {
-    method: 'PATCH', data: { enabled: 1 },
-  })
-  await page.waitForTimeout(400)
-
-  // Court restored with its match
-  await expect(page.locator('text=Court 1')).toBeVisible()
-  await expect(page.getByRole('button', { name: 'End Match' })).toHaveCount(1)
-})
-
 test('QM.6 end session with active match — header shows no active session', async ({ page }) => {
   await fullSetup(page)
   await startDoublesMatch(page)
