@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { cn, titleCaseSkill, SKILL_BADGE, SKILL_TIERS } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/components/Toast'
 import { checkinPlayer, createPlayer } from '../api.js'
@@ -22,10 +23,15 @@ export function SkillChip({ level }) {
 // the player selected; `selectedIds` plays the role of the queue for duplicates.
 // `inputTestid`/`placeholder`/`hint`/`maxMatches` only decorate the embedding
 // surface (live popover) — setup keeps its defaults.
-export default function PlayerSearchAdd({ session, queue = [], players, onPlayersChanged, onCheckedIn, selectedIds = [], onPick, inputTestid, placeholder, hint, maxMatches = Infinity }) {
+// `requireConfirm` (live check-in): gate the add behind an "Add <name> to the
+// pool?" dialog — register-new confirms before the create+checkin pair fires.
+export default function PlayerSearchAdd({ session, queue = [], players, onPlayersChanged, onCheckedIn, selectedIds = [], onPick, inputTestid, placeholder, hint, maxMatches = Infinity, requireConfirm = false }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [newPlayerSkill, setNewPlayerSkill] = useState('intermediate')
   const [registering, setRegistering] = useState(false)
+  // pending confirm: { playerId } for an existing registrant, or
+  // { name, skill } for register-new (player not created until confirmed)
+  const [pending, setPending] = useState(null)
   const toast = useToast()
 
   // Normalized search & duplicate checks
@@ -53,6 +59,15 @@ export default function PlayerSearchAdd({ session, queue = [], players, onPlayer
       if (found) onPick?.(found)
       return
     }
+    if (requireConfirm) {
+      const found = players.find(p => p.id === playerId)
+      if (found) setPending({ playerId, name: found.name })
+      return
+    }
+    doCheckIn(playerId)
+  }
+
+  async function doCheckIn(playerId) {
     try {
       await checkinPlayer(session.id, playerId)
     } catch (err) {
@@ -64,10 +79,37 @@ export default function PlayerSearchAdd({ session, queue = [], players, onPlayer
     if (found) onCheckedIn?.(found)
   }
 
+  // The confirm gate's Add: create first for register-new, then check in.
+  async function confirmPending() {
+    if (!pending) return
+    setRegistering(true)
+    try {
+      let playerId = pending.playerId
+      if (!playerId) {
+        const { player } = await createPlayer({ name: pending.name, skill_level: pending.skill })
+        playerId = player.id
+        onPlayersChanged?.()
+      }
+      await doCheckIn(playerId)
+      onPlayersChanged?.()
+    } catch (err) {
+      toast(err?.data?.error ?? 'Could not register player', 'error')
+      // refresh pool
+      onPlayersChanged?.()
+    } finally {
+      setRegistering(false)
+      setPending(null)
+    }
+  }
+
   async function handleRegisterAndCheckIn(e) {
     e.preventDefault()
     const trimmed = searchQuery.trim()
     if (!trimmed || activeDuplicate || exactPoolMatch) return
+    if (!pre && requireConfirm) {
+      setPending({ name: trimmed, skill: newPlayerSkill })
+      return
+    }
     setRegistering(true)
     try {
       const { player } = await createPlayer({ name: trimmed, skill_level: newPlayerSkill })
@@ -157,6 +199,24 @@ export default function PlayerSearchAdd({ session, queue = [], players, onPlayer
           )}
         </div>
       )}
+
+      {/* confirm gate (requireConfirm, live check-in only) */}
+      <Dialog open={!!pending} onOpenChange={v => { if (!v) setPending(null) }}>
+        <DialogContent className="sm:max-w-xs" data-testid="checkin-confirm-dialog">
+          <DialogHeader>
+            <DialogTitle>Add {pending?.name} to the pool?</DialogTitle>
+            <DialogDescription>They will join the session queue as waiting.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" size="sm" data-testid="checkin-confirm-cancel" onClick={() => setPending(null)}>
+              Cancel
+            </Button>
+            <Button type="button" size="sm" autoFocus disabled={registering} data-testid="checkin-confirm-add" onClick={confirmPending}>
+              Add
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

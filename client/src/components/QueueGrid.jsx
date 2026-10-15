@@ -96,7 +96,7 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
     return base
       .filter(e => !q || (e.name ?? '').toLowerCase().includes(q))
       .sort(byOrder)
-  }, [waiting, resting, order, tab, filter])
+  }, [waiting, resting, playing, order, tab, filter])
 
   function handleDropOnPlayer(dragId, targetId) {
     if (drag.current?.status === 'resting') {
@@ -193,6 +193,7 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
                 onPlayersChanged={onPlayersChanged}
                 onCheckedIn={p => toast(`Checked in: ${p.name}`, 'success')}
                 inputTestid="checkin-search"
+                requireConfirm
                 placeholder="Search or add player…"
                 maxMatches={8}
               />
@@ -205,6 +206,7 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
               onPlayersChanged={onPlayersChanged}
               onCheckedIn={p => toast(`Checked in: ${p.name}`, 'success')}
               inputTestid="checkin-search"
+              requireConfirm
               placeholder="Search or add player…"
               hint="Type to search registered players"
               maxMatches={8}
