@@ -51,5 +51,8 @@ test('6.6 selection persists while interacting with courts', async ({ page }) =>
   await page.locator('text=Court 1').first().click()
   await page.locator('text=Court 2').first().click()
   await expect(page.locator('text=2 selected → Singles')).toBeVisible()
-  await expect(page.locator('[class*="rounded-full"][class*="bg-primary"]')).toHaveCount(2)
+  // scoped to queue rows: the On Deck builder also renders a bg-primary pill
+  await expect(
+    page.locator('[data-entry-id]').locator('[class*="rounded-full"][class*="bg-primary"]')
+  ).toHaveCount(2)
 })
