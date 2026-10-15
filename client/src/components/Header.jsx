@@ -119,7 +119,7 @@ export default function Header({ session, sseData, draftedIds = new Set(), onSma
         <Button
           size="sm"
           data-testid="btn-smart-match"
-          title="Auto-match across all free courts"
+          title="Line up the next matches in On Deck"
           disabled={!session || session.started_at == null}
           onClick={() => onSmartMatch?.()}
         >

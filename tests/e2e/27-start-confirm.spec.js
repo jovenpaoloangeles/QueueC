@@ -73,22 +73,24 @@ test('27.4 Start Singles asks for confirmation', async ({ page }) => {
   expect((await liveState(page)).activeMatches[0].format).toBe('singles')
 })
 
-test('27.5 Smart Match shows the proposed lineup; Cancel changes nothing; Confirm starts', async ({ page }) => {
+test('27.5 Smart Match shows the proposed slates; Cancel changes nothing; Confirm slates to On Deck', async ({ page }) => {
   await page.getByTestId('btn-smart-match').click()
   await expect(dialog(page)).toBeVisible()
-  await expect(page.getByTestId('start-confirm-row')).toHaveCount(2)  // 2 courts
-  await expect(page.getByTestId('start-confirm-yes')).toHaveText('Start 2 matches')
+  await expect(page.getByTestId('start-confirm-slate-row')).toHaveCount(2) // 8 waiting → 2 lineups
+  await expect(page.getByTestId('start-confirm-yes')).toHaveText('Add to On Deck')
   await page.getByTestId('start-confirm-cancel').click()
   await expect(dialog(page)).toHaveCount(0)
   let st = await liveState(page)
   expect(st.activeMatches).toHaveLength(0)
+  expect(st.slatedMatches).toHaveLength(0)
   expect(st.queue.filter(q => q.status === 'waiting')).toHaveLength(8)
 
   await page.getByTestId('btn-smart-match').click()
   await confirmStart(page)
-  await expect(page.getByTestId('toast')).toContainText(/Matched 2 courts/)
+  await expect(page.getByTestId('toast')).toContainText(/On Deck/)
   st = await liveState(page)
-  expect(st.activeMatches).toHaveLength(2)
+  expect(st.slatedMatches).toHaveLength(2)
+  expect(st.activeMatches).toHaveLength(0) // slate-first: courts stay free
 })
 
 test('27.6 live court shows no lineup matrix; slating goes through the On Deck builder', async ({ page }) => {

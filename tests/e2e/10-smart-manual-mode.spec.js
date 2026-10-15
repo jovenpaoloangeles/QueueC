@@ -48,14 +48,17 @@ test('10.4 no Manual/Smart mode buttons exist in the queue header', async ({ pag
   await expect(page.getByTestId('checkin-toggle')).toHaveCount(1)
 })
 
-test('10.5 header Smart Match still opens its confirm dialog; Cancel changes nothing', async ({ page }) => {
+test('10.5 header Smart Match proposes slates only (no court start); Cancel changes nothing', async ({ page }) => {
   await page.getByTestId('btn-smart-match').click()
   const dialog = page.getByTestId('start-confirm-dialog')
   await expect(dialog).toBeVisible()
-  await expect(page.getByTestId('start-confirm-row')).toHaveCount(2) // 2 courts proposed
+  await expect(page.getByTestId('start-confirm-slate-row')).toHaveCount(2) // 8 waiting → 2 slated lineups
+  await expect(page.getByTestId('start-confirm-row')).toHaveCount(0)      // no court-anchored match proposed
   await page.getByTestId('start-confirm-cancel').click()
   await expect(dialog).toHaveCount(0)
-  expect((await liveState(page)).activeMatches).toHaveLength(0)
+  const st = await liveState(page)
+  expect(st.activeMatches).toHaveLength(0)
+  expect(st.slatedMatches).toHaveLength(0)
   // queue untouched too — Smart Match no longer selects from the queue
   await expect(page.locator('text=selected →')).toHaveCount(0)
 })

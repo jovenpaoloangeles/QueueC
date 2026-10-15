@@ -104,6 +104,15 @@ async function multiSlateTests() {
     let st = await snap()
     assert.equal(st.slatedMatches.length, 0, 'dry run wrote nothing')
 
+    // slate_only is honored even when the client plan carries court matches:
+    // with the matches dropped there is nothing left to write → 409, the free
+    // court stays free, nobody leaves the waiting queue
+    const guard = await post({ plan: { matches: plan.matches, slate: [] }, slate_only: true })
+    assert.equal(guard.status, 409, 'slate_only drops court matches → nothing to write')
+    st = await snap()
+    assert.equal(st.activeMatches.length, 0, 'slate_only never starts a court match')
+    assert.equal(st.queue.filter(q => q.status === 'waiting').length, 20, 'slate_only left everyone waiting')
+
     // slate_only: no court starts, still capped
     const so = (await (await post({ dry_run: true, slate_only: true })).json()).plan
     assert.equal(so.matches.length, 0)

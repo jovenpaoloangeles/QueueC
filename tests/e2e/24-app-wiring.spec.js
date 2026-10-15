@@ -8,7 +8,7 @@ test.beforeEach(async ({ page }) => {
   if (session) await page.request.fetch(`${base()}/api/sessions/${session.id}/end`, { method: 'PATCH' })
 })
 
-test('24.1 Smart Match with free court + 4+ waiting starts a match and toasts', async ({ page }) => {
+test('24.1 Smart Match with 4+ waiting slates to On Deck and toasts — nothing starts', async ({ page }) => {
   await createSession(page, { courts: 1 })
   await checkinPlayers(page, ['Inter C1', 'Inter C2', 'Inter C3', 'Inter C4', 'Expert E1', 'Expert E2'])
   await startSession(page)
@@ -16,20 +16,20 @@ test('24.1 Smart Match with free court + 4+ waiting starts a match and toasts', 
   await confirmStart(page)
   const toast = page.getByTestId('toast')
   await expect(toast).toBeVisible()
-  await expect(toast).toContainText(/Matched 1 court/)
+  await expect(toast).toContainText(/On Deck/)
+  // slate-first: the free court stays free, the lineup waits in On Deck
+  await expect(page.getByTestId('on-deck-count')).toHaveText('1')
 })
 
-test('24.2 Smart Match with nobody waiting toasts a friendly message', async ({ page }) => {
+test('24.2 Smart Match with fewer than 4 waiting toasts a friendly message', async ({ page }) => {
   await createSession(page, { courts: 1 })
   await checkinPlayers(page, ['Inter C1', 'Inter C2'])
   await startSession(page)
-  await page.getByTestId('btn-smart-match').click() // singles takes both players
-  await confirmStart(page)
-  await expect(page.getByTestId('toast')).toContainText(/Matched 1 court/)
-  await page.getByTestId('btn-smart-match').click() // nobody left waiting
+  await page.getByTestId('btn-smart-match').click() // a slate needs 4 — nothing to plan
   const toast = page.getByTestId('toast')
   await expect(toast).toBeVisible()
   await expect(toast).toContainText(/Nothing to auto-match/)
+  await expect(page.getByTestId('start-confirm-dialog')).toHaveCount(0)
 })
 
 test('24.4 hdr-longest uses net wait — leader leaves when they start; wait restarts after a match', async ({ page, server }) => {

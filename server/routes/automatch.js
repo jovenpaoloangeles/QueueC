@@ -109,7 +109,9 @@ router.post('/sessions/:id/automatch', async (c) => {
     }
     const labels = new Map(freeCourts().map(x => [x.id, x.label ?? null]))
     plan = {
-      matches: pMatches.map(m => ({ court_id: m.court_id, court_label: labels.get(m.court_id), format: m.team1.length === 2 ? 'doubles' : 'singles', team1: m.team1, team2: m.team2 })),
+      // slate_only is a hard rule: a client-supplied plan never starts a court
+      // match, whatever matches array it sends
+      matches: slateOnly ? [] : pMatches.map(m => ({ court_id: m.court_id, court_label: labels.get(m.court_id), format: m.team1.length === 2 ? 'doubles' : 'singles', team1: m.team1, team2: m.team2 })),
       slate: pSlate.map(m => ({ format: 'doubles', team1: m.team1, team2: m.team2 })),
     }
   }

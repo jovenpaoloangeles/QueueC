@@ -59,15 +59,16 @@ test('QM.3 smart mode skips players already on court', async ({ page }) => {
   expect(waitingCount).toBe(initialCount - 4)
 
   // Header Smart Match can only match from waiting players — not the 4 on
-  // court: with one court now busy it can propose at most the remaining court,
+  // court: with one court now busy it slates the remaining 4 to On Deck,
   // and cancel leaves the queue untouched
   await page.getByTestId('btn-smart-match').click()
   const dialog = page.getByTestId('start-confirm-dialog')
   await expect(dialog).toBeVisible()
-  await expect(page.getByTestId('start-confirm-row')).toHaveCount(1) // only the free court
+  await expect(page.getByTestId('start-confirm-slate-row')).toHaveCount(1) // the 4 waiting players
   await page.getByTestId('start-confirm-cancel').click()
   await expect(dialog).toHaveCount(0)
   await expect(page.locator('[data-entry-id]')).toHaveCount(waitingCount)
+  expect((await liveState(page)).slatedMatches).toHaveLength(0)
 })
 
 test('QM.4 queue master picks their own 4 — selection always manual', async ({ page }) => {

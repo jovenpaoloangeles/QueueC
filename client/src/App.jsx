@@ -42,11 +42,13 @@ export default function App() {
     return { name: e?.name ?? '?', skill_level: e?.skill_level }
   })
 
-  // header "✨ Smart Match": ask the server for a dry-run plan, confirm, then execute exactly it
+  // header "✨ Smart Match": slate-only, never auto-start. Ask the server for a
+  // dry-run plan, preview it in the confirm dialog, then commit it to On Deck —
+  // the QM reviews/edits there and sends lineups to a court manually.
   async function handleSmartMatch() {
     if (!session) return
     try {
-      const { plan } = await autoMatch(session.id, { dry_run: true })
+      const { plan } = await autoMatch(session.id, { dry_run: true, slate_only: true })
       if (!plan || (!plan.matches.length && !plan.slate.length)) {
         toast('Nothing to auto-match', 'info')
         return
@@ -85,14 +87,16 @@ export default function App() {
     }
   }
 
-  async function confirmSmartMatch(plan, slateOnly = false) {
+  // Smart Match commit: always the slate-only path — every lineup lands in
+  // On Deck for review; nothing starts on a court until the QM sends it.
+  async function confirmSmartMatch(plan) {
     setPendingBusy(true)
     try {
-      const r = await autoMatch(session.id, slateOnly ? { plan, slate_only: true } : { plan })
-      const parts = []
-      if (r.started) parts.push(`Matched ${r.started} court${r.started === 1 ? '' : 's'}`)
-      if (r.slated) parts.push(r.slated_count > 1 ? `added ${r.slated_count} lineups to On Deck` : 'added a lineup to On Deck')
-      toast(parts.length ? parts.join(', ') : 'Nothing to auto-match', parts.length ? 'success' : 'info')
+      const r = await autoMatch(session.id, { plan, slate_only: true })
+      toast(
+        r.slated_count > 1 ? `Added ${r.slated_count} lineups to On Deck for review` : 'Added to On Deck for review',
+        'success'
+      )
     } catch (err) {
       toast(err?.data?.error ?? (err?.status ? err.message : 'Auto-match failed'), 'error')
     } finally {
@@ -410,6 +414,8 @@ export default function App() {
           onOpenChange={open => { if (!open && !pendingBusy) setPending(null) }}
           matches={pending.matches}
           slate={pending.slate}
+          title={pending.kind === 'smart' ? 'Add these lineups to On Deck?' : undefined}
+          confirmText={pending.kind === 'smart' ? 'Add to On Deck' : undefined}
           busy={pendingBusy}
           onConfirm={confirmPending}
         />
