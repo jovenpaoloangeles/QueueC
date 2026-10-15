@@ -25,18 +25,15 @@ test('15.2 scheduled time range shown', async ({ page }) => {
   await expect(page.locator('[data-testid="header-time-range"]')).toBeVisible()
 })
 
-test('15.6 session name renders as ASTIRISK over date (two lines)', async ({ page }) => {
-  // empty name → server default "ASTIRISK (DD-Mon-YYYY)" → name line + date line
+test('15.6 session name renders on one line: ASTIRISK · date', async ({ page }) => {
+  // empty name → server default "ASTIRISK (DD-Mon-YYYY)" → name + date on one line
   await createSession(page, { name: '' })
   await checkinPlayers(page, ['Inter C1', 'Inter C2'])
   await startSession(page)
   const block = page.getByTestId('header-session-name')
-  const lines = block.locator('span')
-  await expect(lines).toHaveCount(2)
-  await expect(lines.nth(0)).toHaveText('ASTIRISK')
-  await expect(lines.nth(1)).toHaveText(/^\d{2}-[A-Z][a-z]{2}-\d{4}$/)
-  await expect(lines.nth(0)).toBeVisible()
-  await expect(lines.nth(1)).toBeVisible()
+  await expect(block).toBeVisible()
+  await expect(block).toContainText('ASTIRISK')
+  await expect(block.locator('span').last()).toHaveText(/^ · \d{2}-[A-Z][a-z]{2}-\d{4}$/)
 })
 
 test('15.4 elapsed timer absent during setup', async ({ page }) => {

@@ -45,17 +45,17 @@ export default function Header({ session, sseData, draftedIds = new Set(), onSma
 
   const Sep = <span className="mx-2 h-3.5 w-px shrink-0 bg-border" aria-hidden="true" />
 
-  // session name "NAME (date)" → two-line block: NAME (uppercased) over date;
-  // without ' (' the full name renders on the single name line (defensive path)
+  // session name "NAME (date)" → one line: NAME (uppercased) · date;
+  // without ' (' the full name renders alone (defensive path)
   function SessionNameBlock({ name }) {
     const idx = (name ?? '').indexOf(' (')
     const namePart = idx === -1 ? (name ?? '') : name.slice(0, idx)
     const datePart = idx === -1 ? null : name.slice(idx + 2, name.length - 1)
     return (
-      <span data-testid="header-session-name" className="flex flex-col leading-tight">
+      <span data-testid="header-session-name" className="whitespace-nowrap">
         <span className="text-sm font-semibold text-foreground">{namePart.toUpperCase()}</span>
         {datePart != null && (
-          <span className="text-2xs text-muted-foreground">{datePart}</span>
+          <span className="text-2xs text-muted-foreground"> · {datePart}</span>
         )}
       </span>
     )
@@ -63,7 +63,7 @@ export default function Header({ session, sseData, draftedIds = new Set(), onSma
 
   return (
     <div className="flex h-14 shrink-0 items-center justify-between gap-4 bg-card px-4">
-      {/* brand — one line; session name split into NAME over date as two lines */}
+      {/* brand — one line; session name + date inline as a single line */}
       <div className="flex items-baseline gap-3">
         <span className="text-base font-semibold text-foreground">🏸 QueueC</span>
         {session ? (
