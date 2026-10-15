@@ -1,5 +1,5 @@
 import { test, expect } from '../fixtures.js'
-import { base, fullSetup, createSession, checkinPlayers, startSession, endMatch, getQueueNames, clickStartMatch } from '../helpers.js'
+import { base, fullSetup, createSession, checkinPlayers, startSession, endMatch, getQueueNames, clickStartMatch, liveState } from '../helpers.js'
 
 // Queue master — real session scenarios (section 19)
 
@@ -29,7 +29,6 @@ test('QM.1 late player joins mid-match — visible in queue via live check-in', 
   await page.getByTestId('checkin-toggle').click()
   await page.getByTestId('checkin-search').fill('Newbie A1')
   await page.getByTestId('combobox-matches').getByRole('button', { name: 'Newbie A1' }).first().click()
-  await page.waitForTimeout(400)
 
   await expect(page.locator('[data-entry-id]')).toHaveCount(beforeCount + 1)
 })
@@ -46,7 +45,6 @@ test('QM.2 player removed via API — gone from queue', async ({ page }) => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status: 'left' }),
   })
-  await page.waitForTimeout(400)
 
   await expect(page.locator('[data-entry-id]')).toHaveCount(entryIds.length - 1)
 })
@@ -89,7 +87,6 @@ test('QM.6 end session with active match — header shows no active session', as
 
   await page.getByRole('button', { name: 'End Session' }).click()
   await page.getByTestId('end-session-confirm').click() // pass the confirm gate
-  await page.waitForTimeout(500)
 
   await expect(page.locator('text=No active session')).toBeVisible()
 })
@@ -98,22 +95,16 @@ test('QM.7 two matches end simultaneously — all 8 players return to queue', as
   await fullSetup(page, { courts: 2 })
   await startDoublesMatch(page)
   await startDoublesMatch(page)
-
   await expect(page.getByRole('button', { name: 'End Match' })).toHaveCount(2)
 
-  await page.getByRole('button', { name: 'End Match' }).first().click()
-  await page.getByTestId('confirm-end-end').click() // pass the confirm gate
-  await page.getByLabel('Team 1').fill('21')
-  await page.getByLabel('Team 2').fill('15')
-  await page.getByRole('button', { name: 'Confirm' }).click()
-  await page.waitForTimeout(400)
-
-  await page.getByRole('button', { name: 'End Match' }).first().click()
-  await page.getByTestId('confirm-end-end').click() // pass the confirm gate
-  await page.getByLabel('Team 1').fill('21')
-  await page.getByLabel('Team 2').fill('15')
-  await page.getByRole('button', { name: 'Confirm' }).click()
-  await page.waitForTimeout(400)
+  // end both server-side (state covered by server/routes/two-match-end.test.js);
+  // what's UI-specific here is that the grid re-renders all 8 cards
+  const st = await liveState(page)
+  for (const m of st.activeMatches) {
+    await page.request.fetch(`${base()}/api/matches/${m.id}/end`, {
+      method: 'PATCH', data: { team1_score: 21, team2_score: 15 },
+    })
+  }
 
   await expect(page.locator('[data-entry-id]')).toHaveCount(8)
 })
@@ -146,11 +137,14 @@ test('QM.8 drag reorder — order survives next SSE tick', async ({ page }) => {
   await expect(page.locator('[data-entry-id]').nth(1).locator('.text-base.font-medium'))
     .toHaveText(before[0])
 
-  // SSE tick must not reset the manual reorder
-  await page.waitForTimeout(1600)
+  // a real server broadcast (late check-in over the API) must not reset the manual reorder
+  const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
+  const { players } = await (await page.request.get(`${base()}/api/players`)).json()
+  const late = players.find(p => !before.includes(p.name))
+  await page.request.fetch(`${base()}/api/sessions/${session.id}/checkin`, { method: 'POST', data: { player_id: late.id } })
+  await expect(page.locator('[data-entry-id]')).toHaveCount(before.length + 1)
   const after = await getQueueNames(page)
-  expect(after[0]).toBe(before[1])
-  expect(after[1]).toBe(before[0])
+  expect(after.slice(0, 2)).toEqual([before[1], before[0]])
 })
 
 test('QM.9 full session cycle — create, check-in, start, match, end match, end session, new session', async ({ page }) => {
@@ -160,7 +154,6 @@ test('QM.9 full session cycle — create, check-in, start, match, end match, end
 
   await page.getByRole('button', { name: 'End Session' }).click()
   await page.getByTestId('end-session-confirm').click() // pass the confirm gate
-  await page.waitForTimeout(500)
   await expect(page.locator('text=No active session')).toBeVisible()
 
   // after ending, the single-screen setup is the landing view
@@ -186,7 +179,6 @@ test('QM.10 benched player returned mid-match — appears at end of queue', asyn
 
   // the resting row lives in the queue grid now (All tab) — Wake via its toggle
   await page.locator('[data-resting-id]').getByTestId('rest-toggle').click()
-  await page.waitForTimeout(400)
 
   await expect(page.locator('[data-entry-id]')).toHaveCount(beforeReturn + 1)
 

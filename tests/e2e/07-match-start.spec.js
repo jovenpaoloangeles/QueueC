@@ -26,14 +26,12 @@ test('7.4 singles start via button', async ({ page }) => {
   await page.locator('[data-entry-id]').nth(0).click()
   await page.locator('[data-entry-id]').nth(1).click()
   await clickStartMatch(page)
-  await page.waitForTimeout(500)
   await expect(page.locator('text=singles').first()).toBeVisible()
 })
 
 test('7.5 doubles start via button', async ({ page }) => {
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
   await clickStartMatch(page)
-  await page.waitForTimeout(500)
   await expect(page.locator('text=doubles').first()).toBeVisible()
 })
 
@@ -43,7 +41,6 @@ test('7.6 started players removed from queue', async ({ page }) => {
   await firstCard.click()
   await page.locator('[data-entry-id]').nth(1).click()
   await clickStartMatch(page)
-  await page.waitForTimeout(500)
   await expect(page.locator('[data-entry-id]').locator(`text=${name?.trim()}`)).toHaveCount(0)
 })
 
@@ -51,14 +48,12 @@ test('7.7 court shows format badge after match starts', async ({ page }) => {
   // doubles: 4 players
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
   await clickStartMatch(page)
-  await page.waitForTimeout(500)
   await expect(page.locator('text=doubles').first()).toBeVisible()
 })
 
 test('7.8 court shows elapsed timer from 0:00', async ({ page }) => {
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
   await clickStartMatch(page)
-  await page.waitForTimeout(500)
   await expect(page.locator('text=/0:0[012]/').first()).toBeVisible()
 })
 
@@ -77,10 +72,9 @@ test('7.16 two courts run simultaneously', async ({ page }) => {
   // Session has 2 courts; start a match on each
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
   await clickStartMatch(page)
-  await page.waitForTimeout(600)
+  await expect(page.locator('text=End Match')).toHaveCount(1)
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
   await clickStartMatch(page)
-  await page.waitForTimeout(600)
   await expect(page.locator('text=End Match')).toHaveCount(2)
 })
 

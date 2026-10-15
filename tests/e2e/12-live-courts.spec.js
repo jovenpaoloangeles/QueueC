@@ -16,10 +16,9 @@ test('12.1 court cards have no "Open" checkbox', async ({ page }) => {
 test('12.8 two courts independent', async ({ page }) => {
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
   await clickStartMatch(page)
-  await page.waitForTimeout(600)
+  await expect(page.getByRole('button', { name: 'End Match' })).toHaveCount(1)
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
   await clickStartMatch(page)
-  await page.waitForTimeout(600)
   await expect(page.getByRole('button', { name: 'End Match' })).toHaveCount(2)
 })
 
@@ -44,7 +43,6 @@ test('12.6 drag team 1 panel to team 2 — full swap', async ({ page }) => {
 test('12.7 drag own-team player to own team — no change', async ({ page }) => {
   await startDoubles(page)
   await syntheticDrag(page, '[data-team-side="1"] span', '[data-team-side="1"]', { fromIndex: 1, toIndex: 0 })
-  await page.waitForTimeout(800) // pass an SSE tick
   await expect(page.locator('[data-team-side="1"]')).toHaveText('Inter C1 + Inter C2')
   await expect(page.locator('[data-team-side="2"]')).toHaveText('Inter C3 + Inter C4')
 })

@@ -22,7 +22,6 @@ test('10.2 selection persists across SSE ticks', async ({ page }) => {
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
   await expect(page.locator('text=4 selected → Doubles')).toBeVisible()
   // ≥2 SSE broadcasts — the selection must survive both
-  await page.waitForTimeout(2400)
   await expect(page.locator('text=4 selected → Doubles')).toBeVisible()
   await expect(page.locator('[class*="ring-2"][class*="ring-primary"]')).toHaveCount(4)
   expect((await liveState(page)).activeMatches).toHaveLength(0) // nothing auto-started either

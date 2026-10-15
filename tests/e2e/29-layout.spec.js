@@ -30,7 +30,6 @@ test('29.2 dragging divider-courts resizes the courts band', async ({ page }) =>
   // r6 global budget: courts sit AT the budget max in an 800px window (queue
   // floor 340 + chrome) — grow room needs a taller one
   await page.setViewportSize({ width: 1280, height: 1000 })
-  await page.waitForTimeout(200)
   const divider = page.getByTestId('divider-courts')
   await expect(divider).toBeVisible()
 

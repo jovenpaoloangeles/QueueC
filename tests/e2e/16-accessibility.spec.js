@@ -22,11 +22,10 @@ test('16.2 end match form submits on Enter', async ({ page }) => {
   await fullSetup(page)
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
   await clickStartMatch(page)
-  await page.waitForTimeout(600)
+  await expect(page.getByRole('button', { name: 'End Match' })).toHaveCount(1)
   await page.getByRole('button', { name: 'End Match' }).first().click()
   await page.getByTestId('confirm-end-end').click() // pass the confirm gate → finalization form
   await page.keyboard.press('Enter')
-  await page.waitForTimeout(400)
   await expect(page.getByRole('dialog')).not.toBeVisible()
 })
 
@@ -46,7 +45,7 @@ test('16.4 score inputs Tab-navigable', async ({ page }) => {
   await fullSetup(page)
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
   await clickStartMatch(page)
-  await page.waitForTimeout(600)
+  await expect(page.getByRole('button', { name: 'End Match' })).toHaveCount(1)
   await page.getByRole('button', { name: 'End Match' }).first().click()
   await page.getByTestId('confirm-end-end').click() // pass the confirm gate
   await page.getByLabel('Team 1').focus()

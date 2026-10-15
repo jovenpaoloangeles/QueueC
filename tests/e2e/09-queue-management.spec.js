@@ -12,13 +12,11 @@ test('9.4 shift-click benches player', async ({ page }) => {
   const card = page.locator('[data-entry-id]').first()
   const name = await card.locator('.text-base.font-medium').textContent()
   await card.click({ modifiers: ['Shift'] })
-  await page.waitForTimeout(400)
   await expect(page.locator('[data-resting-id]').locator(`text=${name?.trim()}`)).toBeVisible()
 })
 
 test('9.5 Rest tab shows benched player', async ({ page }) => {
   await page.locator('[data-entry-id]').first().click({ modifiers: ['Shift'] })
-  await page.waitForTimeout(400)
   await expect(page.getByTestId('queue-tab-rest')).toContainText('(1)')
   await page.getByTestId('queue-tab-rest').click()
   await expect(page.locator('[data-resting-id]')).toHaveCount(1)
@@ -28,7 +26,6 @@ test('9.6 resting player absent from queue grid', async ({ page }) => {
   const card = page.locator('[data-entry-id]').first()
   const name = await card.locator('.text-base.font-medium').textContent()
   await card.click({ modifiers: ['Shift'] })
-  await page.waitForTimeout(400)
   await expect(page.locator('[data-entry-id]').locator(`text=${name?.trim()}`)).toHaveCount(0)
 })
 
@@ -38,7 +35,6 @@ test('9.8 Wake button restores to waiting', async ({ page }) => {
   await card.click({ modifiers: ['Shift'] })
   await page.waitForTimeout(400)
   await page.locator('[data-resting-id]').getByTestId('rest-toggle').click()
-  await page.waitForTimeout(400)
   await expect(page.locator('[data-entry-id]').locator(`text=${name?.trim()}`)).toBeVisible()
 })
 
@@ -46,7 +42,6 @@ test('9.11 bench selected player removes from selection', async ({ page }) => {
   await page.locator('[data-entry-id]').nth(0).click()
   await page.locator('[data-entry-id]').nth(1).click()
   await page.locator('[data-entry-id]').nth(0).click({ modifiers: ['Shift'] })
-  await page.waitForTimeout(300)
   await expect(page.locator('text=1 selected')).toBeVisible()
 })
 
@@ -64,10 +59,14 @@ test('9.1 drag player A after player B — order reflected in grid', async ({ pa
 test('9.2 SSE tick does not reset manual reorder', async ({ page }) => {
   const before = await getQueueNames(page)
   await syntheticDrag(page, '[data-entry-id]', '[data-entry-id]', { fromIndex: 1, toIndex: 0 })
-  await page.waitForTimeout(1600) // ≥1 SSE broadcast
+  // a real server broadcast (late check-in over the API) must not reset the manual order
+  const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
+  const { players } = await (await page.request.get(`${base()}/api/players`)).json()
+  const late = players.find(p => !before.includes(p.name))
+  await page.request.fetch(`${base()}/api/sessions/${session.id}/checkin`, { method: 'POST', data: { player_id: late.id } })
+  await expect(page.locator('[data-entry-id]')).toHaveCount(before.length + 1)
   const after = await getQueueNames(page)
-  expect(after[0]).toBe(before[1])
-  expect(after[1]).toBe(before[0])
+  expect(after.slice(0, 2)).toEqual([before[1], before[0]])
 })
 
 test('9.3 newly checked-in player appended to end of order', async ({ page }) => {

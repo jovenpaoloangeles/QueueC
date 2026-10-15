@@ -68,7 +68,6 @@ test('20.7 expired idle court stays visible with extend panel', async ({ page })
   await page.request.fetch(`${base()}/api/courts/${court1.id}`, {
     method: 'PATCH', data: { expires_at: Math.floor(Date.now() / 1000) - 60 },
   })
-  await page.waitForTimeout(1200) // SSE tick
   // expired court no longer accepts play: it stays in view as a red panel
   // with the extend action; court 2 (no timer) is still live
   await expect(page.locator('text=Court 1')).toBeVisible()
@@ -112,7 +111,6 @@ test('20.9 expired court mid-match shows Last Game badge and persists until matc
   await page.locator('[data-entry-id]').nth(0).click()
   await page.locator('[data-entry-id]').nth(1).click()
   await clickStartMatch(page)
-  await page.waitForTimeout(600)
   await expect(page.getByRole('button', { name: 'End Match' })).toHaveCount(1)
 
   // expire the court mid-game
@@ -121,7 +119,6 @@ test('20.9 expired court mid-match shows Last Game badge and persists until matc
   await page.request.fetch(`${base()}/api/courts/${courts[0].id}`, {
     method: 'PATCH', data: { expires_at: Math.floor(Date.now() / 1000) - 10 },
   })
-  await page.waitForTimeout(1200)
 
   // graceful finish: court still visible with Last Game badge + End Match still available
   await expect(page.locator('[data-testid="expiring-last-game-badge"]')).toBeVisible()
@@ -131,7 +128,6 @@ test('20.9 expired court mid-match shows Last Game badge and persists until matc
   await page.getByRole('button', { name: 'End Match' }).first().click()
   await page.getByTestId('confirm-end-end').click() // pass the confirm gate
   await page.getByRole('button', { name: 'Confirm' }).click()
-  await page.waitForTimeout(1200)
   await expect(page.locator('text=Court 1')).toBeVisible()
   await expect(page.getByTestId('btn-extend-court')).toBeVisible()
 })
@@ -216,13 +212,12 @@ test('20.17 games played increments after a match ends', async ({ page }) => {
   await startSession(page)
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
   await clickStartMatch(page)
-  await page.waitForTimeout(600)
+  await expect(page.getByRole('button', { name: 'End Match' })).toHaveCount(1)
   await page.getByRole('button', { name: 'End Match' }).first().click()
   await page.getByTestId('confirm-end-end').click() // pass the confirm gate
   await page.getByLabel('Team 1').fill('21')
   await page.getByLabel('Team 2').fill('15')
   await page.getByRole('button', { name: 'Confirm' }).click()
-  await page.waitForTimeout(800)
   // all four returned players show [1]
   await expect(page.locator('[data-testid="games-played-badge"]')).toHaveCount(4)
   for (const badge of await page.locator('[data-testid="games-played-badge"]').all()) {

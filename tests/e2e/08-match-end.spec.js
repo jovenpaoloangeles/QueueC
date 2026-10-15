@@ -1,7 +1,7 @@
 // tests/e2e/08-match-end.spec.js
 import { test, expect } from '../fixtures.js'
 import { execSync } from 'node:child_process'
-import { base, fullSetup, endMatch, clickStartMatch } from '../helpers.js'
+import { base, fullSetup, endMatch, clickStartMatch, expectMatchLive } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
   const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
@@ -10,7 +10,7 @@ test.beforeEach(async ({ page }) => {
   // Start a doubles match on court 1
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
   await clickStartMatch(page)
-  await page.waitForTimeout(600)
+  await expectMatchLive(page)
 })
 
 test('8.1 End Match button opens modal', async ({ page }) => {
@@ -60,7 +60,6 @@ test('8.11 score 0–0 accepted', async ({ page }) => {
   await page.getByRole('button', { name: 'End Match' }).first().click()
   await page.getByTestId('confirm-end-end').click() // pass the confirm gate
   await page.getByRole('button', { name: 'Confirm' }).click()
-  await page.waitForTimeout(400)
   await expect(page.locator('text=Select 2 or 4 players').first()).toBeVisible()
 })
 

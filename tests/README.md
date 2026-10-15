@@ -35,6 +35,21 @@ bunx playwright test e2e/01-landing.spec.js --config=playwright.config.js
 bun run test:unit
 ```
 
+## Run server/API regression tests
+
+Some server-state scenarios (e.g. `server/routes/two-match-end.test.js`) run
+against a live server instead of the browser:
+
+```bash
+# server already running on :3001
+bun server/routes/two-match-end.test.js
+# or point at another instance:
+QC_TEST_BASE=http://localhost:3999 bun server/routes/two-match-end.test.js
+```
+
+These are sub-second; run them in the implementer stage for any server-route
+change, before reaching for the E2E suite.
+
 ## Configuration
 
 | Env var | Default | Description |

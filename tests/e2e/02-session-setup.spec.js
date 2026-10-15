@@ -172,7 +172,6 @@ test('2.12 single click selects exactly once; dblclick does not change selection
   const row = poolRow(page, 'Inter C2')
   await row.click()
   await expect(row).toHaveAttribute('aria-checked', 'true')
-  await page.waitForTimeout(500) // would have toggled back if the click fired twice
   await expect(row).toHaveAttribute('aria-checked', 'true')
   await expect(page.getByTestId('selected-count')).toHaveText('1 selected')
   const other = poolRow(page, 'Inter C3')

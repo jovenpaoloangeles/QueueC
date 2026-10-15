@@ -11,7 +11,6 @@ test.beforeEach(async ({ page }) => {
 test('18.1 page reload mid-session restores state', async ({ page }) => {
   await fullSetup(page)
   await page.reload()
-  await page.waitForTimeout(1000) // SSE reconnect
   await expect(page.locator('text=Queue ·')).toBeVisible()
   await expect(page.locator('[data-entry-id]')).toHaveCount(8)
 })
@@ -25,7 +24,6 @@ test('18.4 empty queue shows empty state', async ({ page }) => {
   await page.locator('[data-entry-id]').first().click({ modifiers: ['Shift'] })
   await page.waitForTimeout(300)
   await page.locator('[data-entry-id]').first().click({ modifiers: ['Shift'] })
-  await page.waitForTimeout(300)
   // Queue grid should be empty — no player cards
   await expect(page.locator('[data-entry-id]')).toHaveCount(0)
 })
@@ -52,7 +50,7 @@ test('18.2 SSE reconnects and state resumes', async ({ page }) => {
 test('18.5 all players playing — queue empty, Rest tab (0)', async ({ page }) => {
   await fullSetup(page, { courts: 2 })
   await startDoubles(page)
-  await startDoubles(page)
+  await startDoubles(page, { expectEndMatch: false })
   await expect(page.locator('[data-entry-id]')).toHaveCount(0)
   await expect(page.getByTestId('queue-tab-rest')).toContainText('(0)')
 })
