@@ -37,9 +37,22 @@ export default function App() {
     if (!session) return
     try {
       const r = await autoMatch(session.id)
-      toast(`Started ${r.started} match(es)${r.slated ? ', slated next' : ''}`, 'success')
+      const parts = []
+      if (r.started) parts.push(`Matched ${r.started} court${r.started === 1 ? '' : 's'}`)
+      if (r.slated) parts.push('slated next lineup')
+      toast(parts.length ? parts.join(', ') : 'Nothing to auto-match', parts.length ? 'success' : 'info')
     } catch (err) {
       toast(err?.data?.error ?? (err?.status ? err.message : 'Auto-match failed'), 'error')
+    }
+  }
+
+  async function handleEndSession() {
+    if (!session) return
+    try {
+      await endSession(session.id)
+      setDrafts({}); setSelection([]); setSlateDraftIds([]); setShowAddPlayer(false)
+    } catch (err) {
+      toast(err?.data?.error ?? 'Could not end session', 'error')
     }
   }
 
@@ -57,6 +70,8 @@ export default function App() {
   // A new session invalidates every draft entry id (ids come from the old session's queue)
   useEffect(() => {
     setDrafts(prev => (Object.keys(prev).length ? {} : prev))
+    setSelection([]); setSlateDraftIds([])
+    setShowAddPlayer(false); setConfirmNew(false); setShowCreate(false)
   }, [session?.id])
 
   // Stale-draft pruning: a draft slot can outlive its entry (started elsewhere,
@@ -161,10 +176,16 @@ export default function App() {
   }
 
   const handleReorder = useCallback(newOrder => {
-    setQueueOrder(session.id, newOrder).catch(() => {}) // SSE keeps the truth on failure
-  }, [session?.id])
+    setQueueOrder(session.id, newOrder).catch(err =>
+      toast(err?.data?.error ?? 'Could not reorder queue', 'error')) // SSE keeps the truth
+  }, [session?.id, toast])
 
-  useSSE(useCallback(data => setSseData(data), []))
+  const [connected, setConnected] = useState(true)
+  useSSE(useCallback(data => setSseData(data), []), setConnected)
+
+  useEffect(() => {
+    document.title = session?.name ? `${session.name} · QueueC` : 'QueueC'
+  }, [session?.name])
 
   // close the "new session" modal as soon as SSE confirms a draft session arrived
   useEffect(() => {
@@ -182,8 +203,13 @@ export default function App() {
         onSmartMatch={handleSmartMatch}
         onAddPlayer={() => setShowAddPlayer(true)}
         onNewSession={() => setConfirmNew(true)}
-        onEndSession={session ? () => endSession(session.id).catch(() => {}) : undefined}
+        onEndSession={session ? handleEndSession : undefined}
       />
+      {!connected && (
+        <div data-testid="sse-reconnecting" role="status" className="bg-muted px-4 py-1 text-center text-xs text-muted-foreground">
+          Reconnecting…
+        </div>
+      )}
       {session && session.started_at == null && (
         <SetupScreen session={session} queue={queue} courts={courts} />
       )}

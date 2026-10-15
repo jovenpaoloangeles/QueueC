@@ -41,6 +41,7 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
   useEffect(() => {
     getPlayers()
       .then(d => setAllPlayers(d.players))
+      .catch(() => {})
       .finally(() => setPlayersLoading(false))
   }, [playersVersion])
 
@@ -57,7 +58,7 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
       if (d.suggestion?.length) {
         onSelectionChange(d.suggestion.filter(Boolean).filter(id => !draftedIds.has(id)))
       }
-    })
+    }).catch(() => {}) // suggestion is best-effort
   }, [mode, waitingSig, session?.id, draftedIds])
 
   function toggleSelect(entryId) {
