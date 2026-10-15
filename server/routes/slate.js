@@ -98,6 +98,49 @@ router.patch('/matches/:id/slate', async (c) => {
   return c.json({ slate: db.prepare('SELECT * FROM matches WHERE id = ?').get(id) })
 })
 
+router.post('/matches/:id/start', async (c) => {
+  const id = c.req.param('id')
+  const m = db.prepare('SELECT * FROM matches WHERE id = ?').get(id)
+  if (!m) return c.json({ error: 'Match not found' }, 404)
+  const s = db.prepare('SELECT * FROM sessions WHERE id = ?').get(m.session_id)
+  if (!s || s.started_at == null) return c.json({ error: 'Session not started' }, 409)
+  if (m.state !== 'slated' || m.ended_at != null) {
+    return c.json({ error: 'Match is not on deck' }, 409)
+  }
+
+  const b = await c.req.json().catch(() => ({}))
+  const court = db.prepare('SELECT * FROM courts WHERE id = ? AND session_id = ?').get(b.court_id, m.session_id)
+  if (!court) return c.json({ error: 'Court not found in this session' }, 404)
+
+  const now = Math.floor(Date.now() / 1000)
+  const occupied = db.prepare(
+    "SELECT id FROM matches WHERE session_id = ? AND state = 'active' AND ended_at IS NULL AND court_number = ?"
+  ).get(m.session_id, court.id)
+  const courtFree = court.enabled === 1 &&
+    (court.expires_at == null || now < court.expires_at) &&
+    (court.active_until == null || now < court.active_until) &&
+    !occupied
+  if (!courtFree) return c.json({ error: 'Court is not free' }, 409)
+
+  const entryIds = [m.team1_p1, m.team1_p2, m.team2_p1, m.team2_p2].filter(Boolean)
+  for (const eid of entryIds) {
+    const e = db.prepare('SELECT * FROM queue_entries WHERE id = ? AND session_id = ?').get(eid, m.session_id)
+    if (!e || e.status !== 'staged') {
+      return c.json({ error: 'Lineup changed — cancel and re-slate' }, 409)
+    }
+  }
+
+  db.transaction(() => {
+    db.prepare("UPDATE matches SET state = 'active', court_number = ?, started_at = ?, slate_seq = NULL WHERE id = ?")
+      .run(court.id, now, m.id)
+    const toPlay = db.prepare("UPDATE queue_entries SET status = 'playing', status_updated_at = ? WHERE id = ?")
+    for (const eid of entryIds) toPlay.run(now, eid)
+  })()
+
+  broadcast()
+  return c.json({ match: db.prepare('SELECT * FROM matches WHERE id = ?').get(m.id) })
+})
+
 router.delete('/matches/:id/slate', (c) => {
   const id = c.req.param('id')
   const m = db.prepare("SELECT * FROM matches WHERE id = ? AND state = 'slated'").get(id)

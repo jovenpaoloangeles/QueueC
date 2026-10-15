@@ -376,6 +376,76 @@ async function run() {
     assert.equal((await mv(sB.id, 'down')).status, 200)
     order = (await sl()).filter(x => [sA.id, sB.id].includes(x.id)).map(x => x.id)
     assert.deepEqual(order, [sA.id, sB.id], 'swapped back')
+
+    // 11) POST /matches/:id/start — start an on-deck slate on a free court NOW
+    const post = (matchId, courtId) => fetch(`${BASE}/matches/${matchId}/start`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ court_id: courtId }),
+    })
+
+    const courtsNow = (await readState()).courts
+    const court2 = courtsNow.find(c => c.label === 'Court 2')
+    assert.ok(court2, 'expected Court 2 to exist and be free')
+
+    // happy path: sA goes live on the free Court 2
+    const startRes = await post(sA.id, court2.id)
+    assert.equal(startRes.status, 200, 'Expected 200 starting a slated match on a free court')
+    const { match: started } = await startRes.json()
+    assert.equal(started.state, 'active', 'started match state === active')
+    assert.equal(started.court_number, court2.id, 'started match court_number === court2.id')
+    assert.ok(started.started_at > 0, 'started_at set')
+    assert.equal(started.slate_seq, null, 'slate_seq cleared')
+    const afterStart = await readState()
+    assert.equal(afterStart.slatedMatches.some(x => x.id === sA.id), false, 'slate gone from on deck')
+    const liveNow = afterStart.activeMatches.find(x => x.id === sA.id)
+    assert.ok(liveNow, 'started match appears in activeMatches')
+    for (const eid of ids4.slice(0, 4)) {
+      assert.equal(afterStart.queue.find(q => q.id === eid)?.status, 'playing', `entry ${eid} now playing`)
+    }
+    // remaining slate keeps its seq — no renumbering
+    const stillSlated = afterStart.slatedMatches.find(x => x.id === sB.id)
+    assert.ok(stillSlated, 'sB still slated')
+    assert.equal(stillSlated.slate_seq, sB.slate_seq, 'sB slate_seq unchanged (no renumber)')
+
+    // 409: court already occupied (by the match we just started)
+    const occRes = await post(sB.id, court2.id)
+    assert.equal(occRes.status, 409, 'Expected 409 starting onto an occupied court')
+    assert.match((await occRes.json()).error, /Court is not free/)
+
+    // 409: expired court — set expires_at in the past
+    const court3 = (await fetch(`${BASE}/sessions/${session.id}/courts`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ label: 'Court Exp' }),
+    }).then(r => r.json())).court
+    await fetch(`${BASE}/courts/${court3.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ expires_at: Math.floor(Date.now() / 1000) - 10 }),
+    })
+    const expRes = await post(sB.id, court3.id)
+    assert.equal(expRes.status, 409, 'Expected 409 starting onto an expired court')
+    assert.match((await expRes.json()).error, /Court is not free/)
+    await fetch(`${BASE}/courts/${court3.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ expires_at: null }),
+    })
+
+    // 409: one of the lineup's players is no longer staged (checked out / left)
+    const victim = ids4[4]
+    await fetch(`${BASE}/queue/${victim}/status`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'left' }),
+    })
+    const staleRes = await post(sB.id, court3.id)
+    assert.equal(staleRes.status, 409, 'Expected 409 when a lineup player is no longer staged')
+    assert.match((await staleRes.json()).error, /Lineup changed/)
+
+    // 409: match already active (sA was started above)
+    const againRes = await post(sA.id, court3.id)
+    assert.equal(againRes.status, 409, 'Expected 409 starting an already-active match')
+
+    // 404: unknown match
+    const nfRes = await post(999999999, court3.id)
+    assert.equal(nfRes.status, 404, 'Expected 404 for unknown match')
   } finally {
     // 9) Clean up (end session)
     await fetch(`${BASE}/sessions/${session.id}/end`, { method: 'PATCH' })

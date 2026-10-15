@@ -3,7 +3,7 @@ import { drag, valid } from '@/lib/dnd'
 import { cn, titleCaseSkill, SKILL_BADGE, balanceHint, fmtClock } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
-import { updateSlate, cancelSlate, moveSlate, slateMatch } from '../api.js'
+import { updateSlate, cancelSlate, moveSlate, slateMatch, startSlateOnCourt } from '../api.js'
 import { useToast } from '@/components/Toast'
 
 /** Slot order mirrors the slate payload: Team A = 0,1 · Team B = 2,3. */
@@ -148,6 +148,18 @@ function nextFreeCourt(courts, activeMatches, now) {
   return best
 }
 
+/** Free courts, same rule as the server (automatch.js): enabled, not expired,
+ *  active window open, and no live match sitting on the court. */
+function freeCourts(courts, activeMatches, now) {
+  const busy = new Set((activeMatches ?? []).map(m => m.court_number).filter(v => v != null))
+  return (courts ?? []).filter(c =>
+    c.enabled &&
+    (c.expires_at == null || now < c.expires_at) &&
+    (c.active_until == null || now < c.active_until) &&
+    !busy.has(c.id)
+  )
+}
+
 export default function OnDeckStrip({
   slatedMatches, queue = [], draftedIds = new Set(), onEditDraftChange = NOOP,
   onBuilderDraftChange = NOOP, onSmartFill = NOOP,
@@ -159,6 +171,8 @@ export default function OnDeckStrip({
   const [saving, setSaving] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [pendingCancelId, setPendingCancelId] = useState(null) // confirm dialog target
+  const [pendingStartId, setPendingStartId] = useState(null) // start-now dialog target
+  const [starting, setStarting] = useState(false)
   const [building, setBuilding] = useState(false)       // builder panel open
   const [newDraft, setNewDraft] = useState([null, null, null, null])
   const [adding, setAdding] = useState(false)
@@ -205,11 +219,14 @@ export default function OnDeckStrip({
       setEditingId(null)
       setEditDraft([null, null, null, null])
     }
-    // same for the cancel-confirm target: close silently if the slate vanished
+    // same for the cancel/start-confirm targets: close silently if the slate vanished
     if (pendingCancelId != null && !rows.some(r => r.id === pendingCancelId)) {
       setPendingCancelId(null)
     }
-  }, [rows, editingId, pendingCancelId])
+    if (pendingStartId != null && !rows.some(r => r.id === pendingStartId)) {
+      setPendingStartId(null)
+    }
+  }, [rows, editingId, pendingCancelId, pendingStartId])
 
   // Stale-draft pruning: a slot can outlive its entry's availability (started
   // elsewhere, rested, slated into another match). Null it out — the Save-time
@@ -360,7 +377,22 @@ export default function OnDeckStrip({
     }
   }
 
+  async function handleStartNow(row, court) {
+    if (starting) return // in-flight guard: no double POST / double toast
+    setStarting(true)
+    try {
+      await startSlateOnCourt(row.id, court.id)
+      toast(`Lineup started on ${court.label}`, 'success')
+      setPendingStartId(null)
+    } catch (err) {
+      toast(err?.data?.error ?? 'Could not start the lineup', 'error') // keep the dialog open
+    } finally {
+      setStarting(false)
+    }
+  }
+
   const eta = rows.length ? nextFreeCourt(courts, activeMatches, now) : null
+  const free = useMemo(() => freeCourts(courts, activeMatches, now), [courts, activeMatches, now])
   const filled = newDraft.filter(Boolean).length
 
   const builder = (
@@ -494,6 +526,15 @@ export default function OnDeckStrip({
                     </Button>
                     <Button
                       size="sm"
+                      data-testid={`slate-start-${row.id}`}
+                      disabled={free.length === 0}
+                      title={free.length === 0 ? 'No free court' : 'Start this lineup on a free court now'}
+                      onClick={() => setPendingStartId(row.id)}
+                    >
+                      ▶ Start now
+                    </Button>
+                    <Button
+                      size="sm"
                       variant="outline"
                       className="text-destructive hover:text-destructive"
                       data-testid={`slate-cancel-${row.id}`}
@@ -538,6 +579,47 @@ export default function OnDeckStrip({
               }}
             >
               Cancel lineup
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Start-now dialog: clicking a free court IS the confirm (it starts
+          immediately). Esc/backdrop = abort. One dialog strip-wide. */}
+      <Dialog open={pendingStartId != null} onOpenChange={open => { if (!open) setPendingStartId(null) }}>
+        <DialogContent className="sm:max-w-xs" data-testid="ondeck-start-dialog">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span aria-hidden="true">▶</span>
+              Start this lineup now?
+            </DialogTitle>
+            <DialogDescription>Pick a free court — players leave the queue.</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-1.5">
+            {free.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No free court right now.</p>
+            ) : (
+              free.map(c => (
+                <Button
+                  key={c.id}
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={starting}
+                  data-testid={`slate-start-court-${c.id}`}
+                  onClick={() => {
+                    const row = rows.find(r => r.id === pendingStartId)
+                    if (row) handleStartNow(row, c)
+                  }}
+                >
+                  {c.label}
+                </Button>
+              ))
+            )}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" size="sm" data-testid="slate-start-abort" onClick={() => setPendingStartId(null)}>
+              Cancel
             </Button>
           </DialogFooter>
         </DialogContent>

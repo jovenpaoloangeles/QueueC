@@ -187,3 +187,77 @@ test('28.8 cancelling a slate asks for confirmation; Keep aborts', async ({ page
   expect((await liveState(page)).slatedMatches).toHaveLength(1)
   await expect(page.locator('[data-entry-id]')).toHaveCount(before)
 })
+
+test('28.9 Start now: a slated lineup goes live on a chosen free court immediately', async ({ page }) => {
+  await startDoubles(page) // Court 1 live
+  await addViaSmartFill(page) // 4 more checked in → slate on deck
+  const [id] = (await liveState(page)).slatedMatches.map(m => m.id)
+  const courts = (await liveState(page)).courts
+  const freeCourt = courts.find(c => c.label === 'Court 2')
+  expect(freeCourt).toBeTruthy()
+  const before = await page.locator('[data-entry-id]').count()
+
+  await expect(page.getByTestId(`slate-start-${id}`)).toBeEnabled()
+  await page.getByTestId(`slate-start-${id}`).click()
+  const dialog = page.getByTestId('ondeck-start-dialog')
+  await expect(dialog).toBeVisible()
+  await expect(dialog).toContainText('Start this lineup now?')
+  await expect(page.getByTestId(`slate-start-court-${freeCourt.id}`)).toContainText('Court 2')
+  // the court button IS the confirm — clicking starts immediately
+  await page.getByTestId(`slate-start-court-${freeCourt.id}`).click()
+
+  const st = await liveState(page)
+  expect(st.slatedMatches).toHaveLength(0)
+  expect(st.activeMatches).toHaveLength(2)
+  const live = st.activeMatches.find(m => m.id === id)
+  expect(live.court_number).toBe(freeCourt.id)
+  expect(live.slate_seq).toBeNull()
+  // players were hidden as 'staged' already; they're hidden as 'playing' now
+  await expect(page.locator('[data-entry-id]')).toHaveCount(before)
+  await expect(page.getByTestId(`slate-row-${id}`)).toHaveCount(0)
+  await expect(page.getByTestId('toast')).toContainText('Lineup started on Court 2')
+})
+
+test('28.10 Start now: abort keeps the slate; disabled while no court is free', async ({ page }) => {
+  await startDoubles(page)
+  await addViaSmartFill(page)
+  const [id] = (await liveState(page)).slatedMatches.map(m => m.id)
+
+  // abort path: Cancel in the dialog leaves the slate untouched
+  await page.getByTestId(`slate-start-${id}`).click()
+  const dialog = page.getByTestId('ondeck-start-dialog')
+  await expect(dialog).toBeVisible()
+  await page.getByTestId('slate-start-abort').click()
+  await expect(dialog).toBeHidden()
+  await expect(page.getByTestId(`slate-row-${id}`)).toBeVisible()
+  expect((await liveState(page)).slatedMatches).toHaveLength(1)
+  expect((await liveState(page)).activeMatches).toHaveLength(1)
+
+  // occupy Court 2 too → no free court → the button disables
+  // (select 4 waiting players, start on Court 2 via the header start flow)
+  const queueIds = await page.locator('[data-entry-id]').evaluateAll(els => els.map(el => el.getAttribute('data-entry-id')))
+  for (const qid of queueIds.slice(0, 4)) await page.locator(`[data-entry-id="${qid}"]`).click()
+  await page.getByRole('button', { name: 'Start Match' }).first().click()
+  await confirmStart(page)
+  await expect.poll(async () => (await liveState(page)).activeMatches).toHaveLength(2)
+
+  // a third slate now has no free court → Start now disabled
+  await addViaSmartFill(page)
+  const slateIds = (await liveState(page)).slatedMatches.map(m => m.id)
+  const third = slateIds[slateIds.length - 1] // newest = highest seq (slateIds[0] is the first slate)
+  await expect(page.getByTestId(`slate-start-${third}`)).toBeDisabled()
+
+  // free a court again → Start now re-enables. Freeing while any slate exists
+  // auto-promotes the lowest, so cancel both slates first (players return),
+  // end the match with nothing on deck, then slate fresh.
+  for (const sid of [id, third]) {
+    await page.getByTestId(`slate-cancel-${sid}`).click()
+    await page.getByTestId('ondeck-cancel-confirm').click()
+    await expect(page.getByTestId(`slate-row-${sid}`)).toHaveCount(0)
+  }
+  await endMatch(page, 'Court 1')
+  await expect.poll(async () => (await liveState(page)).activeMatches).toHaveLength(1)
+  await addViaSmartFill(page)
+  const [reid] = (await liveState(page)).slatedMatches.map(m => m.id)
+  await expect(page.getByTestId(`slate-start-${reid}`)).toBeEnabled()
+})
