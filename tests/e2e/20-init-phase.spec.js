@@ -2,7 +2,7 @@
 // Initialization phase: dynamic court config, per-court countdown/expiry,
 // 7-tier skills, Search-and-Add combobox (single-screen setup).
 import { test, expect } from '../fixtures.js'
-import { base, createSession, checkinPlayers, startSession } from '../helpers.js'
+import { poolRow, base, createSession, checkinPlayers, startSession } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
   const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
@@ -149,7 +149,7 @@ test('20.11 1-click select from combobox marks the chip selected', async ({ page
   await page.getByLabel('Search or add player').fill('Inter C1')
   await page.locator('[data-testid="combobox-matches"]').getByRole('button', { name: /Inter C1/ }).click()
   await expect(page.getByTestId('selected-count')).toHaveText('1 selected')
-  await expect(page.getByTestId('player-pool').getByRole('button', { name: /Inter C1/ })).toHaveAttribute('aria-pressed', 'true')
+  await expect(poolRow(page, 'Inter C1')).toHaveAttribute('aria-checked', 'true')
 })
 
 test('20.12 register new player inline with 7-tier skill dropdown', async ({ page }) => {
@@ -160,8 +160,8 @@ test('20.12 register new player inline with 7-tier skill dropdown', async ({ pag
   await expect(prompt.locator('select option')).toHaveCount(7)
   await prompt.locator('select').selectOption('professional')
   await prompt.getByRole('button', { name: 'Add Player' }).click()
-  const chip = page.getByTestId('player-pool').getByRole('button', { name })
-  await expect(chip).toHaveAttribute('aria-pressed', 'true')
+  const chip = poolRow(page, name)
+  await expect(chip).toHaveAttribute('aria-checked', 'true')
   await expect(chip).toContainText('professional')
 })
 
@@ -190,7 +190,7 @@ test('20.14 database collision shows existing profile instead of duplicate creat
 // --- 7-Tier Skill Badges ---
 
 test('20.15 all 7 tiers render distinct badges in the pool', async ({ page }) => {
-  const pool = page.locator('[data-testid="player-pool"]')
+  const pool = page.getByTestId('player-list')
   await expect(pool).toContainText('newbie')
   await expect(pool).toContainText('beginner')
   await expect(pool).toContainText('lower intermediate')

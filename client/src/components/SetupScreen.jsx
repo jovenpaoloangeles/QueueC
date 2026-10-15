@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react'
-import { SKILL_TIERS } from '@/lib/utils'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { cn, SKILL_TIERS, fmtSessionName } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -7,23 +7,20 @@ import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useToast } from '@/components/Toast'
 import PlayerSearchAdd, { SkillChip } from './PlayerSearchAdd.jsx'
-import { createSession, endSession, checkinPlayer, getPlayers, startSession } from '../api.js'
+import { createSession, endSession, checkinPlayer, getPlayers, startSession, updatePlayer } from '../api.js'
 
 const MAX_COURTS = 16
 const DEFAULT_HOURS = '2'
+const CLICK_DELAY = 220
 
 const pad = n => String(n).padStart(2, '0')
 
-// Default start time: now rounded UP to the next 15 minutes, as HH:MM (24h).
-function defaultStartTime() {
-  const d = new Date()
-  const mins = Math.ceil((d.getHours() * 60 + d.getMinutes() + (d.getSeconds() > 0 ? 1 : 0)) / 15) * 15
-  return `${pad(Math.floor(mins / 60) % 24)}:${pad(mins % 60)}`
-}
+const START_HOURS = Array.from({ length: 18 }, (_, i) => pad(i + 6) + ':00') // 06:00 … 23:00
 
-function todayStr() {
-  const d = new Date()
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+// Default start time: the next full hour, clamped into the list (HH:00).
+function defaultStartTime() {
+  const h = Math.min(23, Math.max(6, new Date().getHours() + 1))
+  return `${pad(h)}:00`
 }
 
 const validHours = h => {
@@ -31,13 +28,127 @@ const validHours = h => {
   return h !== '' && Number.isFinite(n) && n >= 0.5 && n <= 12
 }
 
-// Returning players first (last_played_at DESC, never-played last), then name.
-function byRecency(a, b) {
-  const at = a.last_played_at ?? 0
-  const bt = b.last_played_at ?? 0
-  if ((at === 0) !== (bt === 0)) return at === 0 ? 1 : -1
-  if (bt !== at) return bt - at
-  return a.name.localeCompare(b.name)
+// Alphabetical, case-insensitive. Selection never reorders rows.
+const byName = (a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+const letterOf = name => {
+  const c = name.trim().charAt(0).toLocaleUpperCase()
+  return /\p{L}/u.test(c) ? c : '#'
+}
+
+function CheckBox({ on }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        'flex size-4 shrink-0 items-center justify-center rounded border text-2xs leading-none',
+        on ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background'
+      )}
+    >
+      {on ? '✓' : ''}
+    </span>
+  )
+}
+
+// One pool row. Single click toggles after a short delay so a double-click
+// (inline edit) can cancel it and never double-toggles.
+function PoolRow({ p, on, onToggle, onEdit }) {
+  const timer = useRef(null)
+  useEffect(() => () => clearTimeout(timer.current), [])
+  const tip = p.games_total > 0 ? `${p.name} — played ${p.games_total}×` : `${p.name} — new`
+  return (
+    <div
+      data-testid="player-pool"
+      role="checkbox"
+      aria-checked={on}
+      aria-label={p.name}
+      tabIndex={0}
+      title={tip}
+      onClick={() => {
+        clearTimeout(timer.current)
+        timer.current = setTimeout(onToggle, CLICK_DELAY)
+      }}
+      onDoubleClick={() => {
+        clearTimeout(timer.current)
+        onEdit()
+      }}
+      onKeyDown={e => {
+        if (e.target !== e.currentTarget) return
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle() }
+      }}
+      className={cn(
+        'group flex h-8 cursor-pointer select-none items-center gap-2 rounded-md px-2 text-xs outline-none',
+        'hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring',
+        on && 'bg-primary/10'
+      )}
+    >
+      <CheckBox on={on} />
+      <span className={cn('min-w-0 flex-1 truncate', on ? 'font-semibold text-foreground' : 'text-foreground')}>{p.name}</span>
+      <button
+        type="button"
+        aria-label={`Edit ${p.name}`}
+        title="Edit player"
+        className="rounded px-1 text-muted-foreground opacity-0 hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
+        onClick={e => { e.stopPropagation(); clearTimeout(timer.current); onEdit() }}
+        onDoubleClick={e => e.stopPropagation()}
+        onKeyDown={e => e.stopPropagation()}
+      >
+        ✎
+      </button>
+      <SkillChip level={p.skill_level} />
+    </div>
+  )
+}
+
+function EditRow({ p, onSave, onCancel }) {
+  const [name, setName] = useState(p.name)
+  const [skill, setSkill] = useState(p.skill_level)
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
+  const boxRef = useRef(null)
+
+  async function save() {
+    const trimmed = name.trim()
+    if (!trimmed) { setError('Name is required'); return }
+    if (trimmed === p.name && skill === p.skill_level) { onCancel(); return }
+    setSaving(true)
+    try {
+      await onSave(p.id, { name: trimmed, skill_level: skill })
+    } catch (err) {
+      setError(err?.data?.error ?? 'Could not save player')
+      setSaving(false)
+      boxRef.current?.querySelector('input')?.focus() // disabled Save dropped focus; keep Esc/Enter working
+    }
+  }
+  const keys = e => {
+    if (e.key === 'Enter') { e.preventDefault(); save() }
+    else if (e.key === 'Escape') { e.preventDefault(); onCancel() }
+  }
+  return (
+    <div ref={boxRef} data-testid="player-pool" role="group" aria-label={`Editing ${p.name}`} onKeyDown={e => { if (e.key === 'Escape') { e.preventDefault(); onCancel() } }} className="flex flex-col gap-1 rounded-md border border-border bg-muted/40 p-1.5">
+      <div className="flex items-center gap-1.5">
+        <Input
+          autoFocus
+          aria-label="Player name"
+          className="h-7 flex-1 text-xs"
+          value={name}
+          onChange={e => { setName(e.target.value); setError('') }}
+          onKeyDown={keys}
+        />
+        <select
+          aria-label="Player skill"
+          className="h-7 rounded border border-border bg-background px-1 text-xs text-foreground"
+          value={skill}
+          onChange={e => setSkill(e.target.value)}
+          onKeyDown={keys}
+        >
+          {SKILL_TIERS.map(s => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
+        </select>
+        <Button type="button" size="xs" aria-label="Save player" disabled={saving} onClick={save}>✓</Button>
+        <Button type="button" size="xs" variant="outline" aria-label="Cancel edit" onClick={onCancel}>✕</Button>
+      </div>
+      {error && <span role="alert" data-testid="player-edit-error" className="text-2xs text-destructive">{error}</span>}
+    </div>
+  )
 }
 
 const syncCourts = (prev, n) => {
@@ -54,7 +165,7 @@ const syncCourts = (prev, n) => {
  */
 export default function SetupScreen({ draft }) {
   const toast = useToast()
-  const [name, setName] = useState(() => `Session ${todayStr()}`)
+  const [name, setName] = useState(fmtSessionName)
   const [startTime, setStartTime] = useState(defaultStartTime)
   const [courtCount, setCourtCount] = useState('2')
   const [courts, setCourts] = useState(() => syncCourts([], 2))
@@ -64,6 +175,7 @@ export default function SetupScreen({ draft }) {
   const [picked, setPicked] = useState([]) // selected player ids, click order = check-in order
   const [tierFilter, setTierFilter] = useState('') // '' = all tiers
   const [starting, setStarting] = useState(false)
+  const [editingId, setEditingId] = useState(null)
 
   function loadPlayers() {
     setLoading(true)
@@ -83,7 +195,7 @@ export default function SetupScreen({ draft }) {
   }
   const patchCourt = (i, patch) => setCourts(prev => prev.map((c, idx) => (idx === i ? { ...c, ...patch } : c)))
 
-  const pool = useMemo(() => [...players].sort(byRecency), [players])
+  const pool = useMemo(() => [...players].sort(byName), [players])
   const visiblePool = tierFilter ? pool.filter(p => p.skill_level === tierFilter) : pool
   // Selected ids can outlive their pool entry (e.g. player list refreshed) — count only live ones
   const activePicked = picked.filter(id => players.some(p => p.id === id))
@@ -95,6 +207,22 @@ export default function SetupScreen({ draft }) {
     if (ids.length === 0) return
     const all = ids.every(id => picked.includes(id))
     setPicked(prev => (all ? prev.filter(id => !ids.includes(id)) : [...new Set([...prev, ...ids])]))
+  }
+
+  const groups = useMemo(() => {
+    const out = []
+    for (const p of visiblePool) {
+      const l = letterOf(p.name)
+      if (out.length && out[out.length - 1].letter === l) out[out.length - 1].items.push(p)
+      else out.push({ letter: l, items: [p] })
+    }
+    return out
+  }, [visiblePool])
+
+  async function savePlayer(id, patch) {
+    const { player } = await updatePlayer(id, patch)
+    setPlayers(prev => prev.map(p => (p.id === id ? { ...p, ...player } : p)))
+    setEditingId(null)
   }
 
   const hoursOk = courts.every(c => validHours(c.hours))
@@ -114,7 +242,7 @@ export default function SetupScreen({ draft }) {
       const scheduledStart = Math.floor(startDate.getTime() / 1000)
       const maxHours = Math.max(...courts.map(c => Number(c.hours)))
       const { session } = await createSession({
-        name: name.trim() || `Session ${todayStr()}`,
+        name: name.trim() || fmtSessionName(),
         scheduled_start: scheduledStart,
         scheduled_end: scheduledStart + Math.round(maxHours * 3600),
         court_count: courts.length,
@@ -163,7 +291,14 @@ export default function SetupScreen({ draft }) {
               <div className="flex gap-3">
                 <div className="flex flex-1 flex-col gap-1.5">
                   <Label htmlFor="setup-start">Start time</Label>
-                  <Input id="setup-start" type="time" className={fieldCls} value={startTime} onChange={e => setStartTime(e.target.value)} required />
+                  <select
+                    id="setup-start"
+                    className="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground"
+                    value={startTime}
+                    onChange={e => setStartTime(e.target.value)}
+                  >
+                    {START_HOURS.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
                 </div>
                 <div className="flex flex-1 flex-col gap-1.5">
                   <Label htmlFor="setup-courts">Number of courts</Label>
@@ -274,22 +409,23 @@ export default function SetupScreen({ draft }) {
                 {!loading && !fetchError && pool.length > 0 && visiblePool.length === 0 && (
                   <span className="text-xs text-muted-foreground">No players in this tier.</span>
                 )}
-                {/* History sublabel: returning players show games played, rookies show "new" */}
-                <div className="flex max-h-60 flex-wrap gap-2 overflow-y-auto pr-1" data-testid="player-pool">
-                  {visiblePool.map(p => (
-                    <Button
-                      key={p.id}
-                      variant={picked.includes(p.id) ? 'default' : 'outline'}
-                      size="xs"
-                      aria-pressed={picked.includes(p.id)}
-                      onClick={() => togglePick(p.id)}
-                    >
-                      {p.name}
-                      <SkillChip level={p.skill_level} />
-                      <span className="text-2xs opacity-70">
-                        {p.games_total > 0 ? `played ${p.games_total}×` : 'new'}
-                      </span>
-                    </Button>
+                <div className="max-h-[22rem] overflow-y-auto rounded-md border border-border pr-0.5" data-testid="player-list">
+                  {groups.map(g => (
+                    <div key={g.letter} data-testid="pool-group">
+                      <div
+                        data-testid="pool-letter"
+                        className="sticky top-0 z-10 border-b border-border bg-muted px-2 py-0.5 text-2xs font-bold uppercase tracking-wider text-muted-foreground"
+                      >
+                        {g.letter}
+                      </div>
+                      {g.items.map(p =>
+                        editingId === p.id ? (
+                          <EditRow key={p.id} p={p} onSave={savePlayer} onCancel={() => setEditingId(null)} />
+                        ) : (
+                          <PoolRow key={p.id} p={p} on={picked.includes(p.id)} onToggle={() => togglePick(p.id)} onEdit={() => setEditingId(p.id)} />
+                        )
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>

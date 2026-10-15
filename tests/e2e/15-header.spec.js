@@ -15,7 +15,7 @@ test('15.1 session name in header', async ({ page }) => {
 })
 
 test('15.2 scheduled time range shown', async ({ page }) => {
-  await createSession(page, { name: 'Header Test', startTime: '19:30', hours: 2 })
+  await createSession(page, { name: 'Header Test', startTime: '19:00', hours: 2 })
   await checkinPlayers(page, ['Inter C1', 'Inter C2'])
   await startSession(page)
   // Time range format: HH:MM–HH:MM (scoped to header to avoid SetupScreen duplicate)

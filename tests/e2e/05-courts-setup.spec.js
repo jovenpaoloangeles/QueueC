@@ -51,12 +51,12 @@ test('5.6 hours input is a 0.5-step number between 0.5 and 12', async ({ page })
 })
 
 test('5.7 chosen start time becomes the session scheduled start', async ({ page }) => {
-  await page.getByLabel('Start time').fill('20:30')
+  await page.getByLabel('Start time').selectOption('20:00')
   await checkinPlayers(page, ['Inter C1', 'Inter C2'])
   await startSession(page)
   const { session } = await liveState(page)
   const d = new Date(session.scheduled_start * 1000)
-  expect([d.getHours(), d.getMinutes()]).toEqual([20, 30])
+  expect([d.getHours(), d.getMinutes()]).toEqual([20, 0])
   expect(session.scheduled_end - session.scheduled_start).toBe(2 * 3600)
 })
 

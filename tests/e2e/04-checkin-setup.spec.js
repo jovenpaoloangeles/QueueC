@@ -1,6 +1,6 @@
 // tests/e2e/04-checkin-setup.spec.js
 import { test, expect } from '../fixtures.js'
-import { base, liveState, createSession, checkinPlayers, startSession } from '../helpers.js'
+import { poolRow, base, liveState, createSession, checkinPlayers, startSession } from '../helpers.js'
 
 test.beforeEach(async ({ page }) => {
   const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
@@ -9,20 +9,20 @@ test.beforeEach(async ({ page }) => {
 })
 
 test('4.1 all 22 fixture players appear in pool', async ({ page }) => {
-  const chips = page.locator('[data-testid="player-pool"] button')
+  const chips = page.getByTestId('player-pool')
   await expect(chips).toHaveCount(22)
 })
 
-test('4.2 chip shows name and skill badge', async ({ page }) => {
-  const chip = page.getByRole('button', { name: /Inter C1/ })
+test('4.2 row shows name and skill badge', async ({ page }) => {
+  const chip = poolRow(page, 'Inter C1')
   await expect(chip).toBeVisible()
   await expect(chip.locator('text=intermediate')).toBeVisible()
 })
 
 test('4.3 clicking a chip selects it (nothing is checked in yet)', async ({ page }) => {
-  const chip = page.getByRole('button', { name: 'Inter C1', exact: false }).first()
+  const chip = poolRow(page, 'Inter C1')
   await chip.click()
-  await expect(chip).toHaveAttribute('aria-pressed', 'true')
+  await expect(chip).toHaveAttribute('aria-checked', 'true')
   await expect(page.getByTestId('selected-count')).toHaveText('1 selected')
   const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
   expect(session).toBeNull()
@@ -35,9 +35,9 @@ test('4.4 selected counter updates', async ({ page }) => {
 
 test('4.5 selected player stays in the pool, shown as pressed', async ({ page }) => {
   await checkinPlayers(page, ['Inter C1'])
-  const poolBtn = page.getByTestId('player-pool').getByRole('button', { name: 'Inter C1', exact: false })
+  const poolBtn = poolRow(page, 'Inter C1')
   await expect(poolBtn).toHaveCount(1)
-  await expect(poolBtn).toHaveAttribute('aria-pressed', 'true')
+  await expect(poolBtn).toHaveAttribute('aria-checked', 'true')
 })
 
 test('4.6 8 selected players — all in live queue, in selection order', async ({ page }) => {
@@ -63,11 +63,11 @@ test('4.8 players visible in live queue after start', async ({ page }) => {
 })
 
 test('4.9 chip click toggles selection on/off', async ({ page }) => {
-  const chip = page.getByRole('button', { name: 'Inter C1', exact: false }).first()
+  const chip = poolRow(page, 'Inter C1')
   await chip.click()
-  await expect(chip).toHaveAttribute('aria-pressed', 'true')
+  await expect(chip).toHaveAttribute('aria-checked', 'true')
   await chip.click()
-  await expect(chip).toHaveAttribute('aria-pressed', 'false')
+  await expect(chip).toHaveAttribute('aria-checked', 'false')
   await expect(page.getByTestId('selected-count')).toHaveText('0 selected')
   await expect(page.getByTestId('start-session')).toBeDisabled()
 })

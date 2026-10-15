@@ -20,6 +20,14 @@ export function fmtMins(s) {
   return `${Math.floor(Math.max(0, s ?? 0) / 60)}m`
 }
 
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+/** Default session name: `ASTIRISK (15-Oct-2026)` — locale-independent. */
+export function fmtSessionName(date = new Date()) {
+  const dd = String(date.getDate()).padStart(2, '0')
+  return `ASTIRISK (${dd}-${MONTHS[date.getMonth()]}-${date.getFullYear()})`
+}
+
 // 7-Tier Skill Taxonomy (plus legacy 'advanced' alias)
 export const SKILL_TIERS = [
   'newbie',

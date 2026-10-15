@@ -1,3 +1,4 @@
+import { expect } from '@playwright/test'
 export const base = () => process.env.QC_BASE
 
 const DEFAULT_PLAYERS = [
@@ -7,13 +8,13 @@ const DEFAULT_PLAYERS = [
 
 /** Fill the single-screen setup (no server state yet). `courts` = count or
  *  [{label, hours}] rows; `hours` applies to every court when courts is a count;
- *  `startTime` = 'HH:MM' (left at the screen's default when omitted). */
+ *  `startTime` = 'HH:00' (whole hours 06:00–23:00) (left at the screen's default when omitted). */
 export async function createSession(page, { name = 'Test Session', courts = 2, hours, startTime } = {}) {
   await page.goto('/')
   await page.getByLabel('Session name').fill(name)
   const rows = Array.isArray(courts) ? courts : null
   await page.getByLabel('Number of courts').fill(String(rows ? rows.length : courts))
-  if (startTime) await page.getByLabel('Start time').fill(startTime)
+  if (startTime) await page.getByLabel('Start time').selectOption(startTime)
   if (rows) {
     for (const [i, r] of rows.entries()) {
       if (r.label != null) await page.getByLabel(`Court ${i + 1} label`).fill(r.label)
@@ -25,13 +26,14 @@ export async function createSession(page, { name = 'Test Session', courts = 2, h
 }
 
 export async function checkinPlayers(page, names = DEFAULT_PLAYERS) {
-  // Setup screen: clicking a pool chip toggles it into the selection; the
-  // session check-in happens on Start Session.
+  // Setup screen: clicking a pool row toggles it into the selection (the click
+  // is debounced ~220ms to tell it from a dblclick); check-in happens on Start.
   for (const name of names) {
-    const btn = page.getByTestId('player-pool').getByRole('button', { name, exact: false }).first()
-    // center the button — minimal scroll leaves lower rows under the sticky header
-    await btn.evaluate(el => el.scrollIntoView({ block: 'center' }))
-    await btn.click()
+    const row = page.getByTestId('player-pool').filter({ has: page.getByText(name, { exact: true }) }).first()
+    // center the row — minimal scroll leaves lower rows under the sticky letter header
+    await row.evaluate(el => el.scrollIntoView({ block: 'center' }))
+    await row.click()
+    await expect(row).toHaveAttribute('aria-checked', 'true')
   }
 }
 
@@ -107,4 +109,9 @@ export function liveState(page) {
     const es = new EventSource('/api/sse')
     es.addEventListener('state', e => { es.close(); res(JSON.parse(e.data)) })
   }))
+}
+
+/** Pool row (setup screen) by exact player name. */
+export function poolRow(page, name) {
+  return page.getByTestId('player-pool').filter({ has: page.getByText(name, { exact: true }) }).first()
 }
