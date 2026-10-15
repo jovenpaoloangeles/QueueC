@@ -49,13 +49,13 @@ test('13.5 avg wait shows a time string after first match ends', async ({ page }
 })
 
 test('13.6 leaderboard empty before any match ends', async ({ page }) => {
-  await expect(page.locator('text=Wins Today')).toHaveCount(0)
+  await expect(page.getByTestId('leaderboard-row')).toHaveCount(0)
 })
 
 test('13.7 winner of first match appears in leaderboard with 1 win', async ({ page }) => {
   await startDoubles(page)
   await endMatch(page, 'Court', { team1: 21, team2: 15 })
-  await expect(page.locator('text=Wins Today')).toBeVisible()
+  await expect(page.getByTestId('leaderboard-table')).toBeVisible()
   await expect(page.locator('text=1W')).toHaveCount(2) // both winning players
 })
 
@@ -72,7 +72,7 @@ test('13.8 player with most wins ranks first', async ({ page }) => {
   await endMatch(page, 'Court', { team1: 21, team2: 15 })
   // double winners (2W) rank first — exact text so parent rows don't also match
   await expect(page.getByRole('complementary').getByText('2W', { exact: true })).toHaveCount(2)
-  const first = await page.locator('span', { hasText: /^\d+\. / }).first().innerText()
+  const first = await page.getByTestId('leaderboard-name').first().innerText()
   expect(first).toMatch(/Inter C[12]/)
 })
 

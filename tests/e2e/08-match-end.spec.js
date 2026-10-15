@@ -90,11 +90,10 @@ test('8.9 total_seconds_played reflected as X min played', async ({ page }) => {
 
 test('8.12 team 1 win — winning players gain leaderboard wins', async ({ page }) => {
   await endMatch(page, 'Court', { team1: 21, team2: 15 })
-  await expect(page.getByText('Wins', { exact: true }).locator('..').locator('[class*="font-mono"]')).toHaveText('1')
   await expect(page.locator('text=1W')).toHaveCount(2) // both winners show 1W
 })
 
 test('8.13 tie score — no leaderboard wins recorded', async ({ page }) => {
   await endMatch(page, 'Court', { team1: 15, team2: 15 })
-  await expect(page.getByText('Wins', { exact: true }).locator('..').locator('[class*="font-mono"]')).toHaveText('0')
+  await expect(page.getByRole('complementary').getByText(/^[1-9]\d*W$/)).toHaveCount(0)
 })
