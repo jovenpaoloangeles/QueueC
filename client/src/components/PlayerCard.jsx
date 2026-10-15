@@ -121,7 +121,9 @@ export default function PlayerCard({ entry, waitSecs, selectionIndex, playSecs, 
           )}
         </div>
       </div>
-      <div className="flex items-center gap-x-1.5 overflow-hidden whitespace-nowrap text-2xs text-muted-foreground">
+      {/* wraps to a second meta line only on narrow cards — clipping silently
+          hides "Xm played" otherwise */}
+      <div className="flex flex-wrap items-center gap-x-1.5 text-2xs text-muted-foreground">
         <Badge variant="outline" className={cn('font-mono tabular-nums text-2xs border', statusClass)} data-testid="status-timer-badge">
           {isPlaying ? '🟢' : (highPriority ? '🔴' : '🟡')} {fmtClock(statusSeconds)} {statusLabel}
         </Badge>
@@ -136,9 +138,11 @@ export default function PlayerCard({ entry, waitSecs, selectionIndex, playSecs, 
         <span className="shrink-0">
           <span className="font-semibold text-foreground">{gamesPlayed}</span> games
         </span>
-        <span data-testid="avg-rating" className={cn('shrink-0', avgRating != null ? 'font-semibold text-amber-500' : 'text-muted-foreground/60')}>
-          {avgRating != null ? `★ ${avgRating}` : null}
-        </span>
+        {avgRating != null && (
+          <span data-testid="avg-rating" className="shrink-0 font-semibold text-amber-500">
+            ★ {avgRating}
+          </span>
+        )}
         <span className="truncate">{fmtMins(entry.total_seconds_played ?? 0)} played</span>
       </div>
     </div>
