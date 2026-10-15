@@ -3,9 +3,11 @@ import { cn, fmtDur, fmtClock, netWait } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { toggleTheme } from '@/lib/theme'
+import EndSessionConfirmDialog from './EndSessionConfirmDialog.jsx'
 
 export default function Header({ session, sseData, draftedIds = new Set(), onSmartMatch, onAddPlayer, onNewSession, onEndSession }) {
   const [elapsed, setElapsed] = useState(0)
+  const [confirmEnd, setConfirmEnd] = useState(false)
 
   useEffect(() => {
     if (!session || session.started_at == null) return
@@ -155,9 +157,19 @@ export default function Header({ session, sseData, draftedIds = new Set(), onSma
           ☾
         </Button>
         {session && onEndSession && (
-          <Button size="sm" variant="destructive" onClick={onEndSession}>
-            End Session
-          </Button>
+          <>
+            <Button size="sm" variant="destructive" onClick={() => setConfirmEnd(true)}>
+              End Session
+            </Button>
+            <EndSessionConfirmDialog
+              open={confirmEnd}
+              onOpenChange={setConfirmEnd}
+              onConfirm={() => {
+                setConfirmEnd(false)
+                onEndSession?.()
+              }}
+            />
+          </>
         )}
       </div>
     </div>

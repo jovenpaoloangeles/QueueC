@@ -62,9 +62,32 @@ test('18.6 end session with active match — match preserved in DB', async ({ pa
   await startDoubles(page)
   const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
   await page.getByRole('button', { name: 'End Session' }).click()
+  await page.getByTestId('end-session-confirm').click() // pass the confirm gate
   await expect(page.locator('text=No active session')).toBeVisible()
   const rows = execSync(
     `sqlite3 ${server.dbPath} "SELECT COUNT(*) FROM matches WHERE session_id = ${session.id} AND ended_at IS NULL"`
   ).toString().trim()
   expect(rows).toBe('1')
+})
+
+test('18.7 End Session requires confirmation — cancel keeps session live', async ({ page }) => {
+  await fullSetup(page)
+  await expect(page.locator('text=Queue ·')).toBeVisible()
+
+  await page.getByRole('button', { name: 'End Session' }).click()
+
+  // confirm dialog must appear — session NOT ended yet
+  const dialog = page.getByTestId('end-session-confirm-dialog')
+  await expect(dialog).toBeVisible()
+  await expect(page.getByTestId('end-session-cancel')).toBeVisible()
+  await expect(page.getByTestId('end-session-confirm')).toBeVisible()
+  await expect(page.locator('text=No active session')).toHaveCount(0)
+
+  // cancel → session stays live, setup stays hidden, queue still visible
+  await page.getByTestId('end-session-cancel').click()
+  await expect(dialog).toHaveCount(0)
+  await expect(page.getByTestId('session-setup')).toHaveCount(0)
+  await expect(page.locator('text=Queue ·')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'End Session' })).toBeVisible()
+  await expect(page.locator('text=No active session')).toHaveCount(0)
 })

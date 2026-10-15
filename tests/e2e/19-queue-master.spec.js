@@ -87,6 +87,7 @@ test('QM.6 end session with active match — header shows no active session', as
   await startDoublesMatch(page)
 
   await page.getByRole('button', { name: 'End Session' }).click()
+  await page.getByTestId('end-session-confirm').click() // pass the confirm gate
   await page.waitForTimeout(500)
 
   await expect(page.locator('text=No active session')).toBeVisible()
@@ -157,6 +158,7 @@ test('QM.9 full session cycle — create, check-in, start, match, end match, end
   await endMatch(page, 'Court 1')
 
   await page.getByRole('button', { name: 'End Session' }).click()
+  await page.getByTestId('end-session-confirm').click() // pass the confirm gate
   await page.waitForTimeout(500)
   await expect(page.locator('text=No active session')).toBeVisible()
 
