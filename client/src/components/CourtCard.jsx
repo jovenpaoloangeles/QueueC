@@ -4,7 +4,7 @@ import { cn, fmtClock, fmtDur } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { updateMatchTeams, bumpShuttles, extendCourt } from '../api.js'
+import { updateMatchTeams, extendCourt } from '../api.js'
 import { useToast } from '@/components/Toast'
 import EndMatchModal from './EndMatchModal.jsx'
 import ConfirmEndDialog from './ConfirmEndDialog.jsx'
@@ -173,28 +173,6 @@ function SlotsMatrix({ courtId, draft, draftedIds = new Set(), queue, title, onD
   )
 }
 
-/** Shuttle counter stepper (mockup .shuttles). Server clamps both counts at 0. */
-function ShuttleStepper({ testId, label, value, tone, onDelta }) {
-  return (
-    <span className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-2 py-0.5 text-2xs" data-testid={testId}>
-      <b className={cn('font-mono text-xs font-bold tabular-nums', tone)}>{value}</b>
-      <span className="text-muted-foreground">{label}</span>
-      <button
-        type="button"
-        aria-label={`${label} shuttles +`}
-        className="px-0.5 font-bold text-muted-foreground hover:text-foreground"
-        onClick={() => onDelta(1)}
-      >+</button>
-      <button
-        type="button"
-        aria-label={`${label} shuttles −`}
-        className="px-0.5 font-bold text-muted-foreground hover:text-foreground"
-        onClick={() => onDelta(-1)}
-      >−</button>
-    </span>
-  )
-}
-
 export default function CourtCard({
   court, match, queue, playSeconds, serverTime,
   onStartClick, onStartSingles, canStart,
@@ -241,14 +219,6 @@ export default function CourtCard({
       toast('Court extended by 60 min', 'success')
     } catch (err) {
       toast(err?.data?.error ?? 'Could not extend court', 'error')
-    }
-  }
-
-  async function handleShuttle(delta) {
-    try {
-      await bumpShuttles(match.id, { delta_new: delta })
-    } catch (err) {
-      toast(err?.data?.error ?? 'Could not update shuttles', 'error')
     }
   }
 
@@ -323,12 +293,6 @@ export default function CourtCard({
             <div className="flex flex-col gap-1">
               <span className="text-2xs font-bold uppercase tracking-wider text-emerald-600">Team B</span>
               <TeamPanel side={2} entryIds={[match.team2_p1, match.team2_p2]} queue={queue} matchId={match.id} match={match} />
-            </div>
-          </div>
-          <div className="flex items-center justify-between rounded-lg border border-border bg-muted px-2.5 py-1.5 text-2xs">
-            <span className="font-semibold uppercase tracking-wider text-muted-foreground">🏸 Shuttles</span>
-            <div className="flex gap-1.5">
-              <ShuttleStepper testId="shuttle-new" label="New" value={match.new_shuttles ?? 0} tone="text-green-600" onDelta={d => handleShuttle(d)} />
             </div>
           </div>
         </CardContent>
