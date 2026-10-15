@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { drag, valid } from '@/lib/dnd'
 import { cn, titleCaseSkill, SKILL_BADGE, balanceHint, fmtClock } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -164,6 +165,7 @@ export default function OnDeckStrip({
   slatedMatches, queue = [], draftedIds = new Set(), onEditDraftChange = NOOP,
   onBuilderDraftChange = NOOP, onSmartFill = NOOP,
   sessionId, courts = [], activeMatches = [],
+  open = true, height, onToggleOpen = NOOP,
 }) {
   const toast = useToast()
   const [editingId, setEditingId] = useState(null)
@@ -418,38 +420,90 @@ export default function OnDeckStrip({
     </div>
   )
 
+  const collapsedHeader = (
+    <header className="flex min-h-[34px] flex-wrap items-center gap-x-3 gap-y-1">
+      <h2 className="flex items-center gap-2 text-lg font-black uppercase tracking-wide text-primary">
+        ⏭ On Deck
+        <span
+          data-testid="on-deck-count"
+          className="inline-flex min-w-6 items-center justify-center rounded-full bg-primary px-2 py-0.5 text-xs font-extrabold text-primary-foreground"
+        >{rows.length}</span>
+      </h2>
+      <p className="min-w-0 flex-1 text-xs text-muted-foreground">
+        {rows.length ? `${rows.length} lined up · hidden` : 'nothing lined up'}
+      </p>
+      <Button size="sm" variant="outline" data-testid="ondeck-smart-add" disabled={filling} onClick={runSmartFill}>✨ Smart add</Button>
+    </header>
+  )
+
+  const expandedHeader = (
+    <header className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <h2 className="flex items-center gap-2 text-lg font-black uppercase tracking-wide text-primary">
+        ⏭ On Deck
+        <span
+          data-testid="on-deck-count"
+          className="inline-flex min-w-6 items-center justify-center rounded-full bg-primary px-2 py-0.5 text-xs font-extrabold text-primary-foreground"
+        >{rows.length}</span>
+      </h2>
+      <p className="min-w-0 flex-1 text-xs text-muted-foreground">Plays on the next free court · in order</p>
+      <Button size="sm" variant="outline" data-testid="ondeck-smart-add" disabled={filling} onClick={runSmartFill}>✨ Smart add</Button>
+      <Button size="sm" variant={building ? 'secondary' : 'default'} data-testid="ondeck-builder-toggle" onClick={() => setBuilding(b => !b)}>
+        {building ? 'Close builder' : '＋ Build lineup'}
+      </Button>
+    </header>
+  )
+
   return (
     <section
       data-testid="on-deck-strip"
-      className="flex max-h-[36vh] shrink-0 flex-col gap-3 overflow-y-auto rounded-2xl border-2 border-primary/60 bg-primary/5 p-3 shadow-md"
-    >
-      <header className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <h2 className="flex items-center gap-2 text-lg font-black uppercase tracking-wide text-primary">
-          ⏭ On Deck
-          <span
-            data-testid="on-deck-count"
-            className="inline-flex min-w-6 items-center justify-center rounded-full bg-primary px-2 py-0.5 text-xs font-extrabold text-primary-foreground"
-          >{rows.length}</span>
-        </h2>
-        <p className="min-w-0 flex-1 text-xs text-muted-foreground">Plays on the next free court · in order</p>
-        <Button size="sm" variant="outline" data-testid="ondeck-smart-add" disabled={filling} onClick={runSmartFill}>✨ Smart add</Button>
-        <Button size="sm" variant={building ? 'secondary' : 'default'} data-testid="ondeck-builder-toggle" onClick={() => setBuilding(b => !b)}>
-          {building ? 'Close builder' : '＋ Build lineup'}
-        </Button>
-      </header>
-
-      {building && builder}
-
-      {!rows.length && (
-        <div data-testid="on-deck-empty" className="flex flex-wrap items-baseline gap-x-2 rounded-lg border border-dashed border-primary/40 bg-card px-3 py-1.5">
-          <p className="text-sm font-bold">Nothing on deck</p>
-          <p className="text-xs text-muted-foreground">
-            Line up the next match so it starts the moment a court frees up — Smart add or build a lineup.
-          </p>
-        </div>
+      className={cn(
+        'flex shrink-0 flex-col rounded-2xl border-2 border-primary/60 bg-primary/5 shadow-md',
+        open ? 'gap-3 overflow-y-auto p-3' : 'gap-1 overflow-hidden px-3 py-1',
       )}
+      style={open && height != null ? { height } : undefined}
+    >
+      {/* collapse toggle: chevron + aria-expanded, persisted in the layout storage */}
+      <button
+        type="button"
+        data-testid="ondeck-collapse"
+        aria-expanded={open}
+        aria-label={open ? 'Collapse On Deck' : 'Expand On Deck'}
+        onClick={onToggleOpen}
+        className="flex size-6 shrink-0 items-center justify-center rounded text-primary hover:bg-primary/10"
+      >
+        <span
+          aria-hidden="true"
+          className="inline-block transition-transform duration-200"
+          style={{ transform: open ? 'rotate(90deg)' : 'rotate(-90deg)' }}
+        >
+          ▸
+        </span>
+      </button>
+      {open ? expandedHeader : collapsedHeader}
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="ondeck-body"
+            data-testid="ondeck-body"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            className="flex min-h-0 flex-col gap-3 overflow-hidden"
+          >
+            {building && builder}
+
+            {!rows.length && (
+              <div data-testid="on-deck-empty" className="flex flex-wrap items-baseline gap-x-2 rounded-lg border border-dashed border-primary/40 bg-card px-3 py-1.5">
+                <p className="text-sm font-bold">Nothing on deck</p>
+                <p className="text-xs text-muted-foreground">
+                  Line up the next match so it starts the moment a court frees up — Smart add or build a lineup.
+                </p>
+              </div>
+            )}
+
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {rows.map((row, i) => {
           const editing = editingId === row.id
           const pos = i + 1
@@ -549,7 +603,10 @@ export default function OnDeckStrip({
             </div>
           )
         })}
-      </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Cancel-confirm gate: destructive, so the ✕ only arms the dialog.
           Esc/backdrop (onOpenChange false) = abort. One dialog strip-wide. */}
