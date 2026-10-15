@@ -20,6 +20,7 @@ const TABS = [
 export default function QueueGrid({ session, queue, waitSeconds, playSeconds, selection, draftedIds = new Set(), onSelectionChange, onReorder, playersVersion = 0, onPlayersChanged }) {
   const [allPlayers, setAllPlayers] = useState([])
   const [playersLoading, setPlayersLoading] = useState(true)
+  const [playersError, setPlayersError] = useState(false)
   const [showCheckin, setShowCheckin] = useState(false)
   const [order, setOrder] = useState([])
   const [tab, setTab] = useState('all')
@@ -37,11 +38,17 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
     })
   }, [queue])
 
-  useEffect(() => {
+  function loadPlayers() {
+    setPlayersLoading(true)
+    setPlayersError(false)
     getPlayers()
       .then(d => setAllPlayers(d.players))
-      .catch(() => {})
+      .catch(() => setPlayersError(true))
       .finally(() => setPlayersLoading(false))
+  }
+
+  useEffect(() => {
+    loadPlayers()
   }, [playersVersion])
 
   function toggleSelect(entryId) {
@@ -121,6 +128,7 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
           <Button
             variant="ghost"
             size="sm"
+            data-testid="checkin-toggle"
             onClick={() => setShowCheckin(v => !v)}
           >
             + Check In
@@ -165,6 +173,25 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
           {playersLoading ? (
             <div className="flex gap-2">
               <Skeleton className="h-8 w-full" />
+            </div>
+          ) : playersError ? (
+            // pool failed to load — register-new-player still works via
+            // PlayerSearchAdd, but the failure must be visible with a way out
+            <div className="flex flex-col gap-2" data-testid="checkin-error">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Couldn&apos;t load players.</span>
+                <Button variant="outline" size="xs" onClick={loadPlayers}>Retry</Button>
+              </div>
+              <PlayerSearchAdd
+                session={session}
+                queue={queue}
+                players={[]}
+                onPlayersChanged={onPlayersChanged}
+                onCheckedIn={p => toast(`Checked in: ${p.name}`, 'success')}
+                inputTestid="checkin-search"
+                placeholder="Search or add player…"
+                maxMatches={8}
+              />
             </div>
           ) : (
             <PlayerSearchAdd

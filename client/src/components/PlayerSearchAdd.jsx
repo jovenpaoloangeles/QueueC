@@ -41,9 +41,10 @@ export default function PlayerSearchAdd({ session, queue = [], players, onPlayer
   const exactPoolMatch = normQuery
     ? pool.find(p => p.name.trim().toLowerCase() === normQuery)
     : null
-  const matchingPool = normQuery
-    ? pool.filter(p => p.name.toLowerCase().includes(normQuery)).slice(0, maxMatches)
-    : []
+  // count from the full pool, render only the first maxMatches — the label
+  // must not lie when matches exceed the cap
+  const matchingAll = normQuery ? pool.filter(p => p.name.toLowerCase().includes(normQuery)) : []
+  const matchingPool = matchingAll.slice(0, maxMatches)
 
   async function handleQuickCheckIn(playerId) {
     if (pre) {
@@ -109,7 +110,7 @@ export default function PlayerSearchAdd({ session, queue = [], players, onPlayer
           {matchingPool.length > 0 && (
             <div className="flex flex-col gap-1" data-testid="combobox-matches">
               <span className="text-2xs uppercase tracking-wider text-muted-foreground">
-                {pre ? '1-Click Select' : '1-Click Check-In'} ({matchingPool.length})
+                {pre ? '1-Click Select' : '1-Click Check-In'} ({matchingAll.length})
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {matchingPool.map(p => {

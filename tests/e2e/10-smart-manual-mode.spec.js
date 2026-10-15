@@ -46,7 +46,7 @@ test('10.4 no Manual/Smart mode buttons exist in the queue header', async ({ pag
   await expect(page.getByRole('button', { name: 'Manual' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: '● Smart' })).toHaveCount(0)
   // the queue header keeps only + Check In
-  await expect(page.getByRole('button', { name: '+ Check In' })).toHaveCount(1)
+  await expect(page.getByTestId('checkin-toggle')).toHaveCount(1)
 })
 
 test('10.5 header Smart Match still opens its confirm dialog; Cancel changes nothing', async ({ page }) => {

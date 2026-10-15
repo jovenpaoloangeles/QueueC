@@ -71,7 +71,7 @@ test('9.2 SSE tick does not reset manual reorder', async ({ page }) => {
 })
 
 test('9.3 newly checked-in player appended to end of order', async ({ page }) => {
-  await page.getByRole('button', { name: /Check In/i }).click()
+  await page.getByTestId('checkin-toggle').click()
   await page.getByTestId('checkin-search').fill('Newbie A1')
   await page.getByTestId('combobox-matches').getByRole('button', { name: 'Newbie A1' }).click()
   await page.waitForTimeout(400)

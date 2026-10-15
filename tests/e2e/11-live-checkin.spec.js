@@ -12,11 +12,11 @@ test.beforeEach(async ({ page }) => {
 })
 
 test('11.1 "+ Check In" button visible', async ({ page }) => {
-  await expect(page.getByRole('button', { name: '+ Check In' })).toBeVisible()
+  await expect(page.getByTestId('checkin-toggle')).toBeVisible()
 })
 
 test('11.2 open panel lists nothing until a query is typed', async ({ page }) => {
-  await page.getByRole('button', { name: '+ Check In' }).click()
+  await page.getByTestId('checkin-toggle').click()
   // empty query: hint only — no full registered-player dump
   await expect(page.getByTestId('checkin-search')).toBeVisible()
   await expect(page.getByTestId('checkin-hint')).toHaveText('Type to search registered players')
@@ -28,14 +28,14 @@ test('11.3 checking in appends to queue end', async ({ page }) => {
   // Wait for queue entries to render before snapshotting count
   await page.locator('[data-entry-id]').first().waitFor()
   const beforeCount = await page.locator('[data-entry-id]').count()
-  await page.getByRole('button', { name: '+ Check In' }).click()
+  await page.getByTestId('checkin-toggle').click()
   await page.getByTestId('checkin-search').fill('Expert E1')
   await page.getByTestId('combobox-matches').getByRole('button', { name: 'Expert E1' }).click()
   await expect(page.locator('[data-entry-id]')).toHaveCount(beforeCount + 1)
 })
 
 test('11.4 search clears after check-in, panel stays open for multi-add', async ({ page }) => {
-  await page.getByRole('button', { name: '+ Check In' }).click()
+  await page.getByTestId('checkin-toggle').click()
   const search = page.getByTestId('checkin-search')
   await search.fill('Expert E1')
   await page.getByTestId('combobox-matches').getByRole('button', { name: 'Expert E1' }).click()
@@ -47,7 +47,7 @@ test('11.4 search clears after check-in, panel stays open for multi-add', async 
 })
 
 test('11.5 checked-in player absent from matches', async ({ page }) => {
-  await page.getByRole('button', { name: '+ Check In' }).click()
+  await page.getByTestId('checkin-toggle').click()
   await page.getByTestId('checkin-search').fill('Expert')
   await page.getByTestId('combobox-matches').getByRole('button', { name: 'Expert E1' }).click()
   await expect(page.locator('[data-entry-id]')).toHaveCount(5)
