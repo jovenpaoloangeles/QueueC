@@ -8,14 +8,13 @@ export default function StatsSidebar({ stats }) {
     { label: 'Matches', value: stats?.match_count ?? 0 },
     { label: 'Avg Wait', value: fmtClock(stats?.avg_wait_seconds) },
     { label: 'New Shuttles', value: stats?.shuttles?.new ?? 0 },
-    { label: 'Used Shuttles', value: stats?.shuttles?.used ?? 0 },
   ]
 
   return (
     <div className="flex flex-col gap-6 px-4 py-5">
       <div className="grid grid-cols-2 gap-3">
-        {tiles.map((s, i) => (
-          <div key={s.label} className={cn(i === tiles.length - 1 && tiles.length % 2 === 1 && 'col-span-2', "rounded-lg border border-border bg-muted/40 px-3 py-3")}>
+        {tiles.map(s => (
+          <div key={s.label} className="rounded-lg border border-border bg-muted/40 px-3 py-3">
             <div className="text-2xs font-medium uppercase tracking-wider text-muted-foreground">{s.label}</div>
             <div className="mt-1 font-mono text-xl tabular-nums text-foreground">{s.value}</div>
           </div>

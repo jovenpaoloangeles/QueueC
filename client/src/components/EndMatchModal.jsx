@@ -12,7 +12,6 @@ export default function EndMatchModal({ match, onClose }) {
   const [scores, setScores] = useState({ team1: match.team1_score ?? 0, team2: match.team2_score ?? 0 })
   const [shuttles, setShuttles] = useState({
     newShuttles: match.new_shuttles ?? 0,
-    usedShuttles: match.used_shuttles ?? 0,
   })
   const [rating, setRating] = useState(5)
   const [loading, setLoading] = useState(false)
@@ -34,7 +33,6 @@ export default function EndMatchModal({ match, onClose }) {
         team1_score: toInt(scores.team1, 99),
         team2_score: toInt(scores.team2, 99),
         new_shuttles: toInt(shuttles.newShuttles, 999),
-        used_shuttles: toInt(shuttles.usedShuttles, 999),
         rating: toInt(rating, 5),
       })
       onClose()
@@ -85,30 +83,17 @@ export default function EndMatchModal({ match, onClose }) {
 
           <FieldGroup>
             <FieldLabel className="text-2xs uppercase tracking-wider text-muted-foreground">Shuttle Usage</FieldLabel>
-            <div className="flex gap-3">
-              <Field className="flex-1">
-                <FieldLabel htmlFor="end-match-new" className="text-2xs text-muted-foreground">New Shuttles</FieldLabel>
-                <Input
-                  id="end-match-new"
-                  data-testid="final-new"
-                  type="number" min="0"
-                  value={shuttles.newShuttles}
-                  onChange={e => setShuttles(s => ({...s, newShuttles: e.target.value}))}
-                  className="h-9 font-mono tabular-nums"
-                />
-              </Field>
-              <Field className="flex-1">
-                <FieldLabel htmlFor="end-match-used" className="text-2xs text-muted-foreground">Used Shuttles</FieldLabel>
-                <Input
-                  id="end-match-used"
-                  data-testid="final-used"
-                  type="number" min="0"
-                  value={shuttles.usedShuttles}
-                  onChange={e => setShuttles(s => ({...s, usedShuttles: e.target.value}))}
-                  className="h-9 font-mono tabular-nums"
-                />
-              </Field>
-            </div>
+            <Field className="flex-1">
+              <FieldLabel htmlFor="end-match-new" className="text-2xs text-muted-foreground">New Shuttles</FieldLabel>
+              <Input
+                id="end-match-new"
+                data-testid="final-new"
+                type="number" min="0"
+                value={shuttles.newShuttles}
+                onChange={e => setShuttles(s => ({...s, newShuttles: e.target.value}))}
+                className="h-9 font-mono tabular-nums"
+              />
+            </Field>
           </FieldGroup>
 
           <FieldGroup>

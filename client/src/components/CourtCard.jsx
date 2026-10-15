@@ -244,10 +244,9 @@ export default function CourtCard({
     }
   }
 
-  async function handleShuttle(kind, delta) {
-    const d = kind === 'new' ? { delta_new: delta, delta_used: 0 } : { delta_new: 0, delta_used: delta }
+  async function handleShuttle(delta) {
     try {
-      await bumpShuttles(match.id, d)
+      await bumpShuttles(match.id, { delta_new: delta })
     } catch (err) {
       toast(err?.data?.error ?? 'Could not update shuttles', 'error')
     }
@@ -332,8 +331,7 @@ export default function CourtCard({
           <div className="flex items-center justify-between rounded-lg border border-border bg-muted px-2.5 py-1.5 text-2xs">
             <span className="font-semibold uppercase tracking-wider text-muted-foreground">🏸 Shuttles</span>
             <div className="flex gap-1.5">
-              <ShuttleStepper testId="shuttle-new" label="New" value={match.new_shuttles ?? 0} tone="text-green-600" onDelta={d => handleShuttle('new', d)} />
-              <ShuttleStepper testId="shuttle-used" label="Used" value={match.used_shuttles ?? 0} tone="text-amber-600" onDelta={d => handleShuttle('used', d)} />
+              <ShuttleStepper testId="shuttle-new" label="New" value={match.new_shuttles ?? 0} tone="text-green-600" onDelta={d => handleShuttle(d)} />
             </div>
           </div>
         </CardContent>
