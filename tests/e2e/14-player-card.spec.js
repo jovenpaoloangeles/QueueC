@@ -25,6 +25,41 @@ test('14.2 wait timer increments each second', async ({ page }) => {
   expect(t1).not.toEqual(t2)
 })
 
+test('14.5 wait timer never goes backwards across broadcasts', async ({ page }) => {
+  // MutationObserver sees every DOM commit (not just painted frames), so a
+  // wait value that regresses is caught deterministically. Two broadcasts are
+  // fired mid-window — each one re-delivers serverTime while the local
+  // extrapolation is mid-second.
+  const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
+  const { courts } = await (await page.request.get(`${base()}/api/sessions/${session.id}/courts`)).json()
+
+  const regressionsPromise = page.evaluate(() => new Promise(resolve => {
+    const last = new Map()
+    const events = []
+    const scan = () => {
+      document.querySelectorAll('[data-testid="status-timer-badge"]').forEach((el, i) => {
+        const m = el.textContent.match(/(\d+):(\d\d)/)
+        if (!m) return
+        const s = Number(m[1]) * 60 + Number(m[2])
+        const prev = last.get(i)
+        if (prev != null && s < prev) events.push({ i, prev, s })
+        last.set(i, s)
+      })
+    }
+    const obs = new MutationObserver(scan)
+    obs.observe(document.body, { childList: true, subtree: true, characterData: true })
+    setTimeout(() => { obs.disconnect(); resolve(events) }, 4000)
+  }))
+
+  // no-op court PATCH (same label) → server broadcasts state
+  await page.waitForTimeout(1200)
+  await page.request.patch(`${base()}/api/courts/${courts[0].id}`, { data: { label: courts[0].label } })
+  await page.waitForTimeout(1200)
+  await page.request.patch(`${base()}/api/courts/${courts[0].id}`, { data: { label: courts[0].label } })
+
+  expect(await regressionsPromise).toEqual([])
+})
+
 test('14.4 selection badge shows 1-based index', async ({ page }) => {
   for (let i = 0; i < 3; i++) await page.locator('[data-entry-id]').nth(i).click()
   await expect(page.locator('[class*="rounded-full"][class*="bg-primary"]').locator('text=3')).toBeVisible()
