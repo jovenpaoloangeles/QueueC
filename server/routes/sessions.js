@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import db from '../db.js'
+import db, { resetPlayersToPreset } from '../db.js'
 import { broadcast } from './sse.js'
 
 const router = new Hono()
@@ -66,6 +66,7 @@ router.patch('/:id/end', (c) => {
   const id = c.req.param('id')
   const now = Math.floor(Date.now() / 1000)
   db.prepare('UPDATE sessions SET ended_at = ? WHERE id = ?').run(now, id)
+  resetPlayersToPreset()
   const session = db.prepare('SELECT * FROM sessions WHERE id = ?').get(id)
   broadcast()
   return c.json({ session })

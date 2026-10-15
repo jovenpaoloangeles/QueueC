@@ -293,11 +293,39 @@ const dbDir = dirname(dbPath)
 const presetPath = process.env.PLAYERS_PATH
   ?? (existsSync(`${dbDir}/players.json`) ? `${dbDir}/players.json` : join(__dirname, '../players.json'))
 
-if (existsSync(presetPath)) {
+function loadPresetRows() {
+  if (!existsSync(presetPath)) return null
   try {
     const rows = JSON.parse(readFileSync(presetPath, 'utf8'))
-    if (Array.isArray(rows)) seedPlayersFromFile(rows)
-  } catch {}
+    return Array.isArray(rows) ? rows : null
+  } catch {
+    return null
+  }
 }
+
+// Reset the pool to the preset: drop everyone not in the file, resync preset
+// skills, re-add any missing preset players. Missing/unparseable file = no-op.
+export function resetPlayersToPreset() {
+  const rows = loadPresetRows()
+  if (!rows) return
+  db.transaction(() => {
+    const names = rows.filter(r => r?.name?.trim()).map(r => r.name.trim())
+    const placeholders = names.map(() => 'LOWER(TRIM(?))').join(',')
+    if (names.length) {
+      db.prepare(`DELETE FROM players WHERE LOWER(TRIM(name)) NOT IN (${placeholders})`).run(...names)
+    } else {
+      db.prepare('DELETE FROM players').run()
+    }
+    seedPlayersFromFile(rows)
+    const update = db.prepare('UPDATE players SET skill_level = ? WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))')
+    for (const { name, skill_level } of rows) {
+      if (!name?.trim()) continue
+      update.run(normalizeSkill(skill_level), name.trim())
+    }
+  })()
+}
+
+const presetRows = loadPresetRows()
+if (presetRows) seedPlayersFromFile(presetRows)
 
 export default db
