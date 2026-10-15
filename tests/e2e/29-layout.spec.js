@@ -27,6 +27,10 @@ async function courtsBandHeight(page) {
 }
 
 test('29.2 dragging divider-courts resizes the courts band', async ({ page }) => {
+  // r6 global budget: courts sit AT the budget max in an 800px window (queue
+  // floor 340 + chrome) — grow room needs a taller one
+  await page.setViewportSize({ width: 1280, height: 1000 })
+  await page.waitForTimeout(200)
   const divider = page.getByTestId('divider-courts')
   await expect(divider).toBeVisible()
 
@@ -90,4 +94,59 @@ test('29.5 keyboard arrows resize the courts band', async ({ page }) => {
   await page.keyboard.press('ArrowUp')
   const after = await courtsBandHeight(page)
   expect(Math.abs(after - before)).toBeGreaterThanOrEqual(8)
+})
+
+// r6 global budget: no band may push another's content out of view — main
+// never overflows (scrollHeight <= clientHeight) at any divider extreme.
+async function assertBudgetHolds(page) {
+  const m = await page.locator('main').evaluate(el => ({
+    overflow: el.scrollHeight - el.clientHeight,
+    queueH: el.lastElementChild.getBoundingClientRect().height,
+  }))
+  expect(m.overflow).toBeLessThanOrEqual(1)
+  expect(m.queueH).toBeGreaterThanOrEqual(300) // queue keeps (near) its floor
+}
+
+async function drag(page, testid, dy) {
+  const box = await page.getByTestId(testid).boundingBox()
+  const x = box.x + box.width / 2
+  const y = box.y + box.height / 2
+  await page.mouse.move(x, y)
+  await page.mouse.down()
+  await page.mouse.move(x, y + dy, { steps: 8 })
+  await page.mouse.up()
+}
+
+test('29.6 dragging the courts divider to its extreme keeps every band on screen', async ({ page }) => {
+  for (const [, viewport] of Object.entries({ w800: { width: 1280, height: 800 }, w768: { width: 1366, height: 768 } })) {
+    await page.setViewportSize(viewport)
+    await page.waitForTimeout(200) // resize listener + clamp effect settle
+    await drag(page, 'divider-courts', 2000) // far past any max
+    await expect(page.getByTestId('divider-courts')).toBeVisible()
+    await assertBudgetHolds(page)
+    // and back up to the minimum — courts shrink, queue never vanishes
+    await drag(page, 'divider-courts', -2000)
+    await assertBudgetHolds(page)
+  }
+})
+
+test('29.7 dragging the deck divider to its extreme keeps every band on screen', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 })
+  await page.waitForTimeout(200)
+  await page.getByTestId('ondeck-collapse').click()
+  await expect(page.getByTestId('divider-deck')).toBeVisible()
+  await drag(page, 'divider-deck', 2000)
+  await assertBudgetHolds(page)
+})
+
+test('29.8 a layout persisted on a tall window self-corrects in a short one', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('queuec-layout', JSON.stringify({ courtsH: 950, deckH: 400, deckOpen: false, sidebarW: 420 }))
+  })
+  await page.reload()
+  await expect(page.locator('[data-entry-id]').first()).toBeVisible()
+  await assertBudgetHolds(page)
+  // re-expanding On Deck clamps deckH into the current budget too
+  await page.getByTestId('ondeck-collapse').click()
+  await assertBudgetHolds(page)
 })

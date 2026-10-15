@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useSSE } from './hooks/useSSE.js'
 import { useTimers } from './hooks/useTimers.js'
 import { EMPTY_DRAFT } from './lib/dnd.js'
-import { useLayout, LAYOUT_LIMITS } from './lib/layout.js'
+import { useLayout, LAYOUT_LIMITS, maxBandH, sidebarMaxW, clampLayout } from './lib/layout.js'
 import { startMatch, setQueueOrder, endSession, autoMatch } from './api.js'
 import { useToast } from '@/components/Toast'
 import { Button } from '@/components/ui/button'
@@ -263,22 +263,40 @@ export default function App() {
   // bento layout: divider-managed band sizes, persisted in localStorage
   const { layout, update: updateLayout } = useLayout()
   const [windowH, setWindowH] = useState(() => (typeof window !== 'undefined' ? window.innerHeight : 800))
+  const [windowW, setWindowW] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1280))
   useEffect(() => {
-    const onResize = () => setWindowH(window.innerHeight)
+    const onResize = () => { setWindowH(window.innerHeight); setWindowW(window.innerWidth) }
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
   }, [])
-  const courtsMax = Math.max(LAYOUT_LIMITS.courtsMin, Math.floor(windowH * LAYOUT_LIMITS.courtsMaxPct))
-  // the whole live view must fit on screen: courts + deck + queue (min) + paddings/gaps
-  const deckMax = Math.max(
-    LAYOUT_LIMITS.deckMin,
-    windowH - layout.courtsH - LAYOUT_LIMITS.queueMin - 120,
+  // r6: every band clamps against the OTHERS' floors via maxBandH, so the
+  // global budget (courts + deck + queue floor + chrome <= window) always holds
+  const courtsMax = Math.min(
+    Math.max(LAYOUT_LIMITS.courtsMin, Math.floor(windowH * LAYOUT_LIMITS.courtsMaxPct)),
+    maxBandH(windowH, layout.deckOpen ? layout.deckH : 0, LAYOUT_LIMITS.courtsMin),
   )
+  const deckMax = maxBandH(windowH, layout.courtsH, LAYOUT_LIMITS.deckMin)
   // functional updates: divider drags fire many pointermove events between
   // re-renders — a stale `layout.courtsH` closure would drop all but the last
   const growCourts = d => updateLayout(prev => ({ courtsH: Math.min(courtsMax, Math.max(LAYOUT_LIMITS.courtsMin, prev.courtsH + d)) }))
   const growDeck = d => updateLayout(prev => ({ deckH: Math.min(deckMax, Math.max(LAYOUT_LIMITS.deckMin, prev.deckH + d)) }))
-  const growSidebar = d => updateLayout(prev => ({ sidebarW: Math.min(LAYOUT_LIMITS.sidebarMax, Math.max(LAYOUT_LIMITS.sidebarMin, prev.sidebarW + d)) }))
+  const growSidebar = d => updateLayout(prev => ({ sidebarW: Math.min(sidebarMaxW(windowW), Math.max(LAYOUT_LIMITS.sidebarMin, prev.sidebarW + d)) }))
+  // re-expanding On Deck clamps into the current budget instead of blowing the
+  // queue away: deckH is capped, and the COURTS band yields first when the pair
+  // would overflow (collapsing releases the height entirely — the slim bar
+  // renders at its natural size and deckH leaves the budgets above)
+  const toggleDeck = () => updateLayout(prev => {
+    if (prev.deckOpen) return { deckOpen: false }
+    const deckH = Math.max(LAYOUT_LIMITS.deckMin, Math.min(prev.deckH,
+      maxBandH(windowH, LAYOUT_LIMITS.courtsMin, LAYOUT_LIMITS.deckMin)))
+    const courtsH = Math.max(LAYOUT_LIMITS.courtsMin, Math.min(prev.courtsH,
+      maxBandH(windowH, deckH, LAYOUT_LIMITS.courtsMin)))
+    return { deckOpen: true, deckH, courtsH }
+  })
+  // a layout persisted on a tall window self-corrects on load / window resize
+  useEffect(() => {
+    updateLayout(prev => clampLayout(prev, windowH, windowW))
+  }, [windowH, windowW, updateLayout])
 
   useEffect(() => {
     document.title = session?.name ? `${session.name} · QueueC` : 'QueueC'
@@ -347,7 +365,7 @@ export default function App() {
               activeMatches={activeMatches}
               open={layout.deckOpen}
               height={layout.deckH}
-              onToggleOpen={() => updateLayout({ deckOpen: !layout.deckOpen })}
+              onToggleOpen={toggleDeck}
             />
             {layout.deckOpen && (
               <Divider
