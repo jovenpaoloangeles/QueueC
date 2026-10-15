@@ -25,6 +25,7 @@ export default function Divider({ axis = 'row', applyDelta, testid, label, hit =
       setActive(false)
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', up)
       document.body.style.cursor = ''
       document.body.style.userSelect = ''
     }
@@ -32,6 +33,7 @@ export default function Divider({ axis = 'row', applyDelta, testid, label, hit =
     document.body.style.userSelect = 'none'
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', up)
   }, [vertical, applyDelta])
 
   const onKeyDown = useCallback(e => {

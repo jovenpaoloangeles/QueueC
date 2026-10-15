@@ -12,14 +12,13 @@ export function clearDrag() { drag.current = null }
 
 const ACCEPTS = {
   'court':      p => p?.kind === 'player' && p.status === 'waiting',
-  'resting':    p => p?.kind === 'player' && p.status === 'waiting',
   'queue':      p => p?.kind === 'player',
   'team':       p => p?.kind === 'team',
   // a lineup slot also takes resting players — the QM is pulling them out of rest to play
   'slot':       p => p?.kind === 'player' && (p.status === 'waiting' || p.status === 'resting'),
 }
 
-/** Can `payload` be dropped on `zone`? Zone is 'court' | 'resting' | 'queue' | 'team' | 'slot'. */
+/** Can `payload` be dropped on `zone`? Zone is 'court' | 'queue' | 'team' | 'slot'. */
 export function valid(zone, payload = drag.current) {
   return ACCEPTS[zone]?.(payload) ?? false
 }
