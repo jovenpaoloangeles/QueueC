@@ -169,6 +169,45 @@ async function run() {
     assert.ok(neverFound, 'Expected neverPlayed player in GET /api/players')
     assert.equal(neverFound.last_played_at, null, 'Expected neverPlayed.last_played_at === null')
     assert.equal(neverFound.games_total, 0, 'Expected neverPlayed.games_total === 0')
+
+    // 5) rested_seconds must not inflate avg wait (isolated session, single waiter)
+    const restPlayer = (await fetch(`${BASE}/players`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: `StatsRest-${SUFFIX}`, skill_level: 'beginner' })
+    }).then(r => r.json())).player
+
+    const restSession = (await fetch(`${BASE}/sessions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: `StatsRestSession-${SUFFIX}`, scheduled_start: 1000, scheduled_end: 2000, court_count: 1 })
+    }).then(r => r.json())).session
+    const restCheckin = (await fetch(`${BASE}/sessions/${restSession.id}/checkin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ player_id: restPlayer.id })
+    }).then(r => r.json())).entry
+    await fetch(`${BASE}/queue/${restCheckin.id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'resting' })
+    })
+    await new Promise(r => setTimeout(r, 2000))
+    await fetch(`${BASE}/queue/${restCheckin.id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'waiting' })
+    })
+
+    const restStatsRes = await fetch(`${BASE}/sessions/${restSession.id}/stats`)
+    assert.equal(restStatsRes.status, 200, 'Expected 200 from rest-session stats')
+    const { stats: restStats } = await restStatsRes.json()
+    const nowRef = Math.floor(Date.now() / 1000)
+    assert.ok(
+      restStats.avg_wait_seconds <= nowRef - restCheckin.checked_in_at - 1,
+      `Expected rested time (>=2s) subtracted from avg wait: avg=${restStats.avg_wait_seconds}, upper bound=${nowRef - restCheckin.checked_in_at - 1}`
+    )
+    await fetch(`${BASE}/sessions/${restSession.id}/end`, { method: 'PATCH' })
   } finally {
     // 5) Clean up in try / finally
     await fetch(`${BASE}/sessions/${session.id}/end`, { method: 'PATCH' })
