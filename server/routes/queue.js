@@ -10,6 +10,16 @@ export function assignSortOrder(existingOrders) {
   return existingOrders.length ? Math.max(...existingOrders) + 1 : 1
 }
 
+const baseCmp = (a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })
+
+/** sort_order at which an entry named `name` slots alphabetically among `waiting`
+ *  ([{ sort_order, name }]) — null when it goes after all of them. */
+export function alphabeticalSortOrder(waiting, name) {
+  const sorted = [...waiting].sort((a, b) => baseCmp(a.name, b.name) || a.sort_order - b.sort_order)
+  const after = sorted.find(e => baseCmp(e.name, name) > 0)
+  return after ? after.sort_order : null
+}
+
 /** Keep only ids in `allowed`, in the given order, de-duplicated. */
 export function normalizeOrder(order, allowed) {
   const ok = new Set(allowed)
@@ -37,9 +47,28 @@ router.post('/sessions/:id/checkin', async (c) => {
     'SELECT sort_order FROM queue_entries WHERE session_id = ?'
   ).all(id).map(r => r.sort_order)
 
+  // New check-ins slot into alphabetical position among the current WAITING
+  // entries (case-insensitive); everything at or after that spot shifts down one.
+  const name = db.prepare('SELECT name FROM players WHERE id = ?').get(player_id)?.name
+  const insertAt = alphabeticalSortOrder(
+    db.prepare(
+      "SELECT qe.sort_order, p.name FROM queue_entries qe JOIN players p ON p.id = qe.player_id WHERE qe.session_id = ? AND qe.status = 'waiting'"
+    ).all(id),
+    name ?? ''
+  )
+  let sortOrder
+  if (insertAt == null) {
+    sortOrder = assignSortOrder(existingOrders)
+  } else {
+    sortOrder = insertAt
+    db.prepare(
+      'UPDATE queue_entries SET sort_order = sort_order + 1 WHERE session_id = ? AND sort_order >= ?'
+    ).run(id, insertAt)
+  }
+
   const { lastInsertRowid } = db.prepare(
     'INSERT INTO queue_entries (session_id, player_id, checked_in_at, sort_order, status_updated_at) VALUES (?, ?, ?, ?, ?)'
-  ).run(id, player_id, now, assignSortOrder(existingOrders), now)
+  ).run(id, player_id, now, sortOrder, now)
 
   const entry = db.prepare('SELECT * FROM queue_entries WHERE id = ?').get(lastInsertRowid)
   broadcast()

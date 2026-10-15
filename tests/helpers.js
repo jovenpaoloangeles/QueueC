@@ -83,10 +83,17 @@ export async function fullSetup(page, { courts = 2, playerNames = DEFAULT_PLAYER
     courts: cfgs,
   })
   const { players } = await api('/api/players')
+  const entryIds = []
   for (const n of playerNames) {
     const p = players.find(x => x.name === n)
     if (!p) throw new Error(`fullSetup: player not in fixtures/players.json: ${n}`)
-    await api(`/api/sessions/${session.id}/checkin`, 'POST', { player_id: p.id })
+    const { entry } = await api(`/api/sessions/${session.id}/checkin`, 'POST', { player_id: p.id })
+    entryIds.push(entry.id)
+  }
+  // check-ins now insert alphabetically; specs seed a specific queue order via
+  // playerNames — restore it through the manual reorder endpoint
+  if (entryIds.length > 1) {
+    await api('/api/queue/order', 'PATCH', { session_id: session.id, order: entryIds })
   }
   await api(`/api/sessions/${session.id}/start`, 'PATCH')
   await page.goto('/')

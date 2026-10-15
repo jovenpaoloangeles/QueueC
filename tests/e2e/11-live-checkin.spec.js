@@ -24,14 +24,13 @@ test('11.2 open panel lists nothing until a query is typed', async ({ page }) =>
   await expect(page.getByRole('button', { name: 'Expert E1', exact: false })).toHaveCount(0)
 })
 
-test('11.3 checking in appends to queue end', async ({ page }) => {
-  // Wait for queue entries to render before snapshotting count
+test('11.3 checking in slots into alphabetical position', async ({ page }) => {
+  // seeded queue is Inter C1–C4; Expert E1 sorts before them
   await page.locator('[data-entry-id]').first().waitFor()
-  const beforeCount = await page.locator('[data-entry-id]').count()
   await page.getByTestId('checkin-toggle').click()
   await page.getByTestId('checkin-search').fill('Expert E1')
   await page.getByTestId('combobox-matches').getByRole('button', { name: 'Expert E1' }).click()
-  await expect(page.locator('[data-entry-id]')).toHaveCount(beforeCount + 1)
+  await expect(page.locator('[data-entry-id]').first().locator('.text-base.font-medium')).toHaveText('Expert E1')
 })
 
 test('11.4 search clears after check-in, panel stays open for multi-add', async ({ page }) => {

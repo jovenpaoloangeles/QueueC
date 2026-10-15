@@ -69,13 +69,14 @@ test('9.2 SSE tick does not reset manual reorder', async ({ page }) => {
   expect(after.slice(0, 2)).toEqual([before[1], before[0]])
 })
 
-test('9.3 newly checked-in player appended to end of order', async ({ page }) => {
+test('9.3 newly checked-in player slots into alphabetical position', async ({ page }) => {
+  // seeded queue: Inter C1–C4, Expert E1–E2, Upper D1–D2 — B1 sorts before all of them
   await page.getByTestId('checkin-toggle').click()
-  await page.getByTestId('checkin-search').fill('Newbie A1')
-  await page.getByTestId('combobox-matches').getByRole('button', { name: 'Newbie A1' }).click()
+  await page.getByTestId('checkin-search').fill('Beginner B1')
+  await page.getByTestId('combobox-matches').getByRole('button', { name: 'Beginner B1' }).click()
   await page.waitForTimeout(400)
   const names = await getQueueNames(page)
-  expect(names[names.length - 1]).toBe('Newbie A1')
+  expect(names[0]).toBe('Beginner B1')
 })
 
 test('9.7 resting player absent from selection candidates', async ({ page }) => {
