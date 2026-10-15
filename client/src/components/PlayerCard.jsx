@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 
 const WAIT_HIGH_PRIORITY_THRESHOLD_SECS = 15 * 60 // configurable default: 15:00
 
-export default function PlayerCard({ entry, waitSecs, selectionIndex, playSecs, drafted = false, onClick, onDropOn, onToggleRest }) {
+export default function PlayerCard({ entry, waitSecs, selectionIndex, playSecs, onClick, onDropOn, onToggleRest }) {
   const dragProps = useDragSource(() => ({ kind: 'player', entryId: entry.id, status: entry.status }))
   const [over, setOver] = useState(false)
   const isSelected = selectionIndex !== undefined && selectionIndex !== -1
@@ -50,10 +50,14 @@ export default function PlayerCard({ entry, waitSecs, selectionIndex, playSecs, 
         const p = drag.current
         if (valid('queue')) onDropOn(p.entryId, entry.id)
       }}
-      // resting rows render in the All/Rest filter tabs but are NOT selectable /
-      // queue-manageable — they only carry data-resting-id so the queue grid's
-      // [data-entry-id] set stays "waiting entries" (tests 9.6 / 18.4)
-      {...(isResting ? { 'data-resting-id': entry.id } : { 'data-entry-id': entry.id })}
+      // one status attribute per card: [data-entry-id] stays "waiting entries"
+      // (tests 9.6 / 18.4), resting rows carry data-resting-id, playing rows
+      // data-playing-id (All tab shows them but they are not queue-manageable)
+      {...(isResting
+        ? { 'data-resting-id': entry.id }
+        : isPlaying
+          ? { 'data-playing-id': entry.id }
+          : { 'data-entry-id': entry.id })}
       className={cn(
         // r5-2 compact card: exactly 2 tight rows — Rest/Wake moved up beside the
         // skill badge, "Xm played" folded into the meta row; no wrapping
@@ -61,7 +65,6 @@ export default function PlayerCard({ entry, waitSecs, selectionIndex, playSecs, 
         isSelected
           ? 'border-accent-foreground/30 bg-accent ring-2 ring-primary/30'
           : 'border-border bg-card shadow-sm hover:border-border/80 hover:bg-muted/40',
-        drafted && 'opacity-60',
         isResting && 'bg-muted/60 opacity-70',
         over && valid('queue') && 'border-drop-target-border bg-drop-target',
         over && drag.current && !valid('queue') && 'border-drop-invalid-border bg-drop-invalid'
@@ -84,11 +87,6 @@ export default function PlayerCard({ entry, waitSecs, selectionIndex, playSecs, 
           <span className="truncate text-base font-medium text-foreground">{entry.name}</span>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          {drafted && (
-            <span data-testid="drafted-tag" className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
-              in lineup
-            </span>
-          )}
           {isResting && (
             <span data-testid="resting-tag" className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
               resting
@@ -102,7 +100,6 @@ export default function PlayerCard({ entry, waitSecs, selectionIndex, playSecs, 
               variant="ghost"
               size="xs"
               data-testid="rest-toggle"
-              disabled={drafted}
               onClick={e => { e.stopPropagation(); onToggleRest?.(entry) }}
             >
               Rest
@@ -113,7 +110,6 @@ export default function PlayerCard({ entry, waitSecs, selectionIndex, playSecs, 
               variant="ghost"
               size="xs"
               data-testid="rest-toggle"
-              disabled={drafted}
               onClick={e => { e.stopPropagation(); onToggleRest?.(entry) }}
             >
               Wake

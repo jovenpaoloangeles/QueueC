@@ -9,8 +9,8 @@ import PlayerSearchAdd from './PlayerSearchAdd.jsx'
 import { useToast } from './Toast.jsx'
 import { getPlayers, setEntryStatus } from '../api.js'
 
-// mockup .queue-tabs: All = waiting + resting (playing entries live on courts),
-// Wait = waiting only, Rest = resting only
+// mockup .queue-tabs: All = everything in the session (waiting + resting, then
+// playing), Wait = waiting only, Rest = resting only
 const TABS = [
   { id: 'all', label: 'All', testid: 'queue-tab-all' },
   { id: 'wait', label: 'Wait', testid: 'queue-tab-wait' },
@@ -79,15 +79,19 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
       .catch(err => toast(err?.data?.error ?? 'Could not update', 'error'))
   }
 
-  const waiting = queue.filter(e => e.status === 'waiting')
-  const resting = queue.filter(e => e.status === 'resting')
+  // drafted entries (court draft / on-deck builder) leave the list entirely —
+  // they are not merely disabled
+  const notDrafted = e => !draftedIds.has(e.id)
+  const waiting = queue.filter(e => e.status === 'waiting' && notDrafted(e))
+  const resting = queue.filter(e => e.status === 'resting' && notDrafted(e))
+  const playing = queue.filter(e => e.status === 'playing' && notDrafted(e))
   // click-selected OR drag-drafted players both count as "picked" for the header line
   const pickedCount = new Set([...selection, ...draftedIds]).size
 
   const list = useMemo(() => {
     const idx = new Map(order.map((id, i) => [id, i]))
     const byOrder = (a, b) => (idx.get(a.id) ?? 1e9) - (idx.get(b.id) ?? 1e9)
-    const base = tab === 'wait' ? waiting : tab === 'rest' ? resting : [...waiting, ...resting]
+    const base = tab === 'wait' ? waiting : tab === 'rest' ? resting : [...waiting, ...resting, ...playing]
     const q = filter.trim().toLowerCase()
     return base
       .filter(e => !q || (e.name ?? '').toLowerCase().includes(q))
@@ -111,7 +115,7 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
     onReorder([...waitingInOrder, ...restingIds, ...playingIds])
   }
 
-  const tabCount = id => (id === 'wait' ? waiting.length : id === 'rest' ? resting.length : waiting.length + resting.length)
+  const tabCount = id => (id === 'wait' ? waiting.length : id === 'rest' ? resting.length : waiting.length + resting.length + playing.length)
 
   return (
     <div className="flex flex-col gap-2">
@@ -227,7 +231,6 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
             waitSecs={waitSeconds.get(entry.id) ?? 0}
             playSecs={playSeconds?.get(entry.id) ?? 0}
             selectionIndex={selection.indexOf(entry.id)}
-            drafted={draftedIds.has(entry.id)}
             onClick={e => {
               if (entry.status !== 'waiting') return // resting rows are not selectable
               if (e.shiftKey) {
