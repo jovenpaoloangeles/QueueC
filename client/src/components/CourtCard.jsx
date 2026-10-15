@@ -318,9 +318,6 @@ export default function CourtCard({
               <TeamPanel side={1} entryIds={[match.team1_p1, match.team1_p2]} queue={queue} matchId={match.id} match={match} />
             </div>
             <div className="flex flex-col items-center gap-0.5">
-              <span className="font-mono text-3xl tabular-nums text-foreground">
-                {match.team1_score ?? 0}<span className="mx-1.5 text-muted-foreground/40">–</span>{match.team2_score ?? 0}
-              </span>
               <span className="text-2xs uppercase tracking-wider text-muted-foreground">vs</span>
             </div>
             <div className="flex flex-col gap-1">
