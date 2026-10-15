@@ -43,8 +43,8 @@ export default function StatsSidebar({ stats, onPlayerAdded }) {
   return (
     <div className="flex flex-col gap-6 px-4 py-5">
       <div className="grid grid-cols-2 gap-3">
-        {tiles.map(s => (
-          <div key={s.label} className="rounded-lg border border-border bg-muted/40 px-3 py-3">
+        {tiles.map((s, i) => (
+          <div key={s.label} className={cn(i === tiles.length - 1 && tiles.length % 2 === 1 && 'col-span-2', "rounded-lg border border-border bg-muted/40 px-3 py-3")}>
             <div className="text-2xs font-medium uppercase tracking-wider text-muted-foreground">{s.label}</div>
             <div className="mt-1 font-mono text-xl tabular-nums text-foreground">{s.value}</div>
           </div>
@@ -63,12 +63,12 @@ export default function StatsSidebar({ stats, onPlayerAdded }) {
             <table data-testid="leaderboard-table" className="w-full text-xs">
               <thead>
                 <tr className="text-2xs uppercase tracking-wider text-muted-foreground">
-                  <th className="py-1 pr-1 text-left font-medium">Rank</th>
-                  <th className="py-1 pr-1 text-left font-medium">Player</th>
-                  <th className="py-1 pr-1 text-right font-medium">GP</th>
-                  <th className="py-1 pr-1 text-right font-medium">W/L</th>
-                  <th className="py-1 pr-1 text-right font-medium">Win %</th>
-                  <th className="py-1 text-right font-medium">+/-</th>
+                  <th scope="col" className="py-1 pr-1 text-left font-medium">Rank</th>
+                  <th scope="col" className="py-1 pr-1 text-left font-medium">Player</th>
+                  <th scope="col" className="py-1 pr-1 text-right font-medium">GP</th>
+                  <th scope="col" className="py-1 pr-1 text-right font-medium">W/L</th>
+                  <th scope="col" className="py-1 pr-1 text-right font-medium">Win %</th>
+                  <th scope="col" className="py-1 text-right font-medium">+/-</th>
                 </tr>
               </thead>
               <tbody>
@@ -78,7 +78,7 @@ export default function StatsSidebar({ stats, onPlayerAdded }) {
                     <tr key={p.player_id} data-testid="leaderboard-row" className={i === 0 ? 'text-foreground' : 'text-muted-foreground'}>
                       <td className="py-1 pr-1"><span data-testid="leaderboard-rank">{i + 1}</span></td>
                       <td className="py-1 pr-1">
-                        <span data-testid="leaderboard-name">{p.name}</span>{' '}
+                        <span data-testid="leaderboard-name" title={p.name} className="inline-block max-w-[7rem] truncate align-bottom">{p.name}</span>{' '}
                         <span className="text-2xs text-muted-foreground">{p.wins}W</span>
                       </td>
                       <td className="py-1 pr-1 text-right font-mono tabular-nums">{p.games}</td>

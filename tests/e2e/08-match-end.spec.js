@@ -95,5 +95,8 @@ test('8.12 team 1 win — winning players gain leaderboard wins', async ({ page 
 
 test('8.13 tie score — no leaderboard wins recorded', async ({ page }) => {
   await endMatch(page, 'Court', { team1: 15, team2: 15 })
-  await expect(page.getByRole('complementary').getByText(/^[1-9]\d*W$/)).toHaveCount(0)
+  const side = page.getByRole('complementary')
+  // non-vacuous: the match was recorded before asserting no wins
+  await expect(side.locator('text=Matches').locator('..').locator('[class*="font-mono"]')).toHaveText('1')
+  await expect(side.getByText(/^[1-9]\d*W$/)).toHaveCount(0)
 })
