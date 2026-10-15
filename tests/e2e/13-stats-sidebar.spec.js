@@ -24,16 +24,8 @@ test('13.3 match count increments after end', async ({ page }) => {
   await expect(page.locator('text=Matches').locator('..').locator('[class*="font-mono"]')).toHaveText('1')
 })
 
-test('13.9 "+ Add Player" shows form', async ({ page }) => {
-  await page.getByRole('complementary').getByRole('button', { name: /Add Player/i }).click()
-  await expect(page.locator('input[placeholder], input[type="text"]').last()).toBeVisible()
-})
-
-test('13.11 skill-level select has 7 options', async ({ page }) => {
-  await page.getByRole('complementary').getByRole('button', { name: /Add Player/i }).click()
-  await page.locator('button[role="combobox"]').last().click()
-  const options = page.locator('[role="option"], [role="listitem"]')
-  await expect(options).toHaveCount(7)
+test('13.9 sidebar has no Add Player button', async ({ page }) => {
+  await expect(page.getByRole('complementary').getByRole('button', { name: /add player/i })).toHaveCount(0)
 })
 
 test('13.4 avg wait tile shows mm:ss before any match ends', async ({ page }) => {
@@ -74,32 +66,4 @@ test('13.8 player with most wins ranks first', async ({ page }) => {
   await expect(page.getByRole('complementary').getByText('2W', { exact: true })).toHaveCount(2)
   const first = await page.getByTestId('leaderboard-name').first().innerText()
   expect(first).toMatch(/Inter C[12]/)
-})
-
-test('13.10 add-player form has name field and skill select', async ({ page }) => {
-  await page.getByRole('complementary').getByRole('button', { name: /Add Player/i }).click()
-  await expect(page.locator('#add-player-name')).toBeVisible()
-  await expect(page.locator('#add-player-skill')).toBeVisible()
-})
-
-test('13.12 submit add-player form — player appears in check-in pool', async ({ page }) => {
-  await page.getByRole('complementary').getByRole('button', { name: /Add Player/i }).click()
-  const name = `Rookie Z${Date.now().toString(36)}` // unique: players table persists across tests
-  await page.locator('#add-player-name').fill(name)
-  await page.getByRole('button', { name: 'Add', exact: true }).click()
-  await page.waitForTimeout(400)
-  await page.getByRole('button', { name: /Check In/i }).click()
-  await expect(page.getByRole('button', { name, exact: true })).toBeVisible()
-})
-
-test('13.13 added player persists across page reload', async ({ page }) => {
-  const name = `Rookie Z${Date.now().toString(36)}`
-  await page.getByRole('complementary').getByRole('button', { name: /Add Player/i }).click()
-  await page.locator('#add-player-name').fill(name)
-  await page.getByRole('button', { name: 'Add', exact: true }).click()
-  await page.waitForTimeout(400)
-  await page.reload()
-  await page.waitForTimeout(1000)
-  await page.getByRole('button', { name: /Check In/i }).click()
-  await expect(page.getByRole('button', { name, exact: true })).toBeVisible()
 })

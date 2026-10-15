@@ -251,7 +251,7 @@ export default function App() {
             </div>
           </main>
           <aside className="w-72 shrink-0 overflow-y-auto border-l border-border bg-card">
-            <StatsSidebar stats={stats} onPlayerAdded={() => setPlayersVersion(v => v + 1)} />
+            <StatsSidebar stats={stats} />
           </aside>
         </div>
       )}

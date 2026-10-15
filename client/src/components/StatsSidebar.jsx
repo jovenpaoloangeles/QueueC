@@ -1,36 +1,7 @@
-import { useState } from 'react'
 import { Trophy } from 'lucide-react'
-import { createPlayer } from '../api.js'
-import { cn, fmtClock, SKILL_TIERS } from '@/lib/utils'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { useToast } from '@/components/Toast'
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { cn, fmtClock } from '@/lib/utils'
 
-
-
-export default function StatsSidebar({ stats, onPlayerAdded }) {
-  const [showAdd, setShowAdd] = useState(false)
-  const [form, setForm] = useState({ name: '', skill_level: 'intermediate' })
-  const [saving, setSaving] = useState(false)
-  const toast = useToast()
-
-  async function addPlayer(e) {
-    e.preventDefault()
-    setSaving(true)
-    try {
-      await createPlayer(form)
-      setForm({ name: '', skill_level: 'intermediate' })
-      setShowAdd(false)
-      onPlayerAdded?.()
-    } catch (err) {
-      toast(err?.data?.error ?? 'Could not add player', 'error')
-    } finally {
-      setSaving(false)
-    }
-  }
-
+export default function StatsSidebar({ stats }) {
   const board = stats?.leaderboard ?? []
   const tiles = [
     { label: 'Players', value: stats?.player_count ?? 0 },
@@ -93,45 +64,6 @@ export default function StatsSidebar({ stats, onPlayerAdded }) {
               </tbody>
             </table>
           </div>
-        )}
-      </div>
-
-      <div>
-        <Button variant="outline" size="xs" onClick={() => setShowAdd(v => !v)}>
-          + Add Player
-        </Button>
-
-        {showAdd && (
-          <form onSubmit={addPlayer} className="mt-3">
-            <FieldGroup className="gap-3">
-              <Field>
-                <FieldLabel htmlFor="add-player-name">Name</FieldLabel>
-                <Input
-                  id="add-player-name"
-                  placeholder="Name"
-                  required
-                  value={form.name}
-                  onChange={e => setForm(f => ({...f, name: e.target.value}))}
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="add-player-skill">Skill</FieldLabel>
-                <Select value={form.skill_level} onValueChange={v => setForm(f => ({...f, skill_level: v}))}>
-                  <SelectTrigger id="add-player-skill" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SKILL_TIERS.map(s => (
-                      <SelectItem key={s} value={s}>{s.replace('_',' ')}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Button type="submit" size="xs" disabled={saving}>
-                {saving ? '...' : 'Add'}
-              </Button>
-            </FieldGroup>
-          </form>
         )}
       </div>
     </div>
