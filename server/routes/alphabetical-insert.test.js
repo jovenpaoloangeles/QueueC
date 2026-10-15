@@ -4,7 +4,7 @@
 // Run with: bun server/routes/alphabetical-insert.test.js (server must be running on :3001)
 import assert from 'node:assert/strict'
 
-const BASE = process.env.QC_TEST_BASE ?? 'http://localhost:3001'
+const BASE = process.env.QC_TEST_BASE ?? 'http://localhost:3991'
 
 async function api(path, method = 'GET', body) {
   const res = await fetch(`${BASE}${path}`, {

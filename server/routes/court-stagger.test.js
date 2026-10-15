@@ -1,10 +1,10 @@
 // tests/e2e/../server regression: a court with an opens_after offset is unusable
 // until its offset elapses, then opens (lazy active_from check), and its rental
 // clock anchors to its own open time, not the session's.
-// Run with: bun server/routes/court-stagger.test.js (server must be running on :3001)
+// Run with: bun server/routes/court-stagger.test.js (target a throwaway server: QC_TEST_BASE=http://localhost:<port> — :3001 is the live container)
 import assert from 'node:assert/strict'
 
-const BASE = process.env.QC_TEST_BASE ?? 'http://localhost:3001'
+const BASE = process.env.QC_TEST_BASE ?? 'http://localhost:3991'
 
 const api = async (path, method = 'GET', body) => {
   const res = await fetch(`${BASE}${path}`, {

@@ -1,9 +1,9 @@
 // tests/e2e/../server regression: two simultaneous match ends return all 8 players to waiting.
 // Demoted from e2e/19-queue-master.spec.js QM.7 — pure server state, no UI assertion needed.
-// Run with: bun server/routes/two-match-end.test.js (server must be running on :3001)
+// Run with: bun server/routes/two-match-end.test.js (target a throwaway server: QC_TEST_BASE=http://localhost:<port> — :3001 is the live container)
 import assert from 'node:assert/strict'
 
-const BASE = process.env.QC_TEST_BASE ?? 'http://localhost:3001'
+const BASE = process.env.QC_TEST_BASE ?? 'http://localhost:3991'
 
 async function main() {
   // fresh session, 2 courts, 8 players

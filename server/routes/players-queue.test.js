@@ -1,4 +1,4 @@
-const BASE = process.env.BASE_URL ?? 'http://localhost:3001/api'
+const BASE = process.env.BASE_URL ?? 'http://localhost:3991/api'
 const UNIQUE = `TestPlayer-${Date.now().toString(36)}`
 
 async function run() {

@@ -5,7 +5,7 @@ import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { tmpdir } from 'os'
 
-const BASE = process.env.BASE_URL ?? 'http://localhost:3001/api'
+const BASE = process.env.BASE_URL ?? 'http://localhost:3991/api'
 const here = dirname(fileURLToPath(import.meta.url))
 
 // Same preset resolution the server uses

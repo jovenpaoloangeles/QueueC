@@ -1,7 +1,7 @@
 // Run with: bun server/routes/automatch.test.js (server must be running on :3001)
 import assert from 'node:assert/strict'
 
-const BASE = process.env.BASE_URL ?? 'http://localhost:3001/api'
+const BASE = process.env.BASE_URL ?? 'http://localhost:3991/api'
 const SUFFIX = Date.now().toString(36)
 
 async function mkSession(playerCount, courtCount, tag = "PlanP") {
