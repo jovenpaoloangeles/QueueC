@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "concurrently \"bun --cwd server run dev\" \"bun --cwd client run dev\"",
+    "test:touched": "bun scripts/test-touched.mjs",
     "install:all": "bun install && bun install --cwd server && bun install --cwd client"
   },
   "devDependencies": {

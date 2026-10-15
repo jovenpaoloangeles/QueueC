@@ -50,6 +50,31 @@ QC_TEST_BASE=http://localhost:3999 bun server/routes/two-match-end.test.js
 These are sub-second; run them in the implementer stage for any server-route
 change, before reaching for the E2E suite.
 
+**Note:** there are no per-route e2e specs for server routes. E2E exercises the
+server through the UI only; server behaviour is covered by `bun test server/`
+and the live-server tests above.
+
+## Run only the specs a change touches
+
+From the repo root, after editing code:
+
+```bash
+bun run test:touched -- [rev]   # rev defaults to HEAD~1 (diff is rev vs worktree)
+```
+
+Greps the e2e spec sources for the changed paths/basenames (camelCase-aware:
+`QueueGrid.jsx` matches specs mentioning queue AND grid). Changed spec files map
+to themselves; `server/**` maps to nothing (see note above). Dumb by design —
+no manifest to maintain.
+
+## Stale-dist guard
+
+`playwright.config.js` uses `scripts/ensure-build.js` as its `globalSetup`: it
+mtime-compares `client/src` (+ `client/index.html`, vite config) against
+`client/dist/index.html` and runs the client build only when stale. A stale
+bundle previously caused 16 false e2e failures. The check is a no-op when the
+dist is fresh; `bun run test:e2e` runs the same guard before Playwright.
+
 ## Configuration
 
 | Env var | Default | Description |
