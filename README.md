@@ -7,15 +7,16 @@ A self-hosted badminton queue manager for gym sessions. One screen, one queue ma
 ## Features
 
 - **Setup flow** — one screen, no modals: session name defaults to `ASTIRISK (DD-Mmm-YYYY)`, whole-hour start-time select (06:00–23:00), number of courts with a per-court label and rental HOURS (0.5–12); alphabetical, letter-grouped pool with search-and-add, select-all and tier filter; double-click a row (or ✎) to edit name/skill inline; **Start Session** creates the session, checks in the selection and starts the clocks
-- **Live courts** — per-court rental countdown; expired court (idle or mid-match) shows **Extend Court (+1hr)?** — idle it pulses EXPIRED and leaves the available pool, mid-match the game keeps running under a **Last Game** badge (server extends an hour from max(expires_at, now)); elapsed match timer; drag-and-drop 2×2 lineups
-- **Start confirmation** — a match never starts without the confirm dialog: Start Match, Start Singles and the 4th-slot drop on an idle court all open it; header Smart Match dry-runs a plan first and executes exactly what you confirmed
-- **Slate / On Deck** — always mounted (empty state included): numbered cards with skill-balance label and next-free-court ETA, manual **＋ Build lineup** builder (drag 4 / Use selection / Add to On Deck), **Smart add**, multiple slates up to 3 counted across existing ones, ↑/↓ reorder, edit/cancel; drafted players leave the queue and slated matches auto-promote to a free court when a match ends
-- **Smart Match** — fills free courts / slates matches using wait time, games played, skill variance, team balance and pair redundancy
-- **Shuttle counters** — live new/used shuttle +/- per match
-- **Two-step end match** — confirm, then record scores, final shuttles and a 1–5 star rating
-- **Player queue** — All / Wait / Rest tabs, fairness ordering, 7 skill tiers (Newbie → Professional); Rest/Wake buttons or drag-and-drop both ways (waiting rows into the Resting tray, resting chips back out)
+- **Live courts** — per-court rental countdown; expired court (idle or mid-match) shows **Extend Court (+1hr)?** — idle it pulses EXPIRED and leaves the available pool, mid-match the game keeps running under a **Last Game** badge (server extends an hour from max(expires_at, now)); elapsed match timer; idle courts take a drag-and-drop 2×2 lineup draft (live courts show teams only — no next-match matrix)
+- **Start confirmation** — a match never starts without the confirm dialog: Start Match, Start Singles and the 4th-slot drop on an idle court all open it; header Smart Match dry-runs a plan first and executes exactly what you confirmed; the On Deck builder is the only way to slate
+- **Slate / On Deck** — always mounted (empty state included): numbered cards with skill-balance label and next-free-court ETA, manual **＋ Build lineup** builder with oversized 2×2 slots (drag 4 / **Add to On Deck** — nothing slates until that click), **✨ Smart Match** (in the builder) and **Smart add** both pour a slate-only dry-run plan into the builder for review; multiple slates up to 3 counted across existing ones, ↑/↓ reorder, edit, cancel-with-confirm (players return to the queue); drafted players leave the queue and slated matches auto-promote to a free court when a match ends
+- **Smart Match** — the header button fills free courts / slates matches using wait time, games played, skill variance, team balance and pair redundancy (dry-run plan → confirm); queue selection itself is always manual — there is no mode toggle
+- **Shuttle counters** — live new-shuttle +/- per match (used shuttles are history-only: no stepper, no final field, no sidebar tile)
+- **Two-step end match** — confirm, then record scores, final new shuttles and a 1–5 star rating
+- **Player queue** — All / Wait / Rest tabs, fairness ordering, 7 skill tiers rendered title-cased (Newbie → Professional; stored values unchanged); Rest/Wake buttons or drag-and-drop both ways (waiting rows into the Resting tray, resting chips back out)
 - **Leaderboard** — rank, games, W/L, win rate, point differential
-- **Header status, toasts, dark theme**
+- **Header status** — session name rendered as `ASTIRISK` over the date (two lines), live courts/waiting counts, longest wait measured as net wait (playing time excluded — the clock restarts after each match)
+- **Session controls** — header **End Session** and **New Session** both confirm before ending; toasts, dark theme
 - **Real-time sync** — all browsers stay in sync via SSE
 
 ## Stack
@@ -98,7 +99,7 @@ All under `/api`. Mutations broadcast an SSE update.
 | `POST /sessions/:id/checkin`, `DELETE /queue/:entryId`, `PATCH /queue/order`, `GET /sessions/:id/suggest` | Queue |
 | `PATCH /queue/:entryId/status` | waiting/resting. 409 if resting a `playing` or `staged` player, or setting a `playing` player to waiting |
 | `POST /matches` | Start live match on a court (client always confirms first) |
-| `PATCH /matches/:id/end`, `/teams`, `/shuttles` | End (scores, shuttles, rating), edit teams, shuttle counts |
+| `PATCH /matches/:id/end`, `/teams`, `/shuttles` | End (scores, new shuttles, rating), edit teams, shuttle count (`delta_new`; used remains server-side history) |
 | `POST /matches/slate`, `PATCH /matches/:id/slate`, `DELETE /matches/:id/slate` | Create / edit / cancel a slated (On Deck) match; `PATCH {move:'up'\|'down'}` reorders by swapping `slate_seq` with the adjacent slate |
 | `POST /sessions/:id/automatch` | Smart Match. `{dry_run:true}` → `{plan {matches, slate}}` with no writes; post `{plan}` to execute exactly that plan (server re-validates → 409 `Queue changed — review and try again` if stale). `{slate_only:true}` plans On Deck lineups only. On Deck capped at 3 (existing + new). Response `{started, slated, slated_count}`; 409 if nothing to auto-match (need a free court and ≥2 waiting, or ≥4 to slate) |
 | `GET /sessions/:id/stats` | Leaderboard: played, wins, win_rate, point_diff |
@@ -119,7 +120,7 @@ cd tests && bun run test:unit
 cd tests && bun run test:e2e
 ```
 
-E2E env: `PW_WORKERS` (default 5), `PW_BASE_PORT` (default 3410; worker N uses port+N). `ensure-build` rebuilds `client/dist` only if sources are newer. The full Playwright suite is 203 tests across 28 specs, ~2.7 min at 5 workers. Specs from this round: `02-session-setup`, `25-court-expiry`, `26-resting-dnd`, `27-start-confirm`, `28-on-deck`. Note: HTTP-based server tests reset the active session, so don't point them at a server holding real data.
+E2E env: `PW_WORKERS` (default 5), `PW_BASE_PORT` (default 3410; worker N uses port+N). `ensure-build` rebuilds `client/dist` only if sources are newer. The full Playwright suite is ~200 tests across 28 specs. Specs from the last two rounds: `25-court-expiry`, `26-resting-dnd`, `27-start-confirm`, `28-on-deck`. Note: HTTP-based server tests reset the active session, so don't point them at a server holding real data.
 
 ## License
 
