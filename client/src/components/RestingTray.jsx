@@ -17,7 +17,9 @@ export default function RestingTray({ entries, onReturn, onDropEntry }) {
   return (
     <div
       data-drop="resting"
-      onDragEnter={() => setIsOver(true)}
+      // dragenter + dragover MUST preventDefault or the browser never fires drop
+      onDragEnter={e => { e.preventDefault(); setIsOver(true) }}
+      onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = valid('resting') ? 'move' : 'none' }}
       onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget)) setIsOver(false) }}
       onDrop={e => {
         e.preventDefault(); setIsOver(false)

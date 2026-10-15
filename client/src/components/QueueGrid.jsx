@@ -210,7 +210,16 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
         </div>
       )}
 
-      <div className="grid auto-rows-min content-start flex-1 grid-cols-2 gap-3 overflow-y-auto lg:grid-cols-3 xl:grid-cols-4">
+      <div
+        data-queue-list
+        // dropping a resting chip on empty list space wakes it (rows handle their own drops)
+        onDragOver={e => { if (drag.current?.status === 'resting') e.preventDefault() }}
+        onDrop={e => {
+          if (e.defaultPrevented || drag.current?.status !== 'resting') return
+          e.preventDefault()
+          handleDropOnPlayer(drag.current.entryId, null)
+        }}
+        className="grid auto-rows-min content-start flex-1 grid-cols-2 gap-3 overflow-y-auto lg:grid-cols-3 xl:grid-cols-4">
         {list.map(entry => (
           <PlayerCard
             key={entry.id}
