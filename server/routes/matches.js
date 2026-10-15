@@ -44,6 +44,7 @@ router.post('/', async (c) => {
   const court = db.prepare('SELECT * FROM courts WHERE id = ? AND session_id = ?').get(court_number, session_id)
   if (court) {
     if (!court.enabled) return c.json({ error: 'Court is disabled' }, 400)
+    if (court.active_from != null && now < court.active_from) return c.json({ error: 'Court is not open yet' }, 400)
     if (court.expires_at != null && now >= court.expires_at) return c.json({ error: 'Court has expired' }, 400)
     if (court.active_until != null && now >= court.active_until) return c.json({ error: 'Court reservation has ended' }, 400)
   }
@@ -129,6 +130,7 @@ router.patch('/:id/end', async (c) => {
     const freed = match.court_number
     const court = db.prepare('SELECT * FROM courts WHERE id = ?').get(freed)
     const usable = court && court.enabled &&
+      (court.active_from == null || now >= court.active_from) &&
       (court.expires_at == null || now < court.expires_at) &&
       (court.active_until == null || now < court.active_until)
     if (usable) {

@@ -153,7 +153,7 @@ function EditRow({ p, onSave, onCancel }) {
 
 const syncCourts = (prev, n) => {
   const next = prev.slice(0, n)
-  while (next.length < n) next.push({ label: `Court ${next.length + 1}`, hours: DEFAULT_HOURS })
+  while (next.length < n) next.push({ label: `Court ${next.length + 1}`, hours: DEFAULT_HOURS, opens: '0' })
   return next
 }
 
@@ -226,6 +226,7 @@ export default function SetupScreen({ draft }) {
   }
 
   const hoursOk = courts.every(c => validHours(c.hours))
+  const opensAfterOf = c => Math.max(0, Math.round(Number(c.opens) || 0))
   const timeOk = /^\d{2}:\d{2}$/.test(startTime)
   const canStart = activePicked.length >= 2 && courts.length >= 1 && hoursOk && timeOk && !starting
 
@@ -249,6 +250,7 @@ export default function SetupScreen({ draft }) {
         courts: courts.map((c, i) => ({
           label: c.label.trim() || `Court ${i + 1}`,
           duration_minutes: Math.round(Number(c.hours) * 60),
+          opens_after: opensAfterOf(c),
         })),
       })
       createdId = session.id
@@ -339,11 +341,26 @@ export default function SetupScreen({ draft }) {
                       onBlur={() => { if (!validHours(c.hours)) patchCourt(i, { hours: DEFAULT_HOURS }) }}
                     />
                     <span className="text-2xs text-muted-foreground">hrs</span>
+                    {courts.length > 1 && (
+                      <>
+                        <Input
+                          type="number"
+                          min="0"
+                          aria-label={`Court ${i + 1} opens after (min)`}
+                          className="h-7 w-16 text-center text-xs"
+                          value={c.opens ?? '0'}
+                          onChange={e => patchCourt(i, { opens: e.target.value })}
+                          onBlur={() => patchCourt(i, { opens: String(opensAfterOf(c)) })}
+                        />
+                        <span className="text-2xs text-muted-foreground">min</span>
+                      </>
+                    )}
                   </div>
                 ))}
               </div>
               <p className="text-2xs text-muted-foreground">
                 Each court&apos;s timer runs for its hours from the moment you press Start Session, and can be extended live.
+                With several courts, &quot;opens after (min)&quot; staggers a court&apos;s start — it stays unusable until then, and its timer begins when it opens.
               </p>
             </CardContent>
           </Card>

@@ -95,6 +95,7 @@ db.exec(`
     label TEXT NOT NULL,
     active_from INTEGER,
     active_until INTEGER,
+    opens_after INTEGER,
     duration_minutes INTEGER,
     expires_at INTEGER,
     enabled INTEGER NOT NULL DEFAULT 1
@@ -218,6 +219,9 @@ if (!courtCols.has('duration_minutes')) {
 }
 if (!courtCols.has('expires_at')) {
   db.exec('ALTER TABLE courts ADD COLUMN expires_at INTEGER')
+}
+if (!courtCols.has('opens_after')) {
+  db.exec('ALTER TABLE courts ADD COLUMN opens_after INTEGER')
 }
 
 // ponytail: rebuild sessions to relax started_at — drafts have NULL until PATCH /start

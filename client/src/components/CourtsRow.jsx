@@ -21,10 +21,13 @@ export default function CourtsRow({
 }) {
   // Expired courts stay on screen (pulsing red + "Extend +1 Hour"); an expired
   // court with a match in progress is the Last Game case — both need the card.
-  const liveCourts = courts.filter(c =>
-    isLive(c, serverTime) ||
-    (c.enabled && c.expires_at != null && serverTime >= c.expires_at)
-  )
+  // A staggered court waiting for its opens_at offset renders as "Opens in Xm".
+  const liveCourts = courts.filter(c => {
+    if (!c.enabled) return false
+    if (isLive(c, serverTime)) return true
+    if (c.active_from != null && serverTime < c.active_from) return true
+    return c.expires_at != null && serverTime >= c.expires_at
+  })
   const canStartSelection = selection?.length === 2 || selection?.length === 4
 
   // ponytail: >9 courts scroll the band; raise the breakpoint if a club ever needs it

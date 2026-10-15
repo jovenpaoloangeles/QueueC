@@ -117,6 +117,7 @@ router.post('/matches/:id/start', async (c) => {
     "SELECT id FROM matches WHERE session_id = ? AND state = 'active' AND ended_at IS NULL AND court_number = ?"
   ).get(m.session_id, court.id)
   const courtFree = court.enabled === 1 &&
+    (court.active_from == null || now >= court.active_from) &&
     (court.expires_at == null || now < court.expires_at) &&
     (court.active_until == null || now < court.active_until) &&
     !occupied

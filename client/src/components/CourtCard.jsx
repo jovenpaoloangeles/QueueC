@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { drag, valid, useDragSource, rearrange } from '@/lib/dnd'
-import { cn, fmtClock, fmtDur } from '@/lib/utils'
+import { cn, fmtClock, fmtDur, fmtMins } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -196,10 +196,14 @@ export default function CourtCard({
   }, [isActive])
 
   // Independent countdown expiration logic (remaining_ms = expires_at - now())
+  const now = serverTime ?? Math.floor(Date.now() / 1000)
   const hasTimer = court.expires_at != null
-  const remainingSecs = hasTimer ? Math.max(0, court.expires_at - (serverTime ?? Math.floor(Date.now() / 1000))) : null
+  const remainingSecs = hasTimer ? Math.max(0, court.expires_at - now) : null
   const isExpired = hasTimer && remainingSecs <= 0
   const isExpiring = isExpired && isActive // timer hit zero mid-game — Last Game
+  // Staggered start: court not open yet — no drops, no starts until active_from
+  const opensInSecs = court.active_from != null ? Math.max(0, court.active_from - now) : null
+  const isNotOpen = opensInSecs != null && opensInSecs > 0
 
   const draftFilled = draft.filter(Boolean)
   const canStartSingles = !isActive && draftFilled.length === 2 // any two slots → singles
@@ -211,7 +215,7 @@ export default function CourtCard({
     const isPlayer = p?.kind === 'player' && (p.status === 'waiting' || p.status === 'resting')
     return isPlayer && canDropPlayer(p.entryId)
   }
-  const canAcceptNewMatch = !isExpired
+  const canAcceptNewMatch = !isExpired && !isNotOpen
 
   async function handleExtend() {
     try {
@@ -249,6 +253,11 @@ export default function CourtCard({
           {isExpired && !isActive && (
             <span data-testid="expired-badge" className="text-2xs font-extrabold uppercase tracking-wider text-red-600">
               EXPIRED
+            </span>
+          )}
+          {isNotOpen && (
+            <span data-testid="opens-in-badge" className="text-2xs font-extrabold uppercase tracking-wider text-sky-600">
+              Opens in {fmtMins(opensInSecs)}
             </span>
           )}
         </div>
@@ -314,7 +323,13 @@ export default function CourtCard({
             over && canAcceptNewMatch && drag.current && !dropAllowed() && 'bg-drop-invalid ring-2 ring-drop-invalid-border'
           )}
         >
-          {isExpired ? (
+          {isNotOpen ? (
+            <div className="flex flex-col items-center gap-2 rounded-lg border border-sky-200 bg-sky-50/60 px-3 py-6 text-center">
+              <span className="text-xs font-bold text-sky-700" data-testid="opens-in-note">
+                ⏳ Opens in {fmtMins(opensInSecs)} — this court joins the rotation automatically
+              </span>
+            </div>
+          ) : isExpired ? (
             <div className="flex flex-col items-center gap-2 rounded-lg border border-red-200 bg-red-50/60 px-3 py-6 text-center">
               <span className="text-xs font-bold text-red-700">
                 ⚠ Rental time has run out — court removed from the available pool

@@ -1,0 +1,39 @@
+// Staggered court starts (init-phase option A): a court configured with an
+// opens-after offset renders as "Opens in Xm" and rejects matches until its
+// offset elapses, then opens automatically. Offset elapsed time is simulated by
+// backdating active_from over the API (same trick as 25-court-expiry's expires_at).
+import { test, expect } from '../fixtures.js'
+import { base, fullSetup, liveState, seedLiveMatch } from '../helpers.js'
+
+test.beforeEach(async ({ page }) => {
+  const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
+  if (session) await page.request.fetch(`${base()}/api/sessions/${session.id}/end`, { method: 'PATCH' })
+  await fullSetup(page, { courts: [{}, { opensAfter: 5 }] })
+})
+
+test('30.1 staggered second court shows opens-in state and no start/drop until it opens', async ({ page }) => {
+  const { courts } = await (await page.request.get(`${base()}/api/sessions/${(await liveState(page)).session.id}/courts`)).json()
+  const late = courts[1]
+  expect(late.active_from).not.toBeNull()
+
+  // both cards render; the late one shows the opens-in state, no lineup/drop zone
+  await expect(page.getByTestId('opens-in-badge')).toHaveText(/Opens in \d+m/)
+  await expect(page.getByTestId('opens-in-note')).toBeVisible()
+  // court 1 offers a Start Match button; the not-yet-open court renders none
+  await expect(page.getByTestId('btn-start-match')).toHaveCount(1)
+})
+
+test('30.2 after the offset elapses the court opens automatically and accepts a match', async ({ page }) => {
+  const st = await liveState(page)
+  const late = st.courts[1]
+  await page.request.fetch(`${base()}/api/courts/${late.id}`, {
+    method: 'PATCH', data: { active_from: Math.floor(Date.now() / 1000) - 1 },
+  })
+  await expect(page.getByTestId('opens-in-badge')).toHaveCount(0)
+  await expect(page.getByTestId('opens-in-note')).toHaveCount(0)
+  await expect(page.getByTestId('btn-start-match')).toHaveCount(2)
+
+  // usable end-to-end: a slated match starts on it
+  await seedLiveMatch(page, { courtId: late.id })
+  expect((await liveState(page)).activeMatches.some(m => m.court_number === late.id)).toBe(true)
+})

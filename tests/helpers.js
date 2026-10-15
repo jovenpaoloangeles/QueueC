@@ -72,8 +72,8 @@ export async function fullSetup(page, { courts = 2, playerNames = DEFAULT_PLAYER
   const rows = Array.isArray(courts) ? courts : null
   const label = (i, r) => (r?.label ?? '').trim() || `Court ${i + 1}`
   const hoursOf = r => Number(r?.hours ?? hours ?? 2)
-  const cfgs = (rows ? rows.map((r, i) => ({ label: label(i, r), duration_minutes: Math.round(hoursOf(r) * 60) }))
-    : Array.from({ length: courts }, (_, i) => ({ label: label(i, null), duration_minutes: Math.round(hoursOf(null) * 60) })))
+  const cfgs = (rows ? rows.map((r, i) => ({ label: label(i, r), duration_minutes: Math.round(hoursOf(r) * 60), opens_after: Math.max(0, Number(r?.opensAfter ?? 0)) }))
+    : Array.from({ length: courts }, (_, i) => ({ label: label(i, null), duration_minutes: Math.round(hoursOf(null) * 60), opens_after: 0 })))
   const scheduledStart = defaultStartEpoch(startTime)
   const { session } = await api('/api/sessions', 'POST', {
     name,
@@ -221,7 +221,9 @@ export async function seedLiveMatch(page, { courtId } = {}) {
   const now = Math.floor(Date.now() / 1000)
   const court = courtId
     ? st.courts.find(c => c.id === courtId)
-    : st.courts.find(c => c.enabled && !busy.has(c.id) && (c.expires_at == null || now < c.expires_at))
+    : st.courts.find(c => c.enabled && !busy.has(c.id) &&
+      (c.active_from == null || now >= c.active_from) &&
+      (c.expires_at == null || now < c.expires_at))
   if (!court) throw new Error('seedLiveMatch: no free court')
   const slate = await seedSlate(page)
   const res = await page.request.fetch(`${base()}/api/matches/${slate.id}/start`, {

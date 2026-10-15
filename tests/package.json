@@ -9,7 +9,7 @@
     "ensure-build": "bun scripts/ensure-build.js",
     "test:e2e": "bun run ensure-build && bunx playwright test --config=playwright.config.js",
     "test:unit": "bun unit/dnd.valid.test.js && bun unit/api.error.test.js && bun unit/timer.test.js",
-    "test:server": "bun ../server/routes/two-match-end.test.js"
+    "test:server": "bun ../server/routes/two-match-end.test.js && bun ../server/routes/court-stagger.test.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.0"

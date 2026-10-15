@@ -155,6 +155,7 @@ function freeCourts(courts, activeMatches, now) {
   const busy = new Set((activeMatches ?? []).map(m => m.court_number).filter(v => v != null))
   return (courts ?? []).filter(c =>
     c.enabled &&
+    (c.active_from == null || now >= c.active_from) &&
     (c.expires_at == null || now < c.expires_at) &&
     (c.active_until == null || now < c.active_until) &&
     !busy.has(c.id)

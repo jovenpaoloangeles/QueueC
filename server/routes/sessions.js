@@ -20,7 +20,7 @@ router.post('/', async (c) => {
 
   // seed courts (custom configuration array or default Court 1..N)
   const insertCourt = db.prepare(
-    'INSERT INTO courts (session_id, label, duration_minutes, active_from, active_until) VALUES (?, ?, ?, ?, ?)'
+    'INSERT INTO courts (session_id, label, duration_minutes, active_from, active_until, opens_after) VALUES (?, ?, ?, ?, ?, ?)'
   )
   db.transaction(() => {
     if (Array.isArray(courts) && courts.length > 0) {
@@ -29,11 +29,12 @@ router.post('/', async (c) => {
         const dur = cfg?.duration_minutes != null && cfg?.duration_minutes !== '' ? Number(cfg.duration_minutes) : null
         const from = cfg?.active_from != null && cfg?.active_from !== '' ? Number(cfg.active_from) : null
         const until = cfg?.active_until != null && cfg?.active_until !== '' ? Number(cfg.active_until) : null
-        insertCourt.run(lastInsertRowid, label, dur, from, until)
+        const opens = cfg?.opens_after != null && cfg?.opens_after !== '' ? Number(cfg.opens_after) : null
+        insertCourt.run(lastInsertRowid, label, dur, from, until, opens)
       })
     } else {
       for (let i = 1; i <= count; i++) {
-        insertCourt.run(lastInsertRowid, `Court ${i}`, null, null, null)
+        insertCourt.run(lastInsertRowid, `Court ${i}`, null, null, null, null)
       }
     }
   })()
@@ -51,12 +52,21 @@ router.patch('/:id/start', (c) => {
   if (session.started_at != null) return c.json({ error: 'Session already started' }, 400)
   const now = Math.floor(Date.now() / 1000)
   db.prepare('UPDATE sessions SET started_at = ? WHERE id = ?').run(now, id)
-  // Compute expires_at for courts that have duration_minutes configured
-  db.prepare(`
-    UPDATE courts
-    SET expires_at = ? + duration_minutes * 60
-    WHERE session_id = ? AND duration_minutes IS NOT NULL AND duration_minutes > 0 AND expires_at IS NULL
-  `).run(now, id)
+  // Staggered starts: a court with opens_after opens that many minutes after the
+  // session start (lazy — availability is just active_from <= now everywhere it's
+  // checked). Each court's rental clock anchors to ITS OWN open time, not the
+  // session's; courts without an offset behave exactly as before (base = now).
+  const updateCourt = db.prepare('UPDATE courts SET active_from = ?, expires_at = ? WHERE id = ?')
+  for (const court of db.prepare('SELECT * FROM courts WHERE session_id = ?').all(id)) {
+    const opensAt = court.opens_after != null && court.opens_after > 0 && court.active_from == null
+      ? now + court.opens_after * 60
+      : court.active_from
+    const base = opensAt != null && opensAt > now ? opensAt : now
+    const expires = court.duration_minutes != null && court.duration_minutes > 0 && court.expires_at == null
+      ? base + court.duration_minutes * 60
+      : court.expires_at
+    updateCourt.run(opensAt, expires, court.id)
+  }
   const updated = db.prepare('SELECT * FROM sessions WHERE id = ?').get(id)
   broadcast()
   return c.json({ session: updated })
