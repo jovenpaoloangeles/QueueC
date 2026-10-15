@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { drag, valid } from '@/lib/dnd'
-import { cn, SKILL_BADGE, balanceHint, fmtClock } from '@/lib/utils'
+import { cn, titleCaseSkill, SKILL_BADGE, balanceHint, fmtClock } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { updateSlate, cancelSlate, moveSlate, slateMatch } from '../api.js'
 import { useToast } from '@/components/Toast'
@@ -124,7 +124,7 @@ function SidePlayers({ label, players, sideB }) {
           <span className="truncate">{p.name}</span>
           {p.skill_level && (
             <span className={cn('shrink-0 rounded px-1 py-0.5 text-[10px] font-medium leading-none', SKILL_BADGE[p.skill_level])}>
-              {p.skill_level.replace(/_/g, ' ')}
+              {titleCaseSkill(p.skill_level)}
             </span>
           )}
         </span>

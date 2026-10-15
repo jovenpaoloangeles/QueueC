@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { cn, SKILL_BADGE, SKILL_TIERS } from '@/lib/utils'
+import { cn, titleCaseSkill, SKILL_BADGE, SKILL_TIERS } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,7 +9,7 @@ import { checkinPlayer, createPlayer } from '../api.js'
 export function SkillChip({ level }) {
   return (
     <Badge className={cn('border-0 text-2xs', SKILL_BADGE[level] ?? SKILL_BADGE.intermediate)}>
-      {level?.replace('_', ' ') ?? ''}
+      {titleCaseSkill(level)}
     </Badge>
   )
 }
@@ -140,7 +140,7 @@ export default function PlayerSearchAdd({ session, queue = [], players, onPlayer
                 onChange={e => setNewPlayerSkill(e.target.value)}
               >
                 {SKILL_TIERS.map(s => (
-                  <option key={s} value={s}>{s.replace('_', ' ')}</option>
+                  <option key={s} value={s}>{titleCaseSkill(s)}</option>
                 ))}
               </select>
               <Button type="submit" size="xs" disabled={registering}>

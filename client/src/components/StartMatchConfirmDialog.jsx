@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { cn, SKILL_BADGE, balanceHint } from '@/lib/utils'
+import { cn, titleCaseSkill, SKILL_BADGE, balanceHint } from '@/lib/utils'
 
 export { balanceHint }
 
@@ -12,7 +12,7 @@ function Side({ team }) {
       <span className="font-medium">{names(team)}</span>
       {team.map((p, i) => p.skill_level && (
         <span key={i} className={cn('rounded px-1 py-0.5 text-[10px] leading-none', SKILL_BADGE[p.skill_level])}>
-          {p.skill_level.replace(/_/g, ' ')}
+          {titleCaseSkill(p.skill_level)}
         </span>
       ))}
     </span>

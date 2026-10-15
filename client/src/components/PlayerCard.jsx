@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { drag, valid, useDragSource } from '@/lib/dnd'
-import { cn, fmtClock, fmtMins, SKILL_BADGE } from '@/lib/utils'
+import { cn, fmtClock, fmtMins, titleCaseSkill, SKILL_BADGE } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
@@ -93,7 +93,7 @@ export default function PlayerCard({ entry, waitSecs, selectionIndex, playSecs, 
             </span>
           )}
           <Badge data-testid="skill-badge" className={cn('border-0 text-2xs', SKILL_BADGE[entry.skill_level] ?? SKILL_BADGE.intermediate)}>
-            {entry.skill_level?.replace('_', ' ') ?? ''}
+            {titleCaseSkill(entry.skill_level)}
           </Badge>
         </div>
       </div>

@@ -161,7 +161,7 @@ test('20.12 register new player inline with 7-tier skill dropdown', async ({ pag
   await prompt.getByRole('button', { name: 'Add Player' }).click()
   const chip = poolRow(page, name)
   await expect(chip).toHaveAttribute('aria-checked', 'true')
-  await expect(chip).toContainText('professional')
+  await expect(chip).toContainText('Professional')
 })
 
 test('20.13 selected duplicate blocks registration with inline error', async ({ page }) => {
@@ -190,13 +190,13 @@ test('20.14 database collision shows existing profile instead of duplicate creat
 
 test('20.15 all 7 tiers render distinct badges in the pool', async ({ page }) => {
   const pool = page.getByTestId('player-list')
-  await expect(pool).toContainText('newbie')
-  await expect(pool).toContainText('beginner')
-  await expect(pool).toContainText('lower intermediate')
-  await expect(pool).toContainText('intermediate')
-  await expect(pool).toContainText('upper intermediate')
-  await expect(pool).toContainText('expert')
-  await expect(pool).toContainText('professional')
+  await expect(pool).toContainText('Newbie')
+  await expect(pool).toContainText('Beginner')
+  await expect(pool).toContainText('Lower Intermediate')
+  await expect(pool).toContainText('Intermediate')
+  await expect(pool).toContainText('Upper Intermediate')
+  await expect(pool).toContainText('Expert')
+  await expect(pool).toContainText('Professional')
 })
 
 // --- Active Player Row: games-played badge + status timer ---

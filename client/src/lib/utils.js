@@ -68,6 +68,11 @@ const avgSkill = team => {
 
 /** Average-skill gap between the two sides → human hint. m = { team1:[{skill_level}], team2:[...] }.
  *  Thresholds: ≤50 Even · ≤150 Slight edge · else Lopsided. null when skill data is missing. */
+/** 'upper_intermediate' → 'Upper Intermediate'. Null-safe for missing skill data. */
+export function titleCaseSkill(level) {
+  return (level ?? '').split('_').map(w => (w ? w[0].toUpperCase() + w.slice(1) : w)).join(' ')
+}
+
 export function balanceHint(m) {
   const a = avgSkill(m.team1), b = avgSkill(m.team2)
   if (a == null || b == null) return null

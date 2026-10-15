@@ -16,7 +16,7 @@ test('4.1 all 22 fixture players appear in pool', async ({ page }) => {
 test('4.2 row shows name and skill badge', async ({ page }) => {
   const chip = poolRow(page, 'Inter C1')
   await expect(chip).toBeVisible()
-  await expect(chip.locator('text=intermediate')).toBeVisible()
+  await expect(chip.locator('text=Intermediate')).toBeVisible()
 })
 
 test('4.3 clicking a chip selects it (nothing is checked in yet)', async ({ page }) => {

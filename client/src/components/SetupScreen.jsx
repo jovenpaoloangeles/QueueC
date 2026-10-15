@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { cn, SKILL_TIERS, fmtSessionName } from '@/lib/utils'
+import { cn, titleCaseSkill, SKILL_TIERS, fmtSessionName } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -141,7 +141,7 @@ function EditRow({ p, onSave, onCancel }) {
           onChange={e => setSkill(e.target.value)}
           onKeyDown={keys}
         >
-          {SKILL_TIERS.map(s => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
+          {SKILL_TIERS.map(s => <option key={s} value={s}>{titleCaseSkill(s)}</option>)}
         </select>
         <Button type="button" size="xs" aria-label="Save player" disabled={saving} onClick={save}>✓</Button>
         <Button type="button" size="xs" variant="outline" aria-label="Cancel edit" onClick={onCancel}>✕</Button>
@@ -385,7 +385,7 @@ export default function SetupScreen({ draft }) {
                   >
                     <option value="">All tiers</option>
                     {SKILL_TIERS.map(s => (
-                      <option key={s} value={s}>{s.replace('_', ' ')}</option>
+                      <option key={s} value={s}>{titleCaseSkill(s)}</option>
                     ))}
                   </select>
                 </div>
