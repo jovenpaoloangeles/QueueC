@@ -65,8 +65,16 @@ router.patch('/:id/start', (c) => {
 router.patch('/:id/end', (c) => {
   const id = c.req.param('id')
   const now = Math.floor(Date.now() / 1000)
-  db.prepare('UPDATE sessions SET ended_at = ? WHERE id = ?').run(now, id)
-  resetPlayersToPreset()
+  // End + reset atomically: a reset throw rolls ended_at back too, so a failed
+  // end can't strand a dead session with an un-reset pool (d495f6f's harm).
+  db.transaction(() => {
+    db.prepare('UPDATE sessions SET ended_at = ? WHERE id = ?').run(now, id)
+    // Reset the pool only when this is the last unended session — ending one
+    // session must not wipe other live sessions' registrants, queue entries
+    // and in-flight slates.
+    const { c: unended } = db.prepare('SELECT COUNT(*) AS c FROM sessions WHERE ended_at IS NULL').get()
+    if (unended === 0) resetPlayersToPreset()
+  })()
   const session = db.prepare('SELECT * FROM sessions WHERE id = ?').get(id)
   broadcast()
   return c.json({ session })

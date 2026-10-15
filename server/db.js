@@ -26,6 +26,15 @@ export function normalizeSkill(skill) {
   return skill
 }
 
+// Preset rows are hand-edited JSON: a missing/typo'd/non-string skill_level
+// would violate the players CHECK/NOT NULL (or fail binding) mid-reset. Skip
+// the row like a bad name instead of defaulting — a default still can't rescue
+// a typo'd value outside SKILL_LEVELS, and skipping keeps an existing pool
+// player (and their level) intact.
+function isValidSkill(skill) {
+  return typeof skill === 'string' && SKILL_LEVELS.includes(normalizeSkill(skill))
+}
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS players (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -283,8 +292,11 @@ export function seedPlayersFromFile(rows) {
   const insert = db.prepare(
     'INSERT OR IGNORE INTO players (name, skill_level, created_at) SELECT ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM players WHERE LOWER(TRIM(name)) = LOWER(TRIM(?)))'
   )
-  for (const { name, skill_level } of rows) {
+  for (const row of rows) {
+    if (row == null || typeof row !== 'object') continue // bare non-element rows, e.g. [null]
+    const { name, skill_level } = row
     if (typeof name !== 'string' || !name.trim()) continue
+    if (!isValidSkill(skill_level)) continue
     insert.run(name.trim(), normalizeSkill(skill_level), now, name.trim())
   }
 }
@@ -338,6 +350,7 @@ export function resetPlayersToPreset() {
     seedPlayersFromFile(rows)
     const update = db.prepare('UPDATE players SET skill_level = ? WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))')
     for (const { name, skill_level } of valid) {
+      if (!isValidSkill(skill_level)) continue // name above already kept the player; keep their level too
       update.run(normalizeSkill(skill_level), name.trim())
     }
   })()

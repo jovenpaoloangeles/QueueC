@@ -172,7 +172,47 @@ async function resetNoPresetTest() {
   }
 }
 
+// Malformed preset rows — bare null elements, non-string names, missing/typo'd
+// skill_level — must not throw and must leave the pool equal to the VALID
+// preset rows (in-process, temp DB + temp preset; query busts the module cache)
+async function malformedPresetTest() {
+  const dbPath = join(tmpdir(), `queuec-reset-malformed-${Date.now()}.db`)
+  const presetFile = join(tmpdir(), `queuec-reset-malformed-preset-${Date.now()}.json`)
+  writeFileSync(presetFile, JSON.stringify([
+    { name: 'Malformed Anchor', skill_level: 'beginner' },
+    null, // bare non-element
+    { name: 123, skill_level: 'intermediate' }, // non-string name
+    { name: 'Malformed Typo', skill_level: 'rockstar' }, // typo'd skill on an existing player
+    { name: 'Malformed Missing' }, // missing skill on an existing player
+  ]))
+  process.env.DB_PATH = dbPath
+  process.env.PLAYERS_PATH = presetFile
+  const { default: db, resetPlayersToPreset } = await import('../db.js?malformed-preset')
+  try {
+    // Existing pool players named by the bad-skill rows must survive the reset
+    const ins = db.prepare("INSERT INTO players (name, skill_level, created_at) VALUES (?, ?, 1)")
+    ins.run('Malformed Typo', 'expert')
+    ins.run('Malformed Missing', 'expert')
+    ins.run('Malformed Stray', 'beginner')
+
+    resetPlayersToPreset() // must not throw on any of the malformed rows
+
+    const pool = db.prepare('SELECT name, skill_level FROM players ORDER BY name').all()
+    assert.deepEqual(pool, [
+      { name: 'Malformed Anchor', skill_level: 'beginner' },
+      { name: 'Malformed Missing', skill_level: 'expert' },
+      { name: 'Malformed Typo', skill_level: 'expert' },
+    ], 'Expected pool == valid preset rows, garbage skipped, bad-skill levels preserved')
+    console.log('sessions.test.js: malformed-preset assertions passed')
+  } finally {
+    db.close()
+    for (const s of ['', '-wal', '-shm']) rmSync(dbPath + s, { force: true })
+    rmSync(presetFile, { force: true })
+  }
+}
+
 run()
   .then(fkCleanupTest)
   .then(resetNoPresetTest)
+  .then(malformedPresetTest)
   .catch(e => { console.error(e); process.exit(1) })
