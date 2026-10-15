@@ -1,12 +1,14 @@
 # Current Workflow (as implemented)
 
-1. **Setup** (single screen) — start time, number of courts, hours per court; search/add/select players for the waiting pool (select-all available) → **Start Session**. Nothing is created until Start; each court's timer runs its hours from that click.
+1. **Setup** (one screen, no modals) — session name defaults to `ASTIRISK (DD-Mmm-YYYY)`; whole-hour start-time select (06:00–23:00); number of courts (1–16) with a per-court label and rental HOURS (0.5–12, default 2); alphabetical player pool (letter-grouped) with search-and-add, **Select all** and a tier filter. Click a row to select it, **double-click a row (or ✎) to edit name/skill inline**. One **Start Session** button does everything — create session → check in the selection → start. Nothing is created until that click, and each court's timer runs its hours from it.
 2. **Live** — header shows courts in use, waiting count, longest/avg wait; actions: Smart Match, Add Player, New Session, dark toggle.
-   - **Courts**: drag players into Team A/B to start a match; countdown per court, Extend +1h when expired; shuttle +/-.
-   - **On Deck**: slate matches for the next free court; auto-promoted when a court frees.
-   - **Queue**: All/Wait/Rest tabs; rest/wake.
+   - **Courts**: drag players into the 2×2 lineup; a match never starts without the confirmation dialog (Start Match / Start Singles / 4th-slot drop on an idle court). A court whose rental ran out shows **Extend Court (+1hr)?** — idle it pulses EXPIRED and leaves the available pool; mid-match the game keeps running under a **Last Game** badge. Extending adds an hour from max(expires_at, now); shuttle +/-.
+   - **On Deck**: always mounted, even when empty. Numbered cards (up next first) with a skill-balance label and a next-free-court ETA hint; **Smart add** or the manual **＋ Build lineup** builder (drag 4 / **Use selection** / **Add to On Deck**); multiple slates up to 3 counted across existing ones; reorder with ↑/↓; auto-promoted when a court frees. Each live court keeps its own **Next match lineup** matrix for pre-drafting.
+   - **Queue**: All/Wait/Rest tabs; rest/wake via buttons or by dragging — waiting rows drop into the Resting tray and resting chips drag back out.
    - **End match**: confirm → scores, shuttles, 1–5 star rating.
    - **Leaderboard**: win rate and point differential.
+
+**Smart Match confirmation:** the header button first asks the server for a dry-run plan (`POST /sessions/:id/automatch` with `{dry_run:true}` → `{plan}`, no writes), shows it in the confirm dialog, and posting `{plan}` executes exactly that plan — 409 `Queue changed — review and try again` if the queue moved in between. On Deck's **Smart add** uses `{slate_only:true}` the same way. Slating onto an occupied court (4th drop) is immediate, no dialog.
 
 ---
 (Original mockup notes below.)
