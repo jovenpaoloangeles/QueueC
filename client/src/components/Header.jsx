@@ -62,7 +62,7 @@ export default function Header({ session, sseData, draftedIds = new Set(), onSma
   }
 
   return (
-    <div className="flex h-14 shrink-0 items-center justify-between gap-4 bg-card px-4">
+    <div className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between gap-4 bg-card px-4">
       {/* brand — one line; session name + date inline as a single line */}
       <div className="flex items-baseline gap-3">
         <span className="text-base font-semibold text-foreground">🏸 QueueC</span>

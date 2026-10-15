@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useSSE } from './hooks/useSSE.js'
 import { useTimers } from './hooks/useTimers.js'
 import { EMPTY_DRAFT } from './lib/dnd.js'
-import { useLayout, LAYOUT_LIMITS, maxBandH, sidebarMaxW, clampLayout } from './lib/layout.js'
 import { startMatch, setQueueOrder, endSession, autoMatch } from './api.js'
 import { useToast } from '@/components/Toast'
 import { Button } from '@/components/ui/button'
@@ -11,7 +10,6 @@ import Header from './components/Header.jsx'
 import CourtsRow from './components/CourtsRow.jsx'
 import OnDeckStrip from './components/OnDeckStrip.jsx'
 import QueueGrid from './components/QueueGrid.jsx'
-import Divider from './components/Divider.jsx'
 import StatsSidebar from './components/StatsSidebar.jsx'
 import SetupScreen from './components/SetupScreen.jsx'
 import StartMatchConfirmDialog from './components/StartMatchConfirmDialog.jsx'
@@ -29,6 +27,8 @@ export default function App() {
   const [builderDraftIds, setBuilderDraftIds] = useState([])
   // bumped after a live register-new-player so QueueGrid refetches the pool
   const [playersVersion, setPlayersVersion] = useState(0)
+  // On Deck collapsible — plain local state, nothing persisted
+  const [deckOpen, setDeckOpen] = useState(false)
 
   const { session, queue, activeMatches, slatedMatches = [], courts, stats } = sseData
   const toast = useToast()
@@ -264,44 +264,6 @@ export default function App() {
   const [connected, setConnected] = useState(true)
   useSSE(useCallback(data => setSseData(data), []), setConnected)
 
-  // bento layout: divider-managed band sizes, persisted in localStorage
-  const { layout, update: updateLayout } = useLayout()
-  const [windowH, setWindowH] = useState(() => (typeof window !== 'undefined' ? window.innerHeight : 800))
-  const [windowW, setWindowW] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1280))
-  useEffect(() => {
-    const onResize = () => { setWindowH(window.innerHeight); setWindowW(window.innerWidth) }
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [])
-  // r6: every band clamps against the OTHERS' floors via maxBandH, so the
-  // global budget (courts + deck + queue floor + chrome <= window) always holds
-  const courtsMax = Math.min(
-    Math.max(LAYOUT_LIMITS.courtsMin, Math.floor(windowH * LAYOUT_LIMITS.courtsMaxPct)),
-    maxBandH(windowH, layout.deckOpen ? layout.deckH : 0, LAYOUT_LIMITS.courtsMin),
-  )
-  const deckMax = maxBandH(windowH, layout.courtsH, LAYOUT_LIMITS.deckMin)
-  // functional updates: divider drags fire many pointermove events between
-  // re-renders — a stale `layout.courtsH` closure would drop all but the last
-  const growCourts = d => updateLayout(prev => ({ courtsH: Math.min(courtsMax, Math.max(LAYOUT_LIMITS.courtsMin, prev.courtsH + d)) }))
-  const growDeck = d => updateLayout(prev => ({ deckH: Math.min(deckMax, Math.max(LAYOUT_LIMITS.deckMin, prev.deckH + d)) }))
-  const growSidebar = d => updateLayout(prev => ({ sidebarW: Math.min(sidebarMaxW(windowW), Math.max(LAYOUT_LIMITS.sidebarMin, prev.sidebarW + d)) }))
-  // re-expanding On Deck clamps into the current budget instead of blowing the
-  // queue away: deckH is capped, and the COURTS band yields first when the pair
-  // would overflow (collapsing releases the height entirely — the slim bar
-  // renders at its natural size and deckH leaves the budgets above)
-  const toggleDeck = () => updateLayout(prev => {
-    if (prev.deckOpen) return { deckOpen: false }
-    const deckH = Math.max(LAYOUT_LIMITS.deckMin, Math.min(prev.deckH,
-      maxBandH(windowH, LAYOUT_LIMITS.courtsMin, LAYOUT_LIMITS.deckMin)))
-    const courtsH = Math.max(LAYOUT_LIMITS.courtsMin, Math.min(prev.courtsH,
-      maxBandH(windowH, deckH, LAYOUT_LIMITS.courtsMin)))
-    return { deckOpen: true, deckH, courtsH }
-  })
-  // a layout persisted on a tall window self-corrects on load / window resize
-  useEffect(() => {
-    updateLayout(prev => clampLayout(prev, windowH, windowW))
-  }, [windowH, windowW, updateLayout])
-
   useEffect(() => {
     document.title = session?.name ? `${session.name} · QueueC` : 'QueueC'
   }, [session?.name])
@@ -309,7 +271,7 @@ export default function App() {
   const { waitSeconds, playSeconds } = useTimers(sseData.serverTime, sseData.queue, sseData.activeMatches)
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-background">
+    <div className="flex min-h-screen flex-col bg-background">
       <Header
         session={session}
         sseData={sseData}
@@ -326,35 +288,24 @@ export default function App() {
         <SetupScreen draft={session} />
       )}
       {session && session.started_at != null && (
-        <div className="flex flex-1 overflow-hidden">
-          <main className="flex min-w-0 flex-1 flex-col overflow-hidden p-4">
-            {/* bento bands: heights from the persisted layout, resized via dividers */}
-            <div
-              className="shrink-0 overflow-hidden"
-              style={{ height: layout.courtsH }}
-            >
-              <CourtsRow
-                session={session}
-                courts={courts}
-                activeMatches={activeMatches}
-                queue={queue}
-                playSeconds={playSeconds}
-                selection={selection}
-                drafts={drafts}
-                draftedIds={draftedIds}
-                onStartMatch={requestStartMatch}
-                onDropPlayer={handleDropOnCourt}
-                onDropSlot={handleDropOnSlot}
-                onClearSlot={clearSlot}
-                onClearDraft={clearDraft}
-                serverTime={sseData.serverTime ?? Math.floor(Date.now() / 1000)}
-              />
-            </div>
-            <Divider
-              axis="row"
-              testid="divider-courts"
-              label="Resize courts area"
-              applyDelta={growCourts}
+        <div className="flex flex-1 items-start">
+          {/* one scrolling column: Courts → On Deck → Queue at natural height */}
+          <main className="flex min-w-0 flex-1 flex-col gap-4 p-4">
+            <CourtsRow
+              session={session}
+              courts={courts}
+              activeMatches={activeMatches}
+              queue={queue}
+              playSeconds={playSeconds}
+              selection={selection}
+              drafts={drafts}
+              draftedIds={draftedIds}
+              onStartMatch={requestStartMatch}
+              onDropPlayer={handleDropOnCourt}
+              onDropSlot={handleDropOnSlot}
+              onClearSlot={clearSlot}
+              onClearDraft={clearDraft}
+              serverTime={sseData.serverTime ?? Math.floor(Date.now() / 1000)}
             />
             <OnDeckStrip
               key={session.id}
@@ -367,43 +318,24 @@ export default function App() {
               sessionId={session.id}
               courts={courts}
               activeMatches={activeMatches}
-              open={layout.deckOpen}
-              height={layout.deckH}
-              onToggleOpen={toggleDeck}
+              open={deckOpen}
+              onToggleOpen={() => setDeckOpen(o => !o)}
             />
-            {layout.deckOpen && (
-              <Divider
-                axis="row"
-                testid="divider-deck"
-                label="Resize on deck area"
-                applyDelta={growDeck}
-              />
-            )}
-            <div className="flex flex-1 flex-col overflow-hidden" style={{ minHeight: LAYOUT_LIMITS.queueMin }}>
-              <QueueGrid
-                session={session}
-                queue={queue}
-                waitSeconds={waitSeconds}
-                playSeconds={playSeconds}
-                selection={selection}
-                draftedIds={draftedIds}
-                onSelectionChange={setSelection}
-                onReorder={handleReorder}
-                playersVersion={playersVersion}
-                onPlayersChanged={() => setPlayersVersion(v => v + 1)}
-              />
-            </div>
+            <QueueGrid
+              session={session}
+              queue={queue}
+              waitSeconds={waitSeconds}
+              playSeconds={playSeconds}
+              selection={selection}
+              draftedIds={draftedIds}
+              onSelectionChange={setSelection}
+              onReorder={handleReorder}
+              playersVersion={playersVersion}
+              onPlayersChanged={() => setPlayersVersion(v => v + 1)}
+            />
           </main>
-          <Divider
-            axis="col"
-            testid="divider-sidebar"
-            label="Resize sidebar"
-            applyDelta={growSidebar}
-          />
-          <aside
-            className="shrink-0 overflow-y-auto border-l border-border bg-card"
-            style={{ width: layout.sidebarW }}
-          >
+          {/* fixed stats sidebar: own scroll, never scrolls with the page */}
+          <aside className="sticky top-14 h-[calc(100vh-3.5rem)] w-72 shrink-0 overflow-y-auto border-l border-border bg-card">
             <StatsSidebar stats={stats} />
           </aside>
         </div>

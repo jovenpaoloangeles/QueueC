@@ -146,6 +146,7 @@
     }
   html {
     @apply font-sans;
+    scrollbar-gutter: stable; /* page scroll appears/disappears — keep layout steady */
     }
 }
 

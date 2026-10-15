@@ -166,7 +166,7 @@ export default function OnDeckStrip({
   slatedMatches, queue = [], draftedIds = new Set(), onEditDraftChange = NOOP,
   onBuilderDraftChange = NOOP, onSmartFill = NOOP,
   sessionId, courts = [], activeMatches = [],
-  open = true, height, onToggleOpen = NOOP,
+  open = true, onToggleOpen = NOOP,
 }) {
   const toast = useToast()
   const [editingId, setEditingId] = useState(null)
@@ -455,7 +455,7 @@ export default function OnDeckStrip({
   )
 
   const collapseBtn = (
-    /* collapse toggle: chevron + aria-expanded, persisted in the layout storage */
+    /* collapse toggle: chevron + aria-expanded; open/closed is plain local state */
     <button
       type="button"
       data-testid="ondeck-collapse"
@@ -479,9 +479,8 @@ export default function OnDeckStrip({
       data-testid="on-deck-strip"
       className={cn(
         'flex shrink-0 flex-col rounded-2xl border-2 border-primary/60 bg-primary/5 shadow-md',
-        open ? 'gap-3 overflow-y-auto p-3' : 'gap-1 overflow-hidden px-3 py-0.5',
+        open ? 'gap-3 p-3' : 'gap-1 px-3 py-1',
       )}
-      style={open && height != null ? { height } : undefined}
     >
       {/* collapsed: chevron inline with the header so the slim bar stays one row */}
       {open ? (

@@ -30,9 +30,9 @@ export default function CourtsRow({
   })
   const canStartSelection = selection?.length === 2 || selection?.length === 4
 
-  // ponytail: >9 courts scroll the band; raise the breakpoint if a club ever needs it
+  // ponytail: >9 courts wrap to a 3rd column; the page scroll takes the overflow
   return (
-    <div className={cn('grid h-full min-h-[300px] auto-rows-[minmax(260px,auto)] gap-4 overflow-y-auto',
+    <div className={cn('grid auto-rows-[minmax(260px,auto)] gap-4',
       liveCourts.length <= 4 ? 'grid-cols-2' : 'grid-cols-3')}>
       {liveCourts.map(court => {
         const draft = drafts[court.id] ?? EMPTY_DRAFT

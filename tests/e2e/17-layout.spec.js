@@ -1,4 +1,5 @@
-// tests/e2e/17-layout.spec.js
+// tests/e2e/17-layout.spec.js — scroll-column layout: court cards at natural
+// height, one scrolling page, sidebar with its own scroll.
 import { test, expect } from '../fixtures.js'
 import { base, createSession, checkinPlayers, startSession, fullSetup, startDoubles, endMatch } from '../helpers.js'
 
@@ -46,7 +47,7 @@ test('17.4 stats sidebar scrollable when content is long', async ({ page }) => {
   expect(await aside.evaluate(el => el.scrollTop)).toBeGreaterThan(0)
 })
 
-test('17.5 queue grid scrollable with many players', async ({ page }) => {
+test('17.5 the page scrolls as one column — enough content overflows the viewport', async ({ page }) => {
   // end the session beforeEach created; rebuilding with 20 players on top of it
   // blows the default 30s budget
   const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
@@ -55,11 +56,9 @@ test('17.5 queue grid scrollable with many players', async ({ page }) => {
   const { players } = await (await page.request.get(`${base()}/api/players`)).json()
   await fullSetup(page, { playerNames: players.map(p => p.name) })
   await page.setViewportSize({ width: 1000, height: 500 })
-  await page.waitForTimeout(300)
-  // queue list itself is the scroll container (main is overflow-hidden now)
-  const grid = page.locator('[data-queue-list]')
-  const { scrollHeight, clientHeight } = await grid.evaluate(el => ({
-    scrollHeight: el.scrollHeight, clientHeight: el.clientHeight,
-  }))
-  expect(scrollHeight).toBeGreaterThan(clientHeight)
+  await expect(page.locator('[data-entry-id]').first()).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollHeight > window.innerHeight)).toBe(true)
+  // the document is the scroll container — no inner band scrolls anymore
+  await page.evaluate(() => window.scrollTo(0, 100000))
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
 })
