@@ -67,7 +67,7 @@ export default function PlayerSearchAdd({ session, queue = [], players, onPlayer
     doCheckIn(playerId)
   }
 
-  async function doCheckIn(playerId) {
+  async function doCheckIn(playerId, created = null) {
     try {
       await checkinPlayer(session.id, playerId)
     } catch (err) {
@@ -75,8 +75,8 @@ export default function PlayerSearchAdd({ session, queue = [], players, onPlayer
       return
     }
     setSearchQuery('')
-    const found = players.find(p => p.id === playerId)
-    if (found) onCheckedIn?.(found)
+    // a just-registered player isn't in the (stale) pool yet — pass them through
+    onCheckedIn?.(players.find(p => p.id === playerId) ?? created)
   }
 
   // The confirm gate's Add: create first for register-new, then check in.
@@ -85,12 +85,14 @@ export default function PlayerSearchAdd({ session, queue = [], players, onPlayer
     setRegistering(true)
     try {
       let playerId = pending.playerId
+      let created = null
       if (!playerId) {
         const { player } = await createPlayer({ name: pending.name, skill_level: pending.skill })
         playerId = player.id
+        created = player
         onPlayersChanged?.()
       }
-      await doCheckIn(playerId)
+      await doCheckIn(playerId, created)
       onPlayersChanged?.()
     } catch (err) {
       toast(err?.data?.error ?? 'Could not register player', 'error')

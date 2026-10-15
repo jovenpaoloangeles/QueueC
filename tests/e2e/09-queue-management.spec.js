@@ -74,6 +74,7 @@ test('9.3 newly checked-in player slots into alphabetical position', async ({ pa
   await page.getByTestId('checkin-toggle').click()
   await page.getByTestId('checkin-search').fill('Beginner B1')
   await page.getByTestId('combobox-matches').getByRole('button', { name: 'Beginner B1' }).click()
+  await page.getByTestId('checkin-confirm-add').click()
   await page.waitForTimeout(400)
   const names = await getQueueNames(page)
   expect(names[0]).toBe('Beginner B1')

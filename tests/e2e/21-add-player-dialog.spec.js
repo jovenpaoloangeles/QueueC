@@ -30,6 +30,7 @@ test('21.1 register new player from popover: toasts, queues, pool refetches', as
   const name = `Dlg Smoke ${Date.now().toString(36)}`
   await page.getByTestId('checkin-search').fill(name)
   await page.getByTestId('register-new-player-prompt').getByRole('button', { name: 'Add Player' }).click()
+  await page.getByTestId('checkin-confirm-add').click()
 
   await expect(page.getByTestId('toast')).toContainText('Checked in:')
   await expect(page.locator('[data-entry-id]')).toHaveCount(beforeCount + 1)
@@ -44,9 +45,49 @@ test('21.2 check in existing player via search row', async ({ page }) => {
   await page.getByTestId('checkin-toggle').click()
   await page.getByTestId('checkin-search').fill('Newbie A1')
   await page.getByTestId('combobox-matches').getByRole('button', { name: 'Newbie A1' }).click()
+  await page.getByTestId('checkin-confirm-add').click()
 
   await expect(page.getByTestId('toast')).toContainText('Checked in:')
   await expect(page.locator('[data-entry-id]')).toHaveCount(beforeCount + 1)
+})
+
+test('21.5 check-in asks for confirmation; Cancel adds nothing', async ({ page }) => {
+  await page.locator('[data-entry-id]').first().waitFor()
+  const beforeCount = await page.locator('[data-entry-id]').count()
+
+  await page.getByTestId('checkin-toggle').click()
+  await page.getByTestId('checkin-search').fill('Newbie A1')
+  await page.getByTestId('combobox-matches').getByRole('button', { name: 'Newbie A1' }).click()
+
+  // nothing added until confirmed
+  const dialog = page.getByTestId('checkin-confirm-dialog')
+  await expect(dialog).toContainText('Add Newbie A1 to the pool?')
+  await expect(page.locator('[data-entry-id]')).toHaveCount(beforeCount)
+  await page.getByTestId('checkin-confirm-cancel').click()
+  await expect(dialog).toBeHidden()
+  await expect(page.locator('[data-entry-id]')).toHaveCount(beforeCount)
+
+  // confirm path really adds
+  await page.getByTestId('combobox-matches').getByRole('button', { name: 'Newbie A1' }).click()
+  await page.getByTestId('checkin-confirm-add').click()
+  await expect(page.getByTestId('toast')).toContainText('Checked in:')
+  await expect(page.locator('[data-entry-id]')).toHaveCount(beforeCount + 1)
+})
+
+test('21.6 register-new also confirms before the add', async ({ page }) => {
+  await page.locator('[data-entry-id]').first().waitFor()
+  const beforeCount = await page.locator('[data-entry-id]').count()
+
+  await page.getByTestId('checkin-toggle').click()
+  const name = `Dlg Cancel ${Date.now().toString(36)}`
+  await page.getByTestId('checkin-search').fill(name)
+  await page.getByTestId('register-new-player-prompt').getByRole('button', { name: 'Add Player' }).click()
+  await page.getByTestId('checkin-confirm-cancel').click()
+  await expect(page.getByTestId('checkin-confirm-dialog')).toBeHidden()
+  await expect(page.locator('[data-entry-id]')).toHaveCount(beforeCount)
+  // player was never created — a fresh search still offers register-new
+  await page.getByTestId('checkin-search').fill(name)
+  await expect(page.getByTestId('register-new-player-prompt')).toBeVisible()
 })
 
 test('21.3 duplicate-in-session surfaces the inline error, no register prompt', async ({ page }) => {

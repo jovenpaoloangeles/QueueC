@@ -54,13 +54,13 @@ test('28.1 panel is always mounted: empty state, and still there after ending th
   await expect(page.getByTestId('on-deck-empty')).toBeVisible()
 })
 
-test('28.2 builder: smart fill populates slots for review; queue dims then releases', async ({ page }) => {
+test('28.2 builder: smart fill populates slots for review; drafted players leave the queue then return', async ({ page }) => {
   await startDoubles(page)
   const before = await page.locator('[data-entry-id]').count()
   await openBuilder(page)
   await page.getByTestId('ondeck-smart-fill').click()
   for (let i = 0; i < 4; i++) await expect(page.getByTestId(`ondeck-new-slot-${i}`)).not.toHaveText('Drop…')
-  await expect(page.getByTestId('drafted-tag')).toHaveCount(4)       // builder ids dim the queue
+  await expect(page.locator('[data-entry-id]')).toHaveCount(before - 4)  // builder ids pull players out of the queue
   // fill ≠ slate: nothing on deck until the QM reviews and adds
   await expect(page.getByTestId('on-deck-count')).toHaveText('0')
   await expect(page.getByTestId('on-deck-empty')).toBeVisible()
@@ -75,7 +75,7 @@ test('28.2 builder: smart fill populates slots for review; queue dims then relea
   const cardText = await page.locator('[data-testid^="slate-row-"]').first().innerText()
   for (const n of slotNames) expect(cardText).toContain(n)
   await expect(page.locator('[data-entry-id]')).toHaveCount(before - 4)
-  await expect(page.getByTestId('drafted-tag')).toHaveCount(0)
+  await expect(page.locator('[data-entry-id]').filter({ hasText: slotNames[0] })).toHaveCount(0) // still out of the pool (slated)
 
   await addViaSmartFill(page)
   await expect(page.getByTestId('on-deck-pos-2')).toBeVisible()
@@ -86,14 +86,15 @@ test('28.2 builder: smart fill populates slots for review; queue dims then relea
 
 test('28.3 builder: drag from the queue fills slots; clear button empties one', async ({ page }) => {
   await openBuilder(page)
+  const before = await page.locator('[data-entry-id]').count()
   for (let i = 0; i < 4; i++) {
     await syntheticDrag(page, '[data-entry-id]', '[data-testid^="ondeck-new-slot-"]', { fromIndex: i, toIndex: i })
   }
-  await expect(page.getByTestId('drafted-tag')).toHaveCount(4)
+  await expect(page.locator('[data-entry-id]')).toHaveCount(before - 4)  // drafted players leave the queue
   await page.getByTestId('ondeck-new-clear-3').click()
-  await expect(page.getByTestId('drafted-tag')).toHaveCount(3)
+  await expect(page.locator('[data-entry-id]')).toHaveCount(before - 3)  // cleared slot's player returns
   await expect(page.getByTestId('ondeck-add')).toBeDisabled()
-  await syntheticDrag(page, '[data-entry-id]:not(:has([data-testid="drafted-tag"]))', '[data-testid="ondeck-new-slot-3"]', { fromIndex: 0, toIndex: 0 })
+  await syntheticDrag(page, '[data-entry-id]', '[data-testid="ondeck-new-slot-3"]', { fromIndex: 0, toIndex: 0 })
   await expect(page.getByTestId('ondeck-add')).toBeEnabled()
   await page.getByTestId('ondeck-add').click()
   await expect(page.getByTestId('on-deck-pos-1')).toBeVisible()
@@ -283,17 +284,16 @@ test('28.11 editing participants: removing a slated player returns them to the w
   await page.getByTestId(`slate-edit-${slate.id}`).click()
   await page.getByTestId('slate-slot-clear-0').click()
   await expect(page.getByTestId('slate-slot-0')).toContainText('Drop…')
-  const subId = await page.locator('[data-entry-id]').filter({ hasNot: page.getByTestId('drafted-tag') }).first().getAttribute('data-entry-id')
+  const subId = await page.locator('[data-entry-id]').first().getAttribute('data-entry-id')
   await syntheticDrag(page, `[data-entry-id="${subId}"]`, '[data-testid="slate-slot-0"]')
   await page.getByTestId('slate-save').click()
   await expect(page.getByTestId('slate-save')).toBeHidden() // editor closed on success
 
   // the removed player is back in the waiting pool without a reload — via SSE,
-  // with no drafted/dimmed marker left on their card
+  // rendered again as a normal queue card
   await expect.poll(async () => (await liveState(page)).queue.find(e => e.id === removedId)?.status).toBe('waiting')
   const card = page.locator(`[data-queue-list] [data-entry-id="${removedId}"]`)
   await expect(card).toBeVisible()
-  await expect(card.locator('[data-testid="drafted-tag"]')).toHaveCount(0)
   // and the slate really plays the substitute
   const after = await liveState(page)
   expect(after.slatedMatches[0].team1_p1).not.toBe(removedId)
