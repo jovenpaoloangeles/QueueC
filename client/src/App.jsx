@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useSSE } from './hooks/useSSE.js'
 import { useTimers } from './hooks/useTimers.js'
 import { EMPTY_DRAFT } from './lib/dnd.js'
-import { startMatch, slateMatch, setQueueOrder, endSession, autoMatch } from './api.js'
+import { startMatch, setQueueOrder, endSession, autoMatch } from './api.js'
 import { useToast } from '@/components/Toast'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -230,33 +230,18 @@ export default function App() {
     }
   }
 
-  // Slot drop → per-court draft. Opens the start confirmation at 4 on an idle court; on an
-  // occupied court the 4th name slates the lineup for the next free court.
-  async function handleDropOnSlot(courtId, slotIdx, entryId) {
+  // Slot drop → per-court draft on an idle court (live courts render no lineup
+  // matrix). The 4th name opens the start confirmation; pre-building a lineup
+  // for the next free court lives in the On Deck builder.
+  function handleDropOnSlot(courtId, slotIdx, entryId) {
     const draft = drafts[courtId] ?? EMPTY_DRAFT
     if (draft[slotIdx] != null) return           // slot busy — clear it with ✕ first
     if (draft.includes(entryId)) return          // already drafted on this court
     if (draftedIds.has(entryId)) return          // drafted on another court
     const next = draft.map((v, i) => (i === slotIdx ? entryId : v))
     setDrafts(prev => ({ ...prev, [courtId]: next }))
-    if (next.filter(Boolean).length < 4) return
-
-    const occupied = activeMatches.some(m => m.court_number === courtId)
-    if (!occupied) {
+    if (next.filter(Boolean).length === 4) {
       requestStartMatch(courtId, next, 'draft') // confirm dialog; draft cleared on confirmed success
-      return
-    }
-    try {
-      await slateMatch({
-        session_id: session.id,
-        team1_p1: next[0], team1_p2: next[1],
-        team2_p1: next[2], team2_p2: next[3],
-      })
-      toast('Slated — plays on next free court', 'success')
-      clearDraft(courtId)
-    } catch (err) {
-      // keep the draft: the QM swaps the offending player and retries
-      toast(err?.data?.error ?? 'Could not slate', 'error')
     }
   }
 

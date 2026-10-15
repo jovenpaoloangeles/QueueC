@@ -91,12 +91,23 @@ test('27.5 Smart Match shows the proposed lineup; Cancel changes nothing; Confir
   expect(st.activeMatches).toHaveLength(2)
 })
 
-test('27.6 filling 4 slots on an occupied court slates without a dialog', async ({ page }) => {
+test('27.6 live court shows no lineup matrix; slating goes through the On Deck builder', async ({ page }) => {
   await startDoubles(page)
-  const { courts } = await liveState(page)
-  const c1 = courts[0].id
-  for (let i = 0; i < 4; i++) await dropOnCourt(page, c1, i)
-  await expect(page.getByTestId('toast')).toContainText(/Slated/)
-  await expect(dialog(page)).toHaveCount(0)
+  // the live card keeps the match UI but drops its 'Next match lineup' matrix
+  await expect(page.locator('text=Next match lineup')).toHaveCount(0)
+  const liveCard = page.locator('[data-drop^="court-"]').first()      // court 1 is live
+  await expect(liveCard.locator('[data-drop="slot"]')).toHaveCount(0)
+  await expect(liveCard.getByTestId('btn-clear-draft')).toHaveCount(0)
+  // pre-building the next lineup lives in the On Deck builder instead
+  if (!(await page.getByTestId('ondeck-builder').isVisible().catch(() => false))) {
+    await page.getByTestId('ondeck-builder-toggle').click()
+  }
+  for (let i = 0; i < 4; i++) {
+    await syntheticDrag(page, '[data-entry-id]', '[data-testid^="ondeck-new-slot-"]', { fromIndex: i, toIndex: i })
+  }
+  await page.getByTestId('ondeck-add').click()
+  await expect(page.getByTestId('toast')).toContainText(/On Deck/)
+  await expect(dialog(page)).toHaveCount(0)                          // no start dialog — nothing starts
   expect((await liveState(page)).slatedMatches).toHaveLength(1)
+  expect((await liveState(page)).activeMatches).toHaveLength(1)      // court 1 unchanged
 })

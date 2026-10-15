@@ -336,17 +336,6 @@ export default function CourtCard({
               <ShuttleStepper testId="shuttle-used" label="Used" value={match.used_shuttles ?? 0} tone="text-amber-600" onDelta={d => handleShuttle('used', d)} />
             </div>
           </div>
-          {/* drafting here pre-builds the NEXT lineup — auto-slates for the next free court at 4/4 */}
-          <SlotsMatrix
-            courtId={court.id}
-            draft={draft}
-            draftedIds={draftedIds}
-            queue={queue}
-            title="Next match lineup"
-            onDropSlot={onDropSlot}
-            onClearSlot={onClearSlot}
-            onClearDraft={onClearDraft}
-          />
         </CardContent>
       )}
 
