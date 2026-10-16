@@ -7,6 +7,8 @@
 A self-hosted badminton queue manager for gym sessions. One screen, one queue
 master, no paper lists.
 
+![QueueC live session — Court 1 playing, next game on deck, leaderboard alongside](docs/images/live-session.png)
+
 QueueC runs the whole evening: check players in, draft lineups onto courts,
 keep an on-deck slate promoting itself as courts free up, track court rentals
 and shuttles, and close with a leaderboard. Everything on screen stays in sync
