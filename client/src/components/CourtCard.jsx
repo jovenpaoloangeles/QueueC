@@ -64,12 +64,12 @@ function TeamPanel({ side, entryIds, queue, matchId, match }) {
         }
       }}
       className={cn(
-        'rounded-lg border border-border bg-card/80 px-4 py-3 transition-colors',
+        'rounded-md border border-border bg-secondary px-3 py-2.5 transition-colors',
         over && canDrop && 'border-drop-target-border bg-drop-target',
         over && drag.current && !canDrop && 'border-drop-invalid-border bg-drop-invalid'
       )}
     >
-      <div className="text-base font-medium">
+      <div className="text-sm font-semibold">
         {entryIds.filter(Boolean).map((id, i) => (
           <span key={id}>
             {i > 0 && ' + '}
@@ -106,23 +106,23 @@ function Slot({ courtId, idx, entryId, name, draftedIds = new Set(), draft = [],
         if (droppable(p)) onDropSlot(idx, p.entryId)
       }}
       className={cn(
-        'grid min-h-[30px] place-items-center rounded-lg border-[1.5px] border-dashed px-2 py-1 text-center text-2xs font-semibold transition-colors',
+        'grid min-h-[38px] place-items-center rounded-md border-[1.5px] px-2.5 py-1.5 text-center text-xs font-semibold transition-colors',
         filled
-          ? 'border-solid border-primary bg-accent text-foreground'
-          : 'border-border bg-card text-muted-foreground',
+          ? 'border-solid border-border bg-card text-foreground shadow-sm'
+          : 'border-dashed border-border bg-secondary text-muted-foreground',
         over && canDrop && 'border-primary bg-drop-target',
         over && payload && !canDrop && 'border-drop-invalid-border bg-drop-invalid'
       )}
     >
       {filled ? (
-        <span className="flex items-center gap-1">
+        <span className="flex items-center gap-1.5">
           <span className="truncate">{name}</span>
           <button
             type="button"
             data-testid={`slot-clear-${idx}`}
             aria-label={`Clear ${name} from lineup`}
             onClick={() => onClearSlot(idx)}
-            className="font-bold text-muted-foreground hover:text-destructive"
+            className="grid size-5 shrink-0 place-items-center rounded-md bg-secondary text-xs font-bold leading-none text-muted-foreground transition-colors hover:text-destructive"
           >×</button>
         </span>
       ) : 'Drop…'}
@@ -133,9 +133,9 @@ function Slot({ courtId, idx, entryId, name, draftedIds = new Set(), draft = [],
 /** 2×2 lineup matrix (mockup .slots): Team A = slots 0,1; Team B = slots 2,3. */
 function SlotsMatrix({ courtId, draft, draftedIds = new Set(), queue, title, onDropSlot, onClearSlot, onClearDraft }) {
   const filled = draft.filter(Boolean).length
-  const column = (label, idxs, sideB) => (
-    <div className={cn('flex flex-col gap-1.5', sideB && 'b')}>
-      <span className={cn('text-2xs font-bold uppercase tracking-wider', sideB ? 'text-emerald-600' : 'text-sky-600')}>
+  const column = (label, idxs) => (
+    <div className="flex flex-col gap-2">
+      <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
         {label}
       </span>
       {idxs.map(i => (
@@ -155,19 +155,19 @@ function SlotsMatrix({ courtId, draft, draftedIds = new Set(), queue, title, onD
   )
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-border bg-muted px-2.5 py-2">
-      <div className="flex items-center justify-between gap-2 text-2xs">
-        <span className="font-semibold uppercase tracking-wider text-muted-foreground">{title}</span>
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">{title}</span>
         <span className="flex items-center gap-2">
-          <span className="font-mono tabular-nums text-muted-foreground">({filled}/4 filled)</span>
+          <span className="font-mono text-xs font-semibold tabular-nums text-muted-foreground">({filled}/4 filled)</span>
           {filled > 0 && (
-            <Button variant="ghost" size="xs" data-testid="btn-clear-draft" onClick={onClearDraft}>Clear</Button>
+            <Button variant="ghost" size="xs" className="rounded-full" data-testid="btn-clear-draft" onClick={onClearDraft}>Clear</Button>
           )}
         </span>
       </div>
       <div className="grid grid-cols-2 gap-2">
-        {column('Team A', [0, 1], false)}
-        {column('Team B', [2, 3], true)}
+        {column('Team A', [0, 1])}
+        {column('Team B', [2, 3])}
       </div>
     </div>
   )
@@ -229,35 +229,35 @@ export default function CourtCard({
   return (
     <Card
       data-drop={`court-${court.id}`}
-      className={cn('flex flex-col border-border bg-card shadow-sm',
-        isExpiring && 'border-amber-400 bg-amber-50/40',
-        isExpired && !isActive && 'animate-redpulse border-destructive',
-        isActive && !isExpiring && 'border-court-live-border bg-court-live')}
+      className={cn('flex flex-col rounded-lg shadow-card',
+        isExpiring && 'bg-wash-amber/40 ring-amber-300/60',
+        isExpired && !isActive && 'animate-redpulse ring-destructive/40',
+        isActive && !isExpiring && 'bg-court-live ring-court-live-border')}
     >
       {/* grid-cols wins outright (base has no unconditional grid-cols); items-center! is important so it beats base items-start regardless of emission order */}
       <CardHeader className="grid-cols-[1fr_auto] items-center! pb-3">
         <div className="flex items-center gap-2">
-          <span className="text-2xs font-medium uppercase tracking-wider text-muted-foreground">{court.label}</span>
+          <span className="text-[14.5px] font-bold tracking-tight text-foreground">{court.label}</span>
           {isActive && <Badge variant="outline" className="text-2xs uppercase">{match.format}</Badge>}
           {isActive && !isExpiring && (
-            <span data-testid="live-badge" className="flex items-center gap-1 text-2xs font-extrabold uppercase tracking-wider text-green-600">
-              <span className="inline-block size-1.5 animate-pulse rounded-full bg-green-600" aria-hidden="true" />
+            <span data-testid="live-badge" className="flex items-center gap-1.5 rounded-full bg-wash-green px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-green-deep">
+              <span className="inline-block size-1.5 animate-pulse rounded-full bg-primary" aria-hidden="true" />
               LIVE
             </span>
           )}
           {isExpiring && (
-            <Badge className="border-0 bg-amber-100 text-amber-800 text-2xs uppercase" data-testid="expiring-last-game-badge">
+            <Badge className="rounded-full border-0 bg-wash-amber text-[11px] font-bold uppercase tracking-wide text-amber" data-testid="expiring-last-game-badge">
               ⏳ Last Game
             </Badge>
           )}
           {isExpired && !isActive && (
-            <span data-testid="expired-badge" className="text-2xs font-extrabold uppercase tracking-wider text-red-600">
+            <span data-testid="expired-badge" className="text-[11px] font-bold uppercase tracking-wide text-destructive">
               EXPIRED
             </span>
           )}
           {isNotOpen && (
-            <span data-testid="opens-in-badge" className="text-2xs font-extrabold uppercase tracking-wider text-sky-600">
-              Opens in {fmtMins(opensInSecs)}
+            <span data-testid="opens-in-badge" className="flex items-baseline gap-1 rounded-full bg-wash-amber px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-amber">
+              Opens in <span className="font-mono text-xs font-bold normal-case tabular-nums">{fmtMins(opensInSecs)}</span>
             </span>
           )}
         </div>
@@ -265,8 +265,8 @@ export default function CourtCard({
           {hasTimer && (
             <span
               className={cn(
-                'font-mono text-sm tabular-nums',
-                isExpired ? 'font-semibold text-red-600' : remainingSecs < 15 * 60 ? 'text-amber-600' : 'text-foreground'
+                'font-mono text-sm font-semibold tabular-nums',
+                isExpired ? 'text-destructive' : remainingSecs < 15 * 60 ? 'text-amber' : 'text-muted-foreground'
               )}
               data-testid="court-countdown"
             >
@@ -274,33 +274,31 @@ export default function CourtCard({
             </span>
           )}
           {isExpired && (
-            <Button variant="destructive" size="sm" data-testid="btn-extend-court" onClick={handleExtend}>
+            <Button variant="destructive" size="sm" className="rounded-full" data-testid="btn-extend-court" onClick={handleExtend}>
               Extend Court (+1hr)?
             </Button>
           )}
-          {isActive && <span className="font-mono text-sm tabular-nums text-foreground">{fmtClock(secs)}</span>}
           {isActive && (
-            <Button variant="destructive" size="sm" onClick={() => setShowConfirm(true)}>End Match</Button>
+            <Button variant="destructive" size="sm" className="rounded-full" onClick={() => setShowConfirm(true)}>End Match</Button>
+          )}
+          {isActive && (
+            <span className="font-mono text-2xl font-bold tracking-tight text-green-deep tabular-nums">{fmtClock(secs)}</span>
           )}
         </div>
       </CardHeader>
 
       {isActive && (
         <CardContent className="flex flex-1 flex-col justify-center gap-2">
-          <div className="flex items-center justify-between border-b border-dashed border-border pb-1 text-2xs">
-            <span className="font-extrabold uppercase tracking-wider text-green-600">● Live match</span>
-            <span className="font-mono tabular-nums text-muted-foreground">{fmtClock(secs)}</span>
-          </div>
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-            <div className="flex flex-col gap-1">
-              <span className="text-2xs font-bold uppercase tracking-wider text-sky-600">Team A</span>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Team A</span>
               <TeamPanel side={1} entryIds={[match.team1_p1, match.team1_p2]} queue={queue} matchId={match.id} match={match} />
             </div>
             <div className="flex flex-col items-center gap-0.5">
-              <span className="text-2xs uppercase tracking-wider text-muted-foreground">vs</span>
+              <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground/70">vs</span>
             </div>
-            <div className="flex flex-col gap-1">
-              <span className="text-2xs font-bold uppercase tracking-wider text-emerald-600">Team B</span>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Team B</span>
               <TeamPanel side={2} entryIds={[match.team2_p1, match.team2_p2]} queue={queue} matchId={match.id} match={match} />
             </div>
           </div>
@@ -317,21 +315,20 @@ export default function CourtCard({
             if (canAcceptNewMatch && dropAllowed()) onDropPlayer(court.id, drag.current.entryId)
           }}
           className={cn(
-            'flex flex-1 flex-col justify-center gap-2',
-            isExpired && 'bg-red-50/40',
+            'flex flex-1 flex-col justify-center gap-3 rounded-md',
             over && canAcceptNewMatch && dropAllowed() && 'bg-drop-target ring-2 ring-drop-target-border',
             over && canAcceptNewMatch && drag.current && !dropAllowed() && 'bg-drop-invalid ring-2 ring-drop-invalid-border'
           )}
         >
           {isNotOpen ? (
-            <div className="flex flex-col items-center gap-2 rounded-lg border border-sky-200 bg-sky-50/60 px-3 py-6 text-center">
-              <span className="text-xs font-bold text-sky-700" data-testid="opens-in-note">
+            <div className="flex flex-col items-center gap-2 rounded-md border border-border bg-secondary px-3 py-6 text-center">
+              <span className="text-xs font-bold text-foreground/80" data-testid="opens-in-note">
                 ⏳ Opens in {fmtMins(opensInSecs)} — this court joins the rotation automatically
               </span>
             </div>
           ) : isExpired ? (
-            <div className="flex flex-col items-center gap-2 rounded-lg border border-red-200 bg-red-50/60 px-3 py-6 text-center">
-              <span className="text-xs font-bold text-red-700">
+            <div className="flex flex-col items-center gap-2 rounded-md border border-destructive/25 bg-wash-red px-3 py-6 text-center">
+              <span className="text-xs font-bold text-destructive">
                 ⚠ Rental time has run out — court removed from the available pool
               </span>
             </div>
@@ -347,7 +344,7 @@ export default function CourtCard({
                 onClearSlot={onClearSlot}
                 onClearDraft={onClearDraft}
               />
-              <p className="text-center text-2xs text-muted-foreground">
+              <p className="text-center text-xs text-muted-foreground">
                 <span className="font-medium text-foreground/80">
                   {canStart ? 'Drop players here' : 'Select 2 or 4 players'}
                 </span>
@@ -356,12 +353,13 @@ export default function CourtCard({
               </p>
               <div className="flex items-center justify-end gap-2">
                 {canStartSingles && (
-                  <Button size="sm" data-testid="btn-start-singles" onClick={onStartSingles}>
+                  <Button size="sm" className="rounded-full" data-testid="btn-start-singles" onClick={onStartSingles}>
                     Start Singles
                   </Button>
                 )}
                 <Button
                   size="sm"
+                  className="rounded-full"
                   data-testid="btn-start-match"
                   disabled={!canStart}
                   onClick={() => onStartClick()}
