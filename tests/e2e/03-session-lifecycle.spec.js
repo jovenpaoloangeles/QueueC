@@ -53,15 +53,14 @@ test('3.8 elapsed timer badge appears', async ({ page }) => {
   await createSession(page)
   await checkinPlayers(page, ['Inter C1', 'Inter C2'])
   await startSession(page)
-  // Scope to header (the elapsed badge's ● dot)
-  await expect(page.locator('[class*="h-14"]').locator('text=●')).toBeVisible()
+  await expect(page.getByTestId('session-timer')).toBeVisible()
 })
 
 test('3.9 elapsed timer increments', async ({ page }) => {
   await createSession(page)
   await checkinPlayers(page, ['Inter C1', 'Inter C2'])
   await startSession(page)
-  const badge = page.locator('text=/● \\d+:\\d+/')
+  const badge = page.getByTestId('session-timer')
   const first = await badge.textContent()
   await page.waitForTimeout(2000)
   const second = await badge.textContent()

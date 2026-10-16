@@ -12,7 +12,7 @@ test.beforeEach(async ({ page }) => {
 })
 
 test('1.1 QueueC heading visible', async ({ page }) => {
-  await expect(page.locator('text=🏸 QueueC')).toBeVisible()
+  await expect(page.getByTestId('brand')).toBeVisible()
 })
 
 test('1.2 "No active session" badge in header', async ({ page }) => {

@@ -38,7 +38,7 @@ test('15.6 session name renders on one line: ASTIRISK · date', async ({ page })
 
 test('15.4 elapsed timer absent during setup', async ({ page }) => {
   await createSession(page, { name: 'Header Test' })
-  await expect(page.locator('text=●')).not.toBeVisible()
+  await expect(page.getByTestId('session-timer')).not.toBeVisible()
 })
 
 test('15.5 New Session button is gone; End Session is the only reset path', async ({ page }) => {
@@ -58,7 +58,7 @@ test('15.5 New Session button is gone; End Session is the only reset path', asyn
 test('15.3 elapsed timer badge visible after session starts', async ({ page }) => {
   await createSession(page)
   await checkinPlayers(page, ['Inter C1', 'Inter C2'])
-  await expect(page.locator('text=●')).toHaveCount(0) // not during setup
+  await expect(page.getByTestId('session-timer')).toHaveCount(0) // not during setup
   await startSession(page)
-  await expect(page.getByText(/● \d/)).toBeVisible()
+  await expect(page.getByTestId('session-timer')).toBeVisible()
 })
