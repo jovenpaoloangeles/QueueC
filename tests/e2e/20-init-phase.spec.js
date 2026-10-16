@@ -204,7 +204,7 @@ test('20.16 player row shows games played badge [0] and waiting status timer', a
   await expect(card.locator('[data-testid="games-played-badge"]')).toHaveText('[0]')
   const badge = card.locator('[data-testid="status-timer-badge"]')
   await expect(badge).toContainText('Waiting')
-  await expect(badge).toContainText('🟡')
+  await expect(badge).toContainText(/\d+:\d+/) // wait clock (timer dot emojis retired in the redesign)
 })
 
 test('20.17 games played increments after a match ends', async ({ page }) => {

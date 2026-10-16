@@ -136,6 +136,7 @@ export default function PlayerSearchAdd({ session, queue = [], players, onPlayer
         data-testid={inputTestid}
         placeholder={placeholder ?? (pre ? 'Search player to select, or type a new name to register...' : 'Search player to check in, or type a new name to register...')}
         aria-label="Search or add player"
+        className="rounded-full bg-card"
         value={searchQuery}
         onChange={e => setSearchQuery(e.target.value)}
       />
@@ -143,11 +144,11 @@ export default function PlayerSearchAdd({ session, queue = [], players, onPlayer
         <div className="text-2xs text-muted-foreground" data-testid="checkin-hint">{hint}</div>
       )}
       {normQuery && (
-        <div className="flex flex-col gap-2 rounded-md border border-border bg-muted/20 p-2 text-xs">
+        <div className="flex flex-col gap-2 rounded-md border border-border bg-background/60 p-2 text-xs">
           {activeDuplicate && (
             <div className="flex items-center justify-between text-destructive" data-testid="duplicate-session-error">
               <span>Player &ldquo;{activeDuplicate.name}&rdquo; is already {pre ? 'selected' : 'active in this session'}.</span>
-              <Button size="xs" disabled>Add Player</Button>
+              <Button size="xs" className="rounded-full" disabled>Add Player</Button>
             </div>
           )}
 
@@ -164,6 +165,7 @@ export default function PlayerSearchAdd({ session, queue = [], players, onPlayer
                       key={p.id}
                       variant={isExact ? 'default' : 'outline'}
                       size="xs"
+                      className="rounded-full"
                       onClick={() => handleQuickCheckIn(p.id)}
                     >
                       {p.name}
@@ -186,7 +188,7 @@ export default function PlayerSearchAdd({ session, queue = [], players, onPlayer
               </span>
               <select
                 aria-label="New player skill level"
-                className="rounded border border-border bg-background px-2 py-1 text-xs text-foreground"
+                className="rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground"
                 value={newPlayerSkill}
                 onChange={e => setNewPlayerSkill(e.target.value)}
               >
@@ -194,7 +196,7 @@ export default function PlayerSearchAdd({ session, queue = [], players, onPlayer
                   <option key={s} value={s}>{titleCaseSkill(s)}</option>
                 ))}
               </select>
-              <Button type="submit" size="xs" disabled={registering}>
+              <Button type="submit" size="xs" className="rounded-full" disabled={registering}>
                 {registering ? '...' : 'Add Player'}
               </Button>
             </form>
@@ -210,10 +212,10 @@ export default function PlayerSearchAdd({ session, queue = [], players, onPlayer
             <DialogDescription>They will join the session queue as waiting.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button type="button" variant="outline" size="sm" data-testid="checkin-confirm-cancel" onClick={() => setPending(null)}>
+            <Button type="button" variant="outline" size="sm" className="rounded-full" data-testid="checkin-confirm-cancel" onClick={() => setPending(null)}>
               Cancel
             </Button>
-            <Button type="button" size="sm" autoFocus disabled={registering} data-testid="checkin-confirm-add" onClick={confirmPending}>
+            <Button type="button" size="sm" className="rounded-full hover:bg-green-press" autoFocus disabled={registering} data-testid="checkin-confirm-add" onClick={confirmPending}>
               Add
             </Button>
           </DialogFooter>

@@ -124,24 +124,33 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
     onReorder([...waitingInOrder, ...restingIds, ...playingIds])
   }
 
+  // the front of the waiting order is the next lineup (draft is-next cards)
+  const nextIds = useMemo(() => {
+    const idx = new Map(order.map((id, i) => [id, i]))
+    return new Set([...waiting]
+      .sort((a, b) => (idx.get(a.id) ?? 1e9) - (idx.get(b.id) ?? 1e9))
+      .slice(0, 4).map(e => e.id))
+  }, [waiting, order])
+
   const tabCount = id => (id === 'wait' ? waiting.length : id === 'rest' ? resting.length : waiting.length + resting.length + playing.length)
 
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-sm font-semibold text-foreground">
+        <h2 className="min-w-0 text-[15px] font-bold tracking-tight text-foreground">
           Queue · <span className="font-mono tabular-nums">{waiting.length}</span> Waiting
           {pickedCount > 0 && (
-            <span className="ml-2 text-primary">
+            <span className="ml-2 text-xs font-semibold text-primary">
               {pickedCount} selected → {pickedCount === 2 ? 'Singles' : pickedCount === 4 ? 'Doubles' : '...'}
             </span>
           )}
-        </span>
-        <div className="flex gap-2">
+        </h2>
+        <div className="flex shrink-0 gap-2">
           <Button
             variant="ghost"
             size="sm"
             data-testid="checkin-toggle"
+            className="rounded-full bg-secondary px-3.5 font-medium text-foreground hover:bg-secondary/70 dark:hover:bg-secondary/70"
             onClick={() => setShowCheckin(v => !v)}
           >
             + Check In
@@ -149,7 +158,7 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
         </div>
       </div>
 
-      {/* mockup panel-head controls: filter search + All/Wait/Rest segmented tabs */}
+      {/* draft .seg: quiet pill container, active segment lifts on bg-card */}
       <div className="flex flex-wrap items-center justify-end gap-2">
         <Input
           type="search"
@@ -157,31 +166,37 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
           placeholder="Filter queue…"
           value={filter}
           onChange={e => setFilter(e.target.value)}
-          className="h-7 w-44 text-xs"
+          className="h-8 w-44 rounded-full border-border bg-card text-xs"
         />
-        <div className="flex items-center gap-1 rounded-lg border bg-muted/40 p-1">
+        <div className="flex items-center rounded-[9px] bg-secondary p-0.5">
           {TABS.map(t => (
-            <Button
+            <button
               key={t.id}
-              variant={tab === t.id ? 'outline' : 'ghost'}
-              size="xs"
+              type="button"
               data-testid={t.testid}
-              className={cn('text-2xs', tab === t.id && 'bg-background shadow-sm')}
+              aria-pressed={tab === t.id}
               onClick={() => setTab(t.id)}
+              className={cn(
+                'rounded-[7px] px-3 py-1.5 text-xs transition-colors duration-150',
+                tab === t.id
+                  ? 'bg-card font-semibold text-foreground shadow-sm'
+                  : 'font-medium text-muted-foreground hover:text-foreground'
+              )}
             >
-              {t.label} ({tabCount(t.id)})
-            </Button>
+              {t.label} <span className={cn('font-mono tabular-nums', tab === t.id ? 'text-foreground/70' : 'text-muted-foreground')}>({tabCount(t.id)})</span>
+            </button>
           ))}
         </div>
       </div>
 
       {/* search-driven check-in: nothing listed until the user types — the old
           full pool dump is gone. Stays open for multi-add; PlayerSearchAdd
-          clears the query after each check-in / register. */}
+          clears the query after each check-in / register. Rendered as a quiet
+          card so it never outshines the white queue cards. */}
       {showCheckin && (
         <div
           data-testid="checkin-panel"
-          className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3 shadow-sm"
+          className="flex flex-col gap-2 rounded-lg border border-border bg-secondary/50 p-3"
         >
           {playersLoading ? (
             <div className="flex gap-2">
@@ -193,7 +208,7 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
             <div className="flex flex-col gap-2" data-testid="checkin-error">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground">Couldn&apos;t load players.</span>
-                <Button variant="outline" size="xs" onClick={loadPlayers}>Retry</Button>
+                <Button variant="outline" size="xs" className="rounded-full" onClick={loadPlayers}>Retry</Button>
               </div>
               <PlayerSearchAdd
                 session={session}
@@ -224,7 +239,7 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
         </div>
       )}
 
-      {/* 3 cols at xl (4-col cards wrap their meta row); 4 only from 2xl where cards stay wide */}
+      {/* auto-fill at ≥252px like the draft .queue-grid; 2 cols below md */}
       <div
         data-queue-list
         // dropping a resting chip on empty list space wakes it (rows handle their own drops)
@@ -234,13 +249,14 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
           e.preventDefault()
           handleDropOnPlayer(drag.current.entryId, null)
         }}
-        className="grid auto-rows-min grid-cols-2 gap-1.5 lg:grid-cols-3 2xl:grid-cols-4">
+        className="grid auto-rows-min grid-cols-2 gap-2.5 md:grid-cols-[repeat(auto-fill,minmax(252px,1fr))]">
         {list.map(entry => (
           <PlayerCard
             key={entry.id}
             entry={entry}
             waitSecs={waitSeconds.get(entry.id) ?? 0}
             playSecs={playSeconds?.get(entry.id) ?? 0}
+            isNext={nextIds.has(entry.id)}
             selectionIndex={selection.indexOf(entry.id)}
             onClick={e => {
               if (entry.status !== 'waiting') return // resting rows are not selectable
