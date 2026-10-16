@@ -36,7 +36,8 @@ jobs:
         run: bun run --cwd tests test:unit
 
       - name: Install Playwright browser
-        run: bunx --cwd tests playwright install chromium --with-deps
+        working-directory: tests
+        run: bunx playwright install chromium --with-deps
 
       - name: E2E tests
         run: bun run --cwd tests test:e2e
