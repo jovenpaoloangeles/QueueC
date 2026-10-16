@@ -24,7 +24,7 @@ async function main() {
   })
 
   const ids = []
-  for (const p of (await api('/api/players')).players.slice(0, 4)) {
+  for (const p of (await api('/api/players')).players.slice(0, 8)) {
     const { entry } = await api(`/api/sessions/${session.id}/checkin`, 'POST', { player_id: p.id })
     ids.push(entry.id)
   }
@@ -45,6 +45,16 @@ async function main() {
   const playing = await api(`/api/queue/${ids[0]}`, 'DELETE')
   assert.equal(playing.status, 409)
   assert.equal(playing.error, 'Cannot remove a playing entry')
+
+  // staged entry: refused — arm-then-confirm can race a slate landing, and
+  // deleting a staged entry would orphan the slated row
+  const slate = await api('/api/matches/slate', 'POST', {
+    session_id: session.id,
+    team1_p1: ids[4], team1_p2: ids[5], team2_p1: ids[6], team2_p2: ids[7],
+  })
+  assert.equal(slate.status, 201, `slate created (got ${slate.status}: ${slate.error})`)
+  const staged = await api(`/api/queue/${ids[4]}`, 'DELETE')
+  assert.equal(staged.status, 409)
 
   // waiting entry: the check-in-undo path
   const waiting = await api(`/api/queue/${ids[3]}`, 'DELETE')

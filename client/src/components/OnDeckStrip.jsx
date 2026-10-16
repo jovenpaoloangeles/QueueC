@@ -554,7 +554,7 @@ export default function OnDeckStrip({
             <div
               key={row.id}
               data-testid={`slate-row-${row.id}`}
-              className="flex flex-col gap-3 rounded-lg border border-dashed border-border bg-card p-4 shadow-card" 
+              className="flex flex-col gap-3 rounded-lg border border-dashed border-border bg-card p-4 shadow-card"
             >
               <div className="flex flex-wrap items-center gap-2">
                 <span

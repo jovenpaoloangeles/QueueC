@@ -82,8 +82,12 @@ router.delete('/queue/:entryId', (c) => {
   const entryId = c.req.param('entryId')
   const entry = db.prepare('SELECT * FROM queue_entries WHERE id = ?').get(entryId)
   if (!entry) return c.json({ error: 'Entry not found' }, 404)
-  // a playing entry's match would be orphaned — removal is for check-in undo only
-  if (entry.status === 'playing') return c.json({ error: 'Cannot remove a playing entry' }, 409)
+  // a playing entry's match (or a staged slate row) would be orphaned —
+  // removal is for check-in undo only. 'staged' matters for the arm-then-confirm
+  // race: the card can leave the grid via SSE between arm and Confirm.
+  if (entry.status === 'playing' || entry.status === 'staged') {
+    return c.json({ error: 'Cannot remove a playing entry' }, 409)
+  }
   db.prepare('DELETE FROM queue_entries WHERE id = ?').run(entryId)
   broadcast()
   return c.json({ ok: true })
