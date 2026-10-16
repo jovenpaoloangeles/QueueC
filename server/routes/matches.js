@@ -61,8 +61,8 @@ router.post('/', async (c) => {
   const format = team1_p2 ? 'doubles' : 'singles'
 
   const { lastInsertRowid } = db.prepare(`
-    INSERT INTO matches (session_id, court_number, format, team1_p1, team1_p2, team2_p1, team2_p2, started_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO matches (session_id, court_number, format, team1_p1, team1_p2, team2_p1, team2_p2, started_at, new_shuttles)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
   `).run(session_id, court_number, format, team1_p1, team1_p2 ?? null, team2_p1, team2_p2 ?? null, now)
 
   // Mark all involved players as playing
@@ -138,7 +138,7 @@ router.patch('/:id/end', async (c) => {
         "SELECT * FROM matches WHERE session_id = ? AND state = 'slated' AND ended_at IS NULL ORDER BY slate_seq, id LIMIT 1"
       ).get(match.session_id)
       if (next) {
-        db.prepare("UPDATE matches SET state = 'active', court_number = ?, started_at = ?, slate_seq = NULL WHERE id = ?")
+        db.prepare("UPDATE matches SET state = 'active', court_number = ?, started_at = ?, slate_seq = NULL, new_shuttles = 1 WHERE id = ?")
           .run(freed, now, next.id)
         const slatedEntryIds = [next.team1_p1, next.team1_p2, next.team2_p1, next.team2_p2].filter(Boolean)
         const toPlay = db.prepare("UPDATE queue_entries SET status = 'playing', status_updated_at = ? WHERE id = ?")

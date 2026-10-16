@@ -247,6 +247,12 @@ if (startedAt?.notnull === 1) {
   db.exec('PRAGMA foreign_keys = ON')
 }
 
+// session-level manual shuttle count (+ New shuttle in the sidebar)
+const sessionCols = new Set(db.prepare("PRAGMA table_info(sessions)").all().map(c => c.name))
+if (!sessionCols.has('shuttles_extra')) {
+  db.exec('ALTER TABLE sessions ADD COLUMN shuttles_extra INTEGER NOT NULL DEFAULT 0')
+}
+
 // backfill courts for sessions that predate the courts table
 const sessionsNeedingCourts = db.prepare(`
   SELECT s.id, s.court_count FROM sessions s

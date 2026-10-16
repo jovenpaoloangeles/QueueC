@@ -132,7 +132,7 @@ router.post('/matches/:id/start', async (c) => {
   }
 
   db.transaction(() => {
-    db.prepare("UPDATE matches SET state = 'active', court_number = ?, started_at = ?, slate_seq = NULL WHERE id = ?")
+    db.prepare("UPDATE matches SET state = 'active', court_number = ?, started_at = ?, slate_seq = NULL, new_shuttles = 1 WHERE id = ?")
       .run(court.id, now, m.id)
     const toPlay = db.prepare("UPDATE queue_entries SET status = 'playing', status_updated_at = ? WHERE id = ?")
     for (const eid of entryIds) toPlay.run(now, eid)

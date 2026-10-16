@@ -29,6 +29,7 @@ export const checkinPlayer = (sessionId, playerId) =>
 export const setEntryStatus = (entryId, status) =>
   req('PATCH', `/queue/${entryId}/status`, { status })
 export const removeEntry = entryId => req('DELETE', `/queue/${entryId}`)
+export const updateShuttles = (sessionId, delta) => req('PATCH', `/sessions/${sessionId}/shuttles`, { delta })
 export const startMatch = data => req('POST', '/matches', data)
 export const endMatch = (id, scores) => req('PATCH', `/matches/${id}/end`, scores)
 export const updateMatchTeams = (id, teams) => req('PATCH', `/matches/${id}/teams`, teams)

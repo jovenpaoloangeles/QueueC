@@ -124,8 +124,8 @@ router.post('/sessions/:id/automatch', async (c) => {
       const [t1p1, t1p2] = m.team1
       const [t2p1, t2p2] = m.team2
       db.prepare(`
-        INSERT INTO matches (session_id, court_number, format, state, team1_p1, team1_p2, team2_p1, team2_p2, started_at)
-        VALUES (?, ?, ?, 'active', ?, ?, ?, ?, ?)
+        INSERT INTO matches (session_id, court_number, format, state, team1_p1, team1_p2, team2_p1, team2_p2, started_at, new_shuttles)
+        VALUES (?, ?, ?, 'active', ?, ?, ?, ?, ?, 1)
       `).run(id, m.court_id, m.format, t1p1, t1p2 ?? null, t2p1, t2p2 ?? null, now)
       for (const eid of [...m.team1, ...m.team2]) setPlaying.run(now, eid)
       started++

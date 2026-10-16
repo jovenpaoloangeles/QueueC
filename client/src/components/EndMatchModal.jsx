@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils'
 export default function EndMatchModal({ match, courtLabel, onClose }) {
   const [scores, setScores] = useState({ team1: match.team1_score ?? 0, team2: match.team2_score ?? 0 })
   const [shuttles, setShuttles] = useState({
-    newShuttles: match.new_shuttles ?? 0,
+    newShuttles: match.new_shuttles ?? 1,
   })
   const [rating, setRating] = useState(5)
   const [loading, setLoading] = useState(false)

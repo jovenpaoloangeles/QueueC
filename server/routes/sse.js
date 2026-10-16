@@ -85,6 +85,8 @@ export function currentState() {
   const shuttles = db.prepare(
     'SELECT COALESCE(SUM(new_shuttles), 0) as new, COALESCE(SUM(used_shuttles), 0) as used FROM matches WHERE session_id = ?'
   ).get(session.id)
+  shuttles.extra = session.shuttles_extra ?? 0
+  shuttles.total = shuttles.new + shuttles.extra
 
   const leaderboard = computeLeaderboard(session.id)
 

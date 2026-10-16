@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import db from '../db.js'
+import { broadcast } from './sse.js'
 
 const router = new Hono()
 
@@ -72,6 +73,8 @@ router.get('/sessions/:id/stats', (c) => {
   const shuttles = db.prepare(
     'SELECT COALESCE(SUM(new_shuttles), 0) as new, COALESCE(SUM(used_shuttles), 0) as used FROM matches WHERE session_id = ?'
   ).get(sid)
+  shuttles.extra = db.prepare('SELECT shuttles_extra FROM sessions WHERE id = ?').get(sid)?.shuttles_extra ?? 0
+  shuttles.total = shuttles.new + shuttles.extra
 
   const leaderboard = computeLeaderboard(sid)
 
@@ -98,6 +101,21 @@ router.get('/players/:id/history', (c) => {
   ).length
 
   return c.json({ history: { wins, losses: rows.length - wins, matches_played: rows.length } })
+})
+
+// session-level shuttle adjustments (+ New shuttle button): delta on top of the
+// per-game defaults, clamped so extra can't go negative
+router.patch('/sessions/:id/shuttles', async (c) => {
+  const session = db.prepare('SELECT id FROM sessions WHERE id = ?').get(c.req.param('id'))
+  if (!session) return c.json({ error: 'Session not found' }, 404)
+  const body = await c.req.json().catch(() => ({}))
+  const delta = Number(body.delta)
+  if (!Number.isInteger(delta) || delta === 0) {
+    return c.json({ error: 'delta must be a non-zero integer' }, 400)
+  }
+  db.prepare('UPDATE sessions SET shuttles_extra = MAX(0, shuttles_extra + ?) WHERE id = ?').run(delta, session.id)
+  broadcast()
+  return c.json({ shuttles_extra: db.prepare('SELECT shuttles_extra FROM sessions WHERE id = ?').get(session.id).shuttles_extra })
 })
 
 export default router

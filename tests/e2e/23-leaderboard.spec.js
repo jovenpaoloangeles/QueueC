@@ -10,7 +10,7 @@ test.beforeEach(async ({ page }) => {
 test('23.1 empty leaderboard and zero shuttle tile on fresh session', async ({ page }) => {
   const side = page.getByRole('complementary')
   await expect(side.getByTestId('leaderboard-empty')).toBeVisible()
-  await expect(side.locator('text=New Shuttles').locator('..').locator('[class*="font-mono"]')).toHaveText('0')
+  await expect(side.getByTestId('shuttles-used')).toHaveText('0')
   // used-shuttle counting was removed — no Used tile anymore
   await expect(side.getByText('Used Shuttles')).toHaveCount(0)
 })

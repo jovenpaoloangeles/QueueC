@@ -336,7 +336,7 @@ export default function App() {
           </main>
           {/* fixed stats sidebar: own scroll, never scrolls with the page */}
           <aside className="sticky top-14 h-[calc(100vh-3.5rem)] w-72 shrink-0 overflow-y-auto border-l border-border bg-card">
-            <StatsSidebar stats={stats} />
+            <StatsSidebar stats={stats} session={session} />
           </aside>
         </div>
       )}

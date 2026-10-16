@@ -1,9 +1,16 @@
+import { Button } from '@/components/ui/button'
+import { useToast } from './Toast.jsx'
+import { updateShuttles } from '@/api'
 import { cn, fmtClock } from '@/lib/utils'
 
 // redesign-draft sidebar: stats card (3-up mono figures + shuttle row) above the
 // leaderboard card. Value/label order and paddings mirror .stat/.shuttle-row/.lb.
-export default function StatsSidebar({ stats }) {
+export default function StatsSidebar({ stats, session }) {
+  const toast = useToast()
   const board = stats?.leaderboard ?? []
+  const addShuttle = async () => {
+    try { await updateShuttles(session.id, 1) } catch (err) { toast(err?.data?.error ?? 'Could not add shuttle', 'error') }
+  }
   const tiles = [
     { label: 'Players', value: stats?.player_count ?? 0 },
     { label: 'Matches', value: stats?.match_count ?? 0 },
@@ -22,8 +29,12 @@ export default function StatsSidebar({ stats }) {
           ))}
         </div>
         <div className="flex items-center gap-2.5 border-t border-border px-[18px] pb-4 pt-3">
-          <span className="text-[12.5px] text-muted-foreground">New Shuttles</span>
-          <span className="ml-auto font-mono text-[13px] font-bold tabular-nums text-foreground">{stats?.shuttles?.new ?? 0}</span>
+          <span className="text-[12.5px] text-muted-foreground">
+            Shuttles used{' '}
+            <b className="font-mono text-[13px] font-bold tabular-nums text-foreground" data-testid="shuttles-used">{stats?.shuttles?.total ?? 0}</b>
+          </span>
+          <Button size="sm" variant="secondary" className="ml-auto rounded-full" data-testid="shuttle-add"
+            disabled={!session} onClick={addShuttle}>+ New shuttle</Button>
         </div>
       </section>
 
