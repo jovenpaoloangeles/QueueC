@@ -6,8 +6,8 @@
       "name": "queuec-client",
       "dependencies": {
         "@base-ui/react": "^1.9.0",
-        "@fontsource-variable/geist": "^5.3.0",
-        "@fontsource-variable/jetbrains-mono": "^5.3.0",
+        "@fontsource-variable/onest": "^5.3.1",
+        "@fontsource-variable/spline-sans-mono": "^5.3.0",
         "class-variance-authority": "^0.7.1",
         "cn": "^0.4.0",
         "framer-motion": "^14.2.0",
@@ -150,9 +150,9 @@
 
     "@floating-ui/utils": ["@floating-ui/utils@0.2.12", "", {}, "sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww=="],
 
-    "@fontsource-variable/geist": ["@fontsource-variable/geist@5.3.0", "", {}, "sha512-j0m+vLQuG5XAYoHtGCVu0spvlGreR3EzpECUVzkFmI1mTVnAO38l/NEPDCFgZ177JxzYJCLSmTQibIiYPilGrA=="],
+    "@fontsource-variable/onest": ["@fontsource-variable/onest@5.3.1", "", {}, "sha512-xaaw6G4HDB2/RczsWLD/2bnib4ykmQlTlBUN3GOEOiyErilZukQWVJG95h9zwAy0i8KY+QzDa+COPfqhI72Acw=="],
 
-    "@fontsource-variable/jetbrains-mono": ["@fontsource-variable/jetbrains-mono@5.3.0", "", {}, "sha512-F32xpS2NsGYoQi2ADSkKTgpJj7ozajsGgDJ8woTnqjmIB+dxDIqImjl4pXZVEExu8UFZ2ndhmX18EBS/hdz3Lw=="],
+    "@fontsource-variable/spline-sans-mono": ["@fontsource-variable/spline-sans-mono@5.3.0", "", {}, "sha512-dH/qBj/MCE4ObiuCwlA9X1o3AftMO9dwfFgoRVYjy6VCPYkpWAlEtK/RjeyICgsR8rW763IAQARskVgShBY5JA=="],
 
     "@hono/node-server": ["@hono/node-server@2.1.5", "", { "peerDependencies": { "hono": "^4 || ^5.0.0-0" } }, "sha512-MgP/I06GdvsilDspMk/qmRzpk8LOUStP6jFAbSRi40W09DhoyUn+Mj7eyKICPqeYKybOjVFLVIAQzvu1bfIa7Q=="],
 

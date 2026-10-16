@@ -6,8 +6,8 @@
 
 @theme inline {
     --font-heading: var(--font-sans);
-    --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
-    --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+    --font-sans: 'Onest Variable', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'Spline Sans Mono Variable', ui-monospace, monospace;
     --text-2xs: 0.6875rem;
     --text-2xs--line-height: 1rem;
     --color-sidebar-ring: var(--sidebar-ring);
@@ -47,6 +47,21 @@
     --color-drop-target-border: var(--drop-target-border);
     --color-drop-invalid: var(--drop-invalid);
     --color-drop-invalid-border: var(--drop-invalid-border);
+    /* redesign-draft palette (queuec-live-redesign-draft.html) */
+    --color-green-deep: var(--green-deep);
+    --color-green-press: var(--green-press);
+    --color-amber: var(--amber);
+    --color-wash-green: var(--wash-green);
+    --color-wash-amber: var(--wash-amber);
+    --color-wash-red: var(--wash-red);
+    --color-tier-expert: var(--tier-expert);
+    --color-tier-upper: var(--tier-upper);
+    --color-tier-int: var(--tier-int);
+    --color-tier-lower: var(--tier-lower);
+    --color-tier-beginner: var(--tier-beginner);
+    --color-tier-newbie: var(--tier-newbie);
+    --shadow-card: var(--shadow-card);
+    --shadow-lift: var(--shadow-lift);
     --radius-sm: calc(var(--radius) * 0.6);
     --radius-md: calc(var(--radius) * 0.8);
     --radius-lg: var(--radius);
@@ -57,84 +72,118 @@
 }
 
 :root {
-    /* QueueC light workspace */
-    --background: oklch(0.968 0.007 120);      /* #f4f6f3 soft off-white canvas */
-    --foreground: oklch(0.21 0.02 150);        /* #1a221e near-black, green undertone */
-    --card: oklch(1 0 0);                      /* white elevated cards */
-    --card-foreground: oklch(0.21 0.02 150);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.21 0.02 150);
-    --primary: oklch(0.52 0.135 152);          /* #1e7a4e green — 5:1+ on white */
-    --primary-foreground: oklch(0.985 0.01 140);
-    --secondary: oklch(0.955 0.008 140);
-    --secondary-foreground: oklch(0.28 0.02 150);
-    --muted: oklch(0.955 0.008 140);
-    --muted-foreground: oklch(0.52 0.02 150);  /* #68736c readable tertiary */
-    --accent: oklch(0.93 0.05 150);            /* green tint — selection */
-    --accent-foreground: oklch(0.35 0.10 150);
-    --destructive: oklch(0.55 0.20 25);        /* #c2321f */
-    --destructive-foreground: oklch(0.985 0.01 140);
-    --border: oklch(0.90 0.01 140);
-    --input: oklch(0.88 0.01 140);
-    --ring: oklch(0.52 0.135 152);
-    --chart-1: oklch(0.52 0.135 152);
-    --chart-2: oklch(0.55 0.17 255);
-    --chart-3: oklch(0.62 0.14 60);
-    --chart-4: oklch(0.65 0.12 280);
-    --chart-5: oklch(0.45 0.02 150);
-    --radius: 0.75rem;
-    --sidebar: oklch(1 0 0);
-    --sidebar-foreground: oklch(0.21 0.02 150);
-    --sidebar-primary: oklch(0.52 0.135 152);
-    --sidebar-primary-foreground: oklch(0.985 0.01 140);
-    --sidebar-accent: oklch(0.955 0.008 140);
-    --sidebar-accent-foreground: oklch(0.28 0.02 150);
-    --sidebar-border: oklch(0.90 0.01 140);
-    --sidebar-ring: oklch(0.52 0.135 152);
+    /* QueueC — redesign-draft light world: Apple-like neutrals, single green */
+    --background: #f5f5f7;                     /* canvas */
+    --foreground: #1d1d1f;                     /* ink */
+    --card: #ffffff;
+    --card-foreground: #1d1d1f;
+    --popover: #ffffff;
+    --popover-foreground: #1d1d1f;
+    --primary: #1e7a4e;                        /* green */
+    --primary-foreground: #ffffff;
+    --secondary: #f0f0f2;                      /* quiet fill */
+    --secondary-foreground: #515154;           /* ink-2 */
+    --muted: #f0f0f2;
+    --muted-foreground: #636368;               /* ink-3 */
+    --accent: #e8f5ed;                         /* green wash — selection */
+    --accent-foreground: #14532d;              /* green deep */
+    --destructive: #b3371f;                    /* red */
+    --destructive-foreground: #ffffff;
+    --border: rgba(0, 0, 0, 0.09);             /* hairline */
+    --input: rgba(0, 0, 0, 0.14);
+    --ring: #1e7a4e;
+    --chart-1: #1e7a4e;
+    --chart-2: #1d4ed8;
+    --chart-3: #8f6215;
+    --chart-4: #6b21a8;
+    --chart-5: #636368;
+    --radius: 1rem;                            /* draft r-lg 16px; md→12.8px, sm→9.6px */
+    --sidebar: #ffffff;
+    --sidebar-foreground: #1d1d1f;
+    --sidebar-primary: #1e7a4e;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #e8f5ed;
+    --sidebar-accent-foreground: #14532d;
+    --sidebar-border: rgba(0, 0, 0, 0.09);
+    --sidebar-ring: #1e7a4e;
 
     /* live match + drag affordances */
-    --court-live: oklch(0.96 0.04 150);            /* soft green wash, active court */
-    --court-live-border: oklch(0.72 0.10 150);
-    --drop-target: oklch(0.93 0.05 150);           /* valid dragover */
-    --drop-target-border: oklch(0.52 0.135 152);
-    --drop-invalid: oklch(0.96 0.03 25);           /* invalid dragover */
-    --drop-invalid-border: oklch(0.55 0.20 25);
+    --court-live: #f4faf6;                     /* whisper green, active court */
+    --court-live-border: rgba(30, 122, 78, 0.35);
+    --drop-target: #e8f5ed;                    /* valid dragover */
+    --drop-target-border: #1e7a4e;
+    --drop-invalid: #fbeae5;                   /* invalid dragover */
+    --drop-invalid-border: #b3371f;
+
+    /* redesign-draft additions */
+    --green-deep: #14532d;
+    --green-press: #15613b;
+    --amber: #8f6215;
+    --wash-green: #e8f5ed;
+    --wash-amber: #faf3e0;
+    --wash-red: #fbeae5;
+    /* skill tier scale — cool→hot like the wait bars */
+    --tier-expert: #6b21a8;
+    --tier-upper: #1d4ed8;
+    --tier-int: #16653f;
+    --tier-lower: #7a540f;
+    --tier-beginner: #b3371f;
+    --tier-newbie: #636368;
+    --shadow-card: 0 1px 1px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.05);
+    --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.05), 0 12px 28px rgba(0, 0, 0, 0.08);
 }
 
 .dark {
-    --background: oklch(0.19 0.015 145);       /* #12160f dark canvas */
-    --foreground: oklch(0.94 0.01 140);        /* #e9ede7 */
-    --card: oklch(0.23 0.015 145);             /* #1a1f18 elevated cards */
-    --card-foreground: oklch(0.94 0.01 140);
-    --popover: oklch(0.23 0.015 145);
-    --popover-foreground: oklch(0.94 0.01 140);
-    --primary: oklch(0.80 0.18 150);           /* #4ade80 bright green */
-    --primary-foreground: oklch(0.22 0.05 155);/* #06281a */
-    --secondary: oklch(0.27 0.015 145);
-    --secondary-foreground: oklch(0.90 0.01 140);
-    --muted: oklch(0.27 0.015 145);            /* #22281f */
-    --muted-foreground: oklch(0.69 0.015 145); /* #97a194 */
-    --accent: oklch(0.31 0.05 152);            /* #1d3a29 */
-    --accent-foreground: oklch(0.88 0.08 150);
-    --destructive: oklch(0.70 0.19 25);        /* #f87171 */
-    --destructive-foreground: oklch(0.15 0.02 25);
-    --border: oklch(0.31 0.015 145);           /* #2c3329 */
-    --input: oklch(0.31 0.015 145);
-    --ring: oklch(0.80 0.18 150);
-    --sidebar: oklch(0.23 0.015 145);
-    --sidebar-foreground: oklch(0.94 0.01 140);
-    --sidebar-primary: oklch(0.80 0.18 150);
-    --sidebar-primary-foreground: oklch(0.22 0.05 155);
-    --sidebar-accent: oklch(0.27 0.015 145);
-    --sidebar-accent-foreground: oklch(0.90 0.01 140);
-    --sidebar-border: oklch(0.31 0.015 145);
-    --sidebar-ring: oklch(0.80 0.18 150);
-    --court-live: oklch(0.26 0.04 152);
-    --court-live-border: oklch(0.55 0.12 152);
-    --drop-target: oklch(0.30 0.06 152);
-    --drop-target-border: oklch(0.80 0.18 150);
-    --drop-invalid: oklch(0.28 0.06 25);
-    --drop-invalid-border: oklch(0.70 0.19 25);
+    /* draft world carried into dark: same neutrals, brighter green */
+    --background: #161618;
+    --foreground: #f5f5f7;
+    --card: #232326;
+    --card-foreground: #f5f5f7;
+    --popover: #232326;
+    --popover-foreground: #f5f5f7;
+    --primary: #3fae76;
+    --primary-foreground: #0b2417;
+    --secondary: #2e2e31;
+    --secondary-foreground: #d6d6d9;
+    --muted: #2e2e31;
+    --muted-foreground: #98989d;
+    --accent: #1d3529;
+    --accent-foreground: #a9e3c4;
+    --destructive: #e06a52;
+    --destructive-foreground: #1a0c08;
+    --border: rgba(255, 255, 255, 0.11);
+    --input: rgba(255, 255, 255, 0.16);
+    --ring: #3fae76;
+    --sidebar: #232326;
+    --sidebar-foreground: #f5f5f7;
+    --sidebar-primary: #3fae76;
+    --sidebar-primary-foreground: #0b2417;
+    --sidebar-accent: #1d3529;
+    --sidebar-accent-foreground: #a9e3c4;
+    --sidebar-border: rgba(255, 255, 255, 0.11);
+    --sidebar-ring: #3fae76;
+
+    --court-live: #1d2b23;
+    --court-live-border: rgba(63, 174, 118, 0.45);
+    --drop-target: #1d3328;
+    --drop-target-border: #3fae76;
+    --drop-invalid: #38201a;
+    --drop-invalid-border: #e06a52;
+
+    --green-deep: #9fdcb9;
+    --green-press: #34935f;
+    --amber: #d9a441;
+    --wash-green: #1d3529;
+    --wash-amber: #332a17;
+    --wash-red: #38201a;
+    --tier-expert: #b78deb;
+    --tier-upper: #7ea6f8;
+    --tier-int: #6cc793;
+    --tier-lower: #d9a441;
+    --tier-beginner: #e5836c;
+    --tier-newbie: #98989d;
+    --shadow-card: 0 1px 1px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+    --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.35), 0 12px 28px rgba(0, 0, 0, 0.45);
 }
 
 @layer base {
@@ -142,19 +191,43 @@
     @apply border-border outline-ring/50;
     }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
     }
   html {
     @apply font-sans;
     scrollbar-gutter: stable; /* page scroll appears/disappears — keep layout steady */
     }
+  ::selection { background: #bfe6cf; color: #0d3d24; }
+  .dark ::selection { background: #1d4630; color: #d8f3e4; }
+  :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 }
 
-/* expired court: soft red halo breathing around the card (mockup @keyframes redpulse) */
 @layer utilities {
+  /* expired court: soft red halo breathing around the card */
   @keyframes redpulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgb(190 18 60 / 0.35); }
-    50%      { box-shadow: 0 0 0 5px rgb(190 18 60 / 0.08); }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(179, 55, 31, 0.30); }
+    50%      { box-shadow: 0 0 0 5px rgba(179, 55, 31, 0.07); }
   }
   .animate-redpulse { animation: redpulse 1.6s infinite; }
+
+  /* skill-tier badge — draft recipe: tinted fill + inset ring from the tier color */
+  .tier {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    line-height: 1.4;
+    padding: 2px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    background: color-mix(in srgb, currentColor 11%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 26%, transparent);
+  }
+  .tier.t-expert { color: var(--tier-expert); }
+  .tier.t-upper { color: var(--tier-upper); }
+  .tier.t-int { color: var(--tier-int); }
+  .tier.t-lower { color: var(--tier-lower); }
+  .tier.t-beginner { color: var(--tier-beginner); }
+  .tier.t-newbie { color: var(--tier-newbie); }
 }
