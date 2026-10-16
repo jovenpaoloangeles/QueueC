@@ -31,7 +31,8 @@ const rmDb = (p) =>
 
 export const test = base.extend({
   server: [
-    async (_ctx, use, workerInfo) => {
+    // biome-ignore lint/correctness/noEmptyPattern: Playwright fixtures must take the destructured args object
+    async ({}, use, workerInfo) => {
       const port = Number(process.env.PW_BASE_PORT ?? 3410) + workerInfo.parallelIndex;
       const dbPath = join(tmpdir(), `queuec-w${port}.db`);
       rmDb(dbPath);
