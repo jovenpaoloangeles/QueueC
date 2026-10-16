@@ -1,0 +1,22 @@
+[
+  { "name": "Alex Rivera", "skill_level": "upper_intermediate" },
+  { "name": "Bailey Chen", "skill_level": "intermediate" },
+  { "name": "Casey Morgan", "skill_level": "beginner" },
+  { "name": "Dana Reyes", "skill_level": "expert" },
+  { "name": "Eli Santos", "skill_level": "lower_intermediate" },
+  { "name": "Francis Lim", "skill_level": "intermediate" },
+  { "name": "Gale Torres", "skill_level": "newbie" },
+  { "name": "Harper Cruz", "skill_level": "upper_intermediate" },
+  { "name": "Ivo Mendoza", "skill_level": "intermediate" },
+  { "name": "Jade Villanueva", "skill_level": "beginner" },
+  { "name": "Kai Ramos", "skill_level": "lower_intermediate" },
+  { "name": "Lena Bautista", "skill_level": "expert" },
+  { "name": "Mika Fernandez", "skill_level": "intermediate" },
+  { "name": "Noel Garcia", "skill_level": "upper_intermediate" },
+  { "name": "Odette Castro", "skill_level": "beginner" },
+  { "name": "Pia Navarro", "skill_level": "intermediate" },
+  { "name": "Quinn Salazar", "skill_level": "lower_intermediate" },
+  { "name": "Rex Aguilar", "skill_level": "newbie" },
+  { "name": "Sam Dela Cruz", "skill_level": "intermediate" },
+  { "name": "Tina Ocampo", "skill_level": "upper_intermediate" }
+]

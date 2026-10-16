@@ -11,7 +11,8 @@ COPY server/package.json server/bun.lock ./server/
 RUN cd server && bun install --frozen-lockfile --production
 COPY server ./server
 COPY --from=build-client /app/client/dist ./public
-COPY players.json ./players.json
+# sample roster; mount a real players.json over /data/players.json in compose
+COPY players.example.json ./players.json
 
 ENV NODE_ENV=production
 ENV PORT=3001

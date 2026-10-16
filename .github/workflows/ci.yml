@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    env:
+      # e2e boots one server per worker (PW_BASE_PORT + index) with temp DBs —
+      # nothing here touches a real instance
+      PW_WORKERS: "2"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: |
+          bun install
+          bun install --cwd server
+          bun install --cwd client
+          bun install --cwd tests
+
+      - name: Build client
+        run: bun run --cwd client build
+
+      - name: Server / API regression tests
+        run: bun run --cwd tests test:server
+
+      - name: Unit tests
+        run: bun run --cwd tests test:unit
+
+      - name: Install Playwright browser
+        run: bunx --cwd tests playwright install chromium --with-deps
+
+      - name: E2E tests
+        run: bun run --cwd tests test:e2e
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: tests/playwright-report/
+          retention-days: 7
