@@ -1,22 +1,12 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { cn, titleCaseSkill, balanceHint } from '@/lib/utils'
+import { cn, titleCaseSkill, balanceHint, TIER_CLASS } from '@/lib/utils'
 
 export { balanceHint }
 
 const names = team => team.map(p => p.name).join(' & ')
 
-// skill level → draft tier-badge class (index.css .tier recipe), same map as PlayerCard
-const TIER_CLASS = {
-  newbie: 't-newbie',
-  beginner: 't-beginner',
-  lower_intermediate: 't-lower',
-  intermediate: 't-int',
-  upper_intermediate: 't-upper',
-  expert: 't-expert',
-  advanced: 't-expert', // legacy alias
-  professional: 't-expert',
-}
+// skill level → draft tier-badge class — canonical map lives in lib/utils
 
 function Side({ team }) {
   return (
@@ -86,7 +76,7 @@ export default function StartMatchConfirmDialog({ open, onOpenChange, title, con
           <Button type="button" variant="outline" size="sm" className="rounded-full" data-testid="start-confirm-cancel" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button type="button" size="sm" className="rounded-full bg-primary hover:bg-green-press" autoFocus data-testid="start-confirm-yes" disabled={busy} onClick={onConfirm}>
+          <Button type="button" size="sm" className="rounded-full" autoFocus data-testid="start-confirm-yes" disabled={busy} onClick={onConfirm}>
             {confirmText ?? confirmLabel}
           </Button>
         </DialogFooter>

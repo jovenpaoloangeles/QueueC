@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { drag, valid } from '@/lib/dnd'
-import { cn, titleCaseSkill, balanceHint, fmtClock } from '@/lib/utils'
+import { cn, titleCaseSkill, balanceHint, fmtClock, TIER_CLASS } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { updateSlate, cancelSlate, moveSlate, slateMatch, startSlateOnCourt } from '../api.js'
@@ -13,18 +13,6 @@ const SLOT_NAME_KEYS = ['team1_p1_name', 'team1_p2_name', 'team2_p1_name', 'team
 
 const NOOP = () => {}
 
-// skill_level → draft tier-badge class (index.css `.tier t-*` utilities).
-// professional has no dedicated draft token — it shares expert's violet.
-const TIER_CLASS = {
-  newbie: 't-newbie',
-  beginner: 't-beginner',
-  lower_intermediate: 't-lower',
-  intermediate: 't-int',
-  upper_intermediate: 't-upper',
-  expert: 't-expert',
-  professional: 't-expert',
-}
-
 // draft verdict pill (queuec-live-redesign-draft.html .verdict): wash fill +
 // deep ink, keyed off balanceHint's label — the same three contract texts.
 const VERDICT_PILL = {
@@ -34,14 +22,6 @@ const VERDICT_PILL = {
 }
 const verdictPill = hint =>
   cn('rounded-full px-2.5 py-0.5 text-xs font-bold', VERDICT_PILL[hint?.label])
-
-function teamNames(row, side) {
-  const keys = side === 1 ? ['team1_p1_name', 'team1_p2_name'] : ['team2_p1_name', 'team2_p2_name']
-  const direct = keys.map(k => row[k]).filter(Boolean)
-  if (direct.length) return direct
-  const joined = side === 1 ? row.team1_names : row.team2_names
-  return joined ? String(joined).split(',').filter(Boolean) : []
-}
 
 /** One lineup slot — drop target for a waiting player, clearable once filled. */
 function SlateSlot({ idx, entryId, name, draftedIds, draft, onDropSlot, onClearSlot, slotPrefix = 'slate-slot', clearPrefix = 'slate-slot-clear' }) {

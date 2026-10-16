@@ -214,7 +214,7 @@ export default function PlayerSearchAdd({ session, queue = [], players, onPlayer
             <Button type="button" variant="outline" size="sm" className="rounded-full" data-testid="checkin-confirm-cancel" onClick={() => setPending(null)}>
               Cancel
             </Button>
-            <Button type="button" size="sm" className="rounded-full hover:bg-green-press" autoFocus disabled={registering} data-testid="checkin-confirm-add" onClick={confirmPending}>
+            <Button type="button" size="sm" className="rounded-full" autoFocus disabled={registering} data-testid="checkin-confirm-add" onClick={confirmPending}>
               Add
             </Button>
           </DialogFooter>

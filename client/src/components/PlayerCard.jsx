@@ -36,12 +36,12 @@ export default function PlayerCard({ entry, waitSecs, selectionIndex, playSecs, 
   } else if (wait >= WAIT_HIGH_PRIORITY_THRESHOLD_SECS) {
     statusLabel = 'Overdue'
     statusSeconds = wait
-    heatBar = 'bg-[#e2a48e] dark:bg-[#e06a52]/70'
+    heatBar = 'bg-waitbar-hot'
     heatInk = 'text-destructive'
   } else if (wait >= WAIT_WARM_SECS) {
     statusLabel = 'Waiting'
     statusSeconds = wait
-    heatBar = 'bg-[#ecd9a8] dark:bg-[#d9a441]/70'
+    heatBar = 'bg-waitbar-warm'
     heatInk = 'text-amber'
   } else {
     statusLabel = 'Waiting'

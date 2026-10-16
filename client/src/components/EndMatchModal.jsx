@@ -130,7 +130,7 @@ export default function EndMatchModal({ match, courtLabel, onClose }) {
 
           <DialogFooter>
             <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={onClose}>Cancel</Button>
-            <Button type="submit" size="sm" className="rounded-full bg-primary hover:bg-green-press" disabled={loading}>
+            <Button type="submit" size="sm" className="rounded-full" disabled={loading}>
               {loading ? '...' : 'Confirm'}
             </Button>
           </DialogFooter>

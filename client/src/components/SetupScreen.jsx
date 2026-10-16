@@ -508,7 +508,7 @@ export default function SetupScreen({ draft }) {
         <div className="flex flex-col items-center gap-2">
           <Button
             size="lg"
-            className="h-11 w-full max-w-md rounded-full bg-primary text-[15px] font-semibold hover:bg-green-press"
+            className="h-11 w-full max-w-md rounded-full text-[15px] font-semibold"
             aria-label="Start Session"
             data-testid="start-session"
             disabled={!canStart}

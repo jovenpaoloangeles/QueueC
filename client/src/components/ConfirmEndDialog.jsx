@@ -20,7 +20,10 @@ export default function ConfirmEndDialog({ open, onOpenChange, onConfirm }) {
           <Button type="button" variant="outline" size="sm" className="rounded-full" data-testid="confirm-end-cancel" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button type="button" variant="destructive" size="sm" className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90" data-testid="confirm-end-end" onClick={onConfirm}>
+          {/* variant="destructive" already renders the draft's .btn-danger look
+              (wash fill + red ink) — className color overrides would lose the
+              cascade anyway since cn() is a plain joiner, not tailwind-merge */}
+          <Button type="button" variant="destructive" size="sm" className="rounded-full" data-testid="confirm-end-end" onClick={onConfirm}>
             End Match
           </Button>
         </DialogFooter>

@@ -57,17 +57,6 @@ export const SKILL_WEIGHTS = {
   professional: 700,
 }
 
-export const SKILL_BADGE = {
-  newbie: 'bg-slate-100 text-slate-700',              // #64748B Slate / Gray (100)
-  beginner: 'bg-sky-100 text-sky-800',                // #0EA5E9 Sky Blue (200)
-  lower_intermediate: 'bg-emerald-100 text-emerald-800', // #10B981 Emerald Green (300)
-  intermediate: 'bg-amber-100 text-amber-800',        // #F59E0B Amber / Gold (400)
-  upper_intermediate: 'bg-orange-100 text-orange-800',// #F97316 Orange (500)
-  expert: 'bg-rose-100 text-rose-800',                // #E11D48 Rose / Crimson (600)
-  advanced: 'bg-rose-100 text-rose-800',              // legacy alias → Expert
-  professional: 'bg-purple-100 text-purple-800',      // #7C3AED Royal Purple (700)
-}
-
 // skill level → redesign-draft tier badge class (index.css .tier recipe)
 export const TIER_CLASS = {
   newbie: 't-newbie',

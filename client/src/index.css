@@ -54,6 +54,8 @@
     --color-wash-green: var(--wash-green);
     --color-wash-amber: var(--wash-amber);
     --color-wash-red: var(--wash-red);
+    --color-waitbar-warm: var(--waitbar-warm);
+    --color-waitbar-hot: var(--waitbar-hot);
     --color-tier-expert: var(--tier-expert);
     --color-tier-upper: var(--tier-upper);
     --color-tier-int: var(--tier-int);
@@ -122,6 +124,9 @@
     --wash-green: #e8f5ed;
     --wash-amber: #faf3e0;
     --wash-red: #fbeae5;
+    /* queue-card wait-heat strips (draft .waitbar warm/hot) */
+    --waitbar-warm: #ecd9a8;
+    --waitbar-hot: #e2a48e;
     /* skill tier scale — cool→hot like the wait bars */
     --tier-expert: #6b21a8;
     --tier-upper: #1d4ed8;
@@ -176,6 +181,8 @@
     --wash-green: #1d3529;
     --wash-amber: #332a17;
     --wash-red: #38201a;
+    --waitbar-warm: rgb(217 164 65 / 0.7);   /* #d9a441 at 70% */
+    --waitbar-hot: rgb(224 106 82 / 0.7);    /* #e06a52 at 70% */
     --tier-expert: #b78deb;
     --tier-upper: #7ea6f8;
     --tier-int: #6cc793;

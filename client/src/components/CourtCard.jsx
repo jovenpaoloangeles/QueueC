@@ -230,7 +230,7 @@ export default function CourtCard({
     <Card
       data-drop={`court-${court.id}`}
       className={cn('flex flex-col rounded-lg shadow-card',
-        isExpiring && 'bg-wash-amber/40 ring-amber-300/60',
+        isExpiring && 'bg-wash-amber/40 ring-amber/40',
         isExpired && !isActive && 'animate-redpulse ring-destructive/40',
         isActive && !isExpiring && 'bg-court-live ring-court-live-border')}
     >
