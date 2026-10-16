@@ -35,7 +35,7 @@ const openBuilder = async page => {
 // ✨ Smart-fill the builder from the waiting queue, then add the lineup
 async function addViaSmartFill(page) {
   await openBuilder(page)
-  await page.getByTestId('ondeck-smart-fill').click()
+  await page.getByTestId('ondeck-smart-add').click()
   for (let i = 0; i < 4; i++) await expect(page.getByTestId(`ondeck-new-slot-${i}`)).not.toHaveText('Drop…')
   await page.getByTestId('ondeck-add').click()
   await expect(page.getByTestId('ondeck-new-slot-0')).toHaveText('Drop…')
@@ -58,7 +58,7 @@ test('28.2 builder: smart fill populates slots for review; drafted players leave
   await startDoubles(page)
   const before = await page.locator('[data-entry-id]').count()
   await openBuilder(page)
-  await page.getByTestId('ondeck-smart-fill').click()
+  await page.getByTestId('ondeck-smart-add').click()
   for (let i = 0; i < 4; i++) await expect(page.getByTestId(`ondeck-new-slot-${i}`)).not.toHaveText('Drop…')
   // live balance verdict appears the moment the lineup fills — before adding
   await expect(page.getByTestId('ondeck-draft-balance')).toHaveText(/Even|Slight edge|Lopsided/)
@@ -127,7 +127,7 @@ test('28.4b smart fill with <4 waiting: toast and empty slots', async ({ page })
   await fullSetup(page, { playerNames: NAMES.slice(0, 3) })
   await expandDeck(page) // mid-test fullSetup reloads to collapsed default
   await openBuilder(page)
-  await page.getByTestId('ondeck-smart-fill').click()
+  await page.getByTestId('ondeck-smart-add').click()
   await expect(page.getByTestId('toast')).toContainText('Nothing to add — need 4 waiting players')
   for (let i = 0; i < 4; i++) await expect(page.getByTestId(`ondeck-new-slot-${i}`)).toHaveText('Drop…')
   expect((await liveState(page)).slatedMatches).toHaveLength(0)

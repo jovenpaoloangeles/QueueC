@@ -29,7 +29,7 @@ for (;;) {
 }
 
 let code = 0
-for (const f of ['server/routes/two-match-end.test.js', 'server/routes/court-stagger.test.js']) {
+for (const f of ['server/routes/two-match-end.test.js', 'server/routes/court-stagger.test.js', 'server/routes/queue-remove.test.js']) {
   const r = Bun.spawnSync(['bun', join(root, f)], {
     cwd: root,
     env: { ...process.env, QC_TEST_BASE: BASE },

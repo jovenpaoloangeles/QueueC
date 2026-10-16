@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { drag, valid } from '@/lib/dnd'
-import { cn, titleCaseSkill, balanceHint, fmtClock, TIER_CLASS } from '@/lib/utils'
+import { cn, shortSkill, balanceHint, fmtClock, TIER_CLASS } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { updateSlate, cancelSlate, moveSlate, slateMatch, startSlateOnCourt } from '../api.js'
@@ -12,6 +12,20 @@ const SLOT_KEYS = ['team1_p1', 'team1_p2', 'team2_p1', 'team2_p2']
 const SLOT_NAME_KEYS = ['team1_p1_name', 'team1_p2_name', 'team2_p1_name', 'team2_p2_name']
 
 const NOOP = () => {}
+
+// draft .btn-icon glyphs: 11px chevrons (stroke 2.4) for slate reorder
+const Chevron = ({ dir }) => (
+  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d={dir === 'up' ? 'M6 14l6-6 6 6' : 'M6 10l6 6 6-6'} />
+  </svg>
+)
+
+// draft 12px sparkle for the Smart add buttons
+const Spark = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M12 3l1.7 4.6L18 9.3l-4.3 1.7L12 15.6l-1.7-4.6L6 9.3l4.3-1.7L12 3z" />
+  </svg>
+)
 
 // draft verdict pill (queuec-live-redesign-draft.html .verdict): wash fill +
 // deep ink, keyed off balanceHint's label — the same three contract texts.
@@ -118,7 +132,7 @@ function SidePlayers({ players }) {
           <span className="truncate">{p.name}</span>
           {p.skill_level && (
             <span className={cn('tier ml-auto shrink-0', TIER_CLASS[p.skill_level])}>
-              {titleCaseSkill(p.skill_level)}
+              {shortSkill(p.skill_level)}
             </span>
           )}
         </span>
@@ -426,12 +440,11 @@ export default function OnDeckStrip({
       />
       <div className="flex flex-wrap items-center gap-2">
         <p className="mr-auto min-w-0 text-xs text-muted-foreground">
-          {filled === 4 ? 'Ready — check the sides, then add' : 'Drag 4 waiting players, or ✨ Smart Match fills from the queue'}
+          {filled === 4 ? 'Ready — check the sides, then add' : 'Drag 4 waiting players, or Smart add fills from the queue'}
         </p>
         {filled > 0 && (
           <Button size="sm" variant="ghost" className="rounded-full" onClick={() => setNewDraft([null, null, null, null])}>Clear</Button>
         )}
-        <Button size="sm" variant="secondary" className="rounded-full" data-testid="ondeck-smart-fill" disabled={filling} onClick={runSmartFill}>✨ Smart Match</Button>
         <Button size="sm" className="rounded-full" data-testid="ondeck-add" disabled={filled !== 4 || adding} onClick={handleAdd}>Add to On Deck</Button>
       </div>
     </div>
@@ -449,7 +462,7 @@ export default function OnDeckStrip({
       <p className="min-w-0 flex-1 text-xs text-muted-foreground">
         {rows.length ? `${rows.length} lined up · hidden` : 'nothing lined up'}
       </p>
-      <Button size="sm" variant="secondary" className="rounded-full" data-testid="ondeck-smart-add" disabled={filling} onClick={runSmartFill}>✨ Smart add</Button>
+      <Button size="sm" variant="secondary" className="rounded-full" data-testid="ondeck-smart-add" disabled={filling} onClick={runSmartFill}><Spark /> Smart add</Button>
     </header>
   )
 
@@ -463,7 +476,7 @@ export default function OnDeckStrip({
         >{rows.length}</span>
       </h2>
       <p className="min-w-0 flex-1 text-xs text-muted-foreground">{rows.length} lined up · QM announces top to bottom</p>
-      <Button size="sm" variant="secondary" className="rounded-full" data-testid="ondeck-smart-add" disabled={filling} onClick={runSmartFill}>✨ Smart add</Button>
+      <Button size="sm" variant="secondary" className="rounded-full" data-testid="ondeck-smart-add" disabled={filling} onClick={runSmartFill}><Spark /> Smart add</Button>
       <Button size="sm" variant={building ? 'secondary' : 'default'} className="rounded-full" data-testid="ondeck-builder-toggle" onClick={() => setBuilding(b => !b)}>
         {building ? 'Close builder' : '＋ Build lineup'}
       </Button>
@@ -541,10 +554,7 @@ export default function OnDeckStrip({
             <div
               key={row.id}
               data-testid={`slate-row-${row.id}`}
-              className={cn(
-                'flex flex-col gap-3 rounded-lg border border-dashed border-border bg-card p-4 shadow-card',
-                pos === 1 && 'border-court-live-border bg-court-live'
-              )}
+              className="flex flex-col gap-3 rounded-lg border border-dashed border-border bg-card p-4 shadow-card" 
             >
               <div className="flex flex-wrap items-center gap-2">
                 <span
@@ -566,8 +576,8 @@ export default function OnDeckStrip({
                   </span>
                 )}
                 <div className="ml-auto flex shrink-0 items-center gap-1">
-                  <Button size="icon-sm" variant="secondary" data-testid={`slate-up-${row.id}`} aria-label="Move up" disabled={i === 0 || moving} onClick={() => handleMove(row, 'up')}>↑</Button>
-                  <Button size="icon-sm" variant="secondary" data-testid={`slate-down-${row.id}`} aria-label="Move down" disabled={i === rows.length - 1 || moving} onClick={() => handleMove(row, 'down')}>↓</Button>
+                  <Button size="icon-sm" variant="secondary" data-testid={`slate-up-${row.id}`} aria-label="Move up" disabled={i === 0 || moving} onClick={() => handleMove(row, 'up')}><Chevron dir="up" /></Button>
+                  <Button size="icon-sm" variant="secondary" data-testid={`slate-down-${row.id}`} aria-label="Move down" disabled={i === rows.length - 1 || moving} onClick={() => handleMove(row, 'down')}><Chevron dir="down" /></Button>
                 </div>
               </div>
 

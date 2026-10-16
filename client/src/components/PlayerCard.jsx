@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 const WAIT_HIGH_PRIORITY_THRESHOLD_SECS = 15 * 60 // overdue threshold — unchanged
 const WAIT_WARM_SECS = 6 * 60 // cosmetic mid tier for the wait strip; overdue logic untouched
 
-export default function PlayerCard({ entry, waitSecs, selectionIndex, playSecs, isNext = false, onClick, onDropOn, onToggleRest }) {
+export default function PlayerCard({ entry, waitSecs, selectionIndex, playSecs, isNext = false, onClick, onDropOn, onToggleRest, onRemove }) {
   const dragProps = useDragSource(() => ({ kind: 'player', entryId: entry.id, status: entry.status }))
   const [over, setOver] = useState(false)
   const isSelected = selectionIndex !== undefined && selectionIndex !== -1
@@ -129,6 +129,17 @@ export default function PlayerCard({ entry, waitSecs, selectionIndex, playSecs, 
             onClick={e => { e.stopPropagation(); onToggleRest?.(entry) }}
           >
             {isResting ? 'Wake' : 'Rest'}
+          </Button>
+        )}
+        {(isWaiting || isResting) && onRemove && (
+          <Button
+            variant="ghost"
+            size="xs"
+            className="h-6 rounded-full px-2.5 text-xs font-medium text-muted-foreground hover:text-destructive"
+            data-testid="remove-player"
+            onClick={e => { e.stopPropagation(); onRemove(entry) }}
+          >
+            Remove
           </Button>
         )}
       </div>

@@ -7,7 +7,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import PlayerCard from './PlayerCard.jsx'
 import PlayerSearchAdd from './PlayerSearchAdd.jsx'
 import { useToast } from './Toast.jsx'
-import { getPlayers, setEntryStatus } from '../api.js'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { getPlayers, removeEntry, setEntryStatus } from '../api.js'
 
 // mockup .queue-tabs: All = everything in the session (waiting + resting, then
 // playing), Wait = waiting only, Rest = resting only
@@ -25,6 +26,8 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
   const [order, setOrder] = useState([])
   const [tab, setTab] = useState('all')
   const [filter, setFilter] = useState('')
+  const [pendingRemove, setPendingRemove] = useState(null) // confirm-dialog target
+  const [removing, setRemoving] = useState(false)
   const toast = useToast()
 
   // order survives SSE pushes (every 1s) so an optimistic drag doesn't snap
@@ -79,6 +82,17 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
         if (next === 'resting') onSelectionChange(selection.filter(s => s !== entry.id))
       })
       .catch(err => toast(err?.data?.error ?? 'Could not update', 'error'))
+  }
+
+  // Remove (check-in undo): the card's Remove only arms the confirm dialog;
+  // the server refuses playing entries (409) and its card never shows the button.
+  function removePlayer(entry) {
+    if (removing) return
+    setRemoving(true)
+    removeEntry(entry.id)
+      .then(() => onSelectionChange(selection.filter(s => s !== entry.id)))
+      .catch(err => toast(err?.data?.error ?? 'Could not remove player', 'error'))
+      .finally(() => { setRemoving(false); setPendingRemove(null) })
   }
 
   // drafted entries (court draft / on-deck builder) leave the list entirely —
@@ -268,9 +282,32 @@ export default function QueueGrid({ session, queue, waitSeconds, playSeconds, se
             }}
             onDropOn={handleDropOnPlayer}
             onToggleRest={toggleRest}
+            onRemove={setPendingRemove}
           />
         ))}
       </div>
+
+      {/* Remove-confirm gate: destructive, so the button only arms the dialog.
+          Esc/backdrop = keep. One dialog grid-wide. */}
+      <Dialog open={pendingRemove != null} onOpenChange={open => { if (!open) setPendingRemove(null) }}>
+        <DialogContent className="sm:max-w-xs" data-testid="remove-player-dialog">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span aria-hidden="true">✕</span>
+              Remove {pendingRemove?.name}?
+            </DialogTitle>
+            <DialogDescription>They leave the queue and are checked out of this session.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" size="sm" data-testid="remove-player-abort" onClick={() => setPendingRemove(null)}>
+              Keep
+            </Button>
+            <Button type="button" variant="destructive" size="sm" data-testid="remove-player-confirm" disabled={removing} onClick={() => removePlayer(pendingRemove)}>
+              Remove player
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

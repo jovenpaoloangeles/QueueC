@@ -87,6 +87,21 @@ export function titleCaseSkill(level) {
   return (level ?? '').split('_').map(w => (w ? w[0].toUpperCase() + w.slice(1) : w)).join(' ')
 }
 
+/** Draft-tier labels (queuec-live-redesign-draft.html chips): 'Int', 'Upper Int',
+ *  'Lower Int' — full titleCaseSkill doesn't fit beside a name in a court chip. */
+export function shortSkill(level) {
+  return {
+    newbie: 'New',
+    beginner: 'Beg',
+    lower_intermediate: 'Lower Int',
+    intermediate: 'Int',
+    upper_intermediate: 'Upper Int',
+    expert: 'Expert',
+    advanced: 'Expert',
+    professional: 'Expert',
+  }[level] ?? titleCaseSkill(level)
+}
+
 export function balanceHint(m) {
   const a = avgSkill(m.team1), b = avgSkill(m.team2)
   if (a == null || b == null) return null

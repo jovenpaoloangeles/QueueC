@@ -63,9 +63,15 @@ test('8.11 score 0–0 accepted', async ({ page }) => {
   await expect(page.locator('text=Select 2 or 4 players').first()).toBeVisible()
 })
 
+// live-card sides are per-player chips: name + tier badge lines
+const sideNames = async (page, side) =>
+  (await page.locator(`[data-team-side="${side}"]`).innerText())
+    .split('\n').map(s => s.trim())
+    .filter(s => s && !/^(new|beg|lower int|upper int|int|expert)$/i.test(s))
+
 test('8.6 returned players visible in queue grid', async ({ page }) => {
-  const t1 = (await page.locator('[data-team-side="1"]').innerText()).split(' + ')
-  const t2 = (await page.locator('[data-team-side="2"]').innerText()).split(' + ')
+  const t1 = await sideNames(page, 1)
+  const t2 = await sideNames(page, 2)
   await endMatch(page, 'Court')
   for (const name of [...t1, ...t2]) {
     await expect(page.locator('[data-entry-id]').filter({ hasText: name.trim() })).toBeVisible()
@@ -81,7 +87,7 @@ test('8.9 total_seconds_played reflected as X min played', async ({ page, server
   // backdate the match start so the ended duration is ~10 min; server computes
   // duration = end - started_at from the DB, and WAL makes the CLI write visible
   execSync(`sqlite3 ${server.dbPath} "UPDATE matches SET started_at = started_at - 600 WHERE ended_at IS NULL"`)
-  const names = (await page.locator('[data-team-side="1"]').innerText()).split(' + ')
+  const names = await sideNames(page, 1)
   await endMatch(page, 'Court')
   const card = page.locator('[data-entry-id]').filter({ hasText: names[0].trim() })
   await expect(card).toContainText('10m played')

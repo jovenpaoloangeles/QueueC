@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { drag, valid, useDragSource, rearrange } from '@/lib/dnd'
-import { cn, fmtClock, fmtWall } from '@/lib/utils'
+import { cn, fmtClock, fmtWall, shortSkill, TIER_CLASS } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -13,15 +13,26 @@ function playerName(queue, entryId) {
   return queue.find(e => e.id === entryId)?.name ?? '?'
 }
 
-function TeamPlayer({ entryId, name }) {
+function playerSkill(queue, entryId) {
+  return queue.find(e => e.id === entryId)?.skill_level
+}
+
+function TeamPlayer({ entryId, name, skill }) {
   const dragProps = useDragSource(() => ({ kind: 'player', entryId, status: 'playing' }))
+  // draft .chip: one card per player, tier badge riding on the right
   return (
-    <span
+    <div
       {...dragProps}
       onDragStart={e => { e.stopPropagation(); dragProps.onDragStart(e) }}
+      className="flex min-w-0 cursor-grab items-center gap-2 rounded-md border border-border bg-card px-2.5 py-1.5 text-[13px] font-semibold text-foreground shadow-sm transition-colors dark:bg-secondary"
     >
-      {name}
-    </span>
+      <span className="truncate">{name}</span>
+      {skill && (
+        <span className={cn('tier ml-auto shrink-0', TIER_CLASS[skill] ?? TIER_CLASS.intermediate)}>
+          {shortSkill(skill)}
+        </span>
+      )}
+    </div>
   )
 }
 
@@ -64,19 +75,14 @@ function TeamPanel({ side, entryIds, queue, matchId, match }) {
         }
       }}
       className={cn(
-        'rounded-md border border-border bg-card px-2.5 py-2 text-center text-[13px] font-semibold text-foreground shadow-sm transition-colors dark:bg-secondary',
-        over && canDrop && 'border-drop-target-border bg-drop-target!',
-        over && drag.current && !canDrop && 'border-drop-invalid-border bg-drop-invalid!'
+        'flex min-w-0 flex-col gap-1.5 rounded-lg transition-colors',
+        over && canDrop && 'bg-drop-target ring-2 ring-drop-target-border',
+        over && drag.current && !canDrop && 'bg-drop-invalid ring-2 ring-drop-invalid-border'
       )}
     >
-      <div>
-        {entryIds.filter(Boolean).map((id, i) => (
-          <span key={id}>
-            {i > 0 && ' + '}
-            <TeamPlayer entryId={id} name={playerName(queue, id)} />
-          </span>
-        ))}
-      </div>
+      {entryIds.filter(Boolean).map(id => (
+        <TeamPlayer key={id} entryId={id} name={playerName(queue, id)} skill={playerSkill(queue, id)} />
+      ))}
     </div>
   )
 }
@@ -236,10 +242,10 @@ export default function CourtCard({
       {/* grid-cols wins outright (base has no unconditional grid-cols); items-center! is important so it beats base items-start regardless of emission order */}
       <CardHeader className="grid-cols-[minmax(0,1fr)_auto] items-center! gap-2 pb-0">
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-          <span className="text-[14.5px] font-bold tracking-tight text-foreground">{court.label}</span>
           {isActive && !isExpiring && (
             <span data-testid="live-badge" className="live-dot shrink-0" aria-hidden="true" />
           )}
+          <span className="text-[14.5px] font-bold tracking-tight text-foreground">{court.label}</span>
           {isExpiring && (
             <Badge className="rounded-full border-0 bg-wash-amber text-[11px] font-bold uppercase tracking-wide text-amber" data-testid="expiring-last-game-badge">
               ⏳ Last Game
@@ -269,7 +275,7 @@ export default function CourtCard({
       </CardHeader>
 
       {isActive && (
-        <CardContent className="flex flex-1 flex-col justify-center gap-3 px-4">
+        <CardContent className="flex flex-col gap-3 px-4">
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
               <TeamPanel side={1} entryIds={[match.team1_p1, match.team1_p2]} queue={queue} matchId={match.id} match={match} />
             <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground/70">VS</span>
@@ -313,7 +319,7 @@ export default function CourtCard({
             if (canAcceptNewMatch && dropAllowed()) onDropPlayer(court.id, drag.current.entryId)
           }}
           className={cn(
-            'flex flex-1 flex-col justify-center gap-3 rounded-md',
+            'flex flex-1 flex-col gap-3 rounded-md',
             over && canAcceptNewMatch && dropAllowed() && 'bg-drop-target ring-2 ring-drop-target-border',
             over && canAcceptNewMatch && drag.current && !dropAllowed() && 'bg-drop-invalid ring-2 ring-drop-invalid-border'
           )}
