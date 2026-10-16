@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { drag, valid } from '@/lib/dnd'
-import { cn, titleCaseSkill, SKILL_BADGE, balanceHint, fmtClock } from '@/lib/utils'
+import { cn, titleCaseSkill, balanceHint, fmtClock } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { updateSlate, cancelSlate, moveSlate, slateMatch, startSlateOnCourt } from '../api.js'
@@ -13,11 +13,27 @@ const SLOT_NAME_KEYS = ['team1_p1_name', 'team1_p2_name', 'team2_p1_name', 'team
 
 const NOOP = () => {}
 
-// index.css ships no --violet token, so the mockup's violet is expressed with
-// arbitrary Tailwind tones plus dark: overrides — violet-100/800 washes out on
-// the dark canvas, violet-400/300 keeps the same hue readable there.
-const VIOLET_TAG = 'bg-violet-100 text-violet-800 dark:bg-violet-400/15 dark:text-violet-300'
-const VIOLET_SOFT = 'text-violet-700 dark:text-violet-300'
+// skill_level → draft tier-badge class (index.css `.tier t-*` utilities).
+// professional has no dedicated draft token — it shares expert's violet.
+const TIER_CLASS = {
+  newbie: 't-newbie',
+  beginner: 't-beginner',
+  lower_intermediate: 't-lower',
+  intermediate: 't-int',
+  upper_intermediate: 't-upper',
+  expert: 't-expert',
+  professional: 't-expert',
+}
+
+// draft verdict pill (queuec-live-redesign-draft.html .verdict): wash fill +
+// deep ink, keyed off balanceHint's label — the same three contract texts.
+const VERDICT_PILL = {
+  Even: 'bg-wash-green text-green-deep',
+  'Slight edge': 'bg-wash-amber text-amber',
+  Lopsided: 'bg-wash-red text-destructive',
+}
+const verdictPill = hint =>
+  cn('rounded-full px-2.5 py-0.5 text-xs font-bold', VERDICT_PILL[hint?.label])
 
 function teamNames(row, side) {
   const keys = side === 1 ? ['team1_p1_name', 'team1_p2_name'] : ['team2_p1_name', 'team2_p2_name']
@@ -53,23 +69,23 @@ function SlateSlot({ idx, entryId, name, draftedIds, draft, onDropSlot, onClearS
         if (droppable(p)) onDropSlot(idx, p.entryId)
       }}
       className={cn(
-        'grid min-h-[44px] place-items-center rounded-lg border-[1.5px] border-dashed px-3 py-2 text-center text-sm font-semibold transition-colors',
+        'grid min-h-[38px] place-items-center rounded-md border-[1.5px] px-2.5 py-1.5 text-center text-xs font-semibold transition-colors',
         filled
-          ? 'border-solid border-primary bg-accent text-foreground'
-          : 'border-border bg-card text-muted-foreground',
+          ? 'border-solid border-border bg-card text-foreground shadow-sm'
+          : 'border-dashed border-border bg-secondary text-muted-foreground',
         over && canDrop && 'border-primary bg-drop-target',
         over && payload && !canDrop && 'border-drop-invalid-border bg-drop-invalid'
       )}
     >
       {filled ? (
-        <span className="flex items-center gap-1">
+        <span className="flex items-center gap-1.5">
           <span className="truncate">{name}</span>
           <button
             type="button"
             data-testid={`${clearPrefix}-${idx}`}
             aria-label={`Remove ${name} from slate`}
             onClick={() => onClearSlot(idx)}
-            className="size-5 font-bold text-muted-foreground hover:text-destructive"
+            className="grid size-5 shrink-0 place-items-center rounded-md bg-secondary text-xs font-bold leading-none text-muted-foreground transition-colors hover:text-destructive"
           >×</button>
         </span>
       ) : 'Drop…'}
@@ -79,9 +95,9 @@ function SlateSlot({ idx, entryId, name, draftedIds, draft, onDropSlot, onClearS
 
 /** Compact 2×2 matrix (CourtCard .slots pattern): Team A = 0,1 · Team B = 2,3. */
 function SlateMatrix({ draft, draftedIds, nameById, onDropSlot, onClearSlot, slotPrefix, clearPrefix }) {
-  const column = (label, idxs, sideB) => (
+  const column = (label, idxs) => (
     <div className="flex flex-col gap-1.5">
-      <span className={cn('text-2xs font-bold uppercase tracking-wider', sideB ? 'text-emerald-600' : 'text-sky-600')}>
+      <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
         {label}
       </span>
       {idxs.map(i => (
@@ -102,9 +118,9 @@ function SlateMatrix({ draft, draftedIds, nameById, onDropSlot, onClearSlot, slo
   )
 
   return (
-    <div className="grid grid-cols-2 gap-2 rounded-lg border border-border bg-muted px-2.5 py-2">
-      {column('Team A', [0, 1], false)}
-      {column('Team B', [2, 3], true)}
+    <div className="grid grid-cols-2 gap-3">
+      {column('Team A', [0, 1])}
+      {column('Team B', [2, 3])}
     </div>
   )
 }
@@ -117,15 +133,15 @@ function sideOf(row, side) {
   return p.map(k => (row[k] != null ? { name: row[`${k}_name`] ?? '?', skill_level: row[`${k}_skill`] } : null)).filter(Boolean)
 }
 
-function SidePlayers({ label, players, sideB }) {
+function SidePlayers({ label, players }) {
   return (
-    <div className="flex min-w-0 flex-col gap-1">
-      <span className={cn('text-2xs font-bold uppercase tracking-wider', sideB ? 'text-emerald-600' : 'text-sky-600')}>{label}</span>
+    <div className="flex min-w-0 flex-col gap-1.5">
+      <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">{label}</span>
       {players.length ? players.map((p, i) => (
-        <span key={i} className="flex min-w-0 items-center gap-1.5 text-sm font-semibold">
+        <span key={i} className="flex min-w-0 items-center gap-2 rounded-md border border-border bg-secondary px-2.5 py-1.5 text-[13px] font-semibold">
           <span className="truncate">{p.name}</span>
           {p.skill_level && (
-            <span className={cn('shrink-0 rounded px-1 py-0.5 text-[10px] font-medium leading-none', SKILL_BADGE[p.skill_level])}>
+            <span className={cn('tier ml-auto shrink-0', TIER_CLASS[p.skill_level])}>
               {titleCaseSkill(p.skill_level)}
             </span>
           )}
@@ -416,7 +432,7 @@ export default function OnDeckStrip({
   const filled = newDraft.filter(Boolean).length
 
   const builder = (
-    <div data-testid="ondeck-builder" className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card p-3">
+    <div data-testid="ondeck-builder" className="flex flex-wrap items-center gap-4 rounded-lg border border-border bg-card p-4 shadow-card">
       <SlateMatrix
         draft={newDraft}
         draftedIds={draftedIds}
@@ -427,14 +443,14 @@ export default function OnDeckStrip({
         clearPrefix="ondeck-new-clear"
       />
       <div className="flex flex-col gap-1.5">
-        <p className="max-w-[16rem] text-2xs text-muted-foreground">
+        <p className="max-w-[16rem] text-xs text-muted-foreground">
           Drag 4 waiting players in, or ✨ Smart Match to fill from the waiting queue — review and adjust before adding.
         </p>
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" data-testid="ondeck-smart-fill" disabled={filling} onClick={runSmartFill}>✨ Smart Match</Button>
-          <Button size="sm" data-testid="ondeck-add" disabled={filled !== 4 || adding} onClick={handleAdd}>Add to On Deck</Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button size="sm" variant="outline" className="rounded-full" data-testid="ondeck-smart-fill" disabled={filling} onClick={runSmartFill}>✨ Smart Match</Button>
+          <Button size="sm" className="rounded-full" data-testid="ondeck-add" disabled={filled !== 4 || adding} onClick={handleAdd}>Add to On Deck</Button>
           {draftHint && (
-            <span data-testid="ondeck-draft-balance" className={cn('text-xs font-bold', draftHint.tone)}>{draftHint.label}</span>
+            <span data-testid="ondeck-draft-balance" className={verdictPill(draftHint)}>{draftHint.label}</span>
           )}
         </div>
       </div>
@@ -443,32 +459,32 @@ export default function OnDeckStrip({
 
   const collapsedHeader = (
     <header className="flex min-h-7 flex-wrap items-center gap-x-3 gap-y-1">
-      <h2 className="flex items-center gap-2 text-lg font-black uppercase tracking-wide text-primary">
+      <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-foreground">
         ⏭ On Deck
         <span
           data-testid="on-deck-count"
-          className="inline-flex min-w-6 items-center justify-center rounded-full bg-primary px-2 py-0.5 text-xs font-extrabold text-primary-foreground"
+          className="inline-flex min-w-6 items-center justify-center rounded-full bg-primary px-2 py-0.5 font-mono text-xs font-semibold tabular-nums text-primary-foreground"
         >{rows.length}</span>
       </h2>
       <p className="min-w-0 flex-1 text-xs text-muted-foreground">
         {rows.length ? `${rows.length} lined up · hidden` : 'nothing lined up'}
       </p>
-      <Button size="sm" variant="outline" data-testid="ondeck-smart-add" disabled={filling} onClick={runSmartFill}>✨ Smart add</Button>
+      <Button size="sm" variant="outline" className="rounded-full" data-testid="ondeck-smart-add" disabled={filling} onClick={runSmartFill}>✨ Smart add</Button>
     </header>
   )
 
   const expandedHeader = (
     <header className="flex flex-wrap items-center gap-x-3 gap-y-1">
-      <h2 className="flex items-center gap-2 text-lg font-black uppercase tracking-wide text-primary">
+      <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-foreground">
         ⏭ On Deck
         <span
           data-testid="on-deck-count"
-          className="inline-flex min-w-6 items-center justify-center rounded-full bg-primary px-2 py-0.5 text-xs font-extrabold text-primary-foreground"
+          className="inline-flex min-w-6 items-center justify-center rounded-full bg-primary px-2 py-0.5 font-mono text-xs font-semibold tabular-nums text-primary-foreground"
         >{rows.length}</span>
       </h2>
       <p className="min-w-0 flex-1 text-xs text-muted-foreground">Plays on the next free court · in order</p>
-      <Button size="sm" variant="outline" data-testid="ondeck-smart-add" disabled={filling} onClick={runSmartFill}>✨ Smart add</Button>
-      <Button size="sm" variant={building ? 'secondary' : 'default'} data-testid="ondeck-builder-toggle" onClick={() => setBuilding(b => !b)}>
+      <Button size="sm" variant="outline" className="rounded-full" data-testid="ondeck-smart-add" disabled={filling} onClick={runSmartFill}>✨ Smart add</Button>
+      <Button size="sm" variant={building ? 'secondary' : 'default'} className="rounded-full" data-testid="ondeck-builder-toggle" onClick={() => setBuilding(b => !b)}>
         {building ? 'Close builder' : '＋ Build lineup'}
       </Button>
     </header>
@@ -482,7 +498,7 @@ export default function OnDeckStrip({
       aria-expanded={open}
       aria-label={open ? 'Collapse On Deck' : 'Expand On Deck'}
       onClick={onToggleOpen}
-      className="flex size-6 shrink-0 items-center justify-center rounded text-primary hover:bg-primary/10"
+      className="flex size-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
     >
       <span
         aria-hidden="true"
@@ -498,8 +514,8 @@ export default function OnDeckStrip({
     <section
       data-testid="on-deck-strip"
       className={cn(
-        'flex shrink-0 flex-col rounded-2xl border-2 border-primary/60 bg-primary/5 shadow-md',
-        open ? 'gap-3 p-3' : 'gap-1 px-3 py-1',
+        'flex shrink-0 flex-col',
+        open ? 'gap-3' : 'gap-1 py-1',
       )}
     >
       {/* collapsed: chevron inline with the header so the slim bar stays one row */}
@@ -520,14 +536,14 @@ export default function OnDeckStrip({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
             className="flex min-h-0 flex-col gap-3 overflow-hidden"
           >
             {building && builder}
 
             {!rows.length && (
-              <div data-testid="on-deck-empty" className="flex flex-wrap items-baseline gap-x-2 rounded-lg border border-dashed border-primary/40 bg-card px-3 py-1.5">
-                <p className="text-sm font-bold">Nothing on deck</p>
+              <div data-testid="on-deck-empty" className="flex flex-wrap items-baseline gap-x-2 rounded-lg border border-dashed border-border bg-card px-4 py-3">
+                <p className="text-sm font-bold tracking-tight">Nothing on deck</p>
                 <p className="text-xs text-muted-foreground">
                   Line up the next match so it starts the moment a court frees up — Smart add or build a lineup.
                 </p>
@@ -546,29 +562,29 @@ export default function OnDeckStrip({
               key={row.id}
               data-testid={`slate-row-${row.id}`}
               className={cn(
-                'flex flex-col gap-2.5 rounded-xl border bg-card px-4 py-3 shadow-sm',
-                pos === 1 ? 'border-primary' : 'border-dashed border-border'
+                'flex flex-col gap-3 rounded-lg border border-border bg-card p-4 shadow-card',
+                pos === 1 && 'border-court-live-border bg-court-live'
               )}
             >
               <div className="flex flex-wrap items-center gap-2">
                 <span
                   data-testid={`on-deck-pos-${pos}`}
-                  className="rounded-full bg-primary px-2.5 py-1 text-xs font-extrabold text-primary-foreground"
+                  className="rounded-full bg-wash-green px-2.5 py-1 text-xs font-bold text-green-deep"
                 >
                   #{pos}{pos === 1 ? ' · Up next' : ''}
                 </span>
-                {/* the one violet tag — present in display AND edit mode */}
+                {/* quiet neutral tag — present in display AND edit mode */}
                 <span
                   data-testid="on-deck-tag"
-                  className={cn('inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-2xs font-extrabold uppercase tracking-wider', VIOLET_TAG)}
+                  className="inline-flex shrink-0 items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-2xs font-bold uppercase tracking-wider text-muted-foreground"
                 >
                   ⏭ On Deck
                 </span>
                 {hint && !editing && (
-                  <span data-testid="on-deck-balance" className={cn('text-xs font-bold', hint.tone)}>{hint.label}</span>
+                  <span data-testid="on-deck-balance" className={verdictPill(hint)}>{hint.label}</span>
                 )}
                 {row.slate_seq != null && (
-                  <span className={cn('ml-auto shrink-0 rounded-full px-2 py-0.5 text-2xs font-bold uppercase tracking-wider', VIOLET_TAG)}>
+                  <span className="ml-auto shrink-0 rounded-full bg-secondary px-2 py-0.5 font-mono text-2xs font-bold uppercase tracking-wider tabular-nums text-muted-foreground">
                     slated #{row.slate_seq}
                   </span>
                 )}
@@ -585,32 +601,34 @@ export default function OnDeckStrip({
               ) : (
                 <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
                   <SidePlayers label="Team A" players={t1} />
-                  <span className="text-xs font-extrabold text-muted-foreground">vs</span>
-                  <SidePlayers label="Team B" players={t2} sideB />
+                  <span className="text-[11px] font-bold tracking-[0.14em] text-muted-foreground/70">vs</span>
+                  <SidePlayers label="Team B" players={t2} />
                 </div>
               )}
 
               {pos === 1 && eta && !editing && (
-                <p data-testid="on-deck-eta" className={cn('text-xs font-semibold', VIOLET_SOFT)}>
-                  next free court: {eta.label} in ~{fmtClock(eta.secs)}
+                <p data-testid="on-deck-eta" className="text-xs text-muted-foreground">
+                  next free court:{' '}
+                  <span className="font-mono font-semibold tabular-nums text-foreground">{eta.label} in ~{fmtClock(eta.secs)}</span>
                 </p>
               )}
 
               <div className="flex flex-wrap items-center gap-2">
                 {editing ? (
                   <>
-                    <Button size="sm" data-testid="slate-save" disabled={saving} onClick={() => handleSave(row)}>Save</Button>
-                    <Button size="sm" variant="ghost" data-testid="slate-cancel-edit" onClick={exitEdit}>Cancel</Button>
+                    <Button size="sm" className="rounded-full" data-testid="slate-save" disabled={saving} onClick={() => handleSave(row)}>Save</Button>
+                    <Button size="sm" variant="ghost" className="rounded-full" data-testid="slate-cancel-edit" onClick={exitEdit}>Cancel</Button>
                   </>
                 ) : (
                   <>
-                    <Button size="sm" variant="outline" data-testid={`slate-up-${row.id}`} aria-label="Move up" disabled={i === 0 || moving} onClick={() => handleMove(row, 'up')}>↑</Button>
-                    <Button size="sm" variant="outline" data-testid={`slate-down-${row.id}`} aria-label="Move down" disabled={i === rows.length - 1 || moving} onClick={() => handleMove(row, 'down')}>↓</Button>
-                    <Button size="sm" variant="outline" className="ml-auto" data-testid={`slate-edit-${row.id}`} onClick={() => startEdit(row)}>
+                    <Button size="sm" variant="outline" className="rounded-full" data-testid={`slate-up-${row.id}`} aria-label="Move up" disabled={i === 0 || moving} onClick={() => handleMove(row, 'up')}>↑</Button>
+                    <Button size="sm" variant="outline" className="rounded-full" data-testid={`slate-down-${row.id}`} aria-label="Move down" disabled={i === rows.length - 1 || moving} onClick={() => handleMove(row, 'down')}>↓</Button>
+                    <Button size="sm" variant="outline" className="ml-auto rounded-full" data-testid={`slate-edit-${row.id}`} onClick={() => startEdit(row)}>
                       ✎ Edit
                     </Button>
                     <Button
                       size="sm"
+                      className="rounded-full"
                       data-testid={`slate-start-${row.id}`}
                       disabled={free.length === 0}
                       title={free.length === 0 ? 'No free court' : 'Start this lineup on a free court now'}
@@ -621,7 +639,7 @@ export default function OnDeckStrip({
                     <Button
                       size="sm"
                       variant="outline"
-                      className="text-destructive hover:text-destructive"
+                      className="rounded-full text-destructive hover:text-destructive"
                       data-testid={`slate-cancel-${row.id}`}
                       disabled={cancelling}
                       onClick={() => setPendingCancelId(row.id)}
@@ -693,6 +711,7 @@ export default function OnDeckStrip({
                   type="button"
                   size="sm"
                   variant="outline"
+                  className="rounded-full"
                   disabled={starting}
                   data-testid={`slate-start-court-${c.id}`}
                   onClick={() => {
