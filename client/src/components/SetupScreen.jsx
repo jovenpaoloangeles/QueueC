@@ -17,6 +17,17 @@ const pad = n => String(n).padStart(2, '0')
 
 const START_HOURS = Array.from({ length: 18 }, (_, i) => pad(i + 6) + ':00') // 06:00 … 23:00
 
+// Later open times are picked as clock times, 15-min steps up to 4h past start.
+const OPEN_STEPS = Array.from({ length: 16 }, (_, i) => (i + 1) * 15)
+
+const toMin = hhmm => { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m }
+const fmtClock = min => {
+  const m = ((min % 1440) + 1440) % 1440
+  const h24 = Math.floor(m / 60)
+  const ampm = h24 >= 12 ? 'PM' : 'AM'
+  return `${h24 % 12 || 12}:${pad(m % 60)} ${ampm}`
+}
+
 // Default start time: the next full hour, clamped into the list (HH:00).
 function defaultStartTime() {
   const h = Math.min(23, Math.max(6, new Date().getHours() + 1))
@@ -227,6 +238,11 @@ export default function SetupScreen({ draft }) {
 
   const hoursOk = courts.every(c => validHours(c.hours))
   const opensAfterOf = c => Math.max(0, Math.round(Number(c.opens) || 0))
+  const startMin = toMin(startTime)
+  // timeline window: session start → latest court end (open time + rental)
+  const rentalMinOf = c => Math.max(0.5, Number(c.hours) || 0) * 60
+  const windowEnd = Math.max(startMin + 60, ...courts.map(c => startMin + opensAfterOf(c) + rentalMinOf(c)))
+  const span = windowEnd - startMin
   const timeOk = /^\d{2}:\d{2}$/.test(startTime)
   const canStart = activePicked.length >= 2 && courts.length >= 1 && hoursOk && timeOk && !starting
 
@@ -323,12 +339,7 @@ export default function SetupScreen({ draft }) {
                   <span className="flex-1">Court</span>
                   <span className="w-20 text-center">Rental</span>
                   <span className="text-2xs">hrs</span>
-                  {courts.length > 1 && (
-                    <>
-                      <span className="w-16 text-center">Opens after</span>
-                      <span className="text-2xs">min</span>
-                    </>
-                  )}
+                  {courts.length > 1 && <span className="w-[6.5rem] text-center">Opens</span>}
                 </div>
                 {courts.map((c, i) => (
                   <div key={i} className="flex items-center gap-2 rounded-md border border-border bg-muted/30 p-2 text-xs" data-testid="court-row">
@@ -353,25 +364,53 @@ export default function SetupScreen({ draft }) {
                     />
                     <span className="text-2xs text-muted-foreground">hrs</span>
                     {courts.length > 1 && (
-                      <>
-                        <Input
-                          type="number"
-                          min="0"
-                          aria-label={`Court ${i + 1} opens after (min)`}
-                          className="h-7 w-16 text-center text-xs"
-                          value={c.opens ?? '0'}
-                          onChange={e => patchCourt(i, { opens: e.target.value })}
-                          onBlur={() => patchCourt(i, { opens: String(opensAfterOf(c)) })}
-                        />
-                        <span className="text-2xs text-muted-foreground">min</span>
-                      </>
+                      <select
+                        aria-label={`Court ${i + 1} opens at`}
+                        className="h-7 w-[6.5rem] rounded-md border border-input bg-background px-1 text-xs text-foreground"
+                        value={String(opensAfterOf(c))}
+                        onChange={e => patchCourt(i, { opens: e.target.value })}
+                      >
+                        <option value="0">With session</option>
+                        {OPEN_STEPS.map(m => (
+                          <option key={m} value={String(m)}>{fmtClock(startMin + m)}</option>
+                        ))}
+                      </select>
                     )}
                   </div>
                 ))}
               </div>
+              {courts.length > 1 && (
+                <div className="flex flex-col gap-1.5 rounded-md border border-border bg-muted/20 p-2" data-testid="court-timeline">
+                  <div className="flex justify-between text-2xs text-muted-foreground">
+                    <span>{fmtClock(startMin)}</span>
+                    <span>Rental window</span>
+                    <span>{fmtClock(windowEnd)}</span>
+                  </div>
+                  {courts.map((c, i) => {
+                    const open = startMin + opensAfterOf(c)
+                    const mins = rentalMinOf(c)
+                    const label = c.label.trim() || `Court ${i + 1}`
+                    return (
+                      <div key={i} className="flex items-center gap-1.5">
+                        <span className="w-14 shrink-0 truncate text-2xs text-muted-foreground" title={label}>{label}</span>
+                        <div className="relative h-3 flex-1 overflow-hidden rounded-sm bg-background">
+                          <div
+                            className="absolute inset-y-0 rounded-sm border border-primary/40 bg-primary/25"
+                            style={{ left: `${((open - startMin) / span) * 100}%`, width: `${Math.max(3, (mins / span) * 100)}%` }}
+                            title={`${label} · ${fmtClock(open)} – ${fmtClock(open + mins)}`}
+                          />
+                        </div>
+                        <span className="w-[6.5rem] shrink-0 text-right text-2xs tabular-nums text-muted-foreground">
+                          {fmtClock(open)}–{fmtClock(open + mins)}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
               <p className="text-2xs text-muted-foreground">
-                Each court&apos;s timer runs for its hours from the moment you press Start Session, and can be extended live.
-                With several courts, &quot;opens after (min)&quot; staggers a court&apos;s start — it stays unusable until then, and its timer begins when it opens.
+                Each court&apos;s timer runs for its rental hours from the moment it opens, and can be extended live.
+                A court with a later open time joins the rotation automatically when its time comes.
               </p>
             </CardContent>
           </Card>

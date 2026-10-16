@@ -54,12 +54,15 @@ router.patch('/:id/start', (c) => {
   db.prepare('UPDATE sessions SET started_at = ? WHERE id = ?').run(now, id)
   // Staggered starts: a court with opens_after opens that many minutes after the
   // session start (lazy — availability is just active_from <= now everywhere it's
-  // checked). Each court's rental clock anchors to ITS OWN open time, not the
-  // session's; courts without an offset behave exactly as before (base = now).
+  // checked). Offsets anchor to the SCHEDULED start while it's still in the
+  // future (the setup screen shows clock times — "9:00 AM" must mean 9:00 AM
+  // even if Start is pressed early); otherwise to the actual start. Each court's
+  // rental clock anchors to ITS OWN open time; no-offset courts are as before.
+  const base0 = Math.max(now, session.scheduled_start ?? now)
   const updateCourt = db.prepare('UPDATE courts SET active_from = ?, expires_at = ? WHERE id = ?')
   for (const court of db.prepare('SELECT * FROM courts WHERE session_id = ?').all(id)) {
     const opensAt = court.opens_after != null && court.opens_after > 0 && court.active_from == null
-      ? now + court.opens_after * 60
+      ? base0 + court.opens_after * 60
       : court.active_from
     const base = opensAt != null && opensAt > now ? opensAt : now
     const expires = court.duration_minutes != null && court.duration_minutes > 0 && court.expires_at == null

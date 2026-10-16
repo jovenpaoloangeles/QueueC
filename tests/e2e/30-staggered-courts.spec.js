@@ -8,7 +8,11 @@ import { base, fullSetup, liveState, seedLiveMatch } from '../helpers.js'
 test.beforeEach(async ({ page }) => {
   const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json()
   if (session) await page.request.fetch(`${base()}/api/sessions/${session.id}/end`, { method: 'PATCH' })
-  await fullSetup(page, { courts: [{}, { opensAfter: 5 }] })
+  // startTime = now, so offsets anchor to the actual start (a future scheduled
+  // start would push active_from out per the clock-time anchor in sessions.js)
+  const now = new Date()
+  const startTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+  await fullSetup(page, { courts: [{}, { opensAfter: 5 }], startTime })
 })
 
 test('30.1 staggered second court shows opens-in state and no start/drop until it opens', async ({ page }) => {
