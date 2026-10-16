@@ -12,7 +12,7 @@ they're up.
 ## Quickstart (Docker)
 
 ```bash
-git clone https://github.com/YOUR_USER/QueueC.git
+git clone https://github.com/jovenpaoloangeles/QueueC.git
 cd QueueC
 docker build -t queuec .
 docker run -d --name queuec -p 3001:3001 \
