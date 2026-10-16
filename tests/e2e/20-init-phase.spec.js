@@ -203,7 +203,8 @@ test('20.16 player row shows games played badge [0] and waiting status timer', a
   const card = page.locator('[data-entry-id]').first()
   await expect(card.locator('[data-testid="games-played-badge"]')).toHaveText('[0]')
   const badge = card.locator('[data-testid="status-timer-badge"]')
-  await expect(badge).toContainText('Waiting')
+  // no caption on plain waiting (draft r3 — everyone in the grid is waiting)
+  await expect(badge).not.toContainText('Waiting')
   await expect(badge).toContainText(/\d+:\d+/) // wait clock (timer dot emojis retired in the redesign)
 })
 

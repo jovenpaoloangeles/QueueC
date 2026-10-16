@@ -113,9 +113,12 @@ export default function PlayerCard({ entry, waitSecs, selectionIndex, playSecs, 
         {/* only element on a waiting card carrying font-mono AND tabular-nums — 14.2 reads it by that pair */}
         <div data-testid="status-timer-badge" className={cn('text-right font-mono text-base font-bold leading-none tabular-nums', heatInk)}>
           {fmtClock(statusSeconds)}
-          <span className="mt-1 block font-sans text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            {statusLabel}
-          </span>
+          {/* draft r3: no caption on plain waiting — everyone in this grid is waiting */}
+          {statusLabel !== 'Waiting' && (
+            <span className="mt-1 block font-sans text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {statusLabel}
+            </span>
+          )}
         </div>
         {(isWaiting || isResting) && (
           <Button
@@ -146,15 +149,15 @@ export default function PlayerCard({ entry, waitSecs, selectionIndex, playSecs, 
           </span>
           <span className="truncate">{fmtMins(entry.total_seconds_played ?? 0)} played</span>
         </span>
-        {avgRating != null && (
-          <span data-testid="avg-rating" className="flex shrink-0 items-center gap-1">
-            <span aria-hidden="true" className="tracking-[0.1em] text-amber">{'★'.repeat(starsOn)}</span>
-            <span aria-hidden="true" className="tracking-[0.1em] text-foreground/20">{'☆'.repeat(5 - starsOn)}</span>
+        <span data-testid="avg-rating" className="flex shrink-0 items-center gap-1">
+          <span aria-hidden="true" className="tracking-[0.1em] text-amber">{'★'.repeat(starsOn)}</span>
+          <span aria-hidden="true" className="tracking-[0.1em] text-foreground/20">{'☆'.repeat(5 - starsOn)}</span>
+          {avgRating != null && (
             <span className={cn('font-mono text-2xs font-semibold', avgRating < 3.5 ? 'text-destructive' : 'text-foreground')}>
               {avgRating}
             </span>
-          </span>
-        )}
+          )}
+        </span>
       </div>
     </div>
   )
