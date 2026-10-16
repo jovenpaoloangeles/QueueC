@@ -71,7 +71,7 @@ test('28.2 builder: smart fill populates slots for review; drafted players leave
   const slotNames = []
   for (let i = 0; i < 4; i++) slotNames.push((await page.getByTestId(`ondeck-new-slot-${i}`).innerText()).replace(/[\s×]+$/, '').trim())
   await page.getByTestId('ondeck-add').click()
-  await expect(page.getByTestId('on-deck-pos-1')).toContainText('Up next')
+  await expect(page.getByTestId('on-deck-pos-1')).toContainText('up next')
   await expect(page.getByTestId('on-deck-count')).toHaveText('1')
   await expect(page.getByTestId('on-deck-empty')).toHaveCount(0)
   const cardText = await page.locator('[data-testid^="slate-row-"]').first().innerText()
@@ -139,8 +139,6 @@ test('28.5 reorder: moving #2 up swaps the order', async ({ page }) => {
   await seedSlate(page)
   const names = async () => (await liveState(page)).slatedMatches.map(m => m.id)
   const [a, b] = await names()
-  const textOf = id => page.getByTestId(`slate-row-${id}`).innerText()
-  const textA = await textOf(a)
   await expect(page.getByTestId(`slate-up-${a}`)).toBeDisabled()
   await expect(page.getByTestId(`slate-down-${b}`)).toBeDisabled()
   await page.getByTestId(`slate-up-${b}`).click()
@@ -150,7 +148,8 @@ test('28.5 reorder: moving #2 up swaps the order', async ({ page }) => {
   const cards = page.locator('[data-testid^="slate-row-"]')
   await expect(cards.nth(0)).toHaveAttribute('data-testid', `slate-row-${b}`)
   await expect(cards.nth(1)).toHaveAttribute('data-testid', `slate-row-${a}`)
-  expect(await cards.nth(1).innerText()).toContain((textA.match(/Team A\n([^\n]+)/) ?? [])[1] ?? '')
+  const rowA = (await liveState(page)).slatedMatches.find(m => m.id === a)
+  expect(await cards.nth(1).innerText()).toContain(rowA.team1_p1_name)
 })
 
 test('28.6 ending the live match promotes slate #1; the rest renumbers; panel stays mounted', async ({ page }) => {

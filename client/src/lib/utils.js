@@ -27,6 +27,12 @@ export function fmtMins(s) {
   return `${Math.floor(Math.max(0, s ?? 0) / 60)}m`
 }
 
+/** Epoch seconds → "8:44 PM" wall clock (draft copy style: rental ends …). */
+export function fmtWall(ts) {
+  if (ts == null) return ''
+  return new Date(ts * 1000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+}
+
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 /** Default session name: `ASTIRISK (15-Oct-2026)` — locale-independent. */

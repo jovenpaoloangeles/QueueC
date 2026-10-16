@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { drag, valid, useDragSource, rearrange } from '@/lib/dnd'
-import { cn, fmtClock, fmtDur, fmtMins } from '@/lib/utils'
+import { cn, fmtClock, fmtWall } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -64,12 +64,12 @@ function TeamPanel({ side, entryIds, queue, matchId, match }) {
         }
       }}
       className={cn(
-        'rounded-md border border-border bg-secondary px-3 py-2.5 transition-colors',
-        over && canDrop && 'border-drop-target-border bg-drop-target',
-        over && drag.current && !canDrop && 'border-drop-invalid-border bg-drop-invalid'
+        'rounded-md border border-border bg-card px-2.5 py-2 text-center text-[13px] font-semibold text-foreground shadow-sm transition-colors dark:bg-secondary',
+        over && canDrop && 'border-drop-target-border bg-drop-target!',
+        over && drag.current && !canDrop && 'border-drop-invalid-border bg-drop-invalid!'
       )}
     >
-      <div className="text-sm font-semibold">
+      <div>
         {entryIds.filter(Boolean).map((id, i) => (
           <span key={id}>
             {i > 0 && ' + '}
@@ -106,12 +106,12 @@ function Slot({ courtId, idx, entryId, name, draftedIds = new Set(), draft = [],
         if (droppable(p)) onDropSlot(idx, p.entryId)
       }}
       className={cn(
-        'grid min-h-[38px] place-items-center rounded-md border-[1.5px] px-2.5 py-1.5 text-center text-xs font-semibold transition-colors',
+        'grid min-h-[38px] place-items-center rounded-md border-[1.5px] px-2.5 py-1.5 text-center text-[13px] transition-colors',
         filled
-          ? 'border-solid border-border bg-card text-foreground shadow-sm'
-          : 'border-dashed border-border bg-secondary text-muted-foreground',
-        over && canDrop && 'border-primary bg-drop-target',
-        over && payload && !canDrop && 'border-drop-invalid-border bg-drop-invalid'
+          ? 'border-solid border-border bg-card font-semibold text-foreground shadow-sm dark:bg-secondary'
+          : 'border-dashed border-foreground/15 bg-transparent font-medium text-muted-foreground',
+        over && canDrop && 'border-primary bg-drop-target!',
+        over && payload && !canDrop && 'border-drop-invalid-border bg-drop-invalid!'
       )}
     >
       {filled ? (
@@ -130,15 +130,11 @@ function Slot({ courtId, idx, entryId, name, draftedIds = new Set(), draft = [],
   )
 }
 
-/** 2×2 lineup matrix (mockup .slots): Team A = slots 0,1; Team B = slots 2,3. */
-function SlotsMatrix({ courtId, draft, draftedIds = new Set(), queue, title, onDropSlot, onClearSlot, onClearDraft }) {
-  const filled = draft.filter(Boolean).length
-  const column = (label, idxs) => (
-    <div className="flex flex-col gap-2">
-      <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-        {label}
-      </span>
-      {idxs.map(i => (
+/** 2×2 lineup matrix (draft .matrix — no header chrome): Team A = 0,1 · Team B = 2,3. */
+function SlotsMatrix({ courtId, draft, draftedIds = new Set(), queue, onDropSlot, onClearSlot }) {
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {[0, 1, 2, 3].map(i => (
         <Slot
           key={i}
           courtId={courtId}
@@ -153,22 +149,20 @@ function SlotsMatrix({ courtId, draft, draftedIds = new Set(), queue, title, onD
       ))}
     </div>
   )
+}
 
+/** Draft .opens-strip: a not-yet-open court is an amber strip, not a card —
+ *  no drop zone, no start, joins the rotation on its own when active_from hits. */
+function OpensStrip({ court, opensInSecs }) {
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">{title}</span>
-        <span className="flex items-center gap-2">
-          <span className="font-mono text-xs font-semibold tabular-nums text-muted-foreground">({filled}/4 filled)</span>
-          {filled > 0 && (
-            <Button variant="ghost" size="xs" className="rounded-full" data-testid="btn-clear-draft" onClick={onClearDraft}>Clear</Button>
-          )}
-        </span>
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        {column('Team A', [0, 1])}
-        {column('Team B', [2, 3])}
-      </div>
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 self-start rounded-lg border border-amber/25 bg-wash-amber px-4 py-3 shadow-card">
+      <span className="text-[14.5px] font-bold tracking-tight text-foreground">{court.label}</span>
+      <span data-testid="opens-in-note" className="min-w-0 text-xs text-muted-foreground">
+        opens {fmtWall(court.active_from)} — joins the rotation automatically
+      </span>
+      <span data-testid="opens-in-badge" className="ml-auto shrink-0 font-mono text-xs font-bold tabular-nums text-amber">
+        in {fmtClock(opensInSecs)}
+      </span>
     </div>
   )
 }
@@ -226,24 +220,25 @@ export default function CourtCard({
     }
   }
 
+  // not-open courts are the draft's amber strip, not a card — no drop, no start
+  if (isNotOpen && !isActive) {
+    return <OpensStrip court={court} opensInSecs={opensInSecs} />
+  }
+
   return (
     <Card
       data-drop={`court-${court.id}`}
-      className={cn('flex flex-col rounded-lg shadow-card',
-        isExpiring && 'bg-wash-amber/40 ring-amber/40',
+      className={cn('flex flex-col gap-3 py-3.5 shadow-card',
+        isExpiring && 'border-amber/40 bg-wash-amber/40 ring-amber/40',
         isExpired && !isActive && 'animate-redpulse ring-destructive/40',
-        isActive && !isExpiring && 'bg-court-live ring-court-live-border')}
+        isActive && !isExpiring && 'border-court-live-border bg-gradient-to-b from-court-live to-court-live-2 ring-court-live-border')}
     >
       {/* grid-cols wins outright (base has no unconditional grid-cols); items-center! is important so it beats base items-start regardless of emission order */}
-      <CardHeader className="grid-cols-[1fr_auto] items-center! pb-3">
-        <div className="flex items-center gap-2">
+      <CardHeader className="grid-cols-[minmax(0,1fr)_auto] items-center! gap-2 pb-0">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
           <span className="text-[14.5px] font-bold tracking-tight text-foreground">{court.label}</span>
-          {isActive && <Badge variant="outline" className="text-2xs uppercase">{match.format}</Badge>}
           {isActive && !isExpiring && (
-            <span data-testid="live-badge" className="flex items-center gap-1.5 rounded-full bg-wash-green px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-green-deep">
-              <span className="inline-block size-1.5 animate-pulse rounded-full bg-primary" aria-hidden="true" />
-              LIVE
-            </span>
+            <span data-testid="live-badge" className="live-dot shrink-0" aria-hidden="true" />
           )}
           {isExpiring && (
             <Badge className="rounded-full border-0 bg-wash-amber text-[11px] font-bold uppercase tracking-wide text-amber" data-testid="expiring-last-game-badge">
@@ -255,52 +250,55 @@ export default function CourtCard({
               EXPIRED
             </span>
           )}
-          {isNotOpen && (
-            <span data-testid="opens-in-badge" className="flex items-baseline gap-1 rounded-full bg-wash-amber px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-amber">
-              Opens in <span className="font-mono text-xs font-bold normal-case tabular-nums">{fmtMins(opensInSecs)}</span>
-            </span>
-          )}
         </div>
         <div className="flex items-center gap-3">
-          {hasTimer && (
+          {isActive ? (
+            <span data-testid="court-elapsed" className="font-mono text-2xl font-bold tracking-tight text-green-deep tabular-nums">{fmtClock(secs)}</span>
+          ) : hasTimer && (
             <span
               className={cn(
-                'font-mono text-sm font-semibold tabular-nums',
-                isExpired ? 'text-destructive' : remainingSecs < 15 * 60 ? 'text-amber' : 'text-muted-foreground'
+                'font-mono text-xs font-semibold tabular-nums',
+                isExpired ? 'text-destructive' : remainingSecs < 900 ? 'text-amber' : 'text-muted-foreground'
               )}
               data-testid="court-countdown"
             >
-              ⏱ {fmtDur(remainingSecs)}
+              rental {isExpired ? 'ended' : 'to'} {fmtWall(court.expires_at)}
             </span>
-          )}
-          {isExpired && (
-            <Button variant="destructive" size="sm" className="rounded-full" data-testid="btn-extend-court" onClick={handleExtend}>
-              Extend Court (+1hr)?
-            </Button>
-          )}
-          {isActive && (
-            <Button variant="destructive" size="sm" className="rounded-full" onClick={() => setShowConfirm(true)}>End Match</Button>
-          )}
-          {isActive && (
-            <span data-testid="court-elapsed" className="font-mono text-2xl font-bold tracking-tight text-green-deep tabular-nums">{fmtClock(secs)}</span>
           )}
         </div>
       </CardHeader>
 
       {isActive && (
-        <CardContent className="flex flex-1 flex-col justify-center gap-2">
+        <CardContent className="flex flex-1 flex-col justify-center gap-3 px-4">
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Team A</span>
               <TeamPanel side={1} entryIds={[match.team1_p1, match.team1_p2]} queue={queue} matchId={match.id} match={match} />
-            </div>
-            <div className="flex flex-col items-center gap-0.5">
-              <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground/70">vs</span>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Team B</span>
-              <TeamPanel side={2} entryIds={[match.team2_p1, match.team2_p2]} queue={queue} matchId={match.id} match={match} />
-            </div>
+            <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground/70">VS</span>
+            <TeamPanel side={2} entryIds={[match.team2_p1, match.team2_p2]} queue={queue} matchId={match.id} match={match} />
+          </div>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <p className="mr-auto min-w-0 text-xs text-muted-foreground">
+              {isExpiring ? (
+                'rental ended — last game'
+              ) : (
+                <>
+                  {match.format}
+                  {hasTimer && (
+                    <>
+                      {' · rental ends '}
+                      <span data-testid="court-countdown" className={cn('font-mono font-semibold tabular-nums', remainingSecs < 900 ? 'text-amber' : 'text-foreground')}>
+                        {fmtWall(court.expires_at)}
+                      </span>
+                    </>
+                  )}
+                </>
+              )}
+            </p>
+            {isExpired && (
+              <Button variant="outline" size="sm" className="rounded-full" data-testid="btn-extend-court" onClick={handleExtend}>
+                Extend Court (+1hr)?
+              </Button>
+            )}
+            <Button variant="outline" size="sm" className="rounded-full" onClick={() => setShowConfirm(true)}>End match</Button>
           </div>
         </CardContent>
       )}
@@ -320,18 +318,20 @@ export default function CourtCard({
             over && canAcceptNewMatch && drag.current && !dropAllowed() && 'bg-drop-invalid ring-2 ring-drop-invalid-border'
           )}
         >
-          {isNotOpen ? (
-            <div className="flex flex-col items-center gap-2 rounded-md border border-border bg-secondary px-3 py-6 text-center">
-              <span className="text-xs font-bold text-foreground/80" data-testid="opens-in-note">
-                ⏳ Opens in {fmtMins(opensInSecs)} — this court joins the rotation automatically
-              </span>
-            </div>
-          ) : isExpired ? (
-            <div className="flex flex-col items-center gap-2 rounded-md border border-destructive/25 bg-wash-red px-3 py-6 text-center">
-              <span className="text-xs font-bold text-destructive">
-                ⚠ Rental time has run out — court removed from the available pool
-              </span>
-            </div>
+          {isExpired ? (
+            <>
+              <div className="flex items-center justify-center rounded-md border border-destructive/25 bg-wash-red px-3 py-6 text-center">
+                <span className="text-xs font-bold text-destructive">
+                  ⚠ Rental time has run out — court removed from the available pool
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <p className="mr-auto text-xs text-muted-foreground">rental time has run out</p>
+                <Button variant="outline" size="sm" className="rounded-full" data-testid="btn-extend-court" onClick={handleExtend}>
+                  Extend Court (+1hr)?
+                </Button>
+              </div>
+            </>
           ) : (
             <>
               <SlotsMatrix
@@ -339,33 +339,23 @@ export default function CourtCard({
                 draft={draft}
                 draftedIds={draftedIds}
                 queue={queue}
-                title="2×2 Match Lineup"
                 onDropSlot={onDropSlot}
                 onClearSlot={onClearSlot}
-                onClearDraft={onClearDraft}
               />
-              <p className="text-center text-xs text-muted-foreground">
-                <span className="font-medium text-foreground/80">
-                  {canStart ? 'Drop players here' : 'Select 2 or 4 players'}
-                </span>
-                {' · '}
-                {canStart ? 'Or start with the players already selected' : 'Drag from the queue, or click to select'}
-              </p>
-              <div className="flex items-center justify-end gap-2">
-                {canStartSingles && (
-                  <Button size="sm" className="rounded-full" data-testid="btn-start-singles" onClick={onStartSingles}>
-                    Start Singles
-                  </Button>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <p className="mr-auto min-w-0 text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground/80">
+                    {canStart ? 'Drop players here' : draftFilled.length === 3 ? '3 of 4 — one more opens Start' : 'Select 2 or 4 players'}
+                  </span>
+                  {!canStart && draftFilled.length !== 3 && ' · drag from the queue, or click to select'}
+                </p>
+                {draftFilled.length > 0 && (
+                  <Button variant="ghost" size="sm" className="rounded-full" data-testid="btn-clear-draft" onClick={onClearDraft}>Clear</Button>
                 )}
-                <Button
-                  size="sm"
-                  className="rounded-full"
-                  data-testid="btn-start-match"
-                  disabled={!canStart}
-                  onClick={() => onStartClick()}
-                >
-                  Start Match
-                </Button>
+                {canStartSingles && (
+                  <Button size="sm" className="rounded-full" data-testid="btn-start-singles" onClick={onStartSingles}>Start Singles</Button>
+                )}
+                <Button size="sm" className="rounded-full" data-testid="btn-start-match" disabled={!canStart} onClick={() => onStartClick()}>Start match</Button>
               </div>
             </>
           )}

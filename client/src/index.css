@@ -42,6 +42,7 @@
     --color-foreground: var(--foreground);
     --color-background: var(--background);
     --color-court-live: var(--court-live);
+    --color-court-live-2: var(--court-live-2);
     --color-court-live-border: var(--court-live-border);
     --color-drop-target: var(--drop-target);
     --color-drop-target-border: var(--drop-target-border);
@@ -111,6 +112,7 @@
 
     /* live match + drag affordances */
     --court-live: #f4faf6;                     /* whisper green, active court */
+    --court-live-2: #eaf5ee;                   /* gradient floor under it (draft .court.is-live) */
     --court-live-border: rgba(30, 122, 78, 0.35);
     --drop-target: #e8f5ed;                    /* valid dragover */
     --drop-target-border: #1e7a4e;
@@ -169,6 +171,7 @@
     --sidebar-ring: #3fae76;
 
     --court-live: #1d2b23;
+    --court-live-2: #16211b;
     --court-live-border: rgba(63, 174, 118, 0.45);
     --drop-target: #1d3328;
     --drop-target-border: #3fae76;
@@ -216,6 +219,21 @@
     50%      { box-shadow: 0 0 0 5px rgba(179, 55, 31, 0.07); }
   }
   .animate-redpulse { animation: redpulse 1.6s infinite; }
+
+  /* live court: 8px green dot with a breathing halo (draft .live-dot) */
+  @keyframes livepulse {
+    0%        { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 45%, transparent); }
+    70%, 100% { box-shadow: 0 0 0 6px color-mix(in srgb, currentColor 0%, transparent); }
+  }
+  .live-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 9999px;
+    background: currentColor;
+    color: var(--primary);
+    animation: livepulse 1.8s ease-out infinite;
+  }
 
   /* skill-tier badge — draft recipe: tinted fill + inset ring from the tier color */
   .tier {

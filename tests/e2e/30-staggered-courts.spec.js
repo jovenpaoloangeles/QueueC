@@ -1,5 +1,5 @@
 // Staggered court starts (init-phase option A): a court configured with an
-// opens-after offset renders as "Opens in Xm" and rejects matches until its
+// opens-after offset renders as the draft opens-strip ("in mm:ss") and rejects matches until its
 // offset elapses, then opens automatically. Offset elapsed time is simulated by
 // backdating active_from over the API (same trick as 25-court-expiry's expires_at).
 import { test, expect } from '../fixtures.js'
@@ -20,9 +20,9 @@ test('30.1 staggered second court shows opens-in state and no start/drop until i
   const late = courts[1]
   expect(late.active_from).not.toBeNull()
 
-  // both cards render; the late one shows the opens-in state, no lineup/drop zone
-  await expect(page.getByTestId('opens-in-badge')).toHaveText(/Opens in \d+m/)
-  await expect(page.getByTestId('opens-in-note')).toBeVisible()
+  // the late court renders as the amber opens-strip, not a card — no lineup/drop zone
+  await expect(page.getByTestId('opens-in-badge')).toHaveText(/^in \d+:\d\d$/)
+  await expect(page.getByTestId('opens-in-note')).toContainText('joins the rotation automatically')
   // court 1 offers a Start Match button; the not-yet-open court renders none
   await expect(page.getByTestId('btn-start-match')).toHaveCount(1)
 })

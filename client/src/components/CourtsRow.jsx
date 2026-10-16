@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils'
+import { cn, fmtWall } from '@/lib/utils'
 import { EMPTY_DRAFT } from '@/lib/dnd'
 import CourtCard from './CourtCard.jsx'
 
@@ -30,10 +30,30 @@ export default function CourtsRow({
   })
   const canStartSelection = selection?.length === 2 || selection?.length === 4
 
+  // draft sec-h: "Courts" + a running count — 1 live · 1 open · 1 opens 8:00 PM
+  const isRunning = c => activeMatches.some(m => m.court_number === c.id)
+  const liveN = liveCourts.filter(isRunning).length
+  const openN = liveCourts.filter(c => isLive(c, serverTime) && !isRunning(c)).length
+  const late = liveCourts.filter(c => c.active_from != null && serverTime < c.active_from)
+  const expiredN = liveCourts.filter(c => c.expires_at != null && serverTime >= c.expires_at).length
+  const sub = [
+    liveN && `${liveN} live`,
+    openN && `${openN} open`,
+    late.length && `${late.length} opens ${fmtWall(Math.min(...late.map(c => c.active_from)))}`,
+    expiredN && `${expiredN} expired`,
+  ].filter(Boolean).join(' · ')
+
+  if (!liveCourts.length) return null
+
   // ponytail: >9 courts wrap to a 3rd column; the page scroll takes the overflow
   return (
-    <div className={cn('grid auto-rows-[minmax(260px,auto)] gap-4',
-      liveCourts.length <= 4 ? 'grid-cols-2' : 'grid-cols-3')}>
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 px-0.5">
+        <h2 className="text-base font-bold tracking-[-0.015em] text-foreground">Courts</h2>
+        {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
+      </div>
+      <div className={cn('grid auto-rows-[minmax(260px,auto)] gap-3',
+        liveCourts.length <= 4 ? 'grid-cols-2' : 'grid-cols-3')}>
       {liveCourts.map(court => {
         const draft = drafts[court.id] ?? EMPTY_DRAFT
         const filled = draft.filter(Boolean)
@@ -63,6 +83,7 @@ export default function CourtsRow({
           />
         )
       })}
+      </div>
     </div>
   )
 }
