@@ -60,6 +60,8 @@ test('28.2 builder: smart fill populates slots for review; drafted players leave
   await openBuilder(page)
   await page.getByTestId('ondeck-smart-fill').click()
   for (let i = 0; i < 4; i++) await expect(page.getByTestId(`ondeck-new-slot-${i}`)).not.toHaveText('Drop…')
+  // live balance verdict appears the moment the lineup fills — before adding
+  await expect(page.getByTestId('ondeck-draft-balance')).toHaveText(/Even|Slight edge|Lopsided/)
   await expect(page.locator('[data-entry-id]')).toHaveCount(before - 4)  // builder ids pull players out of the queue
   // fill ≠ slate: nothing on deck until the QM reviews and adds
   await expect(page.getByTestId('on-deck-count')).toHaveText('0')

@@ -207,6 +207,23 @@ export default function OnDeckStrip({
     return map
   }, [rows, queueRows])
 
+  // entryId → skill_level from the same two sources, for the builder's live
+  // balance verdict (same balanceHint thresholds as the slated cards).
+  const skillById = useMemo(() => {
+    const map = new Map()
+    for (const e of queueRows) if (e?.id != null && e.skill_level) map.set(e.id, e.skill_level)
+    for (const r of rows) SLOT_KEYS.forEach(k => { if (r[k] != null && r[`${k}_skill`]) map.set(r[k], r[`${k}_skill`]) })
+    return map
+  }, [rows, queueRows])
+
+  // Live verdict for the staged lineup — feedback the moment the 4 slots fill
+  // (Smart add or manual), before anything is added to On Deck.
+  const draftHint = useMemo(() => {
+    if (newDraft.filter(Boolean).length !== 4) return null
+    const side = ids => ids.map(id => ({ skill_level: skillById.get(id) }))
+    return balanceHint({ team1: side(newDraft.slice(0, 2)), team2: side(newDraft.slice(2, 4)) })
+  }, [newDraft, skillById])
+
   // Ids that may legally sit in the edit draft — the PATCH route's rule in
   // client form: one of this slate's current four (rearrangement) or a queue
   // entry still waiting (substitution). Resting/playing/staged → unavailable.
@@ -413,9 +430,12 @@ export default function OnDeckStrip({
         <p className="max-w-[16rem] text-2xs text-muted-foreground">
           Drag 4 waiting players in, or ✨ Smart Match to fill from the waiting queue — review and adjust before adding.
         </p>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" data-testid="ondeck-smart-fill" disabled={filling} onClick={runSmartFill}>✨ Smart Match</Button>
           <Button size="sm" data-testid="ondeck-add" disabled={filled !== 4 || adding} onClick={handleAdd}>Add to On Deck</Button>
+          {draftHint && (
+            <span data-testid="ondeck-draft-balance" className={cn('text-xs font-bold', draftHint.tone)}>{draftHint.label}</span>
+          )}
         </div>
       </div>
     </div>
