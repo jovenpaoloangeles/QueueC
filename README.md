@@ -1,5 +1,9 @@
 # QueueC
 
+[![CI](https://github.com/jovenpaoloangeles/QueueC/actions/workflows/ci.yml/badge.svg)](https://github.com/jovenpaoloangeles/QueueC/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Docker](https://img.shields.io/badge/image-ghcr.io-2496ED?logo=docker&logoColor=white)](https://github.com/jovenpaoloangeles/QueueC/pkgs/container/QueueC)
+
 A self-hosted badminton queue manager for gym sessions. One screen, one queue
 master, no paper lists.
 
@@ -12,13 +16,25 @@ they're up.
 ## Quickstart (Docker)
 
 ```bash
+mkdir queuec && cd queuec
+curl -o players.json https://raw.githubusercontent.com/jovenpaoloangeles/QueueC/master/players.example.json
+docker run -d --name queuec -p 3001:3001 \
+  -v "$PWD/data:/data" \
+  -v "$PWD/players.json:/data/players.json" \
+  ghcr.io/jovenpaoloangeles/queuec:edge
+```
+
+Open `http://localhost:3001`. The database lives in `./data`, the roster seeds
+from `players.json` on first boot (edit players in the app afterwards). To run
+a specific version, pin a release tag instead of `:edge`.
+
+Building from source instead:
+
+```bash
 git clone https://github.com/jovenpaoloangeles/QueueC.git
 cd QueueC
 docker build -t queuec .
-docker run -d --name queuec -p 3001:3001 \
-  -v queuec-data:/data \
-  -v "$PWD/players.json:/data/players.json" \
-  queuec
+docker run -d --name queuec -p 3001:3001 -v queuec-data:/data queuec
 ```
 
 Open `http://localhost:3001`. On first boot the database is seeded from
@@ -69,10 +85,11 @@ cd tests && bun run test:server   # sub-second API regressions
 cd tests && bun run test          # unit + full Playwright e2e
 ```
 
-CI runs the server tests, the client build, and the full e2e suite on every
-push/PR — the suites boot their own throwaway servers, so nothing touches a
-real instance. See [docs/testing.md](docs/testing.md) and
-[docs/ai-harness.md](docs/ai-harness.md) before your first change.
+CI runs lint (Biome), the server tests, the client build, and the full e2e
+suite on every push/PR — the suites boot their own throwaway servers, so
+nothing touches a real instance. See [CONTRIBUTING.md](CONTRIBUTING.md),
+[docs/testing.md](docs/testing.md) and [docs/ai-harness.md](docs/ai-harness.md)
+before your first change.
 
 ## License
 
