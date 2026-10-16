@@ -4,16 +4,15 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/image-ghcr.io-2496ED?logo=docker&logoColor=white)](https://github.com/jovenpaoloangeles/QueueC/pkgs/container/QueueC)
 
-A self-hosted badminton queue manager for gym sessions. One screen, one queue
-master, no paper lists.
+A self-hosted queue manager for badminton. Players check in, the queue tracks
+who has actually been waiting (time spent playing doesn't count), and lineups
+go out to the courts. Court rental time, shuttles, and the session leaderboard
+are tracked along the way.
 
 ![QueueC live session — Court 1 playing, next game on deck, leaderboard alongside](docs/images/live-session.png)
 
-QueueC runs the whole evening: check players in, draft lineups onto courts,
-keep an on-deck slate promoting itself as courts free up, track court rentals
-and shuttles, and close with a leaderboard. Everything on screen stays in sync
-in real time across browsers — put it on the gym TV and players can see when
-they're up.
+Every browser viewing the session stays in sync in real time, so a shared
+screen is all players need to see when they're up.
 
 ## Quickstart (Docker)
 
