@@ -4,9 +4,9 @@ const noop = () => {}
 const ToastContext = createContext(noop)
 
 const TYPE_STYLES = {
-  success: 'bg-primary text-primary-foreground border-primary/30',
-  error: 'bg-destructive text-destructive-foreground border-destructive/30',
-  warning: 'bg-amber-500/95 text-white border-amber-600/30',
+  success: 'bg-wash-green text-green-deep border-green-deep/15',
+  error: 'bg-wash-red text-destructive border-destructive/15',
+  warning: 'bg-wash-amber text-amber border-amber/20',
   info: 'bg-card text-card-foreground border-border'
 }
 
@@ -38,7 +38,7 @@ export function ToastProvider({ children }) {
           data-toast-type={state.type}
           role="status"
           aria-live="polite"
-          className={`fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-semibold shadow-xl ${TYPE_STYLES[state.type] || TYPE_STYLES.info}`}
+          className={`fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full border px-4 py-2.5 text-xs font-semibold shadow-lift transition-transform duration-150 ${TYPE_STYLES[state.type] || TYPE_STYLES.info}`}
         >
           {state.message}
         </div>

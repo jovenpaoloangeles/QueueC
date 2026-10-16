@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 export default function EndSessionConfirmDialog({ open, onOpenChange, onConfirm }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xs" data-testid="end-session-confirm-dialog">
+      <DialogContent className="sm:max-w-xs shadow-lift" data-testid="end-session-confirm-dialog">
         <DialogHeader>
           <DialogTitle>End this session?</DialogTitle>
           <DialogDescription>
@@ -17,10 +17,10 @@ export default function EndSessionConfirmDialog({ open, onOpenChange, onConfirm 
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button type="button" variant="outline" size="sm" data-testid="end-session-cancel" onClick={() => onOpenChange(false)}>
+          <Button type="button" variant="outline" size="sm" className="rounded-full" data-testid="end-session-cancel" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button type="button" variant="destructive" size="sm" data-testid="end-session-confirm" onClick={onConfirm}>
+          <Button type="button" variant="destructive" size="sm" className="rounded-full" data-testid="end-session-confirm" onClick={onConfirm}>
             End Session
           </Button>
         </DialogFooter>

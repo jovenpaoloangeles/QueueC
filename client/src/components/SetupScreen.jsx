@@ -88,8 +88,8 @@ function PoolRow({ p, on, onToggle, onEdit }) {
       }}
       className={cn(
         'group flex h-8 cursor-pointer select-none items-center gap-2 rounded-md px-2 text-xs outline-none',
-        'hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring',
-        on && 'bg-primary/10'
+        'hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring',
+        on && 'bg-wash-green'
       )}
     >
       <CheckBox on={on} />
@@ -135,19 +135,19 @@ function EditRow({ p, onSave, onCancel }) {
     else if (e.key === 'Escape') { e.preventDefault(); onCancel() }
   }
   return (
-    <div ref={boxRef} data-testid="player-pool" role="group" aria-label={`Editing ${p.name}`} onKeyDown={e => { if (e.key === 'Escape') { e.preventDefault(); onCancel() } }} className="flex flex-col gap-1 rounded-md border border-border bg-muted/40 p-1.5">
+    <div ref={boxRef} data-testid="player-pool" role="group" aria-label={`Editing ${p.name}`} onKeyDown={e => { if (e.key === 'Escape') { e.preventDefault(); onCancel() } }} className="flex flex-col gap-1 rounded-md border border-border bg-secondary p-1.5">
       <div className="flex items-center gap-1.5">
         <Input
           autoFocus
           aria-label="Player name"
-          className="h-7 flex-1 text-xs"
+          className="h-8 flex-1 rounded-md border-border bg-card px-2.5 text-xs"
           value={name}
           onChange={e => { setName(e.target.value); setError('') }}
           onKeyDown={keys}
         />
         <select
           aria-label="Player skill"
-          className="h-7 rounded border border-border bg-background px-1 text-xs text-foreground"
+          className="h-8 rounded-md border border-border bg-card px-2 text-xs text-foreground"
           value={skill}
           onChange={e => setSkill(e.target.value)}
           onKeyDown={keys}
@@ -280,7 +280,7 @@ export default function SetupScreen({ draft }) {
     }
   }
 
-  const fieldCls = 'h-8 text-xs'
+  const fieldCls = 'h-9 rounded-md border-border bg-card px-3 text-sm'
 
   return (
     <div className="flex flex-1 overflow-y-auto p-4">
@@ -288,18 +288,18 @@ export default function SetupScreen({ draft }) {
       <div className="m-auto flex w-full max-w-4xl flex-col gap-5" data-testid="session-setup">
         {/* Hero */}
         <div className="flex flex-col items-center gap-1.5 text-center">
-          <div className="flex size-12 items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 text-2xl" aria-hidden="true">🏸</div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Session Setup</h1>
-          <p className="max-w-lg text-xs text-muted-foreground">
+          <div className="flex size-12 items-center justify-center rounded-2xl border border-primary/20 bg-wash-green text-2xl" aria-hidden="true">🏸</div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Session Setup</h1>
+          <p className="max-w-lg text-[13px] text-muted-foreground">
             Configure courts and rental hours, pick your player pool, then start the session.
           </p>
         </div>
 
         <div className="grid items-start gap-4 md:grid-cols-2">
           {/* Card 1 — Court Configuration */}
-          <Card className="border-border bg-card shadow-sm" data-testid="card-courts">
+          <Card className="rounded-lg bg-card shadow-card" data-testid="card-courts">
             <CardHeader className="pb-3">
-              <CardTitle className="text-xs uppercase tracking-wider">1 · Court Configuration</CardTitle>
+              <CardTitle className="text-[15px] font-bold tracking-tight">1 · Court Configuration</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
@@ -311,7 +311,7 @@ export default function SetupScreen({ draft }) {
                   <Label htmlFor="setup-start">Start time</Label>
                   <select
                     id="setup-start"
-                    className="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground"
+                    className="h-9 rounded-md border border-border bg-card px-3 text-sm text-foreground"
                     value={startTime}
                     onChange={e => setStartTime(e.target.value)}
                   >
@@ -342,11 +342,11 @@ export default function SetupScreen({ draft }) {
                   {courts.length > 1 && <span className="w-[6.5rem] text-center">Opens</span>}
                 </div>
                 {courts.map((c, i) => (
-                  <div key={i} className="flex items-center gap-2 rounded-md border border-border bg-muted/30 p-2 text-xs" data-testid="court-row">
+                  <div key={i} className="flex items-center gap-2 rounded-md border border-border bg-secondary p-2 text-xs" data-testid="court-row">
                     <Input
                       type="text"
                       aria-label={`Court ${i + 1} label`}
-                      className="h-7 flex-1 text-xs"
+                      className="h-8 flex-1 rounded-md border-border bg-card px-2.5 text-xs"
                       value={c.label}
                       onChange={e => patchCourt(i, { label: e.target.value })}
                     />
@@ -357,7 +357,7 @@ export default function SetupScreen({ draft }) {
                       max="12"
                       aria-label={`Court ${i + 1} hours`}
                       aria-invalid={!validHours(c.hours)}
-                      className="h-7 w-20 text-center text-xs font-bold"
+                      className="h-8 w-20 rounded-md border-border bg-card text-center font-mono text-xs font-semibold tabular-nums"
                       value={c.hours}
                       onChange={e => patchCourt(i, { hours: e.target.value })}
                       onBlur={() => { if (!validHours(c.hours)) patchCourt(i, { hours: DEFAULT_HOURS }) }}
@@ -366,7 +366,7 @@ export default function SetupScreen({ draft }) {
                     {courts.length > 1 && (
                       <select
                         aria-label={`Court ${i + 1} opens at`}
-                        className="h-7 w-[6.5rem] rounded-md border border-input bg-background px-1 text-xs text-foreground"
+                        className="h-8 w-[6.5rem] rounded-md border border-border bg-card px-2 text-xs text-foreground"
                         value={String(opensAfterOf(c))}
                         onChange={e => patchCourt(i, { opens: e.target.value })}
                       >
@@ -380,11 +380,11 @@ export default function SetupScreen({ draft }) {
                 ))}
               </div>
               {courts.length > 1 && (
-                <div className="flex flex-col gap-1.5 rounded-md border border-border bg-muted/20 p-2" data-testid="court-timeline">
+                <div className="flex flex-col gap-1.5 rounded-md border border-amber/20 bg-wash-amber p-2.5" data-testid="court-timeline">
                   <div className="flex justify-between text-2xs text-muted-foreground">
-                    <span>{fmtClock(startMin)}</span>
+                    <span className="font-mono font-semibold tabular-nums text-amber">{fmtClock(startMin)}</span>
                     <span>Rental window</span>
-                    <span>{fmtClock(windowEnd)}</span>
+                    <span className="font-mono font-semibold tabular-nums text-amber">{fmtClock(windowEnd)}</span>
                   </div>
                   {courts.map((c, i) => {
                     const open = startMin + opensAfterOf(c)
@@ -393,14 +393,14 @@ export default function SetupScreen({ draft }) {
                     return (
                       <div key={i} className="flex items-center gap-1.5">
                         <span className="w-14 shrink-0 truncate text-2xs text-muted-foreground" title={label}>{label}</span>
-                        <div className="relative h-3 flex-1 overflow-hidden rounded-sm bg-background">
+                        <div className="relative h-3 flex-1 overflow-hidden rounded-sm bg-card">
                           <div
-                            className="absolute inset-y-0 rounded-sm border border-primary/40 bg-primary/25"
+                            className="absolute inset-y-0 rounded-sm border border-amber/40 bg-amber/25"
                             style={{ left: `${((open - startMin) / span) * 100}%`, width: `${Math.max(3, (mins / span) * 100)}%` }}
                             title={`${label} · ${fmtClock(open)} – ${fmtClock(open + mins)}`}
                           />
                         </div>
-                        <span className="w-[6.5rem] shrink-0 text-right text-2xs tabular-nums text-muted-foreground">
+                        <span className="w-[6.5rem] shrink-0 text-right font-mono text-2xs tabular-nums text-muted-foreground">
                           {fmtClock(open)}–{fmtClock(open + mins)}
                         </span>
                       </div>
@@ -416,11 +416,11 @@ export default function SetupScreen({ draft }) {
           </Card>
 
           {/* Card 2 — Active Waiting Pool */}
-          <Card className="border-border bg-card shadow-sm" data-testid="card-pool">
+          <Card className="rounded-lg bg-card shadow-card" data-testid="card-pool">
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center justify-between text-xs uppercase tracking-wider">
+              <CardTitle className="flex items-center justify-between text-[15px] font-bold tracking-tight">
                 <span>2 · Active Waiting Pool</span>
-                <span className="text-2xs font-semibold normal-case text-muted-foreground" data-testid="selected-count">
+                <span className="rounded-full bg-wash-green px-2.5 py-0.5 text-2xs font-semibold normal-case text-green-deep" data-testid="selected-count">
                   {activePicked.length} selected
                 </span>
               </CardTitle>
@@ -438,6 +438,7 @@ export default function SetupScreen({ draft }) {
                   <Button
                     variant="outline"
                     size="xs"
+                    className="rounded-full"
                     data-testid="select-all"
                     disabled={visiblePool.length === 0}
                     onClick={toggleSelectAll}
@@ -446,7 +447,7 @@ export default function SetupScreen({ draft }) {
                   </Button>
                   <select
                     aria-label="Filter tier"
-                    className="rounded border border-border bg-background px-2 py-1 text-xs text-foreground"
+                    className="h-8 rounded-md border border-border bg-card px-2 text-xs text-foreground"
                     value={tierFilter}
                     onChange={e => setTierFilter(e.target.value)}
                   >
@@ -467,7 +468,7 @@ export default function SetupScreen({ draft }) {
                 {!loading && fetchError && (
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">Couldn&apos;t load players.</span>
-                    <Button variant="outline" size="xs" onClick={loadPlayers}>Retry</Button>
+                    <Button variant="outline" size="xs" className="rounded-full" onClick={loadPlayers}>Retry</Button>
                   </div>
                 )}
                 {!loading && !fetchError && pool.length === 0 && (
@@ -507,7 +508,7 @@ export default function SetupScreen({ draft }) {
         <div className="flex flex-col items-center gap-2">
           <Button
             size="lg"
-            className="w-full max-w-md"
+            className="h-11 w-full max-w-md rounded-full bg-primary text-[15px] font-semibold hover:bg-green-press"
             aria-label="Start Session"
             data-testid="start-session"
             disabled={!canStart}

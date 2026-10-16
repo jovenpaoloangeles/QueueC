@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 export default function ConfirmEndDialog({ open, onOpenChange, onConfirm }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xs">
+      <DialogContent className="sm:max-w-xs shadow-lift">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span aria-hidden="true">⚑</span>
@@ -17,10 +17,10 @@ export default function ConfirmEndDialog({ open, onOpenChange, onConfirm }) {
           <DialogDescription>Record final score, shuttle usage and match rating.</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button type="button" variant="outline" size="sm" data-testid="confirm-end-cancel" onClick={() => onOpenChange(false)}>
+          <Button type="button" variant="outline" size="sm" className="rounded-full" data-testid="confirm-end-cancel" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button type="button" variant="destructive" size="sm" data-testid="confirm-end-end" onClick={onConfirm}>
+          <Button type="button" variant="destructive" size="sm" className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90" data-testid="confirm-end-end" onClick={onConfirm}>
             End Match
           </Button>
         </DialogFooter>

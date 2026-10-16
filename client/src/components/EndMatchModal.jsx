@@ -44,7 +44,7 @@ export default function EndMatchModal({ match, onClose }) {
 
   return (
     <Dialog open onOpenChange={open => !open && onClose()}>
-      <DialogContent className="sm:max-w-xs">
+      <DialogContent className="sm:max-w-xs shadow-lift">
         <DialogHeader>
           <DialogTitle>End Match — Court {match.court_number}</DialogTitle>
           <DialogDescription>Record the final score, shuttle usage and a 1-5 rating.</DialogDescription>
@@ -62,7 +62,7 @@ export default function EndMatchModal({ match, onClose }) {
                   type="number" min="0" max="99"
                   value={scores.team1}
                   onChange={e => setScores(s => ({...s, team1: e.target.value}))}
-                  className="w-24 h-12 text-2xl font-mono tabular-nums text-center"
+                  className="w-24 h-12 rounded-md border-border bg-card text-2xl font-mono font-semibold tabular-nums text-center"
                 />
               </Field>
               <span className="pb-3 text-muted-foreground/40">–</span>
@@ -75,7 +75,7 @@ export default function EndMatchModal({ match, onClose }) {
                   type="number" min="0" max="99"
                   value={scores.team2}
                   onChange={e => setScores(s => ({...s, team2: e.target.value}))}
-                  className="w-24 h-12 text-2xl font-mono tabular-nums text-center"
+                  className="w-24 h-12 rounded-md border-border bg-card text-2xl font-mono font-semibold tabular-nums text-center"
                 />
               </Field>
             </div>
@@ -91,7 +91,7 @@ export default function EndMatchModal({ match, onClose }) {
                 type="number" min="0"
                 value={shuttles.newShuttles}
                 onChange={e => setShuttles(s => ({...s, newShuttles: e.target.value}))}
-                className="h-9 font-mono tabular-nums"
+                className="h-9 rounded-md border-border bg-card font-mono font-semibold tabular-nums"
               />
             </Field>
           </FieldGroup>
@@ -118,8 +118,8 @@ export default function EndMatchModal({ match, onClose }) {
                   tabIndex={rating === i ? 0 : -1}
                   onClick={() => setRating(i)}
                   className={cn(
-                    'px-0.5 text-xl leading-none transition-colors',
-                    i <= rating ? 'text-amber-400' : 'text-muted-foreground/40 hover:text-amber-300'
+                    'px-0.5 text-xl leading-none transition-colors duration-150',
+                    i <= rating ? 'text-amber' : 'text-foreground/20 hover:text-amber/60'
                   )}
                 >
                   ★
@@ -129,8 +129,8 @@ export default function EndMatchModal({ match, onClose }) {
           </FieldGroup>
 
           <DialogFooter>
-            <Button type="button" variant="outline" size="sm" onClick={onClose}>Cancel</Button>
-            <Button type="submit" size="sm" disabled={loading}>
+            <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={onClose}>Cancel</Button>
+            <Button type="submit" size="sm" className="rounded-full bg-primary hover:bg-green-press" disabled={loading}>
               {loading ? '...' : 'Confirm'}
             </Button>
           </DialogFooter>

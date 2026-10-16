@@ -1,17 +1,29 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { cn, titleCaseSkill, SKILL_BADGE, balanceHint } from '@/lib/utils'
+import { cn, titleCaseSkill, balanceHint } from '@/lib/utils'
 
 export { balanceHint }
 
 const names = team => team.map(p => p.name).join(' & ')
+
+// skill level → draft tier-badge class (index.css .tier recipe), same map as PlayerCard
+const TIER_CLASS = {
+  newbie: 't-newbie',
+  beginner: 't-beginner',
+  lower_intermediate: 't-lower',
+  intermediate: 't-int',
+  upper_intermediate: 't-upper',
+  expert: 't-expert',
+  advanced: 't-expert', // legacy alias
+  professional: 't-expert',
+}
 
 function Side({ team }) {
   return (
     <span className="inline-flex flex-wrap items-center gap-1">
       <span className="font-medium">{names(team)}</span>
       {team.map((p, i) => p.skill_level && (
-        <span key={i} className={cn('rounded px-1 py-0.5 text-[10px] leading-none', SKILL_BADGE[p.skill_level])}>
+        <span key={i} className={cn('tier', TIER_CLASS[p.skill_level])}>
           {titleCaseSkill(p.skill_level)}
         </span>
       ))}
@@ -22,7 +34,7 @@ function Side({ team }) {
 function Row({ m, testid }) {
   const hint = balanceHint(m)
   return (
-    <li data-testid={testid} className="flex flex-col gap-0.5 rounded border border-border px-2 py-1.5 text-xs">
+    <li data-testid={testid} className="flex flex-col gap-0.5 rounded-md bg-secondary px-2.5 py-1.5 text-xs">
       <div className="flex items-baseline gap-1">
         {m.courtLabel && <span className="font-semibold">{m.courtLabel} ·</span>}
         <Side team={m.team1} />
@@ -47,7 +59,7 @@ export default function StartMatchConfirmDialog({ open, onOpenChange, title, con
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-md"
+        className="sm:max-w-md shadow-lift"
         data-testid="start-confirm-dialog"
         onKeyDown={e => {
           if (e.key === 'Enter' && !busy) { e.preventDefault(); onConfirm() }
@@ -71,10 +83,10 @@ export default function StartMatchConfirmDialog({ open, onOpenChange, title, con
           </div>
         )}
         <DialogFooter>
-          <Button type="button" variant="outline" size="sm" data-testid="start-confirm-cancel" onClick={() => onOpenChange(false)}>
+          <Button type="button" variant="outline" size="sm" className="rounded-full" data-testid="start-confirm-cancel" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button type="button" size="sm" autoFocus data-testid="start-confirm-yes" disabled={busy} onClick={onConfirm}>
+          <Button type="button" size="sm" className="rounded-full bg-primary hover:bg-green-press" autoFocus data-testid="start-confirm-yes" disabled={busy} onClick={onConfirm}>
             {confirmText ?? confirmLabel}
           </Button>
         </DialogFooter>
