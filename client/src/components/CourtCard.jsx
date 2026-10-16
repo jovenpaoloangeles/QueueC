@@ -282,7 +282,7 @@ export default function CourtCard({
             <Button variant="destructive" size="sm" className="rounded-full" onClick={() => setShowConfirm(true)}>End Match</Button>
           )}
           {isActive && (
-            <span className="font-mono text-2xl font-bold tracking-tight text-green-deep tabular-nums">{fmtClock(secs)}</span>
+            <span data-testid="court-elapsed" className="font-mono text-2xl font-bold tracking-tight text-green-deep tabular-nums">{fmtClock(secs)}</span>
           )}
         </div>
       </CardHeader>
@@ -377,7 +377,7 @@ export default function CourtCard({
         onOpenChange={setShowConfirm}
         onConfirm={() => { setShowConfirm(false); setShowEnd(true) }}
       />
-      {showEnd && match && <EndMatchModal match={match} onClose={() => setShowEnd(false)} />}
+      {showEnd && match && <EndMatchModal match={match} courtLabel={court.label} onClose={() => setShowEnd(false)} />}
     </Card>
   )
 }

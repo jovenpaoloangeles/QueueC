@@ -1,22 +1,10 @@
 import { useState } from 'react'
 import { drag, valid, useDragSource } from '@/lib/dnd'
-import { cn, fmtClock, fmtMins, titleCaseSkill } from '@/lib/utils'
+import { cn, fmtClock, fmtMins, titleCaseSkill, TIER_CLASS } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
 const WAIT_HIGH_PRIORITY_THRESHOLD_SECS = 15 * 60 // overdue threshold — unchanged
 const WAIT_WARM_SECS = 6 * 60 // cosmetic mid tier for the wait strip; overdue logic untouched
-
-// skill level → redesign-draft tier badge class (index.css .tier recipe)
-const TIER_CLASS = {
-  newbie: 't-newbie',
-  beginner: 't-beginner',
-  lower_intermediate: 't-lower',
-  intermediate: 't-int',
-  upper_intermediate: 't-upper',
-  expert: 't-expert',
-  advanced: 't-expert', // legacy alias
-  professional: 't-expert',
-}
 
 export default function PlayerCard({ entry, waitSecs, selectionIndex, playSecs, isNext = false, onClick, onDropOn, onToggleRest }) {
   const dragProps = useDragSource(() => ({ kind: 'player', entryId: entry.id, status: entry.status }))

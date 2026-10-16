@@ -68,6 +68,18 @@ export const SKILL_BADGE = {
   professional: 'bg-purple-100 text-purple-800',      // #7C3AED Royal Purple (700)
 }
 
+// skill level → redesign-draft tier badge class (index.css .tier recipe)
+export const TIER_CLASS = {
+  newbie: 't-newbie',
+  beginner: 't-beginner',
+  lower_intermediate: 't-lower',
+  intermediate: 't-int',
+  upper_intermediate: 't-upper',
+  expert: 't-expert',
+  advanced: 't-expert', // legacy alias
+  professional: 't-expert',
+}
+
 const avgSkill = team => {
   const ws = team.map(p => SKILL_WEIGHTS[p.skill_level]).filter(w => w != null)
   return ws.length ? ws.reduce((a, b) => a + b, 0) / ws.length : null
@@ -84,7 +96,7 @@ export function balanceHint(m) {
   const a = avgSkill(m.team1), b = avgSkill(m.team2)
   if (a == null || b == null) return null
   const d = Math.abs(a - b)
-  if (d <= 50) return { label: 'Even', tone: 'text-emerald-600' }
-  if (d <= 150) return { label: 'Slight edge', tone: 'text-amber-600' }
-  return { label: 'Lopsided', tone: 'text-rose-600' }
+  if (d <= 50) return { label: 'Even', tone: 'text-green-deep' }
+  if (d <= 150) return { label: 'Slight edge', tone: 'text-amber' }
+  return { label: 'Lopsided', tone: 'text-destructive' }
 }

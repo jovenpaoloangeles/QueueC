@@ -61,7 +61,7 @@ test('7.9 match timer increments', async ({ page }) => {
   for (let i = 0; i < 4; i++) await page.locator('[data-entry-id]').nth(i).click()
   await clickStartMatch(page)
   await page.waitForTimeout(500)
-  const timer = page.locator('[class*="font-mono"][class*="tabular-nums"]').first()
+  const timer = page.getByTestId('court-elapsed')
   const t1 = await timer.textContent()
   await page.waitForTimeout(2000)
   const t2 = await timer.textContent()

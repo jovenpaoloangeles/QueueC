@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { cn, titleCaseSkill, SKILL_BADGE, SKILL_TIERS } from '@/lib/utils'
-import { Badge } from '@/components/ui/badge'
+import { cn, titleCaseSkill, TIER_CLASS, SKILL_TIERS } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -9,9 +8,9 @@ import { checkinPlayer, createPlayer } from '../api.js'
 
 export function SkillChip({ level }) {
   return (
-    <Badge className={cn('border-0 text-2xs', SKILL_BADGE[level] ?? SKILL_BADGE.intermediate)}>
+    <span className={cn('tier', TIER_CLASS[level] ?? TIER_CLASS.intermediate)}>
       {titleCaseSkill(level)}
-    </Badge>
+    </span>
   )
 }
 

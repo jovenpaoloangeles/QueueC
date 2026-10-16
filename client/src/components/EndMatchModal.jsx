@@ -8,7 +8,7 @@ import { useToast } from '@/components/Toast'
 import { cn } from '@/lib/utils'
 
 /** Step 2 of the End Match flow: final score, shuttle usage and match rating. */
-export default function EndMatchModal({ match, onClose }) {
+export default function EndMatchModal({ match, courtLabel, onClose }) {
   const [scores, setScores] = useState({ team1: match.team1_score ?? 0, team2: match.team2_score ?? 0 })
   const [shuttles, setShuttles] = useState({
     newShuttles: match.new_shuttles ?? 0,
@@ -46,7 +46,7 @@ export default function EndMatchModal({ match, onClose }) {
     <Dialog open onOpenChange={open => !open && onClose()}>
       <DialogContent className="sm:max-w-xs shadow-lift">
         <DialogHeader>
-          <DialogTitle>End Match — Court {match.court_number}</DialogTitle>
+          <DialogTitle>End Match — {courtLabel ?? `Court ${match.court_number}`}</DialogTitle>
           <DialogDescription>Record the final score, shuttle usage and a 1-5 rating.</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="flex flex-col gap-4">

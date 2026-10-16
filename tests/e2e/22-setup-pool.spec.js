@@ -49,9 +49,9 @@ test('22.2 tier filter shows only that tier; select-all only touches visible chi
 
   await page.getByLabel('Filter tier').selectOption('intermediate')
   await expect(chips).toHaveCount(intermediateCount)
-  // intermediate badge is amber (bg-amber-100)
+  // intermediate badge uses the redesign-draft tier class (green .tier.t-int)
   expect(await chips.evaluateAll(els => els.map(el => [...el.querySelectorAll('*')]
-    .some(x => String(x.className).includes('bg-amber-100'))))).toEqual(
+    .some(x => String(x.className).includes('t-int'))))).toEqual(
     Array(intermediateCount).fill(true)
   )
 

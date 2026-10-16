@@ -128,7 +128,7 @@ test('20.9 expired court mid-match shows Last Game badge and persists until matc
   await page.getByRole('button', { name: 'End Match' }).first().click()
   await page.getByTestId('confirm-end-end').click() // pass the confirm gate
   await page.getByRole('button', { name: 'Confirm' }).click()
-  await expect(page.locator('text=Court 1')).toBeVisible()
+  await expect(page.getByText('Court 1', { exact: true })).toBeVisible()
   await expect(page.getByTestId('btn-extend-court')).toBeVisible()
 })
 
