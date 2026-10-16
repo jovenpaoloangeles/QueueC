@@ -2,7 +2,6 @@
 
 [![CI](https://github.com/jovenpaoloangeles/QueueC/actions/workflows/ci.yml/badge.svg)](https://github.com/jovenpaoloangeles/QueueC/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Docker](https://img.shields.io/badge/image-ghcr.io-2496ED?logo=docker&logoColor=white)](https://github.com/jovenpaoloangeles/QueueC/pkgs/container/QueueC)
 
 A self-hosted queue manager for badminton. Players check in, the queue tracks
 who has actually been waiting (time spent playing doesn't count), and lineups
@@ -17,30 +16,23 @@ screen is all players need to see when they're up.
 ## Quickstart (Docker)
 
 ```bash
-mkdir queuec && cd queuec
-curl -o players.json https://raw.githubusercontent.com/jovenpaoloangeles/QueueC/master/players.example.json
-docker run -d --name queuec -p 3001:3001 \
-  -v "$PWD/data:/data" \
-  -v "$PWD/players.json:/data/players.json" \
-  ghcr.io/jovenpaoloangeles/queuec:edge
+curl -fsSL https://raw.githubusercontent.com/jovenpaoloangeles/QueueC/master/install.sh | bash
 ```
 
-Open `http://localhost:3001`. The database lives in `./data`, the roster seeds
-from `players.json` on first boot (edit players in the app afterwards). To run
-a specific version, pin a release tag instead of `:edge`.
+Open `http://localhost:3001`. The script clones the repo, builds the image,
+seeds `players.json` from the example roster, and starts the container. All
+persistent data (SQLite db + roster) lands in `./queuec/data`; re-running the
+script updates and restarts. `PORT`, `QUEUEC_DIR`, and `QUEUEC_CONTAINER` env
+vars override the defaults — see the header of
+[install.sh](install.sh).
 
-Building from source instead:
+Prefer the raw commands:
 
 ```bash
 git clone https://github.com/jovenpaoloangeles/QueueC.git
-cd QueueC
-docker build -t queuec .
-docker run -d --name queuec -p 3001:3001 -v queuec-data:/data queuec
+cd QueueC && docker build -t queuec .
+docker run -d --name queuec -p 3001:3001 -v "$PWD/data:/data" queuec
 ```
-
-Open `http://localhost:3001`. On first boot the database is seeded from
-`players.json` (copy [`players.example.json`](players.example.json) if you
-don't have one yet) — edit the roster in the app afterwards.
 
 Without Docker: install [Bun](https://bun.sh), then
 `bun install && bun install --cwd server && bun install --cwd client` and

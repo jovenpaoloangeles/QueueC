@@ -26,5 +26,5 @@ First public release.
 - Two-step end match (confirm → scores, shuttles, star rating).
 - Live leaderboard (games, W/L, win %, point differential) and session stats.
 - Real-time sync across browsers via SSE; dark theme.
-- Docker deployment with non-root runtime and healthcheck; GHCR images.
+- Docker deployment with non-root runtime and healthcheck; one-line install script.
 - Test suite: unit, API-level, Playwright e2e (230+ scenarios).
