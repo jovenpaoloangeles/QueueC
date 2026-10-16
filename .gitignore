@@ -6,3 +6,12 @@ dist/
 .superpowers/
 .playwright-mcp/
 test-results/
+
+# local roster + local-only files (publish players.example.json instead)
+players.json
+players-ASTI.json
+badminton_queue_master4.html
+image.png
+.remember/
+.claude/
+playwright-report/

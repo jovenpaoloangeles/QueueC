@@ -1,127 +1,79 @@
 # QueueC
 
-A self-hosted badminton queue manager for gym sessions. One screen, one queue master, no paper lists.
+A self-hosted badminton queue manager for gym sessions. One screen, one queue
+master, no paper lists.
 
-![screenshot placeholder]
+QueueC runs the whole evening: check players in, draft lineups onto courts,
+keep an on-deck slate promoting itself as courts free up, track court rentals
+and shuttles, and close with a leaderboard. Everything on screen stays in sync
+in real time across browsers — put it on the gym TV and players can see when
+they're up.
 
-## Features
-
-- **Setup flow** — one screen, no modals: session name defaults to `ASTIRISK (DD-Mmm-YYYY)`, whole-hour start-time select (06:00–23:00), number of courts with a per-court label and rental HOURS (0.5–12); alphabetical, letter-grouped pool with search-and-add, select-all and tier filter; double-click a row (or ✎) to edit name/skill inline; **Start Session** creates the session, checks in the selection and starts the clocks
-- **Live courts** — per-court rental countdown; expired court (idle or mid-match) shows **Extend Court (+1hr)?** — idle it pulses EXPIRED and leaves the available pool, mid-match the game keeps running under a **Last Game** badge (server extends an hour from max(expires_at, now)); elapsed match timer; idle courts take a drag-and-drop 2×2 lineup draft (live courts show teams only — no next-match matrix)
-- **Start confirmation** — a match never starts without the confirm dialog: Start Match, Start Singles and the 4th-slot drop on an idle court all open it; header Smart Match dry-runs a plan first and executes exactly what you confirmed; the On Deck builder is the only way to slate
-- **Slate / On Deck** — always mounted (empty state included): numbered cards with skill-balance label and next-free-court ETA, manual **＋ Build lineup** builder with oversized 2×2 slots (drag 4 / **Add to On Deck** — nothing slates until that click), **✨ Smart Match** (in the builder) and **Smart add** both pour a slate-only dry-run plan into the builder for review; multiple slates up to 3 counted across existing ones, ↑/↓ reorder, edit, cancel-with-confirm (players return to the queue); drafted players leave the queue and slated matches auto-promote to a free court when a match ends
-- **Smart Match** — the header button fills free courts / slates matches using wait time, games played, skill variance, team balance and pair redundancy (dry-run plan → confirm); queue selection itself is always manual — there is no mode toggle
-- **Shuttle counters** — live new-shuttle +/- per match (used shuttles are history-only: no stepper, no final field, no sidebar tile)
-- **Two-step end match** — confirm, then record scores, final new shuttles and a 1–5 star rating
-- **Player queue** — All / Wait / Rest tabs, fairness ordering, 7 skill tiers rendered title-cased (Newbie → Professional; stored values unchanged); Rest/Wake buttons or drag-and-drop both ways (waiting rows into the Resting tray, resting chips back out)
-- **Leaderboard** — rank, games, W/L, win rate, point differential
-- **Header status** — session name rendered as `ASTIRISK` over the date (two lines), live courts/waiting counts, longest wait measured as net wait (playing time excluded — the clock restarts after each match)
-- **Session controls** — header **End Session** and **New Session** both confirm before ending; toasts, dark theme
-- **Real-time sync** — all browsers stay in sync via SSE
-
-## Stack
-
-| Layer | Tech |
-|-------|------|
-| Frontend | React 18, Vite, Tailwind CSS v4, shadcn/ui (Base UI) |
-| Backend | Bun, Hono |
-| Database | SQLite via `bun:sqlite` |
-| Real-time | Server-Sent Events |
-
-## Local Development
+## Quickstart (Docker)
 
 ```bash
-# Install all deps (root + server + client)
-bun run install:all
-
-# Start server (port 3001) + client dev server (port 3003) concurrently
-bun run dev
+git clone https://github.com/YOUR_USER/QueueC.git
+cd QueueC
+docker build -t queuec .
+docker run -d --name queuec -p 3001:3001 \
+  -v queuec-data:/data \
+  -v "$PWD/players.json:/data/players.json" \
+  queuec
 ```
 
-The client dev server proxies `/api` to `localhost:3001`. Open `http://localhost:3003`.
+Open `http://localhost:3001`. On first boot the database is seeded from
+`players.json` (copy [`players.example.json`](players.example.json) if you
+don't have one yet) — edit the roster in the app afterwards.
 
-## Docker
+Without Docker: install [Bun](https://bun.sh), then
+`bun install && bun install --cwd server && bun install --cwd client` and
+`bun run dev` (client on Vite's port, API on 3001).
 
-```bash
-# Build and run
-docker compose up -d --build
-```
+## What it does
 
-The app runs on port `3001` and persists the database to the mounted `/data` volume (`/data/queuec.db`). Migrations run automatically on startup; never wipe the volume.
+- **One-screen setup** — session name, start time, courts with per-court
+  rental hours and staggered opens, alphabetical player pool, one Start button.
+- **Live courts** — drag-and-drop 2×2 lineup drafting, confirm-gated match
+  starts, per-court rental countdown with mid-match extend, team rearranging.
+- **On Deck slate** — build lineups manually or review a Smart Match plan;
+  slates auto-promote to the next free court; nothing starts unconfirmed.
+- **Smart Match** — a dry-run-first matching heuristic (wait time, games
+  played, skill variance, team balance, pair redundancy); it never writes
+  without showing you the plan. [Algorithm deep-dive →](docs/algorithm.md)
+- **Fair queue** — net-wait clocks (playing time doesn't count toward your
+  wait), rest/wake, alphabetical check-in, remove-with-confirm.
+- **Shuttles & stats** — 1 shuttle per game by default with manual extras,
+  live leaderboard (W/L, win %, point differential).
+- **Session controls & history** — end/new session with confirm; everything
+  persists in SQLite.
 
-```yaml
-# minimal compose.yml
-services:
-  queuec:
-    build: /path/to/QueueC
-    ports:
-      - "3001:3001"
-    volumes:
-      - ./data:/data
-```
+## Documentation
 
-## Configuration
-
-| Env var | Default | Description |
-|---------|---------|-------------|
-| `PORT` | `3001` | HTTP port |
-| `DB_PATH` | `../queuec.db` | Path to SQLite database file |
-| `NODE_ENV` | — | Set to `production` to serve the built client |
-| `DB_PATH` dir | — | `players.json` is looked up in the same directory as the DB file (e.g. `/data/players.json` when `DB_PATH=/data/queuec.db`) |
-
-## Project Structure
-
-```
-QueueC/
-├── server/
-│   ├── index.js          # Hono + Bun.serve app entry
-│   ├── db.js             # SQLite setup and migrations (bun:sqlite)
-│   └── routes/           # sessions, players, queue, matches, slate, automatch, stats, sse, courts
-├── client/
-│   └── src/
-│       ├── App.jsx
-│       ├── api.js
-│       ├── components/   # CourtCard, QueueGrid, SetupScreen, …
-│       └── hooks/        # useSSE, useTimers
-└── Dockerfile
-```
-
-## API
-
-All under `/api`. Mutations broadcast an SSE update.
-
-| Method & path | Purpose |
+| Doc | For |
 |---|---|
-| `GET /sessions/active`, `POST /sessions`, `PATCH /sessions/:id/start`, `/end` | Session lifecycle |
-| `GET/POST /sessions/:id/courts`, `PATCH/DELETE /courts/:id` | Courts (delete → 409 if it has matches) |
-| `PATCH /courts/:id/extend` | Extend rental (default +60 min). An expired court reopens: new expiry = max(expires_at, now) + minutes; 400 if the court has no rental timer |
-| `GET/POST /players`, `PATCH /players/:id`, `GET /players/:id/history` | Player pool (duplicate name → 409) |
-| `POST /sessions/:id/checkin`, `DELETE /queue/:entryId`, `PATCH /queue/order`, `GET /sessions/:id/suggest` | Queue |
-| `PATCH /queue/:entryId/status` | waiting/resting. 409 if resting a `playing` or `staged` player, or setting a `playing` player to waiting |
-| `POST /matches` | Start live match on a court (client always confirms first) |
-| `PATCH /matches/:id/end`, `/teams`, `/shuttles` | End (scores, new shuttles, rating), edit teams, shuttle count (`delta_new`; used remains server-side history) |
-| `POST /matches/slate`, `PATCH /matches/:id/slate`, `DELETE /matches/:id/slate` | Create / edit / cancel a slated (On Deck) match; `PATCH {move:'up'\|'down'}` reorders by swapping `slate_seq` with the adjacent slate |
-| `POST /sessions/:id/automatch` | Smart Match. `{dry_run:true}` → `{plan {matches, slate}}` with no writes; post `{plan}` to execute exactly that plan (server re-validates → 409 `Queue changed — review and try again` if stale). `{slate_only:true}` plans On Deck lineups only. On Deck capped at 3 (existing + new). Response `{started, slated, slated_count}`; 409 if nothing to auto-match (need a free court and ≥2 waiting, or ≥4 to slate) |
-| `GET /sessions/:id/stats` | Leaderboard: played, wins, win_rate, point_diff |
-| `GET /sse` | Event stream |
+| [docs/usage.md](docs/usage.md) | Operating a session (queue-master guide) |
+| [docs/architecture.md](docs/architecture.md) | How the server, SSE state model and client fit together |
+| [docs/algorithm.md](docs/algorithm.md) | Smart Match: the shipped heuristic + the target optimizer design |
+| [docs/testing.md](docs/testing.md) | Running the test suites |
+| [docs/ai-harness.md](docs/ai-harness.md) | Contributing with Claude Code / an AI agent |
+| [docs/workflow.md](docs/workflow.md) | The original product workflow spec |
+| [CLAUDE.md](CLAUDE.md) | Agent policy this repo is developed under |
 
-## Testing
+## Development
 
 ```bash
-# Server tests — pure ones run standalone:
-bun server/db.test.js
-# HTTP-based ones need a running server; BASE_URL defaults to http://localhost:3001/api
-BASE_URL=http://localhost:3001/api bun server/routes/automatch.test.js
+bun run install:all        # root + server + client
+bun run dev                # client + API with reload
 
-# Client unit tests
-cd tests && bun run test:unit
-
-# E2E (Playwright). Each worker starts its own server + temp DB.
-cd tests && bun run test:e2e
+cd tests && bun run test:server   # sub-second API regressions
+cd tests && bun run test          # unit + full Playwright e2e
 ```
 
-E2E env: `PW_WORKERS` (default 5), `PW_BASE_PORT` (default 3410; worker N uses port+N). `ensure-build` rebuilds `client/dist` only if sources are newer. The full Playwright suite is ~200 tests across 28 specs. Specs from the last two rounds: `25-court-expiry`, `26-resting-dnd`, `27-start-confirm`, `28-on-deck`. Note: HTTP-based server tests reset the active session, so don't point them at a server holding real data.
+CI runs the server tests, the client build, and the full e2e suite on every
+push/PR — the suites boot their own throwaway servers, so nothing touches a
+real instance. See [docs/testing.md](docs/testing.md) and
+[docs/ai-harness.md](docs/ai-harness.md) before your first change.
 
 ## License
 
-MIT
+[MIT](LICENSE)
