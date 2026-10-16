@@ -1,27 +1,34 @@
-import assert from 'node:assert/strict'
-import db from '../db.js'
-import { currentState } from './sse.js'
+import assert from "node:assert/strict";
+import db from "../db.js";
+import { currentState } from "./sse.js";
 
-const now = Math.floor(Date.now() / 1000)
+const now = Math.floor(Date.now() / 1000);
 
 // Save any pre-existing unended sessions so we can isolate our test session
-const preExistingUnended = db.prepare('SELECT id FROM sessions WHERE ended_at IS NULL').all().map(s => s.id)
+const preExistingUnended = db
+  .prepare("SELECT id FROM sessions WHERE ended_at IS NULL")
+  .all()
+  .map((s) => s.id);
 for (const id of preExistingUnended) {
-  db.prepare('UPDATE sessions SET ended_at = ? WHERE id = ?').run(now, id)
+  db.prepare("UPDATE sessions SET ended_at = ? WHERE id = ?").run(now, id);
 }
 
-let sid, pids = [], eids = [], slatedMid, endedMid
+let sid,
+  pids = [],
+  eids = [],
+  slatedMid,
+  endedMid;
 
 try {
   // Verify no active session state first
-  const emptyState = currentState()
-  assert.equal(emptyState.session, null)
-  assert.deepEqual(emptyState.slatedMatches, [])
+  const emptyState = currentState();
+  assert.equal(emptyState.session, null);
+  assert.deepEqual(emptyState.slatedMatches, []);
 
   // Seed session (started_at in the future relative to any other, or unended)
-  sid = db.prepare(
-    'INSERT INTO sessions (name, scheduled_start, scheduled_end, started_at) VALUES (?, ?, ?, ?)'
-  ).run('__sse_test_session__', now, now + 3600, now).lastInsertRowid
+  sid = db
+    .prepare("INSERT INTO sessions (name, scheduled_start, scheduled_end, started_at) VALUES (?, ?, ?, ?)")
+    .run("__sse_test_session__", now, now + 3600, now).lastInsertRowid;
 
   // Seed 5 players
   const names = [
@@ -30,106 +37,122 @@ try {
     `__sse_p3_${now}__`,
     `__sse_p4_${now}__`,
     `__sse_p5_${now}__`,
-  ]
+  ];
   for (const name of names) {
-    const { lastInsertRowid: pid } = db.prepare(
-      "INSERT INTO players (name, skill_level, created_at) VALUES (?, 'intermediate', ?)"
-    ).run(name, now)
-    pids.push(pid)
+    const { lastInsertRowid: pid } = db
+      .prepare("INSERT INTO players (name, skill_level, created_at) VALUES (?, 'intermediate', ?)")
+      .run(name, now);
+    pids.push(pid);
   }
 
   // Seed 6 queue_entries: first 4 staged, 5th waiting (checked in 10 mins ago),
   // 6th resting (checked in at the same time)
   for (let i = 0; i < 4; i++) {
-    const { lastInsertRowid: eid } = db.prepare(
-      'INSERT INTO queue_entries (session_id, player_id, checked_in_at, status) VALUES (?, ?, ?, ?)'
-    ).run(sid, pids[i], now - 300, 'staged')
-    eids.push(eid)
+    const { lastInsertRowid: eid } = db
+      .prepare("INSERT INTO queue_entries (session_id, player_id, checked_in_at, status) VALUES (?, ?, ?, ?)")
+      .run(sid, pids[i], now - 300, "staged");
+    eids.push(eid);
   }
-  const { lastInsertRowid: waitingEid } = db.prepare(
-    'INSERT INTO queue_entries (session_id, player_id, checked_in_at, status, games_played) VALUES (?, ?, ?, ?, ?)'
-  ).run(sid, pids[4], now - 600, 'waiting', 1)
-  eids.push(waitingEid)
-  const { lastInsertRowid: restingPid } = db.prepare(
-    "INSERT INTO players (name, skill_level, created_at) VALUES (?, 'intermediate', ?)"
-  ).run(`__sse_p6_${now}__`, now)
-  pids.push(restingPid)
-  const { lastInsertRowid: restingEid } = db.prepare(
-    'INSERT INTO queue_entries (session_id, player_id, checked_in_at, status, games_played) VALUES (?, ?, ?, ?, ?)'
-  ).run(sid, restingPid, now - 600, 'resting', 1)
-  eids.push(restingEid)
+  const { lastInsertRowid: waitingEid } = db
+    .prepare(
+      "INSERT INTO queue_entries (session_id, player_id, checked_in_at, status, games_played) VALUES (?, ?, ?, ?, ?)",
+    )
+    .run(sid, pids[4], now - 600, "waiting", 1);
+  eids.push(waitingEid);
+  const { lastInsertRowid: restingPid } = db
+    .prepare("INSERT INTO players (name, skill_level, created_at) VALUES (?, 'intermediate', ?)")
+    .run(`__sse_p6_${now}__`, now);
+  pids.push(restingPid);
+  const { lastInsertRowid: restingEid } = db
+    .prepare(
+      "INSERT INTO queue_entries (session_id, player_id, checked_in_at, status, games_played) VALUES (?, ?, ?, ?, ?)",
+    )
+    .run(sid, restingPid, now - 600, "resting", 1);
+  eids.push(restingEid);
 
   // Seed 1 slated match with the 4 staged entries (in deliberately non-id order: eids[2], eids[0], eids[3], eids[1])
-  slatedMid = db.prepare(
-    `INSERT INTO matches (session_id, court_number, format, team1_p1, team1_p2, team2_p1, team2_p2, started_at, state, slate_seq)
-     VALUES (?, NULL, 'doubles', ?, ?, ?, ?, ?, 'slated', 1)`
-  ).run(sid, eids[2], eids[0], eids[3], eids[1], now).lastInsertRowid
+  slatedMid = db
+    .prepare(
+      `INSERT INTO matches (session_id, court_number, format, team1_p1, team1_p2, team2_p1, team2_p2, started_at, state, slate_seq)
+     VALUES (?, NULL, 'doubles', ?, ?, ?, ?, ?, 'slated', 1)`,
+    )
+    .run(sid, eids[2], eids[0], eids[3], eids[1], now).lastInsertRowid;
 
   // Seed 1 ended match with rating = 4 for the waiting entry
-  endedMid = db.prepare(
-    `INSERT INTO matches (session_id, court_number, format, team1_p1, team2_p1, started_at, ended_at, state, rating, new_shuttles, used_shuttles)
-     VALUES (?, 1, 'singles', ?, ?, ?, ?, 'active', 4, 2, 1)`
-  ).run(sid, waitingEid, eids[0], now - 500, now - 100).lastInsertRowid
+  endedMid = db
+    .prepare(
+      `INSERT INTO matches (session_id, court_number, format, team1_p1, team2_p1, started_at, ended_at, state, rating, new_shuttles, used_shuttles)
+     VALUES (?, 1, 'singles', ?, ?, ?, ?, 'active', 4, 2, 1)`,
+    )
+    .run(sid, waitingEid, eids[0], now - 500, now - 100).lastInsertRowid;
 
-  const state = currentState()
+  const state = currentState();
 
-  assert.equal(state.session?.id, sid, 'Expected active session to match test session')
-  assert.equal(state.slatedMatches?.length, 1, 'Expected 1 slated match')
+  assert.equal(state.session?.id, sid, "Expected active session to match test session");
+  assert.equal(state.slatedMatches?.length, 1, "Expected 1 slated match");
   assert.equal(
     state.slatedMatches[0].names,
-    [names[2], names[0], names[3], names[1]].join(','),
-    'Expected slatedMatch.names in exact slot order (team1_p1, team1_p2, team2_p1, team2_p2)'
-  )
+    [names[2], names[0], names[3], names[1]].join(","),
+    "Expected slatedMatch.names in exact slot order (team1_p1, team1_p2, team2_p1, team2_p2)",
+  );
   assert.equal(
     state.slatedMatches[0].team1_names,
-    [names[2], names[0]].join(','),
-    'Expected slatedMatch.team1_names'
-  )
+    [names[2], names[0]].join(","),
+    "Expected slatedMatch.team1_names",
+  );
   assert.equal(
     state.slatedMatches[0].team2_names,
-    [names[3], names[1]].join(','),
-    'Expected slatedMatch.team2_names'
-  )
+    [names[3], names[1]].join(","),
+    "Expected slatedMatch.team2_names",
+  );
 
   // Queue excludes staged entries and includes waiting + resting entries
-  assert.equal(state.queue.length, 2, 'Expected queue to exclude 4 staged entries and have waiting + resting entries')
-  assert.equal(state.queue[0].id, waitingEid, 'Expected waiting entry in queue')
-  assert.equal(typeof state.queue[0].fairness, 'number', 'Expected numeric fairness')
-  assert.ok(state.queue[0].fairness >= 0, 'Expected fairness >= 0')
-  assert.equal(state.queue[0].avg_rating, 4, 'Expected avg_rating === 4')
+  assert.equal(
+    state.queue.length,
+    2,
+    "Expected queue to exclude 4 staged entries and have waiting + resting entries",
+  );
+  assert.equal(state.queue[0].id, waitingEid, "Expected waiting entry in queue");
+  assert.equal(typeof state.queue[0].fairness, "number", "Expected numeric fairness");
+  assert.ok(state.queue[0].fairness >= 0, "Expected fairness >= 0");
+  assert.equal(state.queue[0].avg_rating, 4, "Expected avg_rating === 4");
 
   // Fairness is played-aware net wait (rest ignored since R7): 600s / 60 / (1+1) = 5
-  assert.equal(state.queue[0].fairness, 5, 'Expected fairness to be raw wait minus played time over games')
+  assert.equal(state.queue[0].fairness, 5, "Expected fairness to be raw wait minus played time over games");
 
   // Rest does not pause the wait clock (R7): the resting entry checked in at the
   // same time accrues the same fairness as the waiting one
-  const restingRow = state.queue.find(e => e.id === restingEid)
-  assert.ok(restingRow, 'Expected resting entry in queue state')
-  assert.equal(restingRow.fairness, state.queue[0].fairness, 'Expected resting entry fairness to equal same-check-in waiting entry')
+  const restingRow = state.queue.find((e) => e.id === restingEid);
+  assert.ok(restingRow, "Expected resting entry in queue state");
+  assert.equal(
+    restingRow.fairness,
+    state.queue[0].fairness,
+    "Expected resting entry fairness to equal same-check-in waiting entry",
+  );
 
   // Stats check
-  assert.equal(state.stats.match_count, 1, 'Expected match_count to count only active matches')
-  assert.deepEqual(state.stats.shuttles, { new: 2, used: 1 }, 'Expected shuttles stats')
+  assert.equal(state.stats.match_count, 1, "Expected match_count to count only active matches");
+  assert.deepEqual(state.stats.shuttles, { new: 2, used: 1 }, "Expected shuttles stats");
 
   // avg wait counts the full time since check-in (rest no longer excluded): ≈ 600
   assert.ok(
     Math.abs(state.stats.avg_wait_seconds - 600) <= 2,
-    `Expected avg_wait_seconds ≈ 600 (rest included), got ${state.stats.avg_wait_seconds}`
-  )
+    `Expected avg_wait_seconds ≈ 600 (rest included), got ${state.stats.avg_wait_seconds}`,
+  );
 
-  console.log('sse.state.test.js: all assertions passed')
+  console.log("sse.state.test.js: all assertions passed");
 } finally {
-  if (slatedMid) db.prepare('DELETE FROM matches WHERE id = ?').run(slatedMid)
-  if (endedMid) db.prepare('DELETE FROM matches WHERE id = ?').run(endedMid)
+  if (slatedMid) db.prepare("DELETE FROM matches WHERE id = ?").run(slatedMid);
+  if (endedMid) db.prepare("DELETE FROM matches WHERE id = ?").run(endedMid);
   if (sid) {
-    db.prepare('DELETE FROM queue_entries WHERE session_id = ?').run(sid)
-    db.prepare('DELETE FROM courts WHERE session_id = ?').run(sid)
-    db.prepare('DELETE FROM sessions WHERE id = ?').run(sid)
+    db.prepare("DELETE FROM queue_entries WHERE session_id = ?").run(sid);
+    db.prepare("DELETE FROM courts WHERE session_id = ?").run(sid);
+    db.prepare("DELETE FROM sessions WHERE id = ?").run(sid);
   }
   for (const pid of pids) {
-    db.prepare('DELETE FROM players WHERE id = ?').run(pid)
+    db.prepare("DELETE FROM players WHERE id = ?").run(pid);
   }
   for (const id of preExistingUnended) {
-    db.prepare('UPDATE sessions SET ended_at = NULL WHERE id = ?').run(id)
+    db.prepare("UPDATE sessions SET ended_at = NULL WHERE id = ?").run(id);
   }
 }

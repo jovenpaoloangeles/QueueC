@@ -1,63 +1,67 @@
-import { useState, useEffect } from 'react'
-import { cn, fmtDur, fmtClock, netWait } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import { toggleTheme } from '@/lib/theme'
-import EndSessionConfirmDialog from './EndSessionConfirmDialog.jsx'
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { toggleTheme } from "@/lib/theme";
+import { cn, fmtClock, fmtDur, netWait } from "@/lib/utils";
+import EndSessionConfirmDialog from "./EndSessionConfirmDialog.jsx";
 
 export default function Header({ session, sseData, draftedIds = new Set(), onSmartMatch, onEndSession }) {
-  const [elapsed, setElapsed] = useState(0)
-  const [confirmEnd, setConfirmEnd] = useState(false)
+  const [elapsed, setElapsed] = useState(0);
+  const [confirmEnd, setConfirmEnd] = useState(false);
 
   useEffect(() => {
-    if (!session || session.started_at == null) return
-    const base = Math.floor(Date.now() / 1000) - session.started_at
-    setElapsed(base)
-    const id = setInterval(() => setElapsed(e => e + 1), 1000)
-    return () => clearInterval(id)
-  }, [session?.id, session?.started_at])
+    if (!session || session.started_at == null) return;
+    const base = Math.floor(Date.now() / 1000) - session.started_at;
+    setElapsed(base);
+    const id = setInterval(() => setElapsed((e) => e + 1), 1000);
+    return () => clearInterval(id);
+  }, [session?.id, session?.started_at, session]);
 
-  const fmtTime = ts => ts ? new Date(ts * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'
+  const fmtTime = (ts) =>
+    ts ? new Date(ts * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—";
 
   // ---- live indicators, all derived client-side from the SSE payload ----
-  const queue = sseData?.queue ?? []
-  const courts = sseData?.courts ?? []
-  const stats = sseData?.stats
-  const serverTime = sseData?.serverTime ?? Math.floor(Date.now() / 1000)
+  const queue = sseData?.queue ?? [];
+  const courts = sseData?.courts ?? [];
+  const stats = sseData?.stats;
+  const serverTime = sseData?.serverTime ?? Math.floor(Date.now() / 1000);
 
-  const courtsLive = courts.filter(c =>
-    c.enabled &&
-    (c.expires_at == null || serverTime < c.expires_at) &&
-    (c.active_from == null || serverTime >= c.active_from) &&
-    (c.active_until == null || serverTime < c.active_until)
-  ).length
+  const courtsLive = courts.filter(
+    (c) =>
+      c.enabled &&
+      (c.expires_at == null || serverTime < c.expires_at) &&
+      (c.active_from == null || serverTime >= c.active_from) &&
+      (c.active_until == null || serverTime < c.active_until),
+  ).length;
 
   // staged entries are excluded server-side from the SSE queue; drafted entries
   // (sitting in a court's lineup slots) are held locally and don't read as available
-  const waiting = queue.filter(e => e.status === 'waiting' && !draftedIds.has(e.id))
+  const waiting = queue.filter((e) => e.status === "waiting" && !draftedIds.has(e.id));
   const longest = waiting.reduce(
     (best, e) => {
-      const secs = netWait(serverTime, e)
-      return secs > best.secs ? { secs, name: e.name } : best
+      const secs = netWait(serverTime, e);
+      return secs > best.secs ? { secs, name: e.name } : best;
     },
-    { secs: 0, name: null }
-  )
+    { secs: 0, name: null },
+  );
 
-  const ChipDot = ({ tone }) => <span className={cn('size-2 shrink-0 rounded-full', tone)} aria-hidden="true" />
+  const ChipDot = ({ tone }) => (
+    <span className={cn("size-2 shrink-0 rounded-full", tone)} aria-hidden="true" />
+  );
 
   // session name "NAME (date)" → one line: NAME (uppercased) · date;
   // without ' (' the full name renders alone (defensive path)
   function SessionNameBlock({ name }) {
-    const idx = (name ?? '').indexOf(' (')
-    const namePart = idx === -1 ? (name ?? '') : name.slice(0, idx)
-    const datePart = idx === -1 ? null : name.slice(idx + 2, name.length - 1)
+    const idx = (name ?? "").indexOf(" (");
+    const namePart = idx === -1 ? (name ?? "") : name.slice(0, idx);
+    const datePart = idx === -1 ? null : name.slice(idx + 2, name.length - 1);
     return (
       <span data-testid="header-session-name" className="whitespace-nowrap">
-        <span className="text-[13.5px] font-bold tracking-wide text-foreground">{namePart.toUpperCase()}</span>
-        {datePart != null && (
-          <span className="text-[12.5px] text-muted-foreground"> · {datePart}</span>
-        )}
+        <span className="text-[13.5px] font-bold tracking-wide text-foreground">
+          {namePart.toUpperCase()}
+        </span>
+        {datePart != null && <span className="text-[12.5px] text-muted-foreground"> · {datePart}</span>}
       </span>
-    )
+    );
   }
 
   return (
@@ -69,12 +73,17 @@ export default function Header({ session, sseData, draftedIds = new Set(), onSma
         {session ? (
           <>
             <SessionNameBlock name={session.name} />
-            <span data-testid="header-time-range" className="text-[12.5px] uppercase tracking-wider text-muted-foreground">
+            <span
+              data-testid="header-time-range"
+              className="text-[12.5px] uppercase tracking-wider text-muted-foreground"
+            >
               {fmtTime(session.scheduled_start)}–{fmtTime(session.scheduled_end)}
             </span>
           </>
         ) : (
-          <span className="text-[12.5px] uppercase tracking-wider text-muted-foreground">No active session</span>
+          <span className="text-[12.5px] uppercase tracking-wider text-muted-foreground">
+            No active session
+          </span>
         )}
       </div>
 
@@ -82,24 +91,39 @@ export default function Header({ session, sseData, draftedIds = new Set(), onSma
       <div aria-label="Session status" className="hidden flex-1 items-center justify-evenly px-2 lg:flex">
         <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[12.5px] text-muted-foreground">
           <ChipDot tone="bg-primary" />
-          Courts <b data-testid="hdr-courts" className="font-mono font-bold tabular-nums text-foreground">{courtsLive} / {courts.length}</b>
+          Courts{" "}
+          <b data-testid="hdr-courts" className="font-mono font-bold tabular-nums text-foreground">
+            {courtsLive} / {courts.length}
+          </b>
         </span>
         <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[12.5px] text-muted-foreground">
           <ChipDot tone="bg-amber-500" />
-          Waiting <b data-testid="hdr-waiting" className="font-mono font-bold tabular-nums text-amber">{waiting.length}</b>
+          Waiting{" "}
+          <b data-testid="hdr-waiting" className="font-mono font-bold tabular-nums text-amber">
+            {waiting.length}
+          </b>
         </span>
         <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[12.5px] text-muted-foreground">
           <ChipDot tone="bg-destructive" />
-          Longest{' '}
-          <b data-testid="hdr-longest" className={cn('font-bold text-foreground', !longest.name && 'text-muted-foreground')}>
-            {longest.name
-              ? <>{longest.name} <span className="font-mono font-semibold text-destructive">({fmtDur(longest.secs)})</span></>
-              : '—'}
+          Longest{" "}
+          <b
+            data-testid="hdr-longest"
+            className={cn("font-bold text-foreground", !longest.name && "text-muted-foreground")}
+          >
+            {longest.name ? (
+              <>
+                {longest.name}{" "}
+                <span className="font-mono font-semibold text-destructive">({fmtDur(longest.secs)})</span>
+              </>
+            ) : (
+              "—"
+            )}
           </b>
         </span>
         <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[12.5px] text-muted-foreground">
           <span className="h-3.5 w-px shrink-0 bg-border" aria-hidden="true" />
-          Avg wait <b data-testid="hdr-avg" className="font-mono font-bold tabular-nums text-foreground">
+          Avg wait{" "}
+          <b data-testid="hdr-avg" className="font-mono font-bold tabular-nums text-foreground">
             {fmtClock(stats?.avg_wait_seconds)}
           </b>
         </span>
@@ -130,8 +154,15 @@ export default function Header({ session, sseData, draftedIds = new Set(), onSma
           onClick={() => onSmartMatch?.()}
         >
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" data-icon="inline-start" className="size-3">
-            <path d="M12 3l1.7 4.6L18 9.3l-4.3 1.7L12 15.6l-1.7-4.6L6 9.3l4.3-1.7L12 3z" fill="currentColor" />
-            <path d="M18.5 15l.9 2.4 2.4.9-2.4.9-.9 2.4-.9-2.4-2.4-.9 2.4-.9.9-2.4z" fill="currentColor" opacity=".7" />
+            <path
+              d="M12 3l1.7 4.6L18 9.3l-4.3 1.7L12 15.6l-1.7-4.6L6 9.3l4.3-1.7L12 3z"
+              fill="currentColor"
+            />
+            <path
+              d="M18.5 15l.9 2.4 2.4.9-2.4.9-.9 2.4-.9-2.4-2.4-.9 2.4-.9.9-2.4z"
+              fill="currentColor"
+              opacity=".7"
+            />
           </svg>
           Smart Match
         </Button>
@@ -160,13 +191,13 @@ export default function Header({ session, sseData, draftedIds = new Set(), onSma
               open={confirmEnd}
               onOpenChange={setConfirmEnd}
               onConfirm={() => {
-                setConfirmEnd(false)
-                onEndSession?.()
+                setConfirmEnd(false);
+                onEndSession?.();
               }}
             />
           </>
         )}
       </div>
     </div>
-  )
+  );
 }

@@ -1,11 +1,12 @@
-import { Hono } from 'hono'
-import db from '../db.js'
-import { broadcast } from './sse.js'
+import { Hono } from "hono";
+import db from "../db.js";
+import { broadcast } from "./sse.js";
 
-const router = new Hono()
+const router = new Hono();
 
 export function computeLeaderboard(sessionId) {
-  const rows = db.prepare(`
+  const rows = db
+    .prepare(`
     SELECT p.id AS player_id, p.name,
       COUNT(*) AS played,
       SUM(CASE WHEN (m.team1_p1=qe.id OR m.team1_p2=qe.id) AND m.team1_score > m.team2_score THEN 1
@@ -23,15 +24,16 @@ export function computeLeaderboard(sessionId) {
       AND (m.team1_p1=qe.id OR m.team1_p2=qe.id OR m.team2_p1=qe.id OR m.team2_p2=qe.id)
     WHERE qe.session_id = ? AND m.ended_at IS NOT NULL AND m.state = 'active'
     GROUP BY p.id
-  `).all(sessionId)
+  `)
+    .all(sessionId);
 
   return rows
-    .map(r => {
-      const played = Number(r.played)
-      const wins = Number(r.wins)
-      const losses = Number(r.losses)
-      const point_diff = Number(r.point_diff)
-      const win_rate = played > 0 ? Math.round((wins / played) * 100) : 0
+    .map((r) => {
+      const played = Number(r.played);
+      const wins = Number(r.wins);
+      const losses = Number(r.losses);
+      const point_diff = Number(r.point_diff);
+      const win_rate = played > 0 ? Math.round((wins / played) * 100) : 0;
       return {
         player_id: r.player_id,
         name: r.name,
@@ -40,51 +42,63 @@ export function computeLeaderboard(sessionId) {
         losses,
         win_rate,
         point_diff,
-      }
+      };
     })
-    .sort((a, b) =>
-      b.win_rate - a.win_rate ||
-      (b.played > 0 ? b.wins / b.played : 0) - (a.played > 0 ? a.wins / a.played : 0) ||
-      b.point_diff - a.point_diff ||
-      b.wins - a.wins ||
-      a.name.localeCompare(b.name)
-    )
+    .sort(
+      (a, b) =>
+        b.win_rate - a.win_rate ||
+        (b.played > 0 ? b.wins / b.played : 0) - (a.played > 0 ? a.wins / a.played : 0) ||
+        b.point_diff - a.point_diff ||
+        b.wins - a.wins ||
+        a.name.localeCompare(b.name),
+    );
 }
 
-router.get('/sessions/:id/stats', (c) => {
-  const sid = c.req.param('id')
-  const now = Math.floor(Date.now() / 1000)
+router.get("/sessions/:id/stats", (c) => {
+  const sid = c.req.param("id");
+  const now = Math.floor(Date.now() / 1000);
 
-  const player_count = db.prepare(
-    "SELECT COUNT(*) as c FROM queue_entries WHERE session_id = ? AND status NOT IN ('left', 'staged')"
-  ).get(sid).c
+  const player_count = db
+    .prepare(
+      "SELECT COUNT(*) as c FROM queue_entries WHERE session_id = ? AND status NOT IN ('left', 'staged')",
+    )
+    .get(sid).c;
 
-  const match_count = db.prepare(
-    "SELECT COUNT(*) as c FROM matches WHERE session_id = ? AND state = 'active'"
-  ).get(sid).c
+  const match_count = db
+    .prepare("SELECT COUNT(*) as c FROM matches WHERE session_id = ? AND state = 'active'")
+    .get(sid).c;
 
-  const waiters = db.prepare(
-    "SELECT checked_in_at, total_seconds_played FROM queue_entries WHERE session_id = ? AND status = 'waiting'"
-  ).all(sid)
+  const waiters = db
+    .prepare(
+      "SELECT checked_in_at, total_seconds_played FROM queue_entries WHERE session_id = ? AND status = 'waiting'",
+    )
+    .all(sid);
   const avg_wait_seconds = waiters.length
-    ? Math.round(waiters.reduce((sum, e) => sum + (now - e.checked_in_at - e.total_seconds_played), 0) / waiters.length)
-    : 0
+    ? Math.round(
+        waiters.reduce((sum, e) => sum + (now - e.checked_in_at - e.total_seconds_played), 0) /
+          waiters.length,
+      )
+    : 0;
 
-  const shuttles = db.prepare(
-    'SELECT COALESCE(SUM(new_shuttles), 0) as new, COALESCE(SUM(used_shuttles), 0) as used FROM matches WHERE session_id = ?'
-  ).get(sid)
-  shuttles.extra = db.prepare('SELECT shuttles_extra FROM sessions WHERE id = ?').get(sid)?.shuttles_extra ?? 0
-  shuttles.total = shuttles.new + shuttles.extra
+  const shuttles = db
+    .prepare(
+      "SELECT COALESCE(SUM(new_shuttles), 0) as new, COALESCE(SUM(used_shuttles), 0) as used FROM matches WHERE session_id = ?",
+    )
+    .get(sid);
+  shuttles.extra =
+    db.prepare("SELECT shuttles_extra FROM sessions WHERE id = ?").get(sid)?.shuttles_extra ?? 0;
+  shuttles.total = shuttles.new + shuttles.extra;
 
-  const leaderboard = computeLeaderboard(sid)
+  const leaderboard = computeLeaderboard(sid);
 
-  return c.json({ stats: { player_count, match_count, avg_wait_seconds, leaderboard, shuttles } })
-})
+  return c.json({ stats: { player_count, match_count, avg_wait_seconds, leaderboard, shuttles } });
+});
 
-router.get('/players/:id/history', (c) => {
-  const pid = c.req.param('id')
+router.get("/players/:id/history", (c) => {
+  const pid = c.req.param("id");
 
-  const rows = db.prepare(`
+  const rows = db
+    .prepare(`
     SELECT
       m.team1_score, m.team2_score,
       qe.id as entry_id,
@@ -93,29 +107,35 @@ router.get('/players/:id/history', (c) => {
     JOIN queue_entries qe ON qe.player_id = ?
       AND (m.team1_p1 = qe.id OR m.team1_p2 = qe.id OR m.team2_p1 = qe.id OR m.team2_p2 = qe.id)
     WHERE m.ended_at IS NOT NULL
-  `).all(pid)
+  `)
+    .all(pid);
 
-  const wins = rows.filter(r =>
-    (r.team === 1 && r.team1_score > r.team2_score) ||
-    (r.team === 2 && r.team2_score > r.team1_score)
-  ).length
+  const wins = rows.filter(
+    (r) => (r.team === 1 && r.team1_score > r.team2_score) || (r.team === 2 && r.team2_score > r.team1_score),
+  ).length;
 
-  return c.json({ history: { wins, losses: rows.length - wins, matches_played: rows.length } })
-})
+  return c.json({ history: { wins, losses: rows.length - wins, matches_played: rows.length } });
+});
 
 // session-level shuttle adjustments (+ New shuttle button): delta on top of the
 // per-game defaults, clamped so extra can't go negative
-router.patch('/sessions/:id/shuttles', async (c) => {
-  const session = db.prepare('SELECT id FROM sessions WHERE id = ?').get(c.req.param('id'))
-  if (!session) return c.json({ error: 'Session not found' }, 404)
-  const body = await c.req.json().catch(() => ({}))
-  const delta = Number(body.delta)
+router.patch("/sessions/:id/shuttles", async (c) => {
+  const session = db.prepare("SELECT id FROM sessions WHERE id = ?").get(c.req.param("id"));
+  if (!session) return c.json({ error: "Session not found" }, 404);
+  const body = await c.req.json().catch(() => ({}));
+  const delta = Number(body.delta);
   if (!Number.isInteger(delta) || delta === 0) {
-    return c.json({ error: 'delta must be a non-zero integer' }, 400)
+    return c.json({ error: "delta must be a non-zero integer" }, 400);
   }
-  db.prepare('UPDATE sessions SET shuttles_extra = MAX(0, shuttles_extra + ?) WHERE id = ?').run(delta, session.id)
-  broadcast()
-  return c.json({ shuttles_extra: db.prepare('SELECT shuttles_extra FROM sessions WHERE id = ?').get(session.id).shuttles_extra })
-})
+  db.prepare("UPDATE sessions SET shuttles_extra = MAX(0, shuttles_extra + ?) WHERE id = ?").run(
+    delta,
+    session.id,
+  );
+  broadcast();
+  return c.json({
+    shuttles_extra: db.prepare("SELECT shuttles_extra FROM sessions WHERE id = ?").get(session.id)
+      .shuttles_extra,
+  });
+});
 
-export default router
+export default router;

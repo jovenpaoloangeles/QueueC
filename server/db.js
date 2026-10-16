@@ -1,29 +1,29 @@
-import { Database } from 'bun:sqlite'
-import { join, dirname } from 'path'
-import { fileURLToPath } from 'url'
-import { readFileSync, existsSync } from 'fs'
+import { Database } from "bun:sqlite";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
-const dbPath = process.env.DB_PATH ?? join(__dirname, '../queuec.db')
-const db = new Database(dbPath)
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const dbPath = process.env.DB_PATH ?? join(__dirname, "../queuec.db");
+const db = new Database(dbPath);
 
-db.exec('PRAGMA journal_mode = WAL')
-db.exec('PRAGMA foreign_keys = ON')
+db.exec("PRAGMA journal_mode = WAL");
+db.exec("PRAGMA foreign_keys = ON");
 
 export const SKILL_LEVELS = [
-  'newbie',
-  'beginner',
-  'lower_intermediate',
-  'intermediate',
-  'upper_intermediate',
-  'expert',
-  'professional',
-  'advanced', // legacy alias accepted & normalized to expert
-]
+  "newbie",
+  "beginner",
+  "lower_intermediate",
+  "intermediate",
+  "upper_intermediate",
+  "expert",
+  "professional",
+  "advanced", // legacy alias accepted & normalized to expert
+];
 
 export function normalizeSkill(skill) {
-  if (skill === 'advanced') return 'expert'
-  return skill
+  if (skill === "advanced") return "expert";
+  return skill;
 }
 
 // Preset rows are hand-edited JSON: a missing/typo'd/non-string skill_level
@@ -32,7 +32,7 @@ export function normalizeSkill(skill) {
 // a typo'd value outside SKILL_LEVELS, and skipping keeps an existing pool
 // player (and their level) intact.
 function isValidSkill(skill) {
-  return typeof skill === 'string' && SKILL_LEVELS.includes(normalizeSkill(skill))
+  return typeof skill === "string" && SKILL_LEVELS.includes(normalizeSkill(skill));
 }
 
 db.exec(`
@@ -100,13 +100,15 @@ db.exec(`
     expires_at INTEGER,
     enabled INTEGER NOT NULL DEFAULT 1
   );
-`)
+`);
 
 // Upgrade players CHECK constraint if DB was created with the old 5-tier constraint
-const playersSql = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='players'").get()?.sql ?? ''
-if (!playersSql.includes('lower_intermediate')) {
-  db.exec('PRAGMA foreign_keys = OFF')
-  db.transaction(() => db.exec(`
+const playersSql =
+  db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='players'").get()?.sql ?? "";
+if (!playersSql.includes("lower_intermediate")) {
+  db.exec("PRAGMA foreign_keys = OFF");
+  db.transaction(() =>
+    db.exec(`
     CREATE TABLE players_new (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
@@ -117,31 +119,41 @@ if (!playersSql.includes('lower_intermediate')) {
       SELECT id, name, CASE WHEN skill_level = 'advanced' THEN 'expert' ELSE skill_level END, created_at FROM players;
     DROP TABLE players;
     ALTER TABLE players_new RENAME TO players;
-  `))()
-  db.exec('PRAGMA foreign_keys = ON')
+  `),
+  )();
+  db.exec("PRAGMA foreign_keys = ON");
 } else {
   // Normalize any stray 'advanced' rows to 'expert'
-  db.exec("UPDATE players SET skill_level = 'expert' WHERE skill_level = 'advanced'")
+  db.exec("UPDATE players SET skill_level = 'expert' WHERE skill_level = 'advanced'");
 }
 
 // ponytail: one-shot column additions for queue_entries
-const qeCols = new Set(db.prepare("PRAGMA table_info(queue_entries)").all().map(c => c.name))
-if (!qeCols.has('sort_order')) {
-  db.exec('ALTER TABLE queue_entries ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0')
+const qeCols = new Set(
+  db
+    .prepare("PRAGMA table_info(queue_entries)")
+    .all()
+    .map((c) => c.name),
+);
+if (!qeCols.has("sort_order")) {
+  db.exec("ALTER TABLE queue_entries ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0");
 }
-if (!qeCols.has('games_played')) {
-  db.exec('ALTER TABLE queue_entries ADD COLUMN games_played INTEGER NOT NULL DEFAULT 0')
+if (!qeCols.has("games_played")) {
+  db.exec("ALTER TABLE queue_entries ADD COLUMN games_played INTEGER NOT NULL DEFAULT 0");
 }
-if (!qeCols.has('status_updated_at')) {
-  db.exec('ALTER TABLE queue_entries ADD COLUMN status_updated_at INTEGER')
-  db.exec('UPDATE queue_entries SET status_updated_at = COALESCE(last_played_at, checked_in_at) WHERE status_updated_at IS NULL')
+if (!qeCols.has("status_updated_at")) {
+  db.exec("ALTER TABLE queue_entries ADD COLUMN status_updated_at INTEGER");
+  db.exec(
+    "UPDATE queue_entries SET status_updated_at = COALESCE(last_played_at, checked_in_at) WHERE status_updated_at IS NULL",
+  );
 }
 
 // Upgrade queue_entries CHECK constraint to include 'staged'
-const qeSql = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='queue_entries'").get()?.sql ?? ''
+const qeSql =
+  db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='queue_entries'").get()?.sql ?? "";
 if (!qeSql.includes("'staged'")) {
-  db.exec('PRAGMA foreign_keys = OFF')
-  db.transaction(() => db.exec(`
+  db.exec("PRAGMA foreign_keys = OFF");
+  db.transaction(() =>
+    db.exec(`
     CREATE TABLE queue_entries_new (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       session_id INTEGER NOT NULL REFERENCES sessions(id),
@@ -158,33 +170,42 @@ if (!qeSql.includes("'staged'")) {
       SELECT id, session_id, player_id, checked_in_at, status, last_played_at, total_seconds_played, sort_order, games_played, status_updated_at FROM queue_entries;
     DROP TABLE queue_entries;
     ALTER TABLE queue_entries_new RENAME TO queue_entries;
-  `))()
-  db.exec('PRAGMA foreign_keys = ON')
+  `),
+  )();
+  db.exec("PRAGMA foreign_keys = ON");
 }
 
 // one-shot column additions and court_number relaxation for matches
-const matchCols = new Set(db.prepare("PRAGMA table_info(matches)").all().map(c => c.name))
-if (!matchCols.has('state')) {
-  db.exec("ALTER TABLE matches ADD COLUMN state TEXT NOT NULL DEFAULT 'active'")
+const matchCols = new Set(
+  db
+    .prepare("PRAGMA table_info(matches)")
+    .all()
+    .map((c) => c.name),
+);
+if (!matchCols.has("state")) {
+  db.exec("ALTER TABLE matches ADD COLUMN state TEXT NOT NULL DEFAULT 'active'");
 }
-if (!matchCols.has('slate_seq')) {
-  db.exec('ALTER TABLE matches ADD COLUMN slate_seq INTEGER')
+if (!matchCols.has("slate_seq")) {
+  db.exec("ALTER TABLE matches ADD COLUMN slate_seq INTEGER");
 }
-if (!matchCols.has('new_shuttles')) {
-  db.exec('ALTER TABLE matches ADD COLUMN new_shuttles INTEGER NOT NULL DEFAULT 0')
+if (!matchCols.has("new_shuttles")) {
+  db.exec("ALTER TABLE matches ADD COLUMN new_shuttles INTEGER NOT NULL DEFAULT 0");
 }
-if (!matchCols.has('used_shuttles')) {
-  db.exec('ALTER TABLE matches ADD COLUMN used_shuttles INTEGER NOT NULL DEFAULT 0')
+if (!matchCols.has("used_shuttles")) {
+  db.exec("ALTER TABLE matches ADD COLUMN used_shuttles INTEGER NOT NULL DEFAULT 0");
 }
-if (!matchCols.has('rating')) {
-  db.exec('ALTER TABLE matches ADD COLUMN rating INTEGER')
+if (!matchCols.has("rating")) {
+  db.exec("ALTER TABLE matches ADD COLUMN rating INTEGER");
 }
 
-const courtNumberCol = db.prepare('PRAGMA table_info(matches)').all()
-  .find(c => c.name === 'court_number')
+const courtNumberCol = db
+  .prepare("PRAGMA table_info(matches)")
+  .all()
+  .find((c) => c.name === "court_number");
 if (courtNumberCol?.notnull === 1) {
-  db.exec('PRAGMA foreign_keys = OFF')
-  db.transaction(() => db.exec(`
+  db.exec("PRAGMA foreign_keys = OFF");
+  db.transaction(() =>
+    db.exec(`
     CREATE TABLE matches_new (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       session_id INTEGER NOT NULL REFERENCES sessions(id),
@@ -208,28 +229,37 @@ if (courtNumberCol?.notnull === 1) {
       SELECT id, session_id, court_number, format, team1_p1, team1_p2, team2_p1, team2_p2, team1_score, team2_score, started_at, ended_at, state, slate_seq, new_shuttles, used_shuttles, rating FROM matches;
     DROP TABLE matches;
     ALTER TABLE matches_new RENAME TO matches;
-  `))()
-  db.exec('PRAGMA foreign_keys = ON')
+  `),
+  )();
+  db.exec("PRAGMA foreign_keys = ON");
 }
 
 // one-shot column additions for courts (duration_minutes, expires_at)
-const courtCols = new Set(db.prepare("PRAGMA table_info(courts)").all().map(c => c.name))
-if (!courtCols.has('duration_minutes')) {
-  db.exec('ALTER TABLE courts ADD COLUMN duration_minutes INTEGER')
+const courtCols = new Set(
+  db
+    .prepare("PRAGMA table_info(courts)")
+    .all()
+    .map((c) => c.name),
+);
+if (!courtCols.has("duration_minutes")) {
+  db.exec("ALTER TABLE courts ADD COLUMN duration_minutes INTEGER");
 }
-if (!courtCols.has('expires_at')) {
-  db.exec('ALTER TABLE courts ADD COLUMN expires_at INTEGER')
+if (!courtCols.has("expires_at")) {
+  db.exec("ALTER TABLE courts ADD COLUMN expires_at INTEGER");
 }
-if (!courtCols.has('opens_after')) {
-  db.exec('ALTER TABLE courts ADD COLUMN opens_after INTEGER')
+if (!courtCols.has("opens_after")) {
+  db.exec("ALTER TABLE courts ADD COLUMN opens_after INTEGER");
 }
 
 // ponytail: rebuild sessions to relax started_at — drafts have NULL until PATCH /start
-const startedAt = db.prepare('PRAGMA table_info(sessions)').all()
-  .find(c => c.name === 'started_at')
+const startedAt = db
+  .prepare("PRAGMA table_info(sessions)")
+  .all()
+  .find((c) => c.name === "started_at");
 if (startedAt?.notnull === 1) {
-  db.exec('PRAGMA foreign_keys = OFF')
-  db.transaction(() => db.exec(`
+  db.exec("PRAGMA foreign_keys = OFF");
+  db.transaction(() =>
+    db.exec(`
     CREATE TABLE sessions_new (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
@@ -243,26 +273,32 @@ if (startedAt?.notnull === 1) {
       SELECT id, name, scheduled_start, scheduled_end, court_count, started_at, ended_at FROM sessions;
     DROP TABLE sessions;
     ALTER TABLE sessions_new RENAME TO sessions;
-  `))()
-  db.exec('PRAGMA foreign_keys = ON')
+  `),
+  )();
+  db.exec("PRAGMA foreign_keys = ON");
 }
 
 // session-level manual shuttle count (+ New shuttle in the sidebar)
-const sessionCols = new Set(db.prepare("PRAGMA table_info(sessions)").all().map(c => c.name))
-if (!sessionCols.has('shuttles_extra')) {
-  db.exec('ALTER TABLE sessions ADD COLUMN shuttles_extra INTEGER NOT NULL DEFAULT 0')
+const sessionCols = new Set(
+  db
+    .prepare("PRAGMA table_info(sessions)")
+    .all()
+    .map((c) => c.name),
+);
+if (!sessionCols.has("shuttles_extra")) {
+  db.exec("ALTER TABLE sessions ADD COLUMN shuttles_extra INTEGER NOT NULL DEFAULT 0");
 }
 
 // backfill courts for sessions that predate the courts table
-const sessionsNeedingCourts = db.prepare(`
+const sessionsNeedingCourts = db
+  .prepare(`
   SELECT s.id, s.court_count FROM sessions s
   WHERE s.court_count > 0
     AND NOT EXISTS (SELECT 1 FROM courts c WHERE c.session_id = s.id)
-`).all()
+`)
+  .all();
 if (sessionsNeedingCourts.length > 0) {
-  const insertCourt = db.prepare(
-    'INSERT INTO courts (session_id, label) VALUES (?, ?)'
-  )
+  const insertCourt = db.prepare("INSERT INTO courts (session_id, label) VALUES (?, ?)");
   const updateMatches = db.prepare(`
     UPDATE matches SET court_number = (
       SELECT c.id FROM courts c
@@ -275,89 +311,91 @@ if (sessionsNeedingCourts.length > 0) {
         WHERE c.session_id = matches.session_id
           AND c.label = 'Court ' || matches.court_number
       )
-  `)
+  `);
   db.transaction(() => {
     for (const { id, court_count } of sessionsNeedingCourts) {
       for (let i = 1; i <= court_count; i++) {
-        insertCourt.run(id, `Court ${i}`)
+        insertCourt.run(id, `Court ${i}`);
       }
     }
     for (const { id } of sessionsNeedingCourts) {
-      updateMatches.run(id)
+      updateMatches.run(id);
     }
-  })()
+  })();
 }
 
 export function seedPlayersFromFile(rows) {
-  const now = Math.floor(Date.now() / 1000)
+  const now = Math.floor(Date.now() / 1000);
   const insert = db.prepare(
-    'INSERT OR IGNORE INTO players (name, skill_level, created_at) SELECT ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM players WHERE LOWER(TRIM(name)) = LOWER(TRIM(?)))'
-  )
+    "INSERT OR IGNORE INTO players (name, skill_level, created_at) SELECT ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM players WHERE LOWER(TRIM(name)) = LOWER(TRIM(?)))",
+  );
   for (const row of rows) {
-    if (row == null || typeof row !== 'object') continue // bare non-element rows, e.g. [null]
-    const { name, skill_level } = row
-    if (typeof name !== 'string' || !name.trim()) continue
-    if (!isValidSkill(skill_level)) continue
-    insert.run(name.trim(), normalizeSkill(skill_level), now, name.trim())
+    if (row == null || typeof row !== "object") continue; // bare non-element rows, e.g. [null]
+    const { name, skill_level } = row;
+    if (typeof name !== "string" || !name.trim()) continue;
+    if (!isValidSkill(skill_level)) continue;
+    insert.run(name.trim(), normalizeSkill(skill_level), now, name.trim());
   }
 }
 
-const dbDir = dirname(dbPath)
-const presetPath = process.env.PLAYERS_PATH
-  ?? (existsSync(`${dbDir}/players.json`) ? `${dbDir}/players.json` : join(__dirname, '../players.json'))
+const dbDir = dirname(dbPath);
+const presetPath =
+  process.env.PLAYERS_PATH ??
+  (existsSync(`${dbDir}/players.json`) ? `${dbDir}/players.json` : join(__dirname, "../players.json"));
 
 function loadPresetRows() {
-  if (!existsSync(presetPath)) return null
+  if (!existsSync(presetPath)) return null;
   try {
-    const rows = JSON.parse(readFileSync(presetPath, 'utf8'))
-    return Array.isArray(rows) ? rows : null
+    const rows = JSON.parse(readFileSync(presetPath, "utf8"));
+    return Array.isArray(rows) ? rows : null;
   } catch {
-    return null
+    return null;
   }
 }
 
 // Reset the pool to the preset: drop everyone not in the file, resync preset
 // skills, re-add any missing preset players. Missing/unparseable file = no-op.
 export function resetPlayersToPreset() {
-  const rows = loadPresetRows()
-  if (!rows) return
+  const rows = loadPresetRows();
+  if (!rows) return;
   db.transaction(() => {
-    const valid = rows.filter(r => typeof r?.name === 'string' && r.name.trim())
-    const names = valid.map(r => r.name.trim())
-    const placeholders = names.map(() => 'LOWER(TRIM(?))').join(',')
+    const valid = rows.filter((r) => typeof r?.name === "string" && r.name.trim());
+    const names = valid.map((r) => r.name.trim());
+    const placeholders = names.map(() => "LOWER(TRIM(?))").join(",");
 
     // Collect players leaving the pool BEFORE deleting anything, so their
     // dependent rows can go first — queue_entries/matches reference players.id
     // with no ON DELETE action and foreign_keys is ON.
     const doomed = names.length
       ? db.prepare(`SELECT id FROM players WHERE LOWER(TRIM(name)) NOT IN (${placeholders})`).all(...names)
-      : db.prepare('SELECT id FROM players').all()
+      : db.prepare("SELECT id FROM players").all();
     if (doomed.length) {
-      const playerIds = doomed.map(r => r.id)
-      const idPh = playerIds.map(() => '?').join(',')
-      const entryIds = db.prepare(
-        `SELECT id FROM queue_entries WHERE player_id IN (${idPh})`
-      ).all(...playerIds).map(r => r.id)
+      const playerIds = doomed.map((r) => r.id);
+      const idPh = playerIds.map(() => "?").join(",");
+      const entryIds = db
+        .prepare(`SELECT id FROM queue_entries WHERE player_id IN (${idPh})`)
+        .all(...playerIds)
+        .map((r) => r.id);
       if (entryIds.length) {
-        const entryPh = entryIds.map(() => '?').join(',')
+        const entryPh = entryIds.map(() => "?").join(",");
         db.prepare(
-          `DELETE FROM matches WHERE team1_p1 IN (${entryPh}) OR team1_p2 IN (${entryPh}) OR team2_p1 IN (${entryPh}) OR team2_p2 IN (${entryPh})`
-        ).run(...entryIds, ...entryIds, ...entryIds, ...entryIds)
-        db.prepare(`DELETE FROM queue_entries WHERE id IN (${entryPh})`).run(...entryIds)
+          `DELETE FROM matches WHERE team1_p1 IN (${entryPh}) OR team1_p2 IN (${entryPh}) OR team2_p1 IN (${entryPh}) OR team2_p2 IN (${entryPh})`,
+        ).run(...entryIds, ...entryIds, ...entryIds, ...entryIds);
+        db.prepare(`DELETE FROM queue_entries WHERE id IN (${entryPh})`).run(...entryIds);
       }
-      db.prepare(`DELETE FROM players WHERE id IN (${idPh})`).run(...playerIds)
+      db.prepare(`DELETE FROM players WHERE id IN (${idPh})`).run(...playerIds);
     }
 
-    seedPlayersFromFile(rows)
-    const update = db.prepare('UPDATE players SET skill_level = ? WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))')
+    seedPlayersFromFile(rows);
+    const update = db.prepare("UPDATE players SET skill_level = ? WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))");
     for (const { name, skill_level } of valid) {
-      if (!isValidSkill(skill_level)) continue // name above already kept the player; keep their level too
-      update.run(normalizeSkill(skill_level), name.trim())
+      if (!isValidSkill(skill_level)) continue; // name above already kept the player; keep their level too
+      update.run(normalizeSkill(skill_level), name.trim());
     }
-  })()
+  })();
 }
 
-const presetRows = loadPresetRows()
-if (presetRows) seedPlayersFromFile(presetRows)
+const presetRows = loadPresetRows();
+if (presetRows) seedPlayersFromFile(presetRows);
 
-export default db
+export default db;

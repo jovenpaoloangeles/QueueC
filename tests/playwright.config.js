@@ -1,11 +1,11 @@
 // tests/playwright.config.js
-import { defineConfig } from '@playwright/test'
+import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
-  testDir: './e2e',
+  testDir: "./e2e",
   // stale client/dist looks like a pile of false failures — mtime-check and
   // rebuild before workers spawn (fast no-op when the dist is fresh)
-  globalSetup: './scripts/ensure-build.js',
+  globalSetup: "./scripts/ensure-build.js",
   use: {
     headless: true,
     viewport: { width: 1280, height: 800 },
@@ -16,5 +16,5 @@ export default defineConfig({
   // chromium instances fit this machine; PW_WORKERS still overrides.
   workers: process.env.PW_WORKERS ? Number(process.env.PW_WORKERS) : 8,
   retries: 0,
-  reporter: [['list'], ['html', { open: 'never' }]],
-})
+  reporter: [["list"], ["html", { open: "never" }]],
+});

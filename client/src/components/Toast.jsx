@@ -1,33 +1,33 @@
-import { createContext, useContext, useState, useRef, useCallback, useEffect } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 
-const noop = () => {}
-const ToastContext = createContext(noop)
+const noop = () => {};
+const ToastContext = createContext(noop);
 
 const TYPE_STYLES = {
-  success: 'bg-wash-green text-green-deep border-green-deep/15',
-  error: 'bg-wash-red text-destructive border-destructive/15',
-  warning: 'bg-wash-amber text-amber border-amber/20',
-  info: 'bg-card text-card-foreground border-border'
-}
+  success: "bg-wash-green text-green-deep border-green-deep/15",
+  error: "bg-wash-red text-destructive border-destructive/15",
+  warning: "bg-wash-amber text-amber border-amber/20",
+  info: "bg-card text-card-foreground border-border",
+};
 
 export function ToastProvider({ children }) {
-  const [state, setState] = useState(null)
-  const timerRef = useRef(null)
+  const [state, setState] = useState(null);
+  const timerRef = useRef(null);
 
-  const toast = useCallback((message, type = 'info') => {
-    if (timerRef.current) clearTimeout(timerRef.current)
-    setState({ message, type })
+  const toast = useCallback((message, type = "info") => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setState({ message, type });
     timerRef.current = setTimeout(() => {
-      setState(null)
-      timerRef.current = null
-    }, 3500)
-  }, [])
+      setState(null);
+      timerRef.current = null;
+    }, 3500);
+  }, []);
 
   useEffect(() => {
     return () => {
-      if (timerRef.current) clearTimeout(timerRef.current)
-    }
-  }, [])
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   return (
     <ToastContext.Provider value={toast}>
@@ -44,9 +44,9 @@ export function ToastProvider({ children }) {
         </div>
       )}
     </ToastContext.Provider>
-  )
+  );
 }
 
 export function useToast() {
-  return useContext(ToastContext) || noop
+  return useContext(ToastContext) || noop;
 }

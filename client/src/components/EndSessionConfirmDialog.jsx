@@ -1,5 +1,12 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 /**
  * Confirm gate for the header 'End Session' button — the session is destroyed,
@@ -17,14 +24,28 @@ export default function EndSessionConfirmDialog({ open, onOpenChange, onConfirm 
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button type="button" variant="outline" size="sm" className="rounded-full" data-testid="end-session-cancel" onClick={() => onOpenChange(false)}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="rounded-full"
+            data-testid="end-session-cancel"
+            onClick={() => onOpenChange(false)}
+          >
             Cancel
           </Button>
-          <Button type="button" variant="destructive" size="sm" className="rounded-full" data-testid="end-session-confirm" onClick={onConfirm}>
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            className="rounded-full"
+            data-testid="end-session-confirm"
+            onClick={onConfirm}
+          >
             End Session
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

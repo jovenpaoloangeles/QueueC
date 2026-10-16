@@ -49,7 +49,7 @@
   ::selection { background: #bfe6cf; color: #0d3d24; }
   :focus-visible { outline: 2px solid var(--green); outline-offset: 2px; border-radius: 6px; }
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation: none !important; transition: none !important; }
+    *, *::before, *::after { animation: none; transition: none; }
   }
   .mono { font-family: "Spline Sans Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
 
@@ -482,7 +482,7 @@
         </div>
       </div>
       <div class="queue-grid">
-        <div class="qcard is-next" tabindex="0">
+        <div class="qcard is-next" >
           <span class="waitbar hot"></span>
           <div class="who">
             <span class="name">Kwong</span>
@@ -495,7 +495,7 @@
           <span class="line3"><span class="gp">GP <b>3</b></span><span class="rating"><span class="stars on">★★★</span><span class="stars off">☆☆</span> <span class="stars-num low">2.7</span></span></span>
           <svg class="grip" width="10" height="16" viewBox="0 0 10 16" aria-hidden="true"><circle cx="2.5" cy="3" r="1.4" fill="currentColor"/><circle cx="7.5" cy="3" r="1.4" fill="currentColor"/><circle cx="2.5" cy="8" r="1.4" fill="currentColor"/><circle cx="7.5" cy="8" r="1.4" fill="currentColor"/><circle cx="2.5" cy="13" r="1.4" fill="currentColor"/><circle cx="7.5" cy="13" r="1.4" fill="currentColor"/></svg>
         </div>
-        <div class="qcard is-next" tabindex="0">
+        <div class="qcard is-next" >
           <span class="waitbar hot"></span>
           <div class="who">
             <span class="name">Peter</span>
@@ -508,7 +508,7 @@
           <span class="line3"><span class="gp">GP <b>3</b></span><span class="rating"><span class="stars on">★★★★★</span><span class="stars off"></span> <span class="stars-num">4.7</span></span></span>
           <svg class="grip" width="10" height="16" viewBox="0 0 10 16" aria-hidden="true"><circle cx="2.5" cy="3" r="1.4" fill="currentColor"/><circle cx="7.5" cy="3" r="1.4" fill="currentColor"/><circle cx="2.5" cy="8" r="1.4" fill="currentColor"/><circle cx="7.5" cy="8" r="1.4" fill="currentColor"/><circle cx="2.5" cy="13" r="1.4" fill="currentColor"/><circle cx="7.5" cy="13" r="1.4" fill="currentColor"/></svg>
         </div>
-        <div class="qcard is-next" tabindex="0">
+        <div class="qcard is-next" >
           <span class="waitbar warm"></span>
           <div class="who">
             <span class="name">Aids</span>
@@ -521,7 +521,7 @@
           <span class="line3"><span class="gp">GP <b>2</b></span><span class="rating"><span class="stars on">★★★★</span><span class="stars off">☆</span> <span class="stars-num">4.5</span></span></span>
           <svg class="grip" width="10" height="16" viewBox="0 0 10 16" aria-hidden="true"><circle cx="2.5" cy="3" r="1.4" fill="currentColor"/><circle cx="7.5" cy="3" r="1.4" fill="currentColor"/><circle cx="2.5" cy="8" r="1.4" fill="currentColor"/><circle cx="7.5" cy="8" r="1.4" fill="currentColor"/><circle cx="2.5" cy="13" r="1.4" fill="currentColor"/><circle cx="7.5" cy="13" r="1.4" fill="currentColor"/></svg>
         </div>
-        <div class="qcard is-next" tabindex="0">
+        <div class="qcard is-next" >
           <span class="waitbar warm"></span>
           <div class="who">
             <span class="name">Shamah</span>
@@ -534,7 +534,7 @@
           <span class="line3"><span class="gp">GP <b>2</b></span><span class="rating"><span class="stars on">★★★★</span><span class="stars off">☆</span> <span class="stars-num">4.2</span></span></span>
           <svg class="grip" width="10" height="16" viewBox="0 0 10 16" aria-hidden="true"><circle cx="2.5" cy="3" r="1.4" fill="currentColor"/><circle cx="7.5" cy="3" r="1.4" fill="currentColor"/><circle cx="2.5" cy="8" r="1.4" fill="currentColor"/><circle cx="7.5" cy="8" r="1.4" fill="currentColor"/><circle cx="2.5" cy="13" r="1.4" fill="currentColor"/><circle cx="7.5" cy="13" r="1.4" fill="currentColor"/></svg>
         </div>
-        <div class="qcard" tabindex="0">
+        <div class="qcard" >
           <span class="waitbar warm"></span>
           <div class="who">
             <span class="name">Trix</span>
@@ -547,7 +547,7 @@
           <span class="line3"><span class="gp">GP <b>2</b></span><span class="rating"><span class="stars on">★★★</span><span class="stars off">☆☆</span> <span class="stars-num low">3.1</span></span></span>
           <svg class="grip" width="10" height="16" viewBox="0 0 10 16" aria-hidden="true"><circle cx="2.5" cy="3" r="1.4" fill="currentColor"/><circle cx="7.5" cy="3" r="1.4" fill="currentColor"/><circle cx="2.5" cy="8" r="1.4" fill="currentColor"/><circle cx="7.5" cy="8" r="1.4" fill="currentColor"/><circle cx="2.5" cy="13" r="1.4" fill="currentColor"/><circle cx="7.5" cy="13" r="1.4" fill="currentColor"/></svg>
         </div>
-        <div class="qcard" tabindex="0">
+        <div class="qcard" >
           <span class="waitbar"></span>
           <div class="who">
             <span class="name">Elcid</span>
@@ -560,7 +560,7 @@
           <span class="line3"><span class="gp">GP <b>1</b></span><span class="rating"><span class="stars on">★★★★★</span><span class="stars off"></span> <span class="stars-num">4.8</span></span></span>
           <svg class="grip" width="10" height="16" viewBox="0 0 10 16" aria-hidden="true"><circle cx="2.5" cy="3" r="1.4" fill="currentColor"/><circle cx="7.5" cy="3" r="1.4" fill="currentColor"/><circle cx="2.5" cy="8" r="1.4" fill="currentColor"/><circle cx="7.5" cy="8" r="1.4" fill="currentColor"/><circle cx="2.5" cy="13" r="1.4" fill="currentColor"/><circle cx="7.5" cy="13" r="1.4" fill="currentColor"/></svg>
         </div>
-        <div class="qcard" tabindex="0">
+        <div class="qcard" >
           <span class="waitbar"></span>
           <div class="who">
             <span class="name">Jason</span>
@@ -573,7 +573,7 @@
           <span class="line3"><span class="gp">GP <b>1</b></span><span class="rating"><span class="stars on">★★★</span><span class="stars off">☆☆</span> <span class="stars-num low">2.8</span></span></span>
           <svg class="grip" width="10" height="16" viewBox="0 0 10 16" aria-hidden="true"><circle cx="2.5" cy="3" r="1.4" fill="currentColor"/><circle cx="7.5" cy="3" r="1.4" fill="currentColor"/><circle cx="2.5" cy="8" r="1.4" fill="currentColor"/><circle cx="7.5" cy="8" r="1.4" fill="currentColor"/><circle cx="2.5" cy="13" r="1.4" fill="currentColor"/><circle cx="7.5" cy="13" r="1.4" fill="currentColor"/></svg>
         </div>
-        <div class="qcard" tabindex="0">
+        <div class="qcard" >
           <span class="waitbar"></span>
           <div class="who">
             <span class="name">Nicole</span>
@@ -586,7 +586,7 @@
           <span class="line3"><span class="gp">GP <b>0</b></span><span class="rating"><span class="stars off">☆☆☆☆☆</span></span></span>
           <svg class="grip" width="10" height="16" viewBox="0 0 10 16" aria-hidden="true"><circle cx="2.5" cy="3" r="1.4" fill="currentColor"/><circle cx="7.5" cy="3" r="1.4" fill="currentColor"/><circle cx="2.5" cy="8" r="1.4" fill="currentColor"/><circle cx="7.5" cy="8" r="1.4" fill="currentColor"/><circle cx="2.5" cy="13" r="1.4" fill="currentColor"/><circle cx="7.5" cy="13" r="1.4" fill="currentColor"/></svg>
         </div>
-        <div class="qcard" tabindex="0">
+        <div class="qcard" >
           <span class="waitbar"></span>
           <div class="who">
             <span class="name">Justin</span>
@@ -599,7 +599,7 @@
           <span class="line3"><span class="gp">GP <b>0</b></span><span class="rating"><span class="stars off">☆☆☆☆☆</span></span></span>
           <svg class="grip" width="10" height="16" viewBox="0 0 10 16" aria-hidden="true"><circle cx="2.5" cy="3" r="1.4" fill="currentColor"/><circle cx="7.5" cy="3" r="1.4" fill="currentColor"/><circle cx="2.5" cy="8" r="1.4" fill="currentColor"/><circle cx="7.5" cy="8" r="1.4" fill="currentColor"/><circle cx="2.5" cy="13" r="1.4" fill="currentColor"/><circle cx="7.5" cy="13" r="1.4" fill="currentColor"/></svg>
         </div>
-        <div class="qcard" tabindex="0">
+        <div class="qcard" >
           <span class="waitbar"></span>
           <div class="who">
             <span class="name">Dylan</span>

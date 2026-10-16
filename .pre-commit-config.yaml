@@ -1,0 +1,15 @@
+# prek (https://github.com/j178/prek) — Rust pre-commit runner.
+# Install hooks:  prek install
+# Run manually:   prek run --all-files
+#
+# Biome (Rust linter/formatter for JS/JSX/JSON) does in one tool what
+# eslint+prettier would; config lives in biome.json.
+repos:
+  - repo: local
+    hooks:
+      - id: biome-check
+        name: biome check (lint + format)
+        entry: bunx @biomejs/biome check --write
+        language: system
+        types_or: [javascript, jsx, json, css]
+        exclude: ^client/src/index\.css$

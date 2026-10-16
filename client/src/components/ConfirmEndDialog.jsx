@@ -1,5 +1,12 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 /**
  * Step 1 of the End Match flow: a dumb confirm gate.
@@ -17,17 +24,31 @@ export default function ConfirmEndDialog({ open, onOpenChange, onConfirm }) {
           <DialogDescription>Record final score, shuttle usage and match rating.</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button type="button" variant="outline" size="sm" className="rounded-full" data-testid="confirm-end-cancel" onClick={() => onOpenChange(false)}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="rounded-full"
+            data-testid="confirm-end-cancel"
+            onClick={() => onOpenChange(false)}
+          >
             Cancel
           </Button>
           {/* variant="destructive" already renders the draft's .btn-danger look
               (wash fill + red ink) — className color overrides would lose the
               cascade anyway since cn() is a plain joiner, not tailwind-merge */}
-          <Button type="button" variant="destructive" size="sm" className="rounded-full" data-testid="confirm-end-end" onClick={onConfirm}>
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            className="rounded-full"
+            data-testid="confirm-end-end"
+            onClick={onConfirm}
+          >
             End Match
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

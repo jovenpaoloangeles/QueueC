@@ -1,0 +1,15 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "pulsing-dot",
+        "value": "*",
+        "files": ["queuec-live-redesign-draft.html"],
+        "createdAt": "2026-10-16T00:39:50.473Z",
+        "reason": "author decision: live-status dot on an operational court board is domain-appropriate literal motion; prefers-reduced-motion disables it"
+      }
+    ]
+  }
+}
