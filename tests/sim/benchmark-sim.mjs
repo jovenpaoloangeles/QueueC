@@ -232,7 +232,7 @@ const LEX_ZERO = {
 //   2: PLAYER_DEPARTURE
 //   3: TRY_ASSIGN_COURTS
 
-export function runSession(scenario, policy) {
+export function runSession(scenario, policy, cfg = {}) {
   const {
     skillTiers,
     arrivals,
@@ -437,7 +437,7 @@ export function runSession(scenario, policy) {
             history,
             courtCount: Math.max(1, batchCount),
             now: nowSec,
-            cfg: policy === "STRICT_LEX" ? LEX_ZERO : {},
+            cfg: policy === "STRICT_LEX" ? LEX_ZERO : cfg,
           });
           if (res.matches.length) {
             assignedQuartets = res.matches.map((m) => [...m.team1, ...m.team2]);

@@ -30,7 +30,7 @@ To isolate the impact of each design choice in `v2.0`, run a 4-way comparison ac
 | **`FIFO`** | Top 4 by `wait_mins` (tie-break: lowest `virt_games`) | Random split among the 4 longest-waiting players | Baseline maximum queue fairness; exposes random skill mismatches and Carry+Anchor traps. |
 | **`LOWEST_RAW_GAMES`** | Top 4 by lowest raw `games_played` (tie-break: `wait_mins`) | Best team balance among the 4 selected players | Demonstrates why unnormalized raw game counts cause latecomers to monopolize courts and slam into $C_{\max}$. |
 | **`STRICT_LEX`** | `v2.0` with $\epsilon_1 = \epsilon_2 = \epsilon_3 = \epsilon_4 = 0$ | Strict lexicographic tie-breaking | Demonstrates how zero tolerance bands cause a hierarchical optimizer to degenerate back into `FIFO`. |
-| **`EPSILON_LEX`** | Full `v2.0` ($\epsilon_1 = 12\%$, $\epsilon_2 = 1.0$, $\epsilon_3 = 1.25$, $\epsilon_4 = 0.35$) | Two-stage $\epsilon$-lexicographic + $K_4$ edge duality | Full proposed algorithm balancing queue fairness, late-arrival equity, cohort homogeneity, and partner variety. |
+| **`EPSILON_LEX`** | Full `v2.0` — shipped tuning: `epsWaitRatio` = 0.10, `epsWaitMin` = 7.0 min, `epsVirtGames` = 1.0, `epsSkillVar` = 0.45, `epsTeamDiff` = 0.35 (see "Parameter Tuning Takeaway"; the listing's $\epsilon_3 = 1.25$ predates the shipped skill² scale) | Two-stage $\epsilon$-lexicographic + $K_4$ edge duality | Full proposed algorithm balancing queue fairness, late-arrival equity, cohort homogeneity, and partner variety. |
 
 ---
 
@@ -403,4 +403,15 @@ Use the interactive benchmark explorer below to stress-test how adjusting the **
 
 ---
 
-> **Parameter Tuning Takeaway:** As the benchmark explorer demonstrates, the feasible operating envelope where **all four CI/CD acceptance gates pass simultaneously** is $\epsilon_1 \in [0.08, 0.16]$ and $\epsilon_3 \in [0.75, 1.50]$. Below $\epsilon_1 = 0.06$, Stage A prunes too aggressively and starves Stage B of balanced cohorts; above $\epsilon_1 = 0.20$, the Priority Bypass Rate exceeds the $5\%$ fairness threshold.
+> **Parameter Tuning Takeaway (measured, 2026-10-17):** The JS harness supersedes the
+> NumPy explorer's envelope above — the shipped units (skill² on the 1–7 scale, minutes
+> on the wall clock) differ from the listing's. `tests/sim/epsilon-sweep.mjs` sweeps the
+> two Stage-A tolerances under Common Random Numbers: with $\epsilon_1$ =
+> `max(epsWaitMin, 10%)`, the feasible region where all gates pass is
+> `epsSkillVar` ∈ [0.3, 0.9] paired with `epsWaitMin` = 7 min (the widened window is what
+> buys cohort headroom; tighter ε₃ balances cohorts better but starts failing the
+> team-diff gate, looser fails the cohort-SD gate). Validating the frontier candidates on
+> the full 144-cell sweep (`EPS_OVERRIDE=… bun tests/sim/sweep-sim.mjs`) picked the
+> shipped operating point **`epsSkillVar` = 0.45, `epsWaitMin` = 7.0** (all-four-gates
+> cells 48/144 vs 35/144 at the previous 0.6/3.5). Re-run both scripts before changing
+> these values in `MATCH_CONFIG`.

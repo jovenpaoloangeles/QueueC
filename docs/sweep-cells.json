@@ -35,18 +35,18 @@
     "virt_game_spread": 1.598
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 4.229,
-    "p95_wait_mins": 15.626,
-    "max_wait_mins": 17.129,
-    "avg_play_mins": 90.87,
-    "play_spread_mins": 14.811,
-    "competitive_game_pct": 21.156,
-    "mean_cohort_sd": 1.197,
-    "mean_team_diff": 0.677,
-    "repeat_recent_pct": 48.587,
-    "latecomer_consec_bursts": 4.375,
+    "avg_wait_mins": 4.256,
+    "p95_wait_mins": 15.693,
+    "max_wait_mins": 17.499,
+    "avg_play_mins": 91.043,
+    "play_spread_mins": 15.024,
+    "competitive_game_pct": 22.746,
+    "mean_cohort_sd": 1.18,
+    "mean_team_diff": 0.69,
+    "repeat_recent_pct": 48.708,
+    "latecomer_consec_bursts": 4.33,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 1.955
+    "virt_game_spread": 1.902
    }
   }
  },
@@ -86,18 +86,18 @@
     "virt_game_spread": 1.864
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 7.04,
-    "p95_wait_mins": 16.851,
-    "max_wait_mins": 17.895,
-    "avg_play_mins": 77.347,
-    "play_spread_mins": 22.969,
-    "competitive_game_pct": 24.249,
-    "mean_cohort_sd": 1.171,
-    "mean_team_diff": 0.641,
-    "repeat_recent_pct": 34.311,
-    "latecomer_consec_bursts": 1.864,
+    "avg_wait_mins": 7.057,
+    "p95_wait_mins": 16.947,
+    "max_wait_mins": 18.327,
+    "avg_play_mins": 77.607,
+    "play_spread_mins": 22.845,
+    "competitive_game_pct": 24.624,
+    "mean_cohort_sd": 1.156,
+    "mean_team_diff": 0.678,
+    "repeat_recent_pct": 32.636,
+    "latecomer_consec_bursts": 1.928,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 1.992
+    "virt_game_spread": 2.052
    }
   }
  },
@@ -137,18 +137,18 @@
     "virt_game_spread": 1.786
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 13.389,
-    "p95_wait_mins": 24.527,
-    "max_wait_mins": 30.962,
-    "avg_play_mins": 58.53,
-    "play_spread_mins": 21.213,
-    "competitive_game_pct": 32.547,
-    "mean_cohort_sd": 1.04,
-    "mean_team_diff": 0.589,
-    "repeat_recent_pct": 19.117,
-    "latecomer_consec_bursts": 0.063,
-    "bypass_rate_pct": 0.434,
-    "virt_game_spread": 1.554
+    "avg_wait_mins": 13.415,
+    "p95_wait_mins": 24.9,
+    "max_wait_mins": 31.272,
+    "avg_play_mins": 58.346,
+    "play_spread_mins": 21.695,
+    "competitive_game_pct": 34.425,
+    "mean_cohort_sd": 0.991,
+    "mean_team_diff": 0.631,
+    "repeat_recent_pct": 17.178,
+    "latecomer_consec_bursts": 0.054,
+    "bypass_rate_pct": 0.955,
+    "virt_game_spread": 1.589
    }
   }
  },
@@ -188,18 +188,18 @@
     "virt_game_spread": 1.598
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 4.215,
-    "p95_wait_mins": 15.45,
-    "max_wait_mins": 16.983,
-    "avg_play_mins": 89.762,
-    "play_spread_mins": 14.138,
-    "competitive_game_pct": 35.248,
-    "mean_cohort_sd": 1.065,
-    "mean_team_diff": 0.455,
-    "repeat_recent_pct": 49.229,
-    "latecomer_consec_bursts": 4.491,
+    "avg_wait_mins": 4.222,
+    "p95_wait_mins": 15.583,
+    "max_wait_mins": 17.231,
+    "avg_play_mins": 90.14,
+    "play_spread_mins": 14.627,
+    "competitive_game_pct": 35.629,
+    "mean_cohort_sd": 1.055,
+    "mean_team_diff": 0.464,
+    "repeat_recent_pct": 48.911,
+    "latecomer_consec_bursts": 4.42,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 1.991
+    "virt_game_spread": 2.009
    }
   }
  },
@@ -239,18 +239,18 @@
     "virt_game_spread": 1.856
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 6.974,
-    "p95_wait_mins": 16.798,
-    "max_wait_mins": 17.723,
-    "avg_play_mins": 76.744,
-    "play_spread_mins": 20.928,
-    "competitive_game_pct": 38.38,
-    "mean_cohort_sd": 1.043,
-    "mean_team_diff": 0.415,
-    "repeat_recent_pct": 31.956,
-    "latecomer_consec_bursts": 2.248,
+    "avg_wait_mins": 6.995,
+    "p95_wait_mins": 16.811,
+    "max_wait_mins": 18.24,
+    "avg_play_mins": 77.114,
+    "play_spread_mins": 22.675,
+    "competitive_game_pct": 38.92,
+    "mean_cohort_sd": 1.034,
+    "mean_team_diff": 0.447,
+    "repeat_recent_pct": 33.549,
+    "latecomer_consec_bursts": 2.008,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2.072
+    "virt_game_spread": 2.064
    }
   }
  },
@@ -290,18 +290,18 @@
     "virt_game_spread": 1.821
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 13.276,
-    "p95_wait_mins": 24.56,
-    "max_wait_mins": 30.842,
-    "avg_play_mins": 58.565,
-    "play_spread_mins": 19.789,
-    "competitive_game_pct": 46.024,
-    "mean_cohort_sd": 0.946,
-    "mean_team_diff": 0.383,
-    "repeat_recent_pct": 21.305,
-    "latecomer_consec_bursts": 0.071,
-    "bypass_rate_pct": 0.211,
-    "virt_game_spread": 1.616
+    "avg_wait_mins": 13.289,
+    "p95_wait_mins": 24.781,
+    "max_wait_mins": 30.98,
+    "avg_play_mins": 58.444,
+    "play_spread_mins": 20.897,
+    "competitive_game_pct": 46.964,
+    "mean_cohort_sd": 0.917,
+    "mean_team_diff": 0.427,
+    "repeat_recent_pct": 20.104,
+    "latecomer_consec_bursts": 0.054,
+    "bypass_rate_pct": 0.521,
+    "virt_game_spread": 1.643
    }
   }
  },
@@ -341,18 +341,18 @@
     "virt_game_spread": 1.607
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 4.271,
-    "p95_wait_mins": 15.757,
-    "max_wait_mins": 17.227,
-    "avg_play_mins": 90.686,
-    "play_spread_mins": 13.708,
-    "competitive_game_pct": 53.136,
-    "mean_cohort_sd": 0.713,
-    "mean_team_diff": 0.44,
-    "repeat_recent_pct": 44.057,
-    "latecomer_consec_bursts": 4.607,
+    "avg_wait_mins": 4.282,
+    "p95_wait_mins": 15.83,
+    "max_wait_mins": 17.46,
+    "avg_play_mins": 90.824,
+    "play_spread_mins": 13.979,
+    "competitive_game_pct": 54.364,
+    "mean_cohort_sd": 0.704,
+    "mean_team_diff": 0.434,
+    "repeat_recent_pct": 43.965,
+    "latecomer_consec_bursts": 4.518,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2
+    "virt_game_spread": 1.955
    }
   }
  },
@@ -392,18 +392,18 @@
     "virt_game_spread": 1.848
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 7.071,
-    "p95_wait_mins": 16.971,
-    "max_wait_mins": 17.97,
-    "avg_play_mins": 76.838,
-    "play_spread_mins": 20.743,
-    "competitive_game_pct": 58.942,
-    "mean_cohort_sd": 0.698,
-    "mean_team_diff": 0.376,
-    "repeat_recent_pct": 28.044,
-    "latecomer_consec_bursts": 2.344,
+    "avg_wait_mins": 7.087,
+    "p95_wait_mins": 17.032,
+    "max_wait_mins": 18.33,
+    "avg_play_mins": 76.929,
+    "play_spread_mins": 20.846,
+    "competitive_game_pct": 59.153,
+    "mean_cohort_sd": 0.693,
+    "mean_team_diff": 0.391,
+    "repeat_recent_pct": 28.444,
+    "latecomer_consec_bursts": 2.2,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 1.936
+    "virt_game_spread": 1.956
    }
   }
  },
@@ -443,18 +443,18 @@
     "virt_game_spread": 1.795
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 13.519,
-    "p95_wait_mins": 25.091,
-    "max_wait_mins": 31.474,
-    "avg_play_mins": 58.119,
-    "play_spread_mins": 20.12,
-    "competitive_game_pct": 64.504,
-    "mean_cohort_sd": 0.629,
-    "mean_team_diff": 0.345,
-    "repeat_recent_pct": 13.81,
+    "avg_wait_mins": 13.526,
+    "p95_wait_mins": 25.385,
+    "max_wait_mins": 31.529,
+    "avg_play_mins": 58.233,
+    "play_spread_mins": 20.139,
+    "competitive_game_pct": 63.152,
+    "mean_cohort_sd": 0.62,
+    "mean_team_diff": 0.36,
+    "repeat_recent_pct": 12.644,
     "latecomer_consec_bursts": 0.063,
-    "bypass_rate_pct": 0.521,
-    "virt_game_spread": 1.438
+    "bypass_rate_pct": 1.042,
+    "virt_game_spread": 1.42
    }
   }
  },
@@ -494,18 +494,18 @@
     "virt_game_spread": 1.625
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 4.242,
-    "p95_wait_mins": 15.548,
-    "max_wait_mins": 17.105,
-    "avg_play_mins": 90.244,
-    "play_spread_mins": 14.381,
-    "competitive_game_pct": 14.659,
-    "mean_cohort_sd": 1.443,
-    "mean_team_diff": 0.782,
-    "repeat_recent_pct": 47.05,
-    "latecomer_consec_bursts": 4.348,
+    "avg_wait_mins": 4.265,
+    "p95_wait_mins": 15.64,
+    "max_wait_mins": 17.512,
+    "avg_play_mins": 90.421,
+    "play_spread_mins": 14.151,
+    "competitive_game_pct": 14.547,
+    "mean_cohort_sd": 1.432,
+    "mean_team_diff": 0.773,
+    "repeat_recent_pct": 46.951,
+    "latecomer_consec_bursts": 4.321,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 1.875
+    "virt_game_spread": 1.866
    }
   }
  },
@@ -545,18 +545,18 @@
     "virt_game_spread": 1.856
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 7.013,
-    "p95_wait_mins": 16.794,
-    "max_wait_mins": 17.753,
-    "avg_play_mins": 77.745,
-    "play_spread_mins": 22.685,
-    "competitive_game_pct": 15.84,
-    "mean_cohort_sd": 1.404,
-    "mean_team_diff": 0.764,
-    "repeat_recent_pct": 31.427,
-    "latecomer_consec_bursts": 1.864,
+    "avg_wait_mins": 7.022,
+    "p95_wait_mins": 16.843,
+    "max_wait_mins": 18.198,
+    "avg_play_mins": 77.782,
+    "play_spread_mins": 23.187,
+    "competitive_game_pct": 15.998,
+    "mean_cohort_sd": 1.392,
+    "mean_team_diff": 0.812,
+    "repeat_recent_pct": 33.113,
+    "latecomer_consec_bursts": 1.872,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2.068
+    "virt_game_spread": 2.1
    }
   }
  },
@@ -596,18 +596,18 @@
     "virt_game_spread": 1.804
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 13.332,
-    "p95_wait_mins": 24.602,
-    "max_wait_mins": 30.987,
-    "avg_play_mins": 58.546,
-    "play_spread_mins": 20.66,
-    "competitive_game_pct": 27.113,
-    "mean_cohort_sd": 1.195,
-    "mean_team_diff": 0.718,
-    "repeat_recent_pct": 18.661,
-    "latecomer_consec_bursts": 0.08,
-    "bypass_rate_pct": 0.533,
-    "virt_game_spread": 1.634
+    "avg_wait_mins": 13.325,
+    "p95_wait_mins": 24.882,
+    "max_wait_mins": 30.997,
+    "avg_play_mins": 58.639,
+    "play_spread_mins": 20.598,
+    "competitive_game_pct": 28.403,
+    "mean_cohort_sd": 1.162,
+    "mean_team_diff": 0.744,
+    "repeat_recent_pct": 17.366,
+    "latecomer_consec_bursts": 0.098,
+    "bypass_rate_pct": 0.955,
+    "virt_game_spread": 1.616
    }
   }
  },
@@ -647,18 +647,18 @@
     "virt_game_spread": 2.024
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.179,
-    "p95_wait_mins": 12.633,
-    "max_wait_mins": 16.121,
-    "avg_play_mins": 95.563,
-    "play_spread_mins": 23.374,
-    "competitive_game_pct": 38.939,
-    "mean_cohort_sd": 1.038,
-    "mean_team_diff": 0.601,
-    "repeat_recent_pct": 15.754,
-    "latecomer_consec_bursts": 7.841,
+    "avg_wait_mins": 3.206,
+    "p95_wait_mins": 13.174,
+    "max_wait_mins": 16.602,
+    "avg_play_mins": 95.839,
+    "play_spread_mins": 24.713,
+    "competitive_game_pct": 42.402,
+    "mean_cohort_sd": 0.971,
+    "mean_team_diff": 0.586,
+    "repeat_recent_pct": 16.351,
+    "latecomer_consec_bursts": 7.667,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2.23
+    "virt_game_spread": 2.258
    }
   }
  },
@@ -698,18 +698,18 @@
     "virt_game_spread": 2.375
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 8.778,
-    "p95_wait_mins": 16.902,
-    "max_wait_mins": 19.285,
-    "avg_play_mins": 71.013,
-    "play_spread_mins": 25.659,
-    "competitive_game_pct": 47.546,
-    "mean_cohort_sd": 0.92,
-    "mean_team_diff": 0.436,
-    "repeat_recent_pct": 4.323,
-    "latecomer_consec_bursts": 1.893,
-    "bypass_rate_pct": 2.626,
-    "virt_game_spread": 1.839
+    "avg_wait_mins": 8.763,
+    "p95_wait_mins": 17.118,
+    "max_wait_mins": 20.122,
+    "avg_play_mins": 70.856,
+    "play_spread_mins": 24.701,
+    "competitive_game_pct": 54.101,
+    "mean_cohort_sd": 0.826,
+    "mean_team_diff": 0.423,
+    "repeat_recent_pct": 4.86,
+    "latecomer_consec_bursts": 2.125,
+    "bypass_rate_pct": 5.756,
+    "virt_game_spread": 1.848
    }
   }
  },
@@ -749,18 +749,18 @@
     "virt_game_spread": 2.008
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 12.802,
-    "p95_wait_mins": 23.261,
-    "max_wait_mins": 28.318,
-    "avg_play_mins": 60.103,
-    "play_spread_mins": 23.652,
-    "competitive_game_pct": 54.358,
-    "mean_cohort_sd": 0.827,
-    "mean_team_diff": 0.393,
-    "repeat_recent_pct": 2.151,
+    "avg_wait_mins": 12.814,
+    "p95_wait_mins": 23.525,
+    "max_wait_mins": 28.745,
+    "avg_play_mins": 60.068,
+    "play_spread_mins": 24.078,
+    "competitive_game_pct": 60.533,
+    "mean_cohort_sd": 0.754,
+    "mean_team_diff": 0.378,
+    "repeat_recent_pct": 2.647,
     "latecomer_consec_bursts": 0.119,
-    "bypass_rate_pct": 35.161,
-    "virt_game_spread": 1.466
+    "bypass_rate_pct": 36.217,
+    "virt_game_spread": 1.525
    }
   }
  },
@@ -800,18 +800,18 @@
     "virt_game_spread": 2.063
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.201,
-    "p95_wait_mins": 12.582,
-    "max_wait_mins": 15.673,
-    "avg_play_mins": 95.454,
-    "play_spread_mins": 23.51,
-    "competitive_game_pct": 47.627,
-    "mean_cohort_sd": 0.951,
-    "mean_team_diff": 0.392,
-    "repeat_recent_pct": 16.048,
-    "latecomer_consec_bursts": 7.984,
+    "avg_wait_mins": 3.171,
+    "p95_wait_mins": 12.936,
+    "max_wait_mins": 16.194,
+    "avg_play_mins": 95.779,
+    "play_spread_mins": 23,
+    "competitive_game_pct": 51.367,
+    "mean_cohort_sd": 0.91,
+    "mean_team_diff": 0.396,
+    "repeat_recent_pct": 15.16,
+    "latecomer_consec_bursts": 7.762,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2.222
+    "virt_game_spread": 2.306
    }
   }
  },
@@ -851,18 +851,18 @@
     "virt_game_spread": 2.321
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 8.645,
-    "p95_wait_mins": 16.754,
-    "max_wait_mins": 19.101,
-    "avg_play_mins": 70.674,
-    "play_spread_mins": 26.512,
-    "competitive_game_pct": 54.965,
-    "mean_cohort_sd": 0.873,
-    "mean_team_diff": 0.311,
-    "repeat_recent_pct": 5.287,
-    "latecomer_consec_bursts": 1.982,
-    "bypass_rate_pct": 2.787,
-    "virt_game_spread": 1.946
+    "avg_wait_mins": 8.65,
+    "p95_wait_mins": 16.985,
+    "max_wait_mins": 20.085,
+    "avg_play_mins": 70.598,
+    "play_spread_mins": 26.792,
+    "competitive_game_pct": 62.808,
+    "mean_cohort_sd": 0.788,
+    "mean_team_diff": 0.301,
+    "repeat_recent_pct": 3.956,
+    "latecomer_consec_bursts": 2.125,
+    "bypass_rate_pct": 4.673,
+    "virt_game_spread": 1.938
    }
   }
  },
@@ -902,18 +902,18 @@
     "virt_game_spread": 2.008
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 12.688,
-    "p95_wait_mins": 22.879,
-    "max_wait_mins": 28.462,
-    "avg_play_mins": 59.983,
-    "play_spread_mins": 24.29,
-    "competitive_game_pct": 59.815,
-    "mean_cohort_sd": 0.793,
-    "mean_team_diff": 0.276,
-    "repeat_recent_pct": 2.486,
-    "latecomer_consec_bursts": 0.102,
-    "bypass_rate_pct": 35.42,
-    "virt_game_spread": 1.661
+    "avg_wait_mins": 12.697,
+    "p95_wait_mins": 23.189,
+    "max_wait_mins": 28.835,
+    "avg_play_mins": 60.25,
+    "play_spread_mins": 25.426,
+    "competitive_game_pct": 66.057,
+    "mean_cohort_sd": 0.747,
+    "mean_team_diff": 0.307,
+    "repeat_recent_pct": 1.041,
+    "latecomer_consec_bursts": 0.136,
+    "bypass_rate_pct": 36.662,
+    "virt_game_spread": 1.653
    }
   }
  },
@@ -953,18 +953,18 @@
     "virt_game_spread": 2
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.23,
-    "p95_wait_mins": 12.744,
-    "max_wait_mins": 16.127,
-    "avg_play_mins": 95.485,
-    "play_spread_mins": 21.222,
-    "competitive_game_pct": 62.685,
-    "mean_cohort_sd": 0.634,
-    "mean_team_diff": 0.38,
-    "repeat_recent_pct": 10.109,
-    "latecomer_consec_bursts": 7.778,
+    "avg_wait_mins": 3.196,
+    "p95_wait_mins": 12.942,
+    "max_wait_mins": 16.472,
+    "avg_play_mins": 95.897,
+    "play_spread_mins": 23.348,
+    "competitive_game_pct": 66.104,
+    "mean_cohort_sd": 0.594,
+    "mean_team_diff": 0.374,
+    "repeat_recent_pct": 8.916,
+    "latecomer_consec_bursts": 7.714,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2.198
+    "virt_game_spread": 2.254
    }
   }
  },
@@ -973,49 +973,49 @@
   "courts": 2,
   "density": "normal",
   "skill": "advanced-club",
-  "seeds": 59,
+  "seeds": 56,
   "policies": {
    "FIFO": {
-    "avg_wait_mins": 8.821,
-    "p95_wait_mins": 16.628,
-    "max_wait_mins": 17.943,
-    "avg_play_mins": 71.694,
-    "play_spread_mins": 21.097,
-    "competitive_game_pct": 31.366,
-    "mean_cohort_sd": 0.738,
-    "mean_team_diff": 0.816,
-    "repeat_recent_pct": 39.642,
-    "latecomer_consec_bursts": 0.644,
-    "bypass_rate_pct": 1.228,
-    "virt_game_spread": 1.441
+    "avg_wait_mins": 8.813,
+    "p95_wait_mins": 16.636,
+    "max_wait_mins": 17.93,
+    "avg_play_mins": 71.721,
+    "play_spread_mins": 21.074,
+    "competitive_game_pct": 31.085,
+    "mean_cohort_sd": 0.734,
+    "mean_team_diff": 0.815,
+    "repeat_recent_pct": 38.79,
+    "latecomer_consec_bursts": 0.661,
+    "bypass_rate_pct": 1.189,
+    "virt_game_spread": 1.429
    },
    "LOWEST_RAW_GAMES": {
-    "avg_wait_mins": 8.772,
-    "p95_wait_mins": 18.24,
-    "max_wait_mins": 25.295,
-    "avg_play_mins": 67.269,
-    "play_spread_mins": 19.006,
-    "competitive_game_pct": 42.58,
-    "mean_cohort_sd": 0.733,
+    "avg_wait_mins": 8.766,
+    "p95_wait_mins": 18.324,
+    "max_wait_mins": 25.634,
+    "avg_play_mins": 67.317,
+    "play_spread_mins": 19.14,
+    "competitive_game_pct": 42.032,
+    "mean_cohort_sd": 0.732,
     "mean_team_diff": 0.557,
-    "repeat_recent_pct": 30.144,
-    "latecomer_consec_bursts": 6.593,
-    "bypass_rate_pct": 11.389,
-    "virt_game_spread": 2.381
+    "repeat_recent_pct": 30.149,
+    "latecomer_consec_bursts": 6.607,
+    "bypass_rate_pct": 11.999,
+    "virt_game_spread": 2.348
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 8.872,
-    "p95_wait_mins": 16.949,
-    "max_wait_mins": 19.621,
-    "avg_play_mins": 70.709,
-    "play_spread_mins": 24.912,
-    "competitive_game_pct": 73.748,
-    "mean_cohort_sd": 0.564,
-    "mean_team_diff": 0.248,
-    "repeat_recent_pct": 2.302,
-    "latecomer_consec_bursts": 1.814,
-    "bypass_rate_pct": 2.103,
-    "virt_game_spread": 1.797
+    "avg_wait_mins": 8.844,
+    "p95_wait_mins": 17.224,
+    "max_wait_mins": 20.424,
+    "avg_play_mins": 71.184,
+    "play_spread_mins": 25.187,
+    "competitive_game_pct": 76.463,
+    "mean_cohort_sd": 0.53,
+    "mean_team_diff": 0.246,
+    "repeat_recent_pct": 1.801,
+    "latecomer_consec_bursts": 1.679,
+    "bypass_rate_pct": 5.438,
+    "virt_game_spread": 1.795
    }
   }
  },
@@ -1055,18 +1055,18 @@
     "virt_game_spread": 1.907
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 12.891,
-    "p95_wait_mins": 23.376,
-    "max_wait_mins": 28.475,
-    "avg_play_mins": 59.996,
-    "play_spread_mins": 23.954,
-    "competitive_game_pct": 76.965,
-    "mean_cohort_sd": 0.516,
-    "mean_team_diff": 0.248,
-    "repeat_recent_pct": 1.206,
-    "latecomer_consec_bursts": 0.034,
-    "bypass_rate_pct": 34.4,
-    "virt_game_spread": 1.517
+    "avg_wait_mins": 12.9,
+    "p95_wait_mins": 23.358,
+    "max_wait_mins": 28.272,
+    "avg_play_mins": 59.965,
+    "play_spread_mins": 24.488,
+    "competitive_game_pct": 79.056,
+    "mean_cohort_sd": 0.495,
+    "mean_team_diff": 0.243,
+    "repeat_recent_pct": 0.699,
+    "latecomer_consec_bursts": 0.085,
+    "bypass_rate_pct": 36.371,
+    "virt_game_spread": 1.492
    }
   }
  },
@@ -1106,18 +1106,18 @@
     "virt_game_spread": 2.032
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.181,
-    "p95_wait_mins": 12.439,
-    "max_wait_mins": 15.617,
-    "avg_play_mins": 95.201,
-    "play_spread_mins": 23.203,
-    "competitive_game_pct": 29.303,
-    "mean_cohort_sd": 1.165,
-    "mean_team_diff": 0.69,
-    "repeat_recent_pct": 15.396,
-    "latecomer_consec_bursts": 7.81,
+    "avg_wait_mins": 3.193,
+    "p95_wait_mins": 13.019,
+    "max_wait_mins": 16.359,
+    "avg_play_mins": 95.929,
+    "play_spread_mins": 23.824,
+    "competitive_game_pct": 35.778,
+    "mean_cohort_sd": 1.083,
+    "mean_team_diff": 0.632,
+    "repeat_recent_pct": 14.392,
+    "latecomer_consec_bursts": 7.397,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2.198
+    "virt_game_spread": 2.183
    }
   }
  },
@@ -1157,18 +1157,18 @@
     "virt_game_spread": 2.339
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 8.723,
-    "p95_wait_mins": 16.81,
-    "max_wait_mins": 19.059,
-    "avg_play_mins": 70.802,
-    "play_spread_mins": 24.498,
-    "competitive_game_pct": 44.067,
-    "mean_cohort_sd": 0.972,
-    "mean_team_diff": 0.506,
-    "repeat_recent_pct": 5.729,
-    "latecomer_consec_bursts": 2.25,
-    "bypass_rate_pct": 1.269,
-    "virt_game_spread": 1.857
+    "avg_wait_mins": 8.696,
+    "p95_wait_mins": 17.028,
+    "max_wait_mins": 19.908,
+    "avg_play_mins": 71.134,
+    "play_spread_mins": 25.021,
+    "competitive_game_pct": 50.165,
+    "mean_cohort_sd": 0.886,
+    "mean_team_diff": 0.49,
+    "repeat_recent_pct": 4.793,
+    "latecomer_consec_bursts": 1.875,
+    "bypass_rate_pct": 3.529,
+    "virt_game_spread": 1.813
    }
   }
  },
@@ -1208,18 +1208,18 @@
     "virt_game_spread": 2
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 12.746,
-    "p95_wait_mins": 23.352,
-    "max_wait_mins": 29.183,
-    "avg_play_mins": 60.184,
-    "play_spread_mins": 23.856,
-    "competitive_game_pct": 49.546,
-    "mean_cohort_sd": 0.911,
-    "mean_team_diff": 0.458,
-    "repeat_recent_pct": 1.846,
-    "latecomer_consec_bursts": 0.169,
-    "bypass_rate_pct": 34.552,
-    "virt_game_spread": 1.525
+    "avg_wait_mins": 12.773,
+    "p95_wait_mins": 23.385,
+    "max_wait_mins": 28.655,
+    "avg_play_mins": 59.978,
+    "play_spread_mins": 22.496,
+    "competitive_game_pct": 53.863,
+    "mean_cohort_sd": 0.841,
+    "mean_team_diff": 0.474,
+    "repeat_recent_pct": 1.736,
+    "latecomer_consec_bursts": 0.153,
+    "bypass_rate_pct": 36.793,
+    "virt_game_spread": 1.449
    }
   }
  },
@@ -1259,17 +1259,17 @@
     "virt_game_spread": 2.038
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.453,
-    "p95_wait_mins": 12.041,
-    "max_wait_mins": 15.676,
-    "avg_play_mins": 93.416,
-    "play_spread_mins": 23.853,
-    "competitive_game_pct": 44.677,
-    "mean_cohort_sd": 0.939,
-    "mean_team_diff": 0.519,
-    "repeat_recent_pct": 7.351,
-    "latecomer_consec_bursts": 11.525,
-    "bypass_rate_pct": 0.1,
+    "avg_wait_mins": 3.432,
+    "p95_wait_mins": 12.525,
+    "max_wait_mins": 16.086,
+    "avg_play_mins": 93.302,
+    "play_spread_mins": 23.87,
+    "competitive_game_pct": 51.507,
+    "mean_cohort_sd": 0.865,
+    "mean_team_diff": 0.506,
+    "repeat_recent_pct": 6.827,
+    "latecomer_consec_bursts": 11.2,
+    "bypass_rate_pct": 0.285,
     "virt_game_spread": 2.275
    }
   }
@@ -1310,18 +1310,18 @@
     "virt_game_spread": 2.417
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 8.46,
-    "p95_wait_mins": 16.199,
-    "max_wait_mins": 18.981,
-    "avg_play_mins": 71.964,
-    "play_spread_mins": 28.117,
-    "competitive_game_pct": 58.57,
-    "mean_cohort_sd": 0.762,
-    "mean_team_diff": 0.358,
-    "repeat_recent_pct": 1.841,
-    "latecomer_consec_bursts": 2.667,
-    "bypass_rate_pct": 19.233,
-    "virt_game_spread": 1.881
+    "avg_wait_mins": 8.462,
+    "p95_wait_mins": 16.406,
+    "max_wait_mins": 19.39,
+    "avg_play_mins": 72.259,
+    "play_spread_mins": 27.499,
+    "competitive_game_pct": 63.663,
+    "mean_cohort_sd": 0.699,
+    "mean_team_diff": 0.361,
+    "repeat_recent_pct": 1.009,
+    "latecomer_consec_bursts": 3.214,
+    "bypass_rate_pct": 21.357,
+    "virt_game_spread": 1.893
    }
   }
  },
@@ -1361,18 +1361,18 @@
     "virt_game_spread": 2.143
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 13.225,
-    "p95_wait_mins": 22.982,
-    "max_wait_mins": 27.911,
-    "avg_play_mins": 59.274,
-    "play_spread_mins": 26.19,
-    "competitive_game_pct": 66.665,
-    "mean_cohort_sd": 0.652,
-    "mean_team_diff": 0.292,
-    "repeat_recent_pct": 0.462,
-    "latecomer_consec_bursts": 0.095,
-    "bypass_rate_pct": 38.713,
-    "virt_game_spread": 1.667
+    "avg_wait_mins": 13.229,
+    "p95_wait_mins": 23.139,
+    "max_wait_mins": 27.438,
+    "avg_play_mins": 59.493,
+    "play_spread_mins": 24.875,
+    "competitive_game_pct": 68.803,
+    "mean_cohort_sd": 0.634,
+    "mean_team_diff": 0.306,
+    "repeat_recent_pct": 0.367,
+    "latecomer_consec_bursts": 0.19,
+    "bypass_rate_pct": 40.264,
+    "virt_game_spread": 1.738
    }
   }
  },
@@ -1412,18 +1412,18 @@
     "virt_game_spread": 2.038
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.437,
-    "p95_wait_mins": 11.77,
-    "max_wait_mins": 15.673,
-    "avg_play_mins": 93.49,
-    "play_spread_mins": 23.261,
-    "competitive_game_pct": 53.102,
-    "mean_cohort_sd": 0.877,
-    "mean_team_diff": 0.36,
-    "repeat_recent_pct": 8.784,
-    "latecomer_consec_bursts": 12.15,
-    "bypass_rate_pct": 0.096,
-    "virt_game_spread": 2.3
+    "avg_wait_mins": 3.398,
+    "p95_wait_mins": 12.43,
+    "max_wait_mins": 15.812,
+    "avg_play_mins": 93.728,
+    "play_spread_mins": 23.998,
+    "competitive_game_pct": 55.234,
+    "mean_cohort_sd": 0.819,
+    "mean_team_diff": 0.383,
+    "repeat_recent_pct": 5.921,
+    "latecomer_consec_bursts": 11.425,
+    "bypass_rate_pct": 0.377,
+    "virt_game_spread": 2.237
    }
   }
  },
@@ -1463,18 +1463,18 @@
     "virt_game_spread": 2.45
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 8.368,
-    "p95_wait_mins": 16.034,
-    "max_wait_mins": 18.657,
-    "avg_play_mins": 71.86,
-    "play_spread_mins": 26.375,
-    "competitive_game_pct": 65.257,
-    "mean_cohort_sd": 0.752,
-    "mean_team_diff": 0.26,
-    "repeat_recent_pct": 1.922,
-    "latecomer_consec_bursts": 3.325,
-    "bypass_rate_pct": 18.859,
-    "virt_game_spread": 1.913
+    "avg_wait_mins": 8.345,
+    "p95_wait_mins": 16.268,
+    "max_wait_mins": 19.743,
+    "avg_play_mins": 72.165,
+    "play_spread_mins": 28.298,
+    "competitive_game_pct": 71.497,
+    "mean_cohort_sd": 0.677,
+    "mean_team_diff": 0.253,
+    "repeat_recent_pct": 1.367,
+    "latecomer_consec_bursts": 3,
+    "bypass_rate_pct": 21.75,
+    "virt_game_spread": 2.013
    }
   }
  },
@@ -1514,18 +1514,18 @@
     "virt_game_spread": 2.167
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 13.062,
-    "p95_wait_mins": 22.806,
-    "max_wait_mins": 27.084,
-    "avg_play_mins": 59.487,
-    "play_spread_mins": 25.897,
-    "competitive_game_pct": 71.97,
-    "mean_cohort_sd": 0.644,
-    "mean_team_diff": 0.211,
-    "repeat_recent_pct": 0.36,
-    "latecomer_consec_bursts": 0.071,
-    "bypass_rate_pct": 39.708,
-    "virt_game_spread": 1.738
+    "avg_wait_mins": 13.083,
+    "p95_wait_mins": 23.027,
+    "max_wait_mins": 27.238,
+    "avg_play_mins": 59.555,
+    "play_spread_mins": 26.256,
+    "competitive_game_pct": 76.75,
+    "mean_cohort_sd": 0.604,
+    "mean_team_diff": 0.204,
+    "repeat_recent_pct": 0.271,
+    "latecomer_consec_bursts": 0.19,
+    "bypass_rate_pct": 40.404,
+    "virt_game_spread": 1.81
    }
   }
  },
@@ -1565,18 +1565,18 @@
     "virt_game_spread": 2.1
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.468,
-    "p95_wait_mins": 11.893,
-    "max_wait_mins": 15.443,
-    "avg_play_mins": 93.556,
-    "play_spread_mins": 24.882,
-    "competitive_game_pct": 70.449,
-    "mean_cohort_sd": 0.561,
-    "mean_team_diff": 0.291,
-    "repeat_recent_pct": 3.389,
-    "latecomer_consec_bursts": 11.475,
-    "bypass_rate_pct": 0,
-    "virt_game_spread": 2.163
+    "avg_wait_mins": 3.471,
+    "p95_wait_mins": 12.369,
+    "max_wait_mins": 15.886,
+    "avg_play_mins": 93.645,
+    "play_spread_mins": 25.368,
+    "competitive_game_pct": 71.577,
+    "mean_cohort_sd": 0.516,
+    "mean_team_diff": 0.302,
+    "repeat_recent_pct": 2.588,
+    "latecomer_consec_bursts": 10.95,
+    "bypass_rate_pct": 0.196,
+    "virt_game_spread": 2.25
    }
   }
  },
@@ -1616,18 +1616,18 @@
     "virt_game_spread": 2.405
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 8.511,
-    "p95_wait_mins": 16.296,
-    "max_wait_mins": 19.134,
-    "avg_play_mins": 72.323,
-    "play_spread_mins": 26.967,
-    "competitive_game_pct": 80.136,
-    "mean_cohort_sd": 0.501,
-    "mean_team_diff": 0.202,
-    "repeat_recent_pct": 0.924,
-    "latecomer_consec_bursts": 2.786,
-    "bypass_rate_pct": 19.884,
-    "virt_game_spread": 1.881
+    "avg_wait_mins": 8.525,
+    "p95_wait_mins": 16.462,
+    "max_wait_mins": 19.617,
+    "avg_play_mins": 72.287,
+    "play_spread_mins": 27.455,
+    "competitive_game_pct": 81.963,
+    "mean_cohort_sd": 0.458,
+    "mean_team_diff": 0.176,
+    "repeat_recent_pct": 0.275,
+    "latecomer_consec_bursts": 2.548,
+    "bypass_rate_pct": 22.496,
+    "virt_game_spread": 1.893
    }
   }
  },
@@ -1667,18 +1667,18 @@
     "virt_game_spread": 2.119
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 13.319,
-    "p95_wait_mins": 23.26,
-    "max_wait_mins": 27.716,
-    "avg_play_mins": 58.794,
-    "play_spread_mins": 25.536,
-    "competitive_game_pct": 84.884,
-    "mean_cohort_sd": 0.422,
-    "mean_team_diff": 0.152,
-    "repeat_recent_pct": 0,
-    "latecomer_consec_bursts": 0.071,
-    "bypass_rate_pct": 39.855,
-    "virt_game_spread": 1.69
+    "avg_wait_mins": 13.29,
+    "p95_wait_mins": 23.332,
+    "max_wait_mins": 27.771,
+    "avg_play_mins": 58.998,
+    "play_spread_mins": 27.617,
+    "competitive_game_pct": 85.653,
+    "mean_cohort_sd": 0.417,
+    "mean_team_diff": 0.154,
+    "repeat_recent_pct": 0.095,
+    "latecomer_consec_bursts": 0.143,
+    "bypass_rate_pct": 40.136,
+    "virt_game_spread": 1.833
    }
   }
  },
@@ -1718,18 +1718,18 @@
     "virt_game_spread": 2.125
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.483,
-    "p95_wait_mins": 11.943,
-    "max_wait_mins": 15.355,
-    "avg_play_mins": 93.093,
-    "play_spread_mins": 23.285,
-    "competitive_game_pct": 40.559,
-    "mean_cohort_sd": 1.061,
-    "mean_team_diff": 0.606,
-    "repeat_recent_pct": 5.809,
-    "latecomer_consec_bursts": 11.775,
-    "bypass_rate_pct": 0.096,
-    "virt_game_spread": 2.038
+    "avg_wait_mins": 3.434,
+    "p95_wait_mins": 12.457,
+    "max_wait_mins": 15.94,
+    "avg_play_mins": 93.804,
+    "play_spread_mins": 25.447,
+    "competitive_game_pct": 44.209,
+    "mean_cohort_sd": 0.984,
+    "mean_team_diff": 0.578,
+    "repeat_recent_pct": 5.949,
+    "latecomer_consec_bursts": 11.125,
+    "bypass_rate_pct": 0.189,
+    "virt_game_spread": 2.15
    }
   }
  },
@@ -1738,49 +1738,49 @@
   "courts": 3,
   "density": "normal",
   "skill": "wide-mix",
-  "seeds": 42,
+  "seeds": 40,
   "policies": {
    "FIFO": {
-    "avg_wait_mins": 8.322,
-    "p95_wait_mins": 15.336,
-    "max_wait_mins": 17.434,
-    "avg_play_mins": 72.622,
-    "play_spread_mins": 23.984,
-    "competitive_game_pct": 6.316,
-    "mean_cohort_sd": 1.544,
-    "mean_team_diff": 1.556,
-    "repeat_recent_pct": 46.014,
-    "latecomer_consec_bursts": 2.048,
-    "bypass_rate_pct": 15.155,
-    "virt_game_spread": 1.679
+    "avg_wait_mins": 8.313,
+    "p95_wait_mins": 15.328,
+    "max_wait_mins": 17.401,
+    "avg_play_mins": 72.69,
+    "play_spread_mins": 23.915,
+    "competitive_game_pct": 6.261,
+    "mean_cohort_sd": 1.542,
+    "mean_team_diff": 1.563,
+    "repeat_recent_pct": 45.556,
+    "latecomer_consec_bursts": 2.025,
+    "bypass_rate_pct": 15.25,
+    "virt_game_spread": 1.688
    },
    "LOWEST_RAW_GAMES": {
-    "avg_wait_mins": 8.314,
-    "p95_wait_mins": 17.55,
-    "max_wait_mins": 23.68,
-    "avg_play_mins": 67.909,
-    "play_spread_mins": 17.592,
-    "competitive_game_pct": 8.859,
-    "mean_cohort_sd": 1.547,
-    "mean_team_diff": 0.907,
-    "repeat_recent_pct": 29.864,
-    "latecomer_consec_bursts": 10.405,
-    "bypass_rate_pct": 22.805,
-    "virt_game_spread": 2.393
+    "avg_wait_mins": 8.311,
+    "p95_wait_mins": 17.474,
+    "max_wait_mins": 23.599,
+    "avg_play_mins": 67.962,
+    "play_spread_mins": 17.674,
+    "competitive_game_pct": 9.024,
+    "mean_cohort_sd": 1.546,
+    "mean_team_diff": 0.902,
+    "repeat_recent_pct": 29.246,
+    "latecomer_consec_bursts": 10.35,
+    "bypass_rate_pct": 22.605,
+    "virt_game_spread": 2.425
    },
    "EPSILON_LEX": {
     "avg_wait_mins": 8.424,
-    "p95_wait_mins": 16.072,
-    "max_wait_mins": 18.825,
-    "avg_play_mins": 72.095,
-    "play_spread_mins": 26.249,
-    "competitive_game_pct": 57.224,
-    "mean_cohort_sd": 0.811,
-    "mean_team_diff": 0.376,
-    "repeat_recent_pct": 1.935,
-    "latecomer_consec_bursts": 3.31,
-    "bypass_rate_pct": 19.049,
-    "virt_game_spread": 1.821
+    "p95_wait_mins": 16.509,
+    "max_wait_mins": 20.549,
+    "avg_play_mins": 72.188,
+    "play_spread_mins": 25.169,
+    "competitive_game_pct": 59.272,
+    "mean_cohort_sd": 0.788,
+    "mean_team_diff": 0.412,
+    "repeat_recent_pct": 0.874,
+    "latecomer_consec_bursts": 3.05,
+    "bypass_rate_pct": 22.468,
+    "virt_game_spread": 1.788
    }
   }
  },
@@ -1820,18 +1820,18 @@
     "virt_game_spread": 2.143
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 13.186,
-    "p95_wait_mins": 22.967,
-    "max_wait_mins": 27.012,
-    "avg_play_mins": 59.402,
-    "play_spread_mins": 25.774,
-    "competitive_game_pct": 64.608,
-    "mean_cohort_sd": 0.705,
-    "mean_team_diff": 0.349,
-    "repeat_recent_pct": 0.092,
-    "latecomer_consec_bursts": 0.119,
-    "bypass_rate_pct": 39.969,
-    "virt_game_spread": 1.619
+    "avg_wait_mins": 13.192,
+    "p95_wait_mins": 23.238,
+    "max_wait_mins": 27.562,
+    "avg_play_mins": 59.315,
+    "play_spread_mins": 24.876,
+    "competitive_game_pct": 67.937,
+    "mean_cohort_sd": 0.659,
+    "mean_team_diff": 0.341,
+    "repeat_recent_pct": 0.473,
+    "latecomer_consec_bursts": 0.238,
+    "bypass_rate_pct": 40.17,
+    "virt_game_spread": 1.595
    }
   }
  },
@@ -1840,49 +1840,49 @@
   "courts": 4,
   "density": "light",
   "skill": "club-balanced",
-  "seeds": 31,
+  "seeds": 32,
   "policies": {
    "FIFO": {
-    "avg_wait_mins": 3.262,
-    "p95_wait_mins": 11.642,
-    "max_wait_mins": 14.916,
-    "avg_play_mins": 95.608,
-    "play_spread_mins": 21.637,
-    "competitive_game_pct": 10.999,
-    "mean_cohort_sd": 1.267,
-    "mean_team_diff": 1.345,
-    "repeat_recent_pct": 42.298,
-    "latecomer_consec_bursts": 15.323,
-    "bypass_rate_pct": 0.19,
-    "virt_game_spread": 2.048
+    "avg_wait_mins": 3.261,
+    "p95_wait_mins": 11.673,
+    "max_wait_mins": 14.966,
+    "avg_play_mins": 95.655,
+    "play_spread_mins": 21.832,
+    "competitive_game_pct": 11.012,
+    "mean_cohort_sd": 1.265,
+    "mean_team_diff": 1.344,
+    "repeat_recent_pct": 42.316,
+    "latecomer_consec_bursts": 15.313,
+    "bypass_rate_pct": 0.273,
+    "virt_game_spread": 2.047
    },
    "LOWEST_RAW_GAMES": {
-    "avg_wait_mins": 3.215,
-    "p95_wait_mins": 12.78,
-    "max_wait_mins": 16.179,
-    "avg_play_mins": 95.414,
-    "play_spread_mins": 22.484,
-    "competitive_game_pct": 15.455,
+    "avg_wait_mins": 3.216,
+    "p95_wait_mins": 12.794,
+    "max_wait_mins": 16.241,
+    "avg_play_mins": 95.45,
+    "play_spread_mins": 22.393,
+    "competitive_game_pct": 15.24,
     "mean_cohort_sd": 1.265,
-    "mean_team_diff": 0.824,
-    "repeat_recent_pct": 29.85,
-    "latecomer_consec_bursts": 13.452,
-    "bypass_rate_pct": 3.495,
-    "virt_game_spread": 2.161
+    "mean_team_diff": 0.823,
+    "repeat_recent_pct": 30.257,
+    "latecomer_consec_bursts": 13.531,
+    "bypass_rate_pct": 3.653,
+    "virt_game_spread": 2.156
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.286,
-    "p95_wait_mins": 11.879,
-    "max_wait_mins": 15.306,
-    "avg_play_mins": 95.881,
-    "play_spread_mins": 25.376,
-    "competitive_game_pct": 49.631,
-    "mean_cohort_sd": 0.86,
-    "mean_team_diff": 0.475,
-    "repeat_recent_pct": 3.697,
-    "latecomer_consec_bursts": 15.323,
-    "bypass_rate_pct": 0.754,
-    "virt_game_spread": 2.29
+    "avg_wait_mins": 3.248,
+    "p95_wait_mins": 11.903,
+    "max_wait_mins": 15.289,
+    "avg_play_mins": 95.972,
+    "play_spread_mins": 27.271,
+    "competitive_game_pct": 56.315,
+    "mean_cohort_sd": 0.769,
+    "mean_team_diff": 0.45,
+    "repeat_recent_pct": 2.483,
+    "latecomer_consec_bursts": 15.313,
+    "bypass_rate_pct": 0.744,
+    "virt_game_spread": 2.266
    }
   }
  },
@@ -1922,17 +1922,17 @@
     "virt_game_spread": 2.948
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 8.13,
-    "p95_wait_mins": 15.195,
-    "max_wait_mins": 18.013,
-    "avg_play_mins": 74.066,
-    "play_spread_mins": 27.466,
-    "competitive_game_pct": 61.567,
-    "mean_cohort_sd": 0.735,
-    "mean_team_diff": 0.34,
-    "repeat_recent_pct": 0.397,
-    "latecomer_consec_bursts": 2.897,
-    "bypass_rate_pct": 17.261,
+    "avg_wait_mins": 8.105,
+    "p95_wait_mins": 15.63,
+    "max_wait_mins": 18.919,
+    "avg_play_mins": 73.695,
+    "play_spread_mins": 27.591,
+    "competitive_game_pct": 67.652,
+    "mean_cohort_sd": 0.642,
+    "mean_team_diff": 0.333,
+    "repeat_recent_pct": 0.296,
+    "latecomer_consec_bursts": 3.552,
+    "bypass_rate_pct": 22.236,
     "virt_game_spread": 2.034
    }
   }
@@ -1973,18 +1973,18 @@
     "virt_game_spread": 2.5
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 12.934,
-    "p95_wait_mins": 22.443,
-    "max_wait_mins": 26.813,
-    "avg_play_mins": 60.046,
-    "play_spread_mins": 25.515,
-    "competitive_game_pct": 70.178,
-    "mean_cohort_sd": 0.625,
-    "mean_team_diff": 0.238,
+    "avg_wait_mins": 12.947,
+    "p95_wait_mins": 22.356,
+    "max_wait_mins": 26.366,
+    "avg_play_mins": 60.038,
+    "play_spread_mins": 26.29,
+    "competitive_game_pct": 72.476,
+    "mean_cohort_sd": 0.578,
+    "mean_team_diff": 0.266,
     "repeat_recent_pct": 0,
-    "latecomer_consec_bursts": 0.036,
-    "bypass_rate_pct": 52.536,
-    "virt_game_spread": 1.679
+    "latecomer_consec_bursts": 0.071,
+    "bypass_rate_pct": 52.446,
+    "virt_game_spread": 1.589
    }
   }
  },
@@ -2024,18 +2024,18 @@
     "virt_game_spread": 2.194
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.213,
-    "p95_wait_mins": 11.395,
-    "max_wait_mins": 15.183,
-    "avg_play_mins": 95.011,
-    "play_spread_mins": 24.679,
-    "competitive_game_pct": 58.421,
-    "mean_cohort_sd": 0.802,
-    "mean_team_diff": 0.33,
-    "repeat_recent_pct": 4.448,
-    "latecomer_consec_bursts": 16.387,
+    "avg_wait_mins": 3.199,
+    "p95_wait_mins": 11.666,
+    "max_wait_mins": 15.031,
+    "avg_play_mins": 95.42,
+    "play_spread_mins": 25.764,
+    "competitive_game_pct": 65.581,
+    "mean_cohort_sd": 0.728,
+    "mean_team_diff": 0.326,
+    "repeat_recent_pct": 2.742,
+    "latecomer_consec_bursts": 15.677,
     "bypass_rate_pct": 0.762,
-    "virt_game_spread": 2.274
+    "virt_game_spread": 2.242
    }
   }
  },
@@ -2075,18 +2075,18 @@
     "virt_game_spread": 2.857
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 8.052,
-    "p95_wait_mins": 15.111,
-    "max_wait_mins": 17.558,
-    "avg_play_mins": 74.338,
-    "play_spread_mins": 27.535,
-    "competitive_game_pct": 67.4,
-    "mean_cohort_sd": 0.717,
-    "mean_team_diff": 0.251,
-    "repeat_recent_pct": 0.502,
-    "latecomer_consec_bursts": 3,
-    "bypass_rate_pct": 19.143,
-    "virt_game_spread": 2
+    "avg_wait_mins": 8.021,
+    "p95_wait_mins": 15.581,
+    "max_wait_mins": 18.409,
+    "avg_play_mins": 74.201,
+    "play_spread_mins": 28.236,
+    "competitive_game_pct": 72.969,
+    "mean_cohort_sd": 0.623,
+    "mean_team_diff": 0.225,
+    "repeat_recent_pct": 0.099,
+    "latecomer_consec_bursts": 3.429,
+    "bypass_rate_pct": 23.946,
+    "virt_game_spread": 2.125
    }
   }
  },
@@ -2095,49 +2095,49 @@
   "courts": 4,
   "density": "peak",
   "skill": "beginner-heavy",
-  "seeds": 27,
+  "seeds": 28,
   "policies": {
    "FIFO": {
-    "avg_wait_mins": 12.698,
-    "p95_wait_mins": 20.571,
-    "max_wait_mins": 23.907,
-    "avg_play_mins": 59.657,
-    "play_spread_mins": 23.14,
-    "competitive_game_pct": 14.664,
+    "avg_wait_mins": 12.713,
+    "p95_wait_mins": 20.622,
+    "max_wait_mins": 23.84,
+    "avg_play_mins": 59.656,
+    "play_spread_mins": 23.015,
+    "competitive_game_pct": 14.651,
     "mean_cohort_sd": 1.184,
-    "mean_team_diff": 1.189,
-    "repeat_recent_pct": 7.569,
+    "mean_team_diff": 1.195,
+    "repeat_recent_pct": 7.401,
     "latecomer_consec_bursts": 0,
-    "bypass_rate_pct": 39.521,
-    "virt_game_spread": 1.407
+    "bypass_rate_pct": 39.844,
+    "virt_game_spread": 1.393
    },
    "LOWEST_RAW_GAMES": {
-    "avg_wait_mins": 12.769,
-    "p95_wait_mins": 25.81,
-    "max_wait_mins": 29.655,
-    "avg_play_mins": 54.783,
-    "play_spread_mins": 14.745,
-    "competitive_game_pct": 23.222,
-    "mean_cohort_sd": 1.168,
-    "mean_team_diff": 0.575,
-    "repeat_recent_pct": 4.573,
-    "latecomer_consec_bursts": 8.63,
-    "bypass_rate_pct": 51.682,
-    "virt_game_spread": 2.463
+    "avg_wait_mins": 12.781,
+    "p95_wait_mins": 25.808,
+    "max_wait_mins": 29.587,
+    "avg_play_mins": 54.849,
+    "play_spread_mins": 14.781,
+    "competitive_game_pct": 23.413,
+    "mean_cohort_sd": 1.17,
+    "mean_team_diff": 0.574,
+    "repeat_recent_pct": 4.511,
+    "latecomer_consec_bursts": 8.536,
+    "bypass_rate_pct": 51.979,
+    "virt_game_spread": 2.482
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 12.795,
-    "p95_wait_mins": 22.317,
-    "max_wait_mins": 26.527,
-    "avg_play_mins": 59.922,
-    "play_spread_mins": 25.844,
-    "competitive_game_pct": 76.575,
-    "mean_cohort_sd": 0.588,
-    "mean_team_diff": 0.179,
+    "avg_wait_mins": 12.772,
+    "p95_wait_mins": 22.045,
+    "max_wait_mins": 26.542,
+    "avg_play_mins": 60.139,
+    "play_spread_mins": 27.16,
+    "competitive_game_pct": 81.288,
+    "mean_cohort_sd": 0.544,
+    "mean_team_diff": 0.176,
     "repeat_recent_pct": 0,
-    "latecomer_consec_bursts": 0.148,
-    "bypass_rate_pct": 51.768,
-    "virt_game_spread": 1.593
+    "latecomer_consec_bursts": 0.107,
+    "bypass_rate_pct": 52.509,
+    "virt_game_spread": 1.661
    }
   }
  },
@@ -2177,18 +2177,18 @@
     "virt_game_spread": 2.234
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.282,
-    "p95_wait_mins": 11.668,
-    "max_wait_mins": 15.019,
-    "avg_play_mins": 95.576,
-    "play_spread_mins": 24.911,
-    "competitive_game_pct": 77.704,
-    "mean_cohort_sd": 0.518,
-    "mean_team_diff": 0.232,
-    "repeat_recent_pct": 2.588,
-    "latecomer_consec_bursts": 15.344,
-    "bypass_rate_pct": 0.647,
-    "virt_game_spread": 2.156
+    "avg_wait_mins": 3.256,
+    "p95_wait_mins": 11.961,
+    "max_wait_mins": 15.271,
+    "avg_play_mins": 95.665,
+    "play_spread_mins": 25.212,
+    "competitive_game_pct": 77.995,
+    "mean_cohort_sd": 0.472,
+    "mean_team_diff": 0.23,
+    "repeat_recent_pct": 1.89,
+    "latecomer_consec_bursts": 14.875,
+    "bypass_rate_pct": 0.752,
+    "virt_game_spread": 2.297
    }
   }
  },
@@ -2228,18 +2228,18 @@
     "virt_game_spread": 2.879
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 8.192,
-    "p95_wait_mins": 15.382,
-    "max_wait_mins": 17.949,
-    "avg_play_mins": 73.966,
-    "play_spread_mins": 26.088,
-    "competitive_game_pct": 81.752,
-    "mean_cohort_sd": 0.455,
-    "mean_team_diff": 0.18,
-    "repeat_recent_pct": 0.101,
-    "latecomer_consec_bursts": 3.31,
-    "bypass_rate_pct": 17.763,
-    "virt_game_spread": 1.931
+    "avg_wait_mins": 8.165,
+    "p95_wait_mins": 15.674,
+    "max_wait_mins": 18.609,
+    "avg_play_mins": 74.048,
+    "play_spread_mins": 27.563,
+    "competitive_game_pct": 84.701,
+    "mean_cohort_sd": 0.422,
+    "mean_team_diff": 0.166,
+    "repeat_recent_pct": 0,
+    "latecomer_consec_bursts": 3,
+    "bypass_rate_pct": 22.153,
+    "virt_game_spread": 1.828
    }
   }
  },
@@ -2279,18 +2279,18 @@
     "virt_game_spread": 2.536
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 13.015,
-    "p95_wait_mins": 22.138,
-    "max_wait_mins": 26.215,
-    "avg_play_mins": 60.191,
-    "play_spread_mins": 25.405,
-    "competitive_game_pct": 89.034,
-    "mean_cohort_sd": 0.387,
-    "mean_team_diff": 0.112,
+    "avg_wait_mins": 13.02,
+    "p95_wait_mins": 22.019,
+    "max_wait_mins": 26.685,
+    "avg_play_mins": 60.072,
+    "play_spread_mins": 24.652,
+    "competitive_game_pct": 88.901,
+    "mean_cohort_sd": 0.352,
+    "mean_team_diff": 0.119,
     "repeat_recent_pct": 0,
-    "latecomer_consec_bursts": 0,
-    "bypass_rate_pct": 51.583,
-    "virt_game_spread": 1.536
+    "latecomer_consec_bursts": 0.107,
+    "bypass_rate_pct": 50.322,
+    "virt_game_spread": 1.571
    }
   }
  },
@@ -2330,18 +2330,18 @@
     "virt_game_spread": 2.161
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.221,
-    "p95_wait_mins": 11.582,
-    "max_wait_mins": 15.197,
-    "avg_play_mins": 95.552,
-    "play_spread_mins": 25.085,
-    "competitive_game_pct": 47.401,
-    "mean_cohort_sd": 0.968,
-    "mean_team_diff": 0.569,
-    "repeat_recent_pct": 3.593,
-    "latecomer_consec_bursts": 16.161,
-    "bypass_rate_pct": 0.19,
-    "virt_game_spread": 2.371
+    "avg_wait_mins": 3.206,
+    "p95_wait_mins": 11.751,
+    "max_wait_mins": 15.046,
+    "avg_play_mins": 95.743,
+    "play_spread_mins": 24.944,
+    "competitive_game_pct": 50.994,
+    "mean_cohort_sd": 0.891,
+    "mean_team_diff": 0.528,
+    "repeat_recent_pct": 2.475,
+    "latecomer_consec_bursts": 15.484,
+    "bypass_rate_pct": 0.572,
+    "virt_game_spread": 2.339
    }
   }
  },
@@ -2381,18 +2381,18 @@
     "virt_game_spread": 2.845
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 8.101,
-    "p95_wait_mins": 15.148,
-    "max_wait_mins": 17.977,
-    "avg_play_mins": 73.866,
-    "play_spread_mins": 26.682,
-    "competitive_game_pct": 57.408,
-    "mean_cohort_sd": 0.79,
-    "mean_team_diff": 0.406,
-    "repeat_recent_pct": 0.296,
+    "avg_wait_mins": 8.081,
+    "p95_wait_mins": 15.539,
+    "max_wait_mins": 18.286,
+    "avg_play_mins": 73.881,
+    "play_spread_mins": 25.159,
+    "competitive_game_pct": 63.978,
+    "mean_cohort_sd": 0.687,
+    "mean_team_diff": 0.365,
+    "repeat_recent_pct": 0.099,
     "latecomer_consec_bursts": 3.828,
-    "bypass_rate_pct": 18.83,
-    "virt_game_spread": 1.966
+    "bypass_rate_pct": 22.279,
+    "virt_game_spread": 1.897
    }
   }
  },
@@ -2432,18 +2432,18 @@
     "virt_game_spread": 2.536
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 12.863,
-    "p95_wait_mins": 22.111,
-    "max_wait_mins": 26.628,
-    "avg_play_mins": 59.914,
-    "play_spread_mins": 25.708,
-    "competitive_game_pct": 67.206,
-    "mean_cohort_sd": 0.68,
-    "mean_team_diff": 0.295,
+    "avg_wait_mins": 12.895,
+    "p95_wait_mins": 22.176,
+    "max_wait_mins": 26.698,
+    "avg_play_mins": 60.116,
+    "play_spread_mins": 24.219,
+    "competitive_game_pct": 70.345,
+    "mean_cohort_sd": 0.607,
+    "mean_team_diff": 0.307,
     "repeat_recent_pct": 0,
-    "latecomer_consec_bursts": 0.214,
-    "bypass_rate_pct": 50.371,
-    "virt_game_spread": 1.607
+    "latecomer_consec_bursts": 0.036,
+    "bypass_rate_pct": 51.884,
+    "virt_game_spread": 1.5
    }
   }
  },
@@ -2483,18 +2483,18 @@
     "virt_game_spread": 1.714
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 4.739,
-    "p95_wait_mins": 16.145,
-    "max_wait_mins": 17.984,
-    "avg_play_mins": 131.164,
-    "play_spread_mins": 17.683,
-    "competitive_game_pct": 20.602,
-    "mean_cohort_sd": 1.211,
-    "mean_team_diff": 0.727,
-    "repeat_recent_pct": 62.06,
-    "latecomer_consec_bursts": 6.584,
+    "avg_wait_mins": 4.735,
+    "p95_wait_mins": 16.169,
+    "max_wait_mins": 18.254,
+    "avg_play_mins": 131.263,
+    "play_spread_mins": 19.905,
+    "competitive_game_pct": 20.403,
+    "mean_cohort_sd": 1.201,
+    "mean_team_diff": 0.739,
+    "repeat_recent_pct": 61.521,
+    "latecomer_consec_bursts": 6.727,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2.208
+    "virt_game_spread": 2.273
    }
   }
  },
@@ -2534,16 +2534,16 @@
     "virt_game_spread": 2.13
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 7.564,
-    "p95_wait_mins": 17.05,
-    "max_wait_mins": 18.622,
-    "avg_play_mins": 112.59,
-    "play_spread_mins": 24.761,
-    "competitive_game_pct": 22.288,
-    "mean_cohort_sd": 1.198,
-    "mean_team_diff": 0.67,
-    "repeat_recent_pct": 43.544,
-    "latecomer_consec_bursts": 2.922,
+    "avg_wait_mins": 7.557,
+    "p95_wait_mins": 17.158,
+    "max_wait_mins": 18.94,
+    "avg_play_mins": 112.996,
+    "play_spread_mins": 25.558,
+    "competitive_game_pct": 22.242,
+    "mean_cohort_sd": 1.178,
+    "mean_team_diff": 0.708,
+    "repeat_recent_pct": 40.647,
+    "latecomer_consec_bursts": 2.896,
     "bypass_rate_pct": 0,
     "virt_game_spread": 2.156
    }
@@ -2585,18 +2585,18 @@
     "virt_game_spread": 2.273
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 14.456,
-    "p95_wait_mins": 27.364,
-    "max_wait_mins": 32.951,
-    "avg_play_mins": 84.725,
-    "play_spread_mins": 24.106,
-    "competitive_game_pct": 31.412,
-    "mean_cohort_sd": 1.068,
-    "mean_team_diff": 0.596,
-    "repeat_recent_pct": 23.621,
-    "latecomer_consec_bursts": 0.065,
-    "bypass_rate_pct": 0.409,
-    "virt_game_spread": 1.831
+    "avg_wait_mins": 14.453,
+    "p95_wait_mins": 27.78,
+    "max_wait_mins": 32.918,
+    "avg_play_mins": 84.874,
+    "play_spread_mins": 25.475,
+    "competitive_game_pct": 33.359,
+    "mean_cohort_sd": 1.028,
+    "mean_team_diff": 0.636,
+    "repeat_recent_pct": 22.671,
+    "latecomer_consec_bursts": 0.052,
+    "bypass_rate_pct": 0.717,
+    "virt_game_spread": 1.844
    }
   }
  },
@@ -2636,18 +2636,18 @@
     "virt_game_spread": 1.688
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 4.715,
-    "p95_wait_mins": 16.014,
-    "max_wait_mins": 17.821,
-    "avg_play_mins": 130.334,
-    "play_spread_mins": 18.368,
-    "competitive_game_pct": 33.213,
-    "mean_cohort_sd": 1.087,
-    "mean_team_diff": 0.474,
-    "repeat_recent_pct": 64.135,
-    "latecomer_consec_bursts": 6.753,
+    "avg_wait_mins": 4.71,
+    "p95_wait_mins": 16.025,
+    "max_wait_mins": 18.137,
+    "avg_play_mins": 130.198,
+    "play_spread_mins": 18.695,
+    "competitive_game_pct": 34.287,
+    "mean_cohort_sd": 1.081,
+    "mean_team_diff": 0.478,
+    "repeat_recent_pct": 64.127,
+    "latecomer_consec_bursts": 6.87,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2.182
+    "virt_game_spread": 2.208
    }
   }
  },
@@ -2687,18 +2687,18 @@
     "virt_game_spread": 2.175
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 7.514,
-    "p95_wait_mins": 16.901,
-    "max_wait_mins": 18.336,
-    "avg_play_mins": 112.316,
-    "play_spread_mins": 22.904,
-    "competitive_game_pct": 37.979,
-    "mean_cohort_sd": 1.069,
-    "mean_team_diff": 0.425,
-    "repeat_recent_pct": 42.402,
-    "latecomer_consec_bursts": 3.221,
+    "avg_wait_mins": 7.503,
+    "p95_wait_mins": 16.985,
+    "max_wait_mins": 18.532,
+    "avg_play_mins": 112.658,
+    "play_spread_mins": 25.486,
+    "competitive_game_pct": 37.647,
+    "mean_cohort_sd": 1.057,
+    "mean_team_diff": 0.456,
+    "repeat_recent_pct": 43.637,
+    "latecomer_consec_bursts": 3.039,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2.195
+    "virt_game_spread": 2.208
    }
   }
  },
@@ -2738,18 +2738,18 @@
     "virt_game_spread": 2.278
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 14.31,
-    "p95_wait_mins": 27.336,
-    "max_wait_mins": 32.662,
-    "avg_play_mins": 84.861,
-    "play_spread_mins": 24.136,
-    "competitive_game_pct": 44.465,
-    "mean_cohort_sd": 0.981,
-    "mean_team_diff": 0.393,
-    "repeat_recent_pct": 24.083,
-    "latecomer_consec_bursts": 0.083,
-    "bypass_rate_pct": 0.215,
-    "virt_game_spread": 1.861
+    "avg_wait_mins": 14.314,
+    "p95_wait_mins": 27.391,
+    "max_wait_mins": 32.64,
+    "avg_play_mins": 84.645,
+    "play_spread_mins": 25.527,
+    "competitive_game_pct": 46.128,
+    "mean_cohort_sd": 0.959,
+    "mean_team_diff": 0.424,
+    "repeat_recent_pct": 24.152,
+    "latecomer_consec_bursts": 0.069,
+    "bypass_rate_pct": 0.429,
+    "virt_game_spread": 1.938
    }
   }
  },
@@ -2789,18 +2789,18 @@
     "virt_game_spread": 1.623
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 4.763,
-    "p95_wait_mins": 16.217,
-    "max_wait_mins": 18.052,
-    "avg_play_mins": 130.747,
-    "play_spread_mins": 16.102,
-    "competitive_game_pct": 50.143,
-    "mean_cohort_sd": 0.707,
-    "mean_team_diff": 0.47,
-    "repeat_recent_pct": 56.201,
-    "latecomer_consec_bursts": 6.675,
+    "avg_wait_mins": 4.76,
+    "p95_wait_mins": 16.244,
+    "max_wait_mins": 18.193,
+    "avg_play_mins": 131.292,
+    "play_spread_mins": 16.766,
+    "competitive_game_pct": 51.392,
+    "mean_cohort_sd": 0.699,
+    "mean_team_diff": 0.471,
+    "repeat_recent_pct": 55.123,
+    "latecomer_consec_bursts": 6.584,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2.065
+    "virt_game_spread": 2.078
    }
   }
  },
@@ -2840,18 +2840,18 @@
     "virt_game_spread": 2.131
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 7.704,
-    "p95_wait_mins": 17.205,
-    "max_wait_mins": 18.709,
-    "avg_play_mins": 111.282,
-    "play_spread_mins": 22.282,
-    "competitive_game_pct": 58.052,
-    "mean_cohort_sd": 0.699,
-    "mean_team_diff": 0.384,
-    "repeat_recent_pct": 36.285,
-    "latecomer_consec_bursts": 3.357,
+    "avg_wait_mins": 7.696,
+    "p95_wait_mins": 17.307,
+    "max_wait_mins": 18.949,
+    "avg_play_mins": 111.6,
+    "play_spread_mins": 22.339,
+    "competitive_game_pct": 57.999,
+    "mean_cohort_sd": 0.689,
+    "mean_team_diff": 0.396,
+    "repeat_recent_pct": 35.041,
+    "latecomer_consec_bursts": 3.369,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 1.994
+    "virt_game_spread": 2.042
    }
   }
  },
@@ -2891,17 +2891,17 @@
     "virt_game_spread": 2.247
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 14.569,
-    "p95_wait_mins": 27.956,
-    "max_wait_mins": 33.009,
-    "avg_play_mins": 84.462,
-    "play_spread_mins": 23.562,
-    "competitive_game_pct": 64.312,
-    "mean_cohort_sd": 0.645,
-    "mean_team_diff": 0.33,
-    "repeat_recent_pct": 20.111,
+    "avg_wait_mins": 14.586,
+    "p95_wait_mins": 28.03,
+    "max_wait_mins": 32.973,
+    "avg_play_mins": 84.438,
+    "play_spread_mins": 24.556,
+    "competitive_game_pct": 64.295,
+    "mean_cohort_sd": 0.634,
+    "mean_team_diff": 0.348,
+    "repeat_recent_pct": 19.36,
     "latecomer_consec_bursts": 0.052,
-    "bypass_rate_pct": 0.533,
+    "bypass_rate_pct": 0.425,
     "virt_game_spread": 1.74
    }
   }
@@ -2942,18 +2942,18 @@
     "virt_game_spread": 1.662
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 4.744,
-    "p95_wait_mins": 16.081,
-    "max_wait_mins": 17.863,
-    "avg_play_mins": 130.477,
-    "play_spread_mins": 18.494,
-    "competitive_game_pct": 12.662,
-    "mean_cohort_sd": 1.445,
-    "mean_team_diff": 0.816,
-    "repeat_recent_pct": 60.436,
-    "latecomer_consec_bursts": 6.701,
+    "avg_wait_mins": 4.739,
+    "p95_wait_mins": 16.136,
+    "max_wait_mins": 18.13,
+    "avg_play_mins": 130.422,
+    "play_spread_mins": 18.683,
+    "competitive_game_pct": 12.654,
+    "mean_cohort_sd": 1.435,
+    "mean_team_diff": 0.811,
+    "repeat_recent_pct": 59.612,
+    "latecomer_consec_bursts": 6.792,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2.13
+    "virt_game_spread": 2.169
    }
   }
  },
@@ -2993,18 +2993,18 @@
     "virt_game_spread": 2.149
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 7.499,
-    "p95_wait_mins": 16.995,
-    "max_wait_mins": 18.368,
-    "avg_play_mins": 112.521,
-    "play_spread_mins": 24.758,
-    "competitive_game_pct": 15.645,
-    "mean_cohort_sd": 1.405,
-    "mean_team_diff": 0.79,
-    "repeat_recent_pct": 40.366,
-    "latecomer_consec_bursts": 3.039,
+    "avg_wait_mins": 7.489,
+    "p95_wait_mins": 17.056,
+    "max_wait_mins": 18.677,
+    "avg_play_mins": 112.737,
+    "play_spread_mins": 24.676,
+    "competitive_game_pct": 15.816,
+    "mean_cohort_sd": 1.407,
+    "mean_team_diff": 0.849,
+    "repeat_recent_pct": 40.718,
+    "latecomer_consec_bursts": 2.948,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2.214
+    "virt_game_spread": 2.26
    }
   }
  },
@@ -3013,49 +3013,49 @@
   "courts": 1,
   "density": "peak",
   "skill": "wide-mix",
-  "seeds": 77,
+  "seeds": 72,
   "policies": {
    "FIFO": {
-    "avg_wait_mins": 14.269,
-    "p95_wait_mins": 27.228,
-    "max_wait_mins": 32.21,
-    "avg_play_mins": 86.216,
-    "play_spread_mins": 18.014,
-    "competitive_game_pct": 5.725,
-    "mean_cohort_sd": 1.536,
-    "mean_team_diff": 1.61,
-    "repeat_recent_pct": 58.647,
-    "latecomer_consec_bursts": 0.013,
+    "avg_wait_mins": 14.234,
+    "p95_wait_mins": 27.073,
+    "max_wait_mins": 32.122,
+    "avg_play_mins": 86.188,
+    "play_spread_mins": 17.798,
+    "competitive_game_pct": 5.348,
+    "mean_cohort_sd": 1.55,
+    "mean_team_diff": 1.613,
+    "repeat_recent_pct": 58.304,
+    "latecomer_consec_bursts": 0.014,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 1.091
+    "virt_game_spread": 1.097
    },
    "LOWEST_RAW_GAMES": {
-    "avg_wait_mins": 14.292,
-    "p95_wait_mins": 30.084,
-    "max_wait_mins": 33.133,
-    "avg_play_mins": 81.015,
-    "play_spread_mins": 14.301,
-    "competitive_game_pct": 9.243,
-    "mean_cohort_sd": 1.54,
-    "mean_team_diff": 0.905,
-    "repeat_recent_pct": 51.557,
-    "latecomer_consec_bursts": 2.597,
-    "bypass_rate_pct": 10.357,
-    "virt_game_spread": 2.286
+    "avg_wait_mins": 14.245,
+    "p95_wait_mins": 29.969,
+    "max_wait_mins": 33.093,
+    "avg_play_mins": 81.102,
+    "play_spread_mins": 14.23,
+    "competitive_game_pct": 8.968,
+    "mean_cohort_sd": 1.555,
+    "mean_team_diff": 0.909,
+    "repeat_recent_pct": 51.38,
+    "latecomer_consec_bursts": 2.583,
+    "bypass_rate_pct": 10.16,
+    "virt_game_spread": 2.306
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 14.406,
-    "p95_wait_mins": 27.707,
-    "max_wait_mins": 32.692,
-    "avg_play_mins": 84.859,
-    "play_spread_mins": 24.534,
-    "competitive_game_pct": 24.359,
-    "mean_cohort_sd": 1.217,
-    "mean_team_diff": 0.717,
-    "repeat_recent_pct": 24.33,
-    "latecomer_consec_bursts": 0.104,
-    "bypass_rate_pct": 0.208,
-    "virt_game_spread": 1.844
+    "avg_wait_mins": 14.387,
+    "p95_wait_mins": 27.639,
+    "max_wait_mins": 32.655,
+    "avg_play_mins": 85.121,
+    "play_spread_mins": 24.443,
+    "competitive_game_pct": 25.945,
+    "mean_cohort_sd": 1.21,
+    "mean_team_diff": 0.745,
+    "repeat_recent_pct": 23.25,
+    "latecomer_consec_bursts": 0.153,
+    "bypass_rate_pct": 0.543,
+    "virt_game_spread": 1.833
    }
   }
  },
@@ -3095,18 +3095,18 @@
     "virt_game_spread": 2.012
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.556,
-    "p95_wait_mins": 13.485,
-    "max_wait_mins": 16.726,
-    "avg_play_mins": 138.35,
-    "play_spread_mins": 24.732,
-    "competitive_game_pct": 33.646,
-    "mean_cohort_sd": 1.063,
-    "mean_team_diff": 0.598,
-    "repeat_recent_pct": 20.513,
-    "latecomer_consec_bursts": 12.381,
+    "avg_wait_mins": 3.545,
+    "p95_wait_mins": 14.019,
+    "max_wait_mins": 17.314,
+    "avg_play_mins": 137.955,
+    "play_spread_mins": 27.658,
+    "competitive_game_pct": 38.688,
+    "mean_cohort_sd": 1.019,
+    "mean_team_diff": 0.608,
+    "repeat_recent_pct": 17.149,
+    "latecomer_consec_bursts": 12.548,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2.381
+    "virt_game_spread": 2.429
    }
   }
  },
@@ -3146,18 +3146,18 @@
     "virt_game_spread": 2.888
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 9.523,
-    "p95_wait_mins": 17.353,
-    "max_wait_mins": 20.191,
-    "avg_play_mins": 103.608,
-    "play_spread_mins": 28.368,
-    "competitive_game_pct": 45.965,
-    "mean_cohort_sd": 0.929,
-    "mean_team_diff": 0.455,
-    "repeat_recent_pct": 7.175,
-    "latecomer_consec_bursts": 3.225,
-    "bypass_rate_pct": 3.509,
-    "virt_game_spread": 1.95
+    "avg_wait_mins": 9.509,
+    "p95_wait_mins": 17.685,
+    "max_wait_mins": 21.319,
+    "avg_play_mins": 103.805,
+    "play_spread_mins": 28.957,
+    "competitive_game_pct": 49.705,
+    "mean_cohort_sd": 0.864,
+    "mean_team_diff": 0.486,
+    "repeat_recent_pct": 4.678,
+    "latecomer_consec_bursts": 3.075,
+    "bypass_rate_pct": 5.963,
+    "virt_game_spread": 1.837
    }
   }
  },
@@ -3197,18 +3197,18 @@
     "virt_game_spread": 2.675
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 13.849,
-    "p95_wait_mins": 24.952,
-    "max_wait_mins": 30.267,
-    "avg_play_mins": 86.499,
-    "play_spread_mins": 28.029,
-    "competitive_game_pct": 51.875,
-    "mean_cohort_sd": 0.846,
-    "mean_team_diff": 0.408,
-    "repeat_recent_pct": 3.137,
-    "latecomer_consec_bursts": 0.4,
-    "bypass_rate_pct": 39.242,
-    "virt_game_spread": 1.813
+    "avg_wait_mins": 13.846,
+    "p95_wait_mins": 24.989,
+    "max_wait_mins": 30.073,
+    "avg_play_mins": 86.495,
+    "play_spread_mins": 28.009,
+    "competitive_game_pct": 55.356,
+    "mean_cohort_sd": 0.798,
+    "mean_team_diff": 0.439,
+    "repeat_recent_pct": 2.428,
+    "latecomer_consec_bursts": 0.3,
+    "bypass_rate_pct": 40.739,
+    "virt_game_spread": 1.775
    }
   }
  },
@@ -3248,18 +3248,18 @@
     "virt_game_spread": 1.952
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.548,
-    "p95_wait_mins": 13.351,
-    "max_wait_mins": 16.71,
-    "avg_play_mins": 137.856,
-    "play_spread_mins": 26.768,
-    "competitive_game_pct": 46.64,
-    "mean_cohort_sd": 0.963,
-    "mean_team_diff": 0.422,
-    "repeat_recent_pct": 17.446,
-    "latecomer_consec_bursts": 12.595,
+    "avg_wait_mins": 3.525,
+    "p95_wait_mins": 13.755,
+    "max_wait_mins": 17.12,
+    "avg_play_mins": 138.051,
+    "play_spread_mins": 27.447,
+    "competitive_game_pct": 50.104,
+    "mean_cohort_sd": 0.922,
+    "mean_team_diff": 0.415,
+    "repeat_recent_pct": 17.507,
+    "latecomer_consec_bursts": 12.667,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2.452
+    "virt_game_spread": 2.393
    }
   }
  },
@@ -3299,18 +3299,18 @@
     "virt_game_spread": 2.962
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 9.403,
-    "p95_wait_mins": 17.161,
-    "max_wait_mins": 19.949,
-    "avg_play_mins": 102.71,
-    "play_spread_mins": 30.447,
-    "competitive_game_pct": 55.712,
-    "mean_cohort_sd": 0.848,
-    "mean_team_diff": 0.303,
-    "repeat_recent_pct": 6.907,
-    "latecomer_consec_bursts": 3.4,
-    "bypass_rate_pct": 3.409,
-    "virt_game_spread": 2.1
+    "avg_wait_mins": 9.389,
+    "p95_wait_mins": 17.477,
+    "max_wait_mins": 21.09,
+    "avg_play_mins": 103.245,
+    "play_spread_mins": 29.756,
+    "competitive_game_pct": 60.307,
+    "mean_cohort_sd": 0.82,
+    "mean_team_diff": 0.322,
+    "repeat_recent_pct": 6.345,
+    "latecomer_consec_bursts": 3.225,
+    "bypass_rate_pct": 5.335,
+    "virt_game_spread": 2.175
    }
   }
  },
@@ -3350,18 +3350,18 @@
     "virt_game_spread": 2.6
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 13.68,
-    "p95_wait_mins": 24.333,
-    "max_wait_mins": 29.674,
-    "avg_play_mins": 86.212,
-    "play_spread_mins": 28.14,
-    "competitive_game_pct": 59.857,
-    "mean_cohort_sd": 0.815,
-    "mean_team_diff": 0.286,
-    "repeat_recent_pct": 2.539,
-    "latecomer_consec_bursts": 0.375,
-    "bypass_rate_pct": 38.14,
-    "virt_game_spread": 1.85
+    "avg_wait_mins": 13.688,
+    "p95_wait_mins": 24.837,
+    "max_wait_mins": 29.623,
+    "avg_play_mins": 85.922,
+    "play_spread_mins": 28.506,
+    "competitive_game_pct": 64.107,
+    "mean_cohort_sd": 0.768,
+    "mean_team_diff": 0.31,
+    "repeat_recent_pct": 2.062,
+    "latecomer_consec_bursts": 0.275,
+    "bypass_rate_pct": 39.277,
+    "virt_game_spread": 1.813
    }
   }
  },
@@ -3401,18 +3401,18 @@
     "virt_game_spread": 1.94
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.558,
-    "p95_wait_mins": 13.727,
-    "max_wait_mins": 16.622,
-    "avg_play_mins": 138.031,
-    "play_spread_mins": 25.576,
-    "competitive_game_pct": 62.534,
-    "mean_cohort_sd": 0.629,
-    "mean_team_diff": 0.368,
-    "repeat_recent_pct": 12.852,
-    "latecomer_consec_bursts": 12.69,
+    "avg_wait_mins": 3.578,
+    "p95_wait_mins": 14.045,
+    "max_wait_mins": 17.154,
+    "avg_play_mins": 138.036,
+    "play_spread_mins": 27.43,
+    "competitive_game_pct": 63.444,
+    "mean_cohort_sd": 0.596,
+    "mean_team_diff": 0.367,
+    "repeat_recent_pct": 10.525,
+    "latecomer_consec_bursts": 12.333,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2.464
+    "virt_game_spread": 2.208
    }
   }
  },
@@ -3452,18 +3452,18 @@
     "virt_game_spread": 2.813
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 9.626,
-    "p95_wait_mins": 17.524,
-    "max_wait_mins": 20.588,
-    "avg_play_mins": 103.703,
-    "play_spread_mins": 27.068,
-    "competitive_game_pct": 74.74,
-    "mean_cohort_sd": 0.56,
-    "mean_team_diff": 0.247,
-    "repeat_recent_pct": 2.002,
-    "latecomer_consec_bursts": 3.025,
-    "bypass_rate_pct": 2.904,
-    "virt_game_spread": 1.688
+    "avg_wait_mins": 9.6,
+    "p95_wait_mins": 17.805,
+    "max_wait_mins": 21.529,
+    "avg_play_mins": 103.842,
+    "play_spread_mins": 29.087,
+    "competitive_game_pct": 75.188,
+    "mean_cohort_sd": 0.526,
+    "mean_team_diff": 0.25,
+    "repeat_recent_pct": 1.782,
+    "latecomer_consec_bursts": 3.05,
+    "bypass_rate_pct": 5.983,
+    "virt_game_spread": 1.9
    }
   }
  },
@@ -3503,17 +3503,17 @@
     "virt_game_spread": 2.625
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 13.935,
-    "p95_wait_mins": 25.083,
-    "max_wait_mins": 30.222,
-    "avg_play_mins": 86.628,
-    "play_spread_mins": 28.391,
-    "competitive_game_pct": 77.642,
-    "mean_cohort_sd": 0.539,
-    "mean_team_diff": 0.237,
-    "repeat_recent_pct": 0.888,
-    "latecomer_consec_bursts": 0.3,
-    "bypass_rate_pct": 39.733,
+    "avg_wait_mins": 13.957,
+    "p95_wait_mins": 25.284,
+    "max_wait_mins": 29.806,
+    "avg_play_mins": 87.066,
+    "play_spread_mins": 28.643,
+    "competitive_game_pct": 78.144,
+    "mean_cohort_sd": 0.499,
+    "mean_team_diff": 0.236,
+    "repeat_recent_pct": 0.796,
+    "latecomer_consec_bursts": 0.1,
+    "bypass_rate_pct": 41.12,
     "virt_game_spread": 1.825
    }
   }
@@ -3554,18 +3554,18 @@
     "virt_game_spread": 1.917
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.529,
-    "p95_wait_mins": 13.431,
-    "max_wait_mins": 16.669,
-    "avg_play_mins": 137.393,
-    "play_spread_mins": 26.077,
-    "competitive_game_pct": 26.958,
-    "mean_cohort_sd": 1.232,
-    "mean_team_diff": 0.705,
-    "repeat_recent_pct": 18.453,
-    "latecomer_consec_bursts": 12.595,
+    "avg_wait_mins": 3.525,
+    "p95_wait_mins": 13.815,
+    "max_wait_mins": 17.137,
+    "avg_play_mins": 137.678,
+    "play_spread_mins": 26.427,
+    "competitive_game_pct": 33.238,
+    "mean_cohort_sd": 1.12,
+    "mean_team_diff": 0.672,
+    "repeat_recent_pct": 16.726,
+    "latecomer_consec_bursts": 12.571,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2.298
+    "virt_game_spread": 2.238
    }
   }
  },
@@ -3605,18 +3605,18 @@
     "virt_game_spread": 2.888
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 9.491,
-    "p95_wait_mins": 17.333,
-    "max_wait_mins": 20.096,
-    "avg_play_mins": 103.357,
-    "play_spread_mins": 28.214,
-    "competitive_game_pct": 39.12,
-    "mean_cohort_sd": 1.028,
-    "mean_team_diff": 0.558,
-    "repeat_recent_pct": 5.909,
-    "latecomer_consec_bursts": 3.4,
-    "bypass_rate_pct": 2.515,
-    "virt_game_spread": 1.95
+    "avg_wait_mins": 9.466,
+    "p95_wait_mins": 17.469,
+    "max_wait_mins": 20.835,
+    "avg_play_mins": 103.636,
+    "play_spread_mins": 27.464,
+    "competitive_game_pct": 43.745,
+    "mean_cohort_sd": 0.925,
+    "mean_team_diff": 0.533,
+    "repeat_recent_pct": 5.732,
+    "latecomer_consec_bursts": 2.95,
+    "bypass_rate_pct": 4.381,
+    "virt_game_spread": 1.962
    }
   }
  },
@@ -3656,18 +3656,18 @@
     "virt_game_spread": 2.65
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 13.778,
-    "p95_wait_mins": 24.77,
-    "max_wait_mins": 30.112,
-    "avg_play_mins": 86.738,
-    "play_spread_mins": 26.019,
-    "competitive_game_pct": 47.428,
-    "mean_cohort_sd": 0.938,
-    "mean_team_diff": 0.484,
-    "repeat_recent_pct": 2.067,
-    "latecomer_consec_bursts": 0.3,
-    "bypass_rate_pct": 38.437,
-    "virt_game_spread": 1.712
+    "avg_wait_mins": 13.787,
+    "p95_wait_mins": 25.129,
+    "max_wait_mins": 30.349,
+    "avg_play_mins": 86.421,
+    "play_spread_mins": 26.574,
+    "competitive_game_pct": 49.441,
+    "mean_cohort_sd": 0.919,
+    "mean_team_diff": 0.535,
+    "repeat_recent_pct": 2.651,
+    "latecomer_consec_bursts": 0.325,
+    "bypass_rate_pct": 40.642,
+    "virt_game_spread": 1.675
    }
   }
  },
@@ -3707,18 +3707,18 @@
     "virt_game_spread": 2.143
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.861,
-    "p95_wait_mins": 12.528,
-    "max_wait_mins": 16.348,
-    "avg_play_mins": 135.295,
-    "play_spread_mins": 29.711,
-    "competitive_game_pct": 40.109,
-    "mean_cohort_sd": 0.986,
-    "mean_team_diff": 0.539,
-    "repeat_recent_pct": 7.018,
-    "latecomer_consec_bursts": 19.071,
-    "bypass_rate_pct": 0.196,
-    "virt_game_spread": 2.357
+    "avg_wait_mins": 3.862,
+    "p95_wait_mins": 13.171,
+    "max_wait_mins": 16.854,
+    "avg_play_mins": 135.188,
+    "play_spread_mins": 28.01,
+    "competitive_game_pct": 44.42,
+    "mean_cohort_sd": 0.912,
+    "mean_team_diff": 0.567,
+    "repeat_recent_pct": 5.867,
+    "latecomer_consec_bursts": 18.071,
+    "bypass_rate_pct": 0.875,
+    "virt_game_spread": 2.25
    }
   }
  },
@@ -3758,18 +3758,18 @@
     "virt_game_spread": 2.92
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 9.138,
-    "p95_wait_mins": 16.596,
-    "max_wait_mins": 19.709,
-    "avg_play_mins": 105.459,
-    "play_spread_mins": 30.654,
-    "competitive_game_pct": 56.14,
-    "mean_cohort_sd": 0.796,
-    "mean_team_diff": 0.381,
-    "repeat_recent_pct": 2.021,
-    "latecomer_consec_bursts": 4.679,
-    "bypass_rate_pct": 21.833,
-    "virt_game_spread": 1.929
+    "avg_wait_mins": 9.137,
+    "p95_wait_mins": 16.885,
+    "max_wait_mins": 20.057,
+    "avg_play_mins": 105.334,
+    "play_spread_mins": 30.358,
+    "competitive_game_pct": 62.961,
+    "mean_cohort_sd": 0.711,
+    "mean_team_diff": 0.367,
+    "repeat_recent_pct": 1.703,
+    "latecomer_consec_bursts": 4.571,
+    "bypass_rate_pct": 23.23,
+    "virt_game_spread": 1.973
    }
   }
  },
@@ -3809,18 +3809,18 @@
     "virt_game_spread": 2.714
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 14.422,
-    "p95_wait_mins": 24.5,
-    "max_wait_mins": 28.918,
-    "avg_play_mins": 85.495,
-    "play_spread_mins": 28.766,
-    "competitive_game_pct": 63.77,
-    "mean_cohort_sd": 0.698,
-    "mean_team_diff": 0.303,
-    "repeat_recent_pct": 0.861,
-    "latecomer_consec_bursts": 0.071,
-    "bypass_rate_pct": 45.454,
-    "virt_game_spread": 2
+    "avg_wait_mins": 14.423,
+    "p95_wait_mins": 24.275,
+    "max_wait_mins": 28.612,
+    "avg_play_mins": 85.007,
+    "play_spread_mins": 27.696,
+    "competitive_game_pct": 67.83,
+    "mean_cohort_sd": 0.658,
+    "mean_team_diff": 0.329,
+    "repeat_recent_pct": 0.748,
+    "latecomer_consec_bursts": 0.25,
+    "bypass_rate_pct": 45.026,
+    "virt_game_spread": 1.821
    }
   }
  },
@@ -3860,18 +3860,18 @@
     "virt_game_spread": 2.286
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.838,
-    "p95_wait_mins": 12.439,
-    "max_wait_mins": 16.392,
-    "avg_play_mins": 135.004,
-    "play_spread_mins": 27.918,
-    "competitive_game_pct": 47.973,
-    "mean_cohort_sd": 0.938,
-    "mean_team_diff": 0.395,
-    "repeat_recent_pct": 6.072,
-    "latecomer_consec_bursts": 18.679,
-    "bypass_rate_pct": 0.097,
-    "virt_game_spread": 2.429
+    "avg_wait_mins": 3.83,
+    "p95_wait_mins": 13.171,
+    "max_wait_mins": 16.516,
+    "avg_play_mins": 135.602,
+    "play_spread_mins": 28.617,
+    "competitive_game_pct": 55.23,
+    "mean_cohort_sd": 0.866,
+    "mean_team_diff": 0.38,
+    "repeat_recent_pct": 6.353,
+    "latecomer_consec_bursts": 17.5,
+    "bypass_rate_pct": 0.284,
+    "virt_game_spread": 2.5
    }
   }
  },
@@ -3911,18 +3911,18 @@
     "virt_game_spread": 3.089
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 9.058,
-    "p95_wait_mins": 16.371,
-    "max_wait_mins": 19.895,
-    "avg_play_mins": 105.512,
-    "play_spread_mins": 28.234,
-    "competitive_game_pct": 62.826,
-    "mean_cohort_sd": 0.773,
+    "avg_wait_mins": 9.072,
+    "p95_wait_mins": 16.762,
+    "max_wait_mins": 20.482,
+    "avg_play_mins": 105.339,
+    "play_spread_mins": 29.401,
+    "competitive_game_pct": 68.635,
+    "mean_cohort_sd": 0.714,
     "mean_team_diff": 0.277,
-    "repeat_recent_pct": 2.633,
-    "latecomer_consec_bursts": 4.643,
-    "bypass_rate_pct": 20.461,
-    "virt_game_spread": 1.929
+    "repeat_recent_pct": 2.287,
+    "latecomer_consec_bursts": 5.036,
+    "bypass_rate_pct": 25.54,
+    "virt_game_spread": 2.018
    }
   }
  },
@@ -3962,18 +3962,18 @@
     "virt_game_spread": 2.643
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 14.275,
-    "p95_wait_mins": 24.036,
-    "max_wait_mins": 28.748,
-    "avg_play_mins": 84.721,
-    "play_spread_mins": 27.205,
-    "competitive_game_pct": 70.065,
-    "mean_cohort_sd": 0.679,
-    "mean_team_diff": 0.213,
-    "repeat_recent_pct": 0.478,
-    "latecomer_consec_bursts": 0.179,
-    "bypass_rate_pct": 45.342,
-    "virt_game_spread": 2.036
+    "avg_wait_mins": 14.257,
+    "p95_wait_mins": 24.345,
+    "max_wait_mins": 29.113,
+    "avg_play_mins": 84.972,
+    "play_spread_mins": 30.517,
+    "competitive_game_pct": 74.77,
+    "mean_cohort_sd": 0.62,
+    "mean_team_diff": 0.21,
+    "repeat_recent_pct": 0.29,
+    "latecomer_consec_bursts": 0.25,
+    "bypass_rate_pct": 44.192,
+    "virt_game_spread": 1.929
    }
   }
  },
@@ -4013,18 +4013,18 @@
     "virt_game_spread": 2.036
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.917,
-    "p95_wait_mins": 12.377,
-    "max_wait_mins": 16.631,
-    "avg_play_mins": 135.504,
-    "play_spread_mins": 28.341,
-    "competitive_game_pct": 68.007,
-    "mean_cohort_sd": 0.572,
-    "mean_team_diff": 0.299,
-    "repeat_recent_pct": 2.644,
-    "latecomer_consec_bursts": 18.786,
-    "bypass_rate_pct": 0,
-    "virt_game_spread": 2.429
+    "avg_wait_mins": 3.893,
+    "p95_wait_mins": 13.038,
+    "max_wait_mins": 16.803,
+    "avg_play_mins": 135.919,
+    "play_spread_mins": 28.065,
+    "competitive_game_pct": 71.285,
+    "mean_cohort_sd": 0.535,
+    "mean_team_diff": 0.286,
+    "repeat_recent_pct": 3.216,
+    "latecomer_consec_bursts": 17.464,
+    "bypass_rate_pct": 0.298,
+    "virt_game_spread": 2.5
    }
   }
  },
@@ -4064,18 +4064,18 @@
     "virt_game_spread": 3.027
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 9.235,
-    "p95_wait_mins": 16.725,
-    "max_wait_mins": 19.72,
-    "avg_play_mins": 105.449,
-    "play_spread_mins": 28.499,
-    "competitive_game_pct": 80.593,
-    "mean_cohort_sd": 0.5,
-    "mean_team_diff": 0.207,
-    "repeat_recent_pct": 0.866,
-    "latecomer_consec_bursts": 3.821,
-    "bypass_rate_pct": 21.64,
-    "virt_game_spread": 1.643
+    "avg_wait_mins": 9.256,
+    "p95_wait_mins": 16.983,
+    "max_wait_mins": 20.554,
+    "avg_play_mins": 105.653,
+    "play_spread_mins": 28.829,
+    "competitive_game_pct": 81.164,
+    "mean_cohort_sd": 0.464,
+    "mean_team_diff": 0.18,
+    "repeat_recent_pct": 0.574,
+    "latecomer_consec_bursts": 4,
+    "bypass_rate_pct": 24.768,
+    "virt_game_spread": 1.759
    }
   }
  },
@@ -4115,18 +4115,18 @@
     "virt_game_spread": 2.679
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 14.547,
-    "p95_wait_mins": 24.614,
-    "max_wait_mins": 28.773,
-    "avg_play_mins": 84.994,
-    "play_spread_mins": 27.752,
-    "competitive_game_pct": 84.787,
-    "mean_cohort_sd": 0.43,
+    "avg_wait_mins": 14.524,
+    "p95_wait_mins": 24.423,
+    "max_wait_mins": 28.827,
+    "avg_play_mins": 85.396,
+    "play_spread_mins": 28.248,
+    "competitive_game_pct": 85.158,
+    "mean_cohort_sd": 0.415,
     "mean_team_diff": 0.15,
-    "repeat_recent_pct": 0,
-    "latecomer_consec_bursts": 0.071,
-    "bypass_rate_pct": 43.759,
-    "virt_game_spread": 1.786
+    "repeat_recent_pct": 0.094,
+    "latecomer_consec_bursts": 0.214,
+    "bypass_rate_pct": 44.377,
+    "virt_game_spread": 1.821
    }
   }
  },
@@ -4166,18 +4166,18 @@
     "virt_game_spread": 2.357
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.85,
-    "p95_wait_mins": 12.358,
-    "max_wait_mins": 16.117,
-    "avg_play_mins": 135.508,
-    "play_spread_mins": 28.364,
-    "competitive_game_pct": 35.786,
-    "mean_cohort_sd": 1.123,
-    "mean_team_diff": 0.653,
-    "repeat_recent_pct": 7.515,
-    "latecomer_consec_bursts": 18.786,
-    "bypass_rate_pct": 0,
-    "virt_game_spread": 2.429
+    "avg_wait_mins": 3.855,
+    "p95_wait_mins": 12.83,
+    "max_wait_mins": 16.857,
+    "avg_play_mins": 135.34,
+    "play_spread_mins": 27.748,
+    "competitive_game_pct": 40.939,
+    "mean_cohort_sd": 0.991,
+    "mean_team_diff": 0.627,
+    "repeat_recent_pct": 5.591,
+    "latecomer_consec_bursts": 17.429,
+    "bypass_rate_pct": 0.497,
+    "virt_game_spread": 2.286
    }
   }
  },
@@ -4217,18 +4217,18 @@
     "virt_game_spread": 3.018
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 9.1,
-    "p95_wait_mins": 16.525,
-    "max_wait_mins": 19.523,
-    "avg_play_mins": 105.471,
-    "play_spread_mins": 28.073,
-    "competitive_game_pct": 52.775,
-    "mean_cohort_sd": 0.882,
-    "mean_team_diff": 0.471,
-    "repeat_recent_pct": 2.544,
-    "latecomer_consec_bursts": 4.821,
-    "bypass_rate_pct": 21.297,
-    "virt_game_spread": 2.063
+    "avg_wait_mins": 9.12,
+    "p95_wait_mins": 16.931,
+    "max_wait_mins": 20.945,
+    "avg_play_mins": 105.053,
+    "play_spread_mins": 29.439,
+    "competitive_game_pct": 58.559,
+    "mean_cohort_sd": 0.807,
+    "mean_team_diff": 0.446,
+    "repeat_recent_pct": 2.089,
+    "latecomer_consec_bursts": 5.214,
+    "bypass_rate_pct": 24.782,
+    "virt_game_spread": 1.875
    }
   }
  },
@@ -4268,17 +4268,17 @@
     "virt_game_spread": 2.643
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 14.387,
-    "p95_wait_mins": 24.319,
-    "max_wait_mins": 28.646,
-    "avg_play_mins": 84.969,
-    "play_spread_mins": 28.508,
-    "competitive_game_pct": 62.415,
-    "mean_cohort_sd": 0.734,
-    "mean_team_diff": 0.361,
-    "repeat_recent_pct": 0.671,
-    "latecomer_consec_bursts": 0.25,
-    "bypass_rate_pct": 44.308,
+    "avg_wait_mins": 14.368,
+    "p95_wait_mins": 24.184,
+    "max_wait_mins": 28.734,
+    "avg_play_mins": 84.84,
+    "play_spread_mins": 28.074,
+    "competitive_game_pct": 62.412,
+    "mean_cohort_sd": 0.704,
+    "mean_team_diff": 0.374,
+    "repeat_recent_pct": 0.854,
+    "latecomer_consec_bursts": 0.357,
+    "bypass_rate_pct": 44.374,
     "virt_game_spread": 1.857
    }
   }
@@ -4319,18 +4319,18 @@
     "virt_game_spread": 2.262
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.523,
-    "p95_wait_mins": 11.911,
-    "max_wait_mins": 15.434,
-    "avg_play_mins": 138.816,
-    "play_spread_mins": 30.491,
-    "competitive_game_pct": 44.153,
-    "mean_cohort_sd": 0.951,
-    "mean_team_diff": 0.502,
-    "repeat_recent_pct": 5.129,
-    "latecomer_consec_bursts": 26.333,
-    "bypass_rate_pct": 0.478,
-    "virt_game_spread": 2.381
+    "avg_wait_mins": 3.509,
+    "p95_wait_mins": 12.409,
+    "max_wait_mins": 16.021,
+    "avg_play_mins": 138.937,
+    "play_spread_mins": 30.974,
+    "competitive_game_pct": 51.064,
+    "mean_cohort_sd": 0.869,
+    "mean_team_diff": 0.504,
+    "repeat_recent_pct": 3.058,
+    "latecomer_consec_bursts": 25.095,
+    "bypass_rate_pct": 0.749,
+    "virt_game_spread": 2.524
    }
   }
  },
@@ -4370,18 +4370,18 @@
     "virt_game_spread": 3.35
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 8.779,
-    "p95_wait_mins": 15.79,
-    "max_wait_mins": 18.806,
-    "avg_play_mins": 107.088,
-    "play_spread_mins": 30.242,
-    "competitive_game_pct": 57.365,
-    "mean_cohort_sd": 0.785,
-    "mean_team_diff": 0.355,
-    "repeat_recent_pct": 0.589,
-    "latecomer_consec_bursts": 5.5,
-    "bypass_rate_pct": 19.81,
-    "virt_game_spread": 2.2
+    "avg_wait_mins": 8.784,
+    "p95_wait_mins": 16.016,
+    "max_wait_mins": 19.285,
+    "avg_play_mins": 106.864,
+    "play_spread_mins": 30.192,
+    "competitive_game_pct": 65.4,
+    "mean_cohort_sd": 0.675,
+    "mean_team_diff": 0.328,
+    "repeat_recent_pct": 0.485,
+    "latecomer_consec_bursts": 5.85,
+    "bypass_rate_pct": 25.757,
+    "virt_game_spread": 1.8
    }
   }
  },
@@ -4421,18 +4421,18 @@
     "virt_game_spread": 3
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 14.032,
-    "p95_wait_mins": 23.331,
-    "max_wait_mins": 27.685,
-    "avg_play_mins": 86.91,
-    "play_spread_mins": 28.589,
-    "competitive_game_pct": 69.962,
-    "mean_cohort_sd": 0.65,
-    "mean_team_diff": 0.262,
+    "avg_wait_mins": 14.052,
+    "p95_wait_mins": 23.359,
+    "max_wait_mins": 27.588,
+    "avg_play_mins": 87.018,
+    "play_spread_mins": 28.945,
+    "competitive_game_pct": 72.405,
+    "mean_cohort_sd": 0.591,
+    "mean_team_diff": 0.272,
     "repeat_recent_pct": 0,
-    "latecomer_consec_bursts": 0.3,
-    "bypass_rate_pct": 53.776,
-    "virt_game_spread": 1.85
+    "latecomer_consec_bursts": 0.2,
+    "bypass_rate_pct": 54.994,
+    "virt_game_spread": 1.9
    }
   }
  },
@@ -4472,18 +4472,18 @@
     "virt_game_spread": 2.286
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.48,
-    "p95_wait_mins": 11.588,
-    "max_wait_mins": 15.397,
-    "avg_play_mins": 138.456,
-    "play_spread_mins": 30.302,
-    "competitive_game_pct": 52.119,
-    "mean_cohort_sd": 0.872,
-    "mean_team_diff": 0.378,
-    "repeat_recent_pct": 3.42,
-    "latecomer_consec_bursts": 26.571,
-    "bypass_rate_pct": 0.379,
-    "virt_game_spread": 2.667
+    "avg_wait_mins": 3.449,
+    "p95_wait_mins": 12.182,
+    "max_wait_mins": 15.663,
+    "avg_play_mins": 138.713,
+    "play_spread_mins": 29.737,
+    "competitive_game_pct": 58.678,
+    "mean_cohort_sd": 0.793,
+    "mean_team_diff": 0.351,
+    "repeat_recent_pct": 3.5,
+    "latecomer_consec_bursts": 24.952,
+    "bypass_rate_pct": 1.138,
+    "virt_game_spread": 2.476
    }
   }
  },
@@ -4523,18 +4523,18 @@
     "virt_game_spread": 3.368
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 8.748,
-    "p95_wait_mins": 15.438,
-    "max_wait_mins": 18.412,
-    "avg_play_mins": 106.736,
-    "play_spread_mins": 29.175,
-    "competitive_game_pct": 66.193,
-    "mean_cohort_sd": 0.734,
-    "mean_team_diff": 0.266,
-    "repeat_recent_pct": 0.405,
-    "latecomer_consec_bursts": 6.105,
-    "bypass_rate_pct": 22.628,
-    "virt_game_spread": 2.105
+    "avg_wait_mins": 8.732,
+    "p95_wait_mins": 15.934,
+    "max_wait_mins": 19.328,
+    "avg_play_mins": 107.302,
+    "play_spread_mins": 29.837,
+    "competitive_game_pct": 70.237,
+    "mean_cohort_sd": 0.669,
+    "mean_team_diff": 0.248,
+    "repeat_recent_pct": 0.508,
+    "latecomer_consec_bursts": 5.526,
+    "bypass_rate_pct": 28.533,
+    "virt_game_spread": 2.158
    }
   }
  },
@@ -4574,18 +4574,18 @@
     "virt_game_spread": 3.025
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 13.901,
-    "p95_wait_mins": 23.159,
-    "max_wait_mins": 27.212,
-    "avg_play_mins": 86.659,
-    "play_spread_mins": 28.921,
-    "competitive_game_pct": 73.201,
-    "mean_cohort_sd": 0.659,
-    "mean_team_diff": 0.182,
+    "avg_wait_mins": 13.908,
+    "p95_wait_mins": 23.14,
+    "max_wait_mins": 27.188,
+    "avg_play_mins": 87.051,
+    "play_spread_mins": 29.681,
+    "competitive_game_pct": 77.601,
+    "mean_cohort_sd": 0.604,
+    "mean_team_diff": 0.189,
     "repeat_recent_pct": 0,
     "latecomer_consec_bursts": 0.2,
-    "bypass_rate_pct": 56.949,
-    "virt_game_spread": 1.75
+    "bypass_rate_pct": 56.005,
+    "virt_game_spread": 1.95
    }
   }
  },
@@ -4625,18 +4625,18 @@
     "virt_game_spread": 2.214
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.557,
-    "p95_wait_mins": 11.648,
-    "max_wait_mins": 15.431,
-    "avg_play_mins": 138.365,
-    "play_spread_mins": 29.01,
-    "competitive_game_pct": 73.593,
-    "mean_cohort_sd": 0.558,
-    "mean_team_diff": 0.271,
-    "repeat_recent_pct": 2.024,
-    "latecomer_consec_bursts": 24.714,
-    "bypass_rate_pct": 0.196,
-    "virt_game_spread": 2.5
+    "avg_wait_mins": 3.551,
+    "p95_wait_mins": 12.314,
+    "max_wait_mins": 16.09,
+    "avg_play_mins": 138.477,
+    "play_spread_mins": 31.363,
+    "competitive_game_pct": 76.115,
+    "mean_cohort_sd": 0.498,
+    "mean_team_diff": 0.247,
+    "repeat_recent_pct": 1.346,
+    "latecomer_consec_bursts": 23.81,
+    "bypass_rate_pct": 1.267,
+    "virt_game_spread": 2.476
    }
   }
  },
@@ -4676,18 +4676,18 @@
     "virt_game_spread": 3.3
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 8.843,
-    "p95_wait_mins": 15.747,
-    "max_wait_mins": 18.386,
-    "avg_play_mins": 106.904,
-    "play_spread_mins": 29.202,
-    "competitive_game_pct": 79.156,
-    "mean_cohort_sd": 0.509,
-    "mean_team_diff": 0.2,
-    "repeat_recent_pct": 0.498,
-    "latecomer_consec_bursts": 4.7,
-    "bypass_rate_pct": 20.835,
-    "virt_game_spread": 1.95
+    "avg_wait_mins": 8.814,
+    "p95_wait_mins": 16.175,
+    "max_wait_mins": 19.24,
+    "avg_play_mins": 107.373,
+    "play_spread_mins": 29.174,
+    "competitive_game_pct": 84.014,
+    "mean_cohort_sd": 0.456,
+    "mean_team_diff": 0.173,
+    "repeat_recent_pct": 0.202,
+    "latecomer_consec_bursts": 5.85,
+    "bypass_rate_pct": 26.8,
+    "virt_game_spread": 1.9
    }
   }
  },
@@ -4727,18 +4727,18 @@
     "virt_game_spread": 2.85
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 14.149,
-    "p95_wait_mins": 23.711,
-    "max_wait_mins": 27.263,
-    "avg_play_mins": 86.675,
-    "play_spread_mins": 27.855,
-    "competitive_game_pct": 86.597,
-    "mean_cohort_sd": 0.427,
-    "mean_team_diff": 0.124,
+    "avg_wait_mins": 14.138,
+    "p95_wait_mins": 23.574,
+    "max_wait_mins": 27.716,
+    "avg_play_mins": 86.509,
+    "play_spread_mins": 30.861,
+    "competitive_game_pct": 87.372,
+    "mean_cohort_sd": 0.4,
+    "mean_team_diff": 0.142,
     "repeat_recent_pct": 0,
     "latecomer_consec_bursts": 0.2,
-    "bypass_rate_pct": 52.429,
-    "virt_game_spread": 1.95
+    "bypass_rate_pct": 53.898,
+    "virt_game_spread": 1.8
    }
   }
  },
@@ -4778,18 +4778,18 @@
     "virt_game_spread": 2.286
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.498,
-    "p95_wait_mins": 11.72,
-    "max_wait_mins": 15.588,
-    "avg_play_mins": 139.233,
-    "play_spread_mins": 30.755,
-    "competitive_game_pct": 42.563,
-    "mean_cohort_sd": 1.066,
-    "mean_team_diff": 0.627,
-    "repeat_recent_pct": 3.611,
-    "latecomer_consec_bursts": 25.714,
-    "bypass_rate_pct": 0.367,
-    "virt_game_spread": 2.5
+    "avg_wait_mins": 3.476,
+    "p95_wait_mins": 12.465,
+    "max_wait_mins": 15.671,
+    "avg_play_mins": 138.895,
+    "play_spread_mins": 29.83,
+    "competitive_game_pct": 46.923,
+    "mean_cohort_sd": 0.958,
+    "mean_team_diff": 0.573,
+    "repeat_recent_pct": 2.839,
+    "latecomer_consec_bursts": 25.238,
+    "bypass_rate_pct": 1.043,
+    "virt_game_spread": 2.286
    }
   }
  },
@@ -4829,18 +4829,18 @@
     "virt_game_spread": 3.4
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 8.768,
-    "p95_wait_mins": 15.706,
-    "max_wait_mins": 18.579,
-    "avg_play_mins": 106.479,
-    "play_spread_mins": 27.653,
-    "competitive_game_pct": 55.926,
-    "mean_cohort_sd": 0.822,
-    "mean_team_diff": 0.422,
-    "repeat_recent_pct": 0.388,
-    "latecomer_consec_bursts": 5.3,
-    "bypass_rate_pct": 21.214,
-    "virt_game_spread": 1.875
+    "avg_wait_mins": 8.744,
+    "p95_wait_mins": 15.93,
+    "max_wait_mins": 19.611,
+    "avg_play_mins": 107.189,
+    "play_spread_mins": 29.803,
+    "competitive_game_pct": 61.957,
+    "mean_cohort_sd": 0.718,
+    "mean_team_diff": 0.388,
+    "repeat_recent_pct": 0.485,
+    "latecomer_consec_bursts": 4.65,
+    "bypass_rate_pct": 26.068,
+    "virt_game_spread": 1.75
    }
   }
  },
@@ -4880,17 +4880,17 @@
     "virt_game_spread": 2.975
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 13.988,
-    "p95_wait_mins": 23.322,
-    "max_wait_mins": 27.546,
-    "avg_play_mins": 86.966,
-    "play_spread_mins": 27.958,
-    "competitive_game_pct": 63.528,
-    "mean_cohort_sd": 0.71,
-    "mean_team_diff": 0.313,
-    "repeat_recent_pct": 0,
-    "latecomer_consec_bursts": 0.45,
-    "bypass_rate_pct": 53.415,
+    "avg_wait_mins": 13.978,
+    "p95_wait_mins": 23.293,
+    "max_wait_mins": 27.266,
+    "avg_play_mins": 86.743,
+    "play_spread_mins": 30.081,
+    "competitive_game_pct": 69.734,
+    "mean_cohort_sd": 0.653,
+    "mean_team_diff": 0.337,
+    "repeat_recent_pct": 0.096,
+    "latecomer_consec_bursts": 0.5,
+    "bypass_rate_pct": 52.95,
     "virt_game_spread": 1.8
    }
   }
@@ -4931,18 +4931,18 @@
     "virt_game_spread": 1.635
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 5.261,
-    "p95_wait_mins": 16.544,
-    "max_wait_mins": 18.252,
-    "avg_play_mins": 168.116,
-    "play_spread_mins": 16.604,
-    "competitive_game_pct": 18.94,
-    "mean_cohort_sd": 1.236,
-    "mean_team_diff": 0.723,
-    "repeat_recent_pct": 68.573,
-    "latecomer_consec_bursts": 9.46,
+    "avg_wait_mins": 5.255,
+    "p95_wait_mins": 16.537,
+    "max_wait_mins": 18.504,
+    "avg_play_mins": 168.537,
+    "play_spread_mins": 18.667,
+    "competitive_game_pct": 18.555,
+    "mean_cohort_sd": 1.227,
+    "mean_team_diff": 0.737,
+    "repeat_recent_pct": 67.427,
+    "latecomer_consec_bursts": 9.476,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2.254
+    "virt_game_spread": 2.286
    }
   }
  },
@@ -4982,18 +4982,18 @@
     "virt_game_spread": 2.397
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 8.219,
-    "p95_wait_mins": 17.178,
-    "max_wait_mins": 18.98,
-    "avg_play_mins": 144.881,
-    "play_spread_mins": 24.998,
-    "competitive_game_pct": 20.898,
-    "mean_cohort_sd": 1.212,
-    "mean_team_diff": 0.667,
-    "repeat_recent_pct": 46.405,
-    "latecomer_consec_bursts": 3.984,
+    "avg_wait_mins": 8.214,
+    "p95_wait_mins": 17.306,
+    "max_wait_mins": 19.367,
+    "avg_play_mins": 145.46,
+    "play_spread_mins": 26.984,
+    "competitive_game_pct": 21.392,
+    "mean_cohort_sd": 1.194,
+    "mean_team_diff": 0.69,
+    "repeat_recent_pct": 44.386,
+    "latecomer_consec_bursts": 4.016,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2.31
+    "virt_game_spread": 2.27
    }
   }
  },
@@ -5033,17 +5033,17 @@
     "virt_game_spread": 2.475
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 15.25,
-    "p95_wait_mins": 29.144,
-    "max_wait_mins": 33.653,
-    "avg_play_mins": 109.351,
-    "play_spread_mins": 26.302,
-    "competitive_game_pct": 30.323,
-    "mean_cohort_sd": 1.074,
-    "mean_team_diff": 0.602,
-    "repeat_recent_pct": 22.763,
-    "latecomer_consec_bursts": 0.051,
-    "bypass_rate_pct": 0.411,
+    "avg_wait_mins": 15.242,
+    "p95_wait_mins": 29.062,
+    "max_wait_mins": 33.508,
+    "avg_play_mins": 109.314,
+    "play_spread_mins": 28.989,
+    "competitive_game_pct": 33.056,
+    "mean_cohort_sd": 1.027,
+    "mean_team_diff": 0.635,
+    "repeat_recent_pct": 24.111,
+    "latecomer_consec_bursts": 0.068,
+    "bypass_rate_pct": 0.611,
     "virt_game_spread": 2.068
    }
   }
@@ -5084,16 +5084,16 @@
     "virt_game_spread": 1.712
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 5.211,
-    "p95_wait_mins": 16.326,
-    "max_wait_mins": 18.104,
-    "avg_play_mins": 167.786,
-    "play_spread_mins": 18.106,
-    "competitive_game_pct": 32.244,
-    "mean_cohort_sd": 1.095,
-    "mean_team_diff": 0.47,
-    "repeat_recent_pct": 69.95,
-    "latecomer_consec_bursts": 9.61,
+    "avg_wait_mins": 5.217,
+    "p95_wait_mins": 16.338,
+    "max_wait_mins": 18.417,
+    "avg_play_mins": 168.214,
+    "play_spread_mins": 18.438,
+    "competitive_game_pct": 32.889,
+    "mean_cohort_sd": 1.092,
+    "mean_team_diff": 0.471,
+    "repeat_recent_pct": 69.245,
+    "latecomer_consec_bursts": 9.627,
     "bypass_rate_pct": 0,
     "virt_game_spread": 2.153
    }
@@ -5135,18 +5135,18 @@
     "virt_game_spread": 2.492
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 8.136,
-    "p95_wait_mins": 17.015,
-    "max_wait_mins": 18.667,
-    "avg_play_mins": 145.934,
-    "play_spread_mins": 26.689,
-    "competitive_game_pct": 37.445,
-    "mean_cohort_sd": 1.064,
-    "mean_team_diff": 0.402,
-    "repeat_recent_pct": 45.818,
-    "latecomer_consec_bursts": 4.305,
+    "avg_wait_mins": 8.137,
+    "p95_wait_mins": 17.101,
+    "max_wait_mins": 19.091,
+    "avg_play_mins": 145.739,
+    "play_spread_mins": 27.367,
+    "competitive_game_pct": 36.643,
+    "mean_cohort_sd": 1.051,
+    "mean_team_diff": 0.437,
+    "repeat_recent_pct": 45.951,
+    "latecomer_consec_bursts": 4.237,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2.237
+    "virt_game_spread": 2.212
    }
   }
  },
@@ -5186,18 +5186,18 @@
     "virt_game_spread": 2.508
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 15.11,
-    "p95_wait_mins": 28.942,
-    "max_wait_mins": 33.401,
-    "avg_play_mins": 109.7,
-    "play_spread_mins": 27.496,
-    "competitive_game_pct": 44.36,
-    "mean_cohort_sd": 0.988,
-    "mean_team_diff": 0.381,
-    "repeat_recent_pct": 24.264,
+    "avg_wait_mins": 15.136,
+    "p95_wait_mins": 29.027,
+    "max_wait_mins": 33.378,
+    "avg_play_mins": 109.253,
+    "play_spread_mins": 28.958,
+    "competitive_game_pct": 45.505,
+    "mean_cohort_sd": 0.966,
+    "mean_team_diff": 0.427,
+    "repeat_recent_pct": 23.892,
     "latecomer_consec_bursts": 0.051,
-    "bypass_rate_pct": 0.206,
-    "virt_game_spread": 1.915
+    "bypass_rate_pct": 0.305,
+    "virt_game_spread": 2.051
    }
   }
  },
@@ -5237,18 +5237,18 @@
     "virt_game_spread": 1.667
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 5.286,
-    "p95_wait_mins": 16.64,
-    "max_wait_mins": 18.309,
-    "avg_play_mins": 168.325,
-    "play_spread_mins": 17.224,
-    "competitive_game_pct": 50.44,
-    "mean_cohort_sd": 0.714,
-    "mean_team_diff": 0.467,
-    "repeat_recent_pct": 61.148,
-    "latecomer_consec_bursts": 9.413,
+    "avg_wait_mins": 5.281,
+    "p95_wait_mins": 16.7,
+    "max_wait_mins": 18.447,
+    "avg_play_mins": 168.364,
+    "play_spread_mins": 17.325,
+    "competitive_game_pct": 50.847,
+    "mean_cohort_sd": 0.71,
+    "mean_team_diff": 0.468,
+    "repeat_recent_pct": 60.123,
+    "latecomer_consec_bursts": 9.397,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2.143
+    "virt_game_spread": 2.19
    }
   }
  },
@@ -5288,18 +5288,18 @@
     "virt_game_spread": 2.46
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 8.309,
-    "p95_wait_mins": 17.26,
-    "max_wait_mins": 18.983,
-    "avg_play_mins": 143.451,
-    "play_spread_mins": 24.263,
-    "competitive_game_pct": 56.235,
-    "mean_cohort_sd": 0.702,
-    "mean_team_diff": 0.398,
-    "repeat_recent_pct": 37.107,
-    "latecomer_consec_bursts": 4.683,
+    "avg_wait_mins": 8.3,
+    "p95_wait_mins": 17.27,
+    "max_wait_mins": 19.343,
+    "avg_play_mins": 143.63,
+    "play_spread_mins": 24.686,
+    "competitive_game_pct": 56.231,
+    "mean_cohort_sd": 0.695,
+    "mean_team_diff": 0.407,
+    "repeat_recent_pct": 35.193,
+    "latecomer_consec_bursts": 4.73,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2.04
+    "virt_game_spread": 2.063
    }
   }
  },
@@ -5339,17 +5339,17 @@
     "virt_game_spread": 2.475
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 15.393,
-    "p95_wait_mins": 29.506,
-    "max_wait_mins": 33.826,
-    "avg_play_mins": 109.479,
-    "play_spread_mins": 25.363,
-    "competitive_game_pct": 62.223,
-    "mean_cohort_sd": 0.654,
-    "mean_team_diff": 0.363,
-    "repeat_recent_pct": 18.873,
+    "avg_wait_mins": 15.371,
+    "p95_wait_mins": 29.576,
+    "max_wait_mins": 33.795,
+    "avg_play_mins": 109.648,
+    "play_spread_mins": 25.523,
+    "competitive_game_pct": 62.643,
+    "mean_cohort_sd": 0.646,
+    "mean_team_diff": 0.373,
+    "repeat_recent_pct": 19.314,
     "latecomer_consec_bursts": 0.085,
-    "bypass_rate_pct": 0.424,
+    "bypass_rate_pct": 0.312,
     "virt_game_spread": 1.949
    }
   }
@@ -5390,18 +5390,18 @@
     "virt_game_spread": 1.683
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 5.225,
-    "p95_wait_mins": 16.446,
-    "max_wait_mins": 18.114,
-    "avg_play_mins": 168.104,
-    "play_spread_mins": 17.897,
-    "competitive_game_pct": 12.128,
-    "mean_cohort_sd": 1.476,
-    "mean_team_diff": 0.857,
-    "repeat_recent_pct": 65.467,
-    "latecomer_consec_bursts": 9.476,
+    "avg_wait_mins": 5.227,
+    "p95_wait_mins": 16.492,
+    "max_wait_mins": 18.395,
+    "avg_play_mins": 168.514,
+    "play_spread_mins": 18.248,
+    "competitive_game_pct": 11.83,
+    "mean_cohort_sd": 1.468,
+    "mean_team_diff": 0.851,
+    "repeat_recent_pct": 64.784,
+    "latecomer_consec_bursts": 9.524,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2.254
+    "virt_game_spread": 2.27
    }
   }
  },
@@ -5441,18 +5441,18 @@
     "virt_game_spread": 2.421
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 8.177,
-    "p95_wait_mins": 17.051,
-    "max_wait_mins": 18.622,
-    "avg_play_mins": 145.949,
-    "play_spread_mins": 24.933,
+    "avg_wait_mins": 8.174,
+    "p95_wait_mins": 17.178,
+    "max_wait_mins": 19.109,
+    "avg_play_mins": 146.216,
+    "play_spread_mins": 25.682,
     "competitive_game_pct": 15.35,
-    "mean_cohort_sd": 1.419,
-    "mean_team_diff": 0.794,
-    "repeat_recent_pct": 42.405,
-    "latecomer_consec_bursts": 3.952,
+    "mean_cohort_sd": 1.417,
+    "mean_team_diff": 0.848,
+    "repeat_recent_pct": 42.793,
+    "latecomer_consec_bursts": 4.048,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2.246
+    "virt_game_spread": 2.325
    }
   }
  },
@@ -5492,17 +5492,17 @@
     "virt_game_spread": 2.508
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 15.18,
-    "p95_wait_mins": 29.088,
-    "max_wait_mins": 33.381,
-    "avg_play_mins": 109.649,
-    "play_spread_mins": 26.918,
-    "competitive_game_pct": 25.577,
-    "mean_cohort_sd": 1.217,
-    "mean_team_diff": 0.698,
-    "repeat_recent_pct": 24.975,
-    "latecomer_consec_bursts": 0.068,
-    "bypass_rate_pct": 0.206,
+    "avg_wait_mins": 15.195,
+    "p95_wait_mins": 28.991,
+    "max_wait_mins": 33.282,
+    "avg_play_mins": 109.464,
+    "play_spread_mins": 27.206,
+    "competitive_game_pct": 27.079,
+    "mean_cohort_sd": 1.216,
+    "mean_team_diff": 0.732,
+    "repeat_recent_pct": 25.174,
+    "latecomer_consec_bursts": 0.102,
+    "bypass_rate_pct": 0.411,
     "virt_game_spread": 2.051
    }
   }
@@ -5543,18 +5543,18 @@
     "virt_game_spread": 2.078
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.869,
-    "p95_wait_mins": 14.018,
-    "max_wait_mins": 17.377,
-    "avg_play_mins": 180.391,
-    "play_spread_mins": 28.421,
-    "competitive_game_pct": 30.829,
-    "mean_cohort_sd": 1.073,
-    "mean_team_diff": 0.592,
-    "repeat_recent_pct": 19.123,
-    "latecomer_consec_bursts": 17.906,
+    "avg_wait_mins": 3.862,
+    "p95_wait_mins": 14.448,
+    "max_wait_mins": 17.859,
+    "avg_play_mins": 179.78,
+    "play_spread_mins": 27.878,
+    "competitive_game_pct": 37.148,
+    "mean_cohort_sd": 1.007,
+    "mean_team_diff": 0.619,
+    "repeat_recent_pct": 15.684,
+    "latecomer_consec_bursts": 17.5,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2.547
+    "virt_game_spread": 2.391
    }
   }
  },
@@ -5594,18 +5594,18 @@
     "virt_game_spread": 3.081
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 10.147,
-    "p95_wait_mins": 17.627,
-    "max_wait_mins": 20.897,
-    "avg_play_mins": 133.205,
-    "play_spread_mins": 30.733,
-    "competitive_game_pct": 46.05,
-    "mean_cohort_sd": 0.921,
-    "mean_team_diff": 0.462,
-    "repeat_recent_pct": 5.725,
-    "latecomer_consec_bursts": 3.871,
-    "bypass_rate_pct": 3.413,
-    "virt_game_spread": 2.161
+    "avg_wait_mins": 10.127,
+    "p95_wait_mins": 17.967,
+    "max_wait_mins": 22.104,
+    "avg_play_mins": 133.084,
+    "play_spread_mins": 30.767,
+    "competitive_game_pct": 51.792,
+    "mean_cohort_sd": 0.834,
+    "mean_team_diff": 0.461,
+    "repeat_recent_pct": 4.945,
+    "latecomer_consec_bursts": 4.581,
+    "bypass_rate_pct": 6.823,
+    "virt_game_spread": 1.903
    }
   }
  },
@@ -5645,18 +5645,18 @@
     "virt_game_spread": 2.8
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 14.778,
-    "p95_wait_mins": 26.175,
-    "max_wait_mins": 31.321,
-    "avg_play_mins": 111.803,
-    "play_spread_mins": 29.854,
-    "competitive_game_pct": 53.129,
-    "mean_cohort_sd": 0.838,
-    "mean_team_diff": 0.4,
-    "repeat_recent_pct": 2.776,
-    "latecomer_consec_bursts": 0.367,
-    "bypass_rate_pct": 42.488,
-    "virt_game_spread": 1.85
+    "avg_wait_mins": 14.761,
+    "p95_wait_mins": 26.185,
+    "max_wait_mins": 31.925,
+    "avg_play_mins": 111.64,
+    "play_spread_mins": 28.715,
+    "competitive_game_pct": 56.781,
+    "mean_cohort_sd": 0.796,
+    "mean_team_diff": 0.423,
+    "repeat_recent_pct": 2.571,
+    "latecomer_consec_bursts": 0.333,
+    "bypass_rate_pct": 43.732,
+    "virt_game_spread": 1.933
    }
   }
  },
@@ -5696,18 +5696,18 @@
     "virt_game_spread": 2.25
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.827,
-    "p95_wait_mins": 13.76,
-    "max_wait_mins": 17.217,
-    "avg_play_mins": 180.175,
-    "play_spread_mins": 30.878,
-    "competitive_game_pct": 43.144,
-    "mean_cohort_sd": 1.002,
-    "mean_team_diff": 0.438,
-    "repeat_recent_pct": 16.808,
-    "latecomer_consec_bursts": 17.656,
+    "avg_wait_mins": 3.822,
+    "p95_wait_mins": 14.25,
+    "max_wait_mins": 17.717,
+    "avg_play_mins": 180.142,
+    "play_spread_mins": 32.134,
+    "competitive_game_pct": 45.241,
+    "mean_cohort_sd": 0.966,
+    "mean_team_diff": 0.446,
+    "repeat_recent_pct": 17.06,
+    "latecomer_consec_bursts": 18.188,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2.563
+    "virt_game_spread": 2.688
    }
   }
  },
@@ -5747,18 +5747,18 @@
     "virt_game_spread": 3.081
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 10.046,
-    "p95_wait_mins": 17.53,
-    "max_wait_mins": 20.837,
-    "avg_play_mins": 132.193,
-    "play_spread_mins": 32.38,
-    "competitive_game_pct": 55.067,
-    "mean_cohort_sd": 0.849,
-    "mean_team_diff": 0.302,
-    "repeat_recent_pct": 6.84,
-    "latecomer_consec_bursts": 4.613,
-    "bypass_rate_pct": 3.584,
-    "virt_game_spread": 2.145
+    "avg_wait_mins": 10.03,
+    "p95_wait_mins": 17.944,
+    "max_wait_mins": 21.362,
+    "avg_play_mins": 133.114,
+    "play_spread_mins": 30.981,
+    "competitive_game_pct": 59.206,
+    "mean_cohort_sd": 0.812,
+    "mean_team_diff": 0.326,
+    "repeat_recent_pct": 6.222,
+    "latecomer_consec_bursts": 4.71,
+    "bypass_rate_pct": 5.01,
+    "virt_game_spread": 2.129
    }
   }
  },
@@ -5798,18 +5798,18 @@
     "virt_game_spread": 2.867
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 14.629,
-    "p95_wait_mins": 25.977,
-    "max_wait_mins": 31.12,
-    "avg_play_mins": 111.697,
-    "play_spread_mins": 28.649,
-    "competitive_game_pct": 58.628,
-    "mean_cohort_sd": 0.837,
-    "mean_team_diff": 0.275,
-    "repeat_recent_pct": 3.075,
+    "avg_wait_mins": 14.64,
+    "p95_wait_mins": 26.088,
+    "max_wait_mins": 31.45,
+    "avg_play_mins": 111.634,
+    "play_spread_mins": 30.592,
+    "competitive_game_pct": 64.55,
+    "mean_cohort_sd": 0.777,
+    "mean_team_diff": 0.301,
+    "repeat_recent_pct": 2.175,
     "latecomer_consec_bursts": 0.267,
-    "bypass_rate_pct": 41.844,
-    "virt_game_spread": 1.933
+    "bypass_rate_pct": 42.721,
+    "virt_game_spread": 2.033
    }
   }
  },
@@ -5849,18 +5849,18 @@
     "virt_game_spread": 2.156
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.923,
-    "p95_wait_mins": 14.195,
-    "max_wait_mins": 17.404,
-    "avg_play_mins": 179.361,
-    "play_spread_mins": 30.394,
-    "competitive_game_pct": 63.416,
-    "mean_cohort_sd": 0.623,
-    "mean_team_diff": 0.362,
-    "repeat_recent_pct": 11.703,
-    "latecomer_consec_bursts": 17.531,
+    "avg_wait_mins": 3.915,
+    "p95_wait_mins": 14.373,
+    "max_wait_mins": 17.85,
+    "avg_play_mins": 179.497,
+    "play_spread_mins": 28.773,
+    "competitive_game_pct": 64.125,
+    "mean_cohort_sd": 0.587,
+    "mean_team_diff": 0.349,
+    "repeat_recent_pct": 9.342,
+    "latecomer_consec_bursts": 17.406,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2.563
+    "virt_game_spread": 2.359
    }
   }
  },
@@ -5900,18 +5900,18 @@
     "virt_game_spread": 2.984
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 10.227,
-    "p95_wait_mins": 17.727,
-    "max_wait_mins": 21.235,
-    "avg_play_mins": 134.01,
-    "play_spread_mins": 28.699,
-    "competitive_game_pct": 76.739,
-    "mean_cohort_sd": 0.545,
+    "avg_wait_mins": 10.209,
+    "p95_wait_mins": 18.171,
+    "max_wait_mins": 22.208,
+    "avg_play_mins": 134.028,
+    "play_spread_mins": 31.911,
+    "competitive_game_pct": 77.478,
+    "mean_cohort_sd": 0.519,
     "mean_team_diff": 0.229,
-    "repeat_recent_pct": 1.358,
-    "latecomer_consec_bursts": 3.484,
-    "bypass_rate_pct": 2.851,
-    "virt_game_spread": 1.742
+    "repeat_recent_pct": 1.654,
+    "latecomer_consec_bursts": 3.774,
+    "bypass_rate_pct": 6.639,
+    "virt_game_spread": 1.839
    }
   }
  },
@@ -5951,18 +5951,18 @@
     "virt_game_spread": 2.806
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 14.87,
-    "p95_wait_mins": 26.47,
-    "max_wait_mins": 31.954,
-    "avg_play_mins": 112.269,
-    "play_spread_mins": 29.537,
-    "competitive_game_pct": 79.197,
-    "mean_cohort_sd": 0.515,
-    "mean_team_diff": 0.208,
-    "repeat_recent_pct": 0.857,
-    "latecomer_consec_bursts": 0.258,
-    "bypass_rate_pct": 41.37,
-    "virt_game_spread": 1.839
+    "avg_wait_mins": 14.9,
+    "p95_wait_mins": 26.352,
+    "max_wait_mins": 31.33,
+    "avg_play_mins": 111.908,
+    "play_spread_mins": 30.937,
+    "competitive_game_pct": 80.921,
+    "mean_cohort_sd": 0.486,
+    "mean_team_diff": 0.199,
+    "repeat_recent_pct": 1.243,
+    "latecomer_consec_bursts": 0.097,
+    "bypass_rate_pct": 43.339,
+    "virt_game_spread": 1.887
    }
   }
  },
@@ -6002,18 +6002,18 @@
     "virt_game_spread": 2.109
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.846,
-    "p95_wait_mins": 13.873,
-    "max_wait_mins": 17.041,
-    "avg_play_mins": 180.094,
-    "play_spread_mins": 28.393,
-    "competitive_game_pct": 23,
-    "mean_cohort_sd": 1.253,
+    "avg_wait_mins": 3.848,
+    "p95_wait_mins": 14.279,
+    "max_wait_mins": 17.622,
+    "avg_play_mins": 179.691,
+    "play_spread_mins": 32.548,
+    "competitive_game_pct": 27.416,
+    "mean_cohort_sd": 1.175,
     "mean_team_diff": 0.735,
-    "repeat_recent_pct": 17.281,
-    "latecomer_consec_bursts": 17.344,
+    "repeat_recent_pct": 15.966,
+    "latecomer_consec_bursts": 17.563,
     "bypass_rate_pct": 0,
-    "virt_game_spread": 2.445
+    "virt_game_spread": 2.406
    }
   }
  },
@@ -6053,18 +6053,18 @@
     "virt_game_spread": 3.016
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 10.105,
-    "p95_wait_mins": 17.686,
-    "max_wait_mins": 20.605,
-    "avg_play_mins": 133.422,
-    "play_spread_mins": 30.349,
-    "competitive_game_pct": 38.89,
-    "mean_cohort_sd": 1.029,
-    "mean_team_diff": 0.549,
-    "repeat_recent_pct": 6.091,
-    "latecomer_consec_bursts": 4.355,
-    "bypass_rate_pct": 2.71,
-    "virt_game_spread": 2.097
+    "avg_wait_mins": 10.107,
+    "p95_wait_mins": 17.915,
+    "max_wait_mins": 21.432,
+    "avg_play_mins": 133.243,
+    "play_spread_mins": 29.164,
+    "competitive_game_pct": 42.62,
+    "mean_cohort_sd": 0.944,
+    "mean_team_diff": 0.547,
+    "repeat_recent_pct": 6.878,
+    "latecomer_consec_bursts": 4.226,
+    "bypass_rate_pct": 4.741,
+    "virt_game_spread": 1.935
    }
   }
  },
@@ -6104,18 +6104,18 @@
     "virt_game_spread": 2.833
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 14.699,
-    "p95_wait_mins": 26.098,
-    "max_wait_mins": 31.605,
-    "avg_play_mins": 111.713,
-    "play_spread_mins": 28.409,
-    "competitive_game_pct": 46.97,
-    "mean_cohort_sd": 0.934,
-    "mean_team_diff": 0.478,
-    "repeat_recent_pct": 2.193,
-    "latecomer_consec_bursts": 0.333,
-    "bypass_rate_pct": 42.036,
-    "virt_game_spread": 1.817
+    "avg_wait_mins": 14.706,
+    "p95_wait_mins": 26.243,
+    "max_wait_mins": 31.396,
+    "avg_play_mins": 111.918,
+    "play_spread_mins": 28.345,
+    "competitive_game_pct": 49.896,
+    "mean_cohort_sd": 0.913,
+    "mean_team_diff": 0.532,
+    "repeat_recent_pct": 2.874,
+    "latecomer_consec_bursts": 0.233,
+    "bypass_rate_pct": 43.55,
+    "virt_game_spread": 1.95
    }
   }
  },
@@ -6155,18 +6155,18 @@
     "virt_game_spread": 2.119
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 4.31,
-    "p95_wait_mins": 13.353,
-    "max_wait_mins": 16.982,
-    "avg_play_mins": 174.634,
-    "play_spread_mins": 33.221,
-    "competitive_game_pct": 36.515,
-    "mean_cohort_sd": 1.034,
-    "mean_team_diff": 0.575,
-    "repeat_recent_pct": 6.495,
-    "latecomer_consec_bursts": 26.714,
-    "bypass_rate_pct": 0.196,
-    "virt_game_spread": 2.381
+    "avg_wait_mins": 4.284,
+    "p95_wait_mins": 13.661,
+    "max_wait_mins": 17.114,
+    "avg_play_mins": 174.644,
+    "play_spread_mins": 31.536,
+    "competitive_game_pct": 41.902,
+    "mean_cohort_sd": 0.923,
+    "mean_team_diff": 0.577,
+    "repeat_recent_pct": 6.354,
+    "latecomer_consec_bursts": 26.19,
+    "bypass_rate_pct": 0.782,
+    "virt_game_spread": 2.476
    }
   }
  },
@@ -6206,18 +6206,18 @@
     "virt_game_spread": 3.429
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 9.78,
-    "p95_wait_mins": 16.76,
-    "max_wait_mins": 19.924,
-    "avg_play_mins": 136.438,
-    "play_spread_mins": 33.025,
-    "competitive_game_pct": 53.712,
-    "mean_cohort_sd": 0.84,
-    "mean_team_diff": 0.402,
-    "repeat_recent_pct": 2.401,
-    "latecomer_consec_bursts": 7.476,
-    "bypass_rate_pct": 25.174,
-    "virt_game_spread": 2.048
+    "avg_wait_mins": 9.782,
+    "p95_wait_mins": 17.041,
+    "max_wait_mins": 20.595,
+    "avg_play_mins": 135.842,
+    "play_spread_mins": 31.699,
+    "competitive_game_pct": 59.355,
+    "mean_cohort_sd": 0.759,
+    "mean_team_diff": 0.396,
+    "repeat_recent_pct": 2.479,
+    "latecomer_consec_bursts": 7.238,
+    "bypass_rate_pct": 27.133,
+    "virt_game_spread": 2.071
    }
   }
  },
@@ -6257,18 +6257,18 @@
     "virt_game_spread": 2.619
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 15.3,
-    "p95_wait_mins": 25.222,
-    "max_wait_mins": 29.802,
-    "avg_play_mins": 110.401,
-    "play_spread_mins": 30.83,
-    "competitive_game_pct": 62.357,
-    "mean_cohort_sd": 0.724,
-    "mean_team_diff": 0.297,
-    "repeat_recent_pct": 0.77,
-    "latecomer_consec_bursts": 0.143,
-    "bypass_rate_pct": 48.535,
-    "virt_game_spread": 1.905
+    "avg_wait_mins": 15.299,
+    "p95_wait_mins": 25.108,
+    "max_wait_mins": 29.599,
+    "avg_play_mins": 110.321,
+    "play_spread_mins": 30.236,
+    "competitive_game_pct": 66.45,
+    "mean_cohort_sd": 0.682,
+    "mean_team_diff": 0.332,
+    "repeat_recent_pct": 0.659,
+    "latecomer_consec_bursts": 0.381,
+    "bypass_rate_pct": 47.366,
+    "virt_game_spread": 1.714
    }
   }
  },
@@ -6308,18 +6308,18 @@
     "virt_game_spread": 2.286
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 4.256,
-    "p95_wait_mins": 13.142,
-    "max_wait_mins": 16.784,
-    "avg_play_mins": 174.652,
-    "play_spread_mins": 28.126,
-    "competitive_game_pct": 48.399,
-    "mean_cohort_sd": 0.948,
-    "mean_team_diff": 0.406,
-    "repeat_recent_pct": 5.915,
-    "latecomer_consec_bursts": 27.857,
-    "bypass_rate_pct": 0.097,
-    "virt_game_spread": 2.476
+    "avg_wait_mins": 4.26,
+    "p95_wait_mins": 13.339,
+    "max_wait_mins": 17.143,
+    "avg_play_mins": 175.312,
+    "play_spread_mins": 29.35,
+    "competitive_game_pct": 54.352,
+    "mean_cohort_sd": 0.891,
+    "mean_team_diff": 0.387,
+    "repeat_recent_pct": 5.536,
+    "latecomer_consec_bursts": 25.667,
+    "bypass_rate_pct": 0.475,
+    "virt_game_spread": 2.548
    }
   }
  },
@@ -6359,18 +6359,18 @@
     "virt_game_spread": 3.19
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 9.688,
-    "p95_wait_mins": 16.543,
-    "max_wait_mins": 20.27,
-    "avg_play_mins": 135.99,
-    "play_spread_mins": 30.318,
-    "competitive_game_pct": 60.211,
-    "mean_cohort_sd": 0.807,
-    "mean_team_diff": 0.277,
-    "repeat_recent_pct": 2.917,
-    "latecomer_consec_bursts": 6.619,
-    "bypass_rate_pct": 23.529,
-    "virt_game_spread": 1.976
+    "avg_wait_mins": 9.678,
+    "p95_wait_mins": 16.937,
+    "max_wait_mins": 20.91,
+    "avg_play_mins": 136.035,
+    "play_spread_mins": 29.842,
+    "competitive_game_pct": 65.588,
+    "mean_cohort_sd": 0.741,
+    "mean_team_diff": 0.289,
+    "repeat_recent_pct": 1.725,
+    "latecomer_consec_bursts": 7.333,
+    "bypass_rate_pct": 28.924,
+    "virt_game_spread": 1.952
    }
   }
  },
@@ -6410,18 +6410,18 @@
     "virt_game_spread": 2.619
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 15.15,
-    "p95_wait_mins": 24.885,
-    "max_wait_mins": 29.524,
-    "avg_play_mins": 109.939,
-    "play_spread_mins": 30.255,
-    "competitive_game_pct": 68.161,
-    "mean_cohort_sd": 0.716,
-    "mean_team_diff": 0.219,
-    "repeat_recent_pct": 0.284,
-    "latecomer_consec_bursts": 0.286,
-    "bypass_rate_pct": 48.88,
-    "virt_game_spread": 2
+    "avg_wait_mins": 15.131,
+    "p95_wait_mins": 24.834,
+    "max_wait_mins": 29.531,
+    "avg_play_mins": 110.426,
+    "play_spread_mins": 31.453,
+    "competitive_game_pct": 73.064,
+    "mean_cohort_sd": 0.653,
+    "mean_team_diff": 0.216,
+    "repeat_recent_pct": 0.676,
+    "latecomer_consec_bursts": 0.19,
+    "bypass_rate_pct": 48.114,
+    "virt_game_spread": 1.857
    }
   }
  },
@@ -6461,18 +6461,18 @@
     "virt_game_spread": 1.929
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 4.317,
-    "p95_wait_mins": 13.048,
-    "max_wait_mins": 16.855,
-    "avg_play_mins": 175.283,
-    "play_spread_mins": 32.711,
-    "competitive_game_pct": 67.017,
-    "mean_cohort_sd": 0.601,
-    "mean_team_diff": 0.307,
-    "repeat_recent_pct": 3.56,
-    "latecomer_consec_bursts": 27.048,
-    "bypass_rate_pct": 0,
-    "virt_game_spread": 2.429
+    "avg_wait_mins": 4.325,
+    "p95_wait_mins": 13.594,
+    "max_wait_mins": 17.066,
+    "avg_play_mins": 175.037,
+    "play_spread_mins": 30.875,
+    "competitive_game_pct": 68.166,
+    "mean_cohort_sd": 0.577,
+    "mean_team_diff": 0.304,
+    "repeat_recent_pct": 2.448,
+    "latecomer_consec_bursts": 26.81,
+    "bypass_rate_pct": 0.487,
+    "virt_game_spread": 2.476
    }
   }
  },
@@ -6512,18 +6512,18 @@
     "virt_game_spread": 3.238
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 9.859,
-    "p95_wait_mins": 16.957,
-    "max_wait_mins": 20.067,
-    "avg_play_mins": 136.562,
-    "play_spread_mins": 29.896,
-    "competitive_game_pct": 80.161,
-    "mean_cohort_sd": 0.52,
-    "mean_team_diff": 0.204,
-    "repeat_recent_pct": 1.06,
-    "latecomer_consec_bursts": 5.381,
-    "bypass_rate_pct": 25.338,
-    "virt_game_spread": 1.81
+    "avg_wait_mins": 9.856,
+    "p95_wait_mins": 17.169,
+    "max_wait_mins": 20.902,
+    "avg_play_mins": 137.065,
+    "play_spread_mins": 31.794,
+    "competitive_game_pct": 80.653,
+    "mean_cohort_sd": 0.483,
+    "mean_team_diff": 0.193,
+    "repeat_recent_pct": 0.288,
+    "latecomer_consec_bursts": 5.476,
+    "bypass_rate_pct": 27.858,
+    "virt_game_spread": 1.952
    }
   }
  },
@@ -6563,18 +6563,18 @@
     "virt_game_spread": 2.619
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 15.39,
-    "p95_wait_mins": 25.215,
-    "max_wait_mins": 29.449,
-    "avg_play_mins": 110.591,
-    "play_spread_mins": 28.378,
-    "competitive_game_pct": 85.072,
-    "mean_cohort_sd": 0.455,
-    "mean_team_diff": 0.155,
+    "avg_wait_mins": 15.408,
+    "p95_wait_mins": 25.468,
+    "max_wait_mins": 29.711,
+    "avg_play_mins": 110.125,
+    "play_spread_mins": 29.265,
+    "competitive_game_pct": 83.497,
+    "mean_cohort_sd": 0.437,
+    "mean_team_diff": 0.161,
     "repeat_recent_pct": 0,
-    "latecomer_consec_bursts": 0.048,
-    "bypass_rate_pct": 47.234,
-    "virt_game_spread": 1.619
+    "latecomer_consec_bursts": 0.333,
+    "bypass_rate_pct": 47.442,
+    "virt_game_spread": 1.571
    }
   }
  },
@@ -6614,17 +6614,17 @@
     "virt_game_spread": 2.381
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 4.253,
-    "p95_wait_mins": 13.139,
-    "max_wait_mins": 16.409,
-    "avg_play_mins": 174.713,
-    "play_spread_mins": 32.125,
-    "competitive_game_pct": 33.129,
-    "mean_cohort_sd": 1.151,
-    "mean_team_diff": 0.653,
-    "repeat_recent_pct": 6.756,
-    "latecomer_consec_bursts": 27.762,
-    "bypass_rate_pct": 0.194,
+    "avg_wait_mins": 4.268,
+    "p95_wait_mins": 13.498,
+    "max_wait_mins": 17.248,
+    "avg_play_mins": 174.967,
+    "play_spread_mins": 29.615,
+    "competitive_game_pct": 40.499,
+    "mean_cohort_sd": 1.025,
+    "mean_team_diff": 0.635,
+    "repeat_recent_pct": 4.52,
+    "latecomer_consec_bursts": 26.095,
+    "bypass_rate_pct": 0.693,
     "virt_game_spread": 2.333
    }
   }
@@ -6665,18 +6665,18 @@
     "virt_game_spread": 3.333
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 9.759,
-    "p95_wait_mins": 16.807,
-    "max_wait_mins": 19.918,
-    "avg_play_mins": 136.496,
-    "play_spread_mins": 28.086,
-    "competitive_game_pct": 50.323,
-    "mean_cohort_sd": 0.919,
-    "mean_team_diff": 0.488,
-    "repeat_recent_pct": 2.577,
-    "latecomer_consec_bursts": 6.952,
-    "bypass_rate_pct": 24.533,
-    "virt_game_spread": 2.119
+    "avg_wait_mins": 9.746,
+    "p95_wait_mins": 16.991,
+    "max_wait_mins": 21.011,
+    "avg_play_mins": 136.17,
+    "play_spread_mins": 30.377,
+    "competitive_game_pct": 56.295,
+    "mean_cohort_sd": 0.837,
+    "mean_team_diff": 0.465,
+    "repeat_recent_pct": 2.009,
+    "latecomer_consec_bursts": 7.143,
+    "bypass_rate_pct": 27.791,
+    "virt_game_spread": 2.048
    }
   }
  },
@@ -6716,17 +6716,17 @@
     "virt_game_spread": 2.619
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 15.23,
-    "p95_wait_mins": 24.95,
-    "max_wait_mins": 29.151,
-    "avg_play_mins": 110.403,
-    "play_spread_mins": 29.067,
-    "competitive_game_pct": 61.333,
-    "mean_cohort_sd": 0.762,
-    "mean_team_diff": 0.365,
-    "repeat_recent_pct": 0.572,
-    "latecomer_consec_bursts": 0.429,
-    "bypass_rate_pct": 47.67,
+    "avg_wait_mins": 15.246,
+    "p95_wait_mins": 25.161,
+    "max_wait_mins": 29.524,
+    "avg_play_mins": 110.587,
+    "play_spread_mins": 29.877,
+    "competitive_game_pct": 61.299,
+    "mean_cohort_sd": 0.731,
+    "mean_team_diff": 0.38,
+    "repeat_recent_pct": 0.766,
+    "latecomer_consec_bursts": 0.476,
+    "bypass_rate_pct": 47.176,
     "virt_game_spread": 1.81
    }
   }
@@ -6767,18 +6767,18 @@
     "virt_game_spread": 2.469
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.892,
-    "p95_wait_mins": 11.955,
-    "max_wait_mins": 15.955,
-    "avg_play_mins": 180.038,
-    "play_spread_mins": 36.833,
-    "competitive_game_pct": 42.776,
-    "mean_cohort_sd": 0.95,
-    "mean_team_diff": 0.509,
-    "repeat_recent_pct": 4.81,
-    "latecomer_consec_bursts": 38.188,
-    "bypass_rate_pct": 0.565,
-    "virt_game_spread": 2.563
+    "avg_wait_mins": 3.894,
+    "p95_wait_mins": 12.636,
+    "max_wait_mins": 16.097,
+    "avg_play_mins": 180.179,
+    "play_spread_mins": 32.048,
+    "competitive_game_pct": 47.166,
+    "mean_cohort_sd": 0.908,
+    "mean_team_diff": 0.531,
+    "repeat_recent_pct": 3.105,
+    "latecomer_consec_bursts": 36.188,
+    "bypass_rate_pct": 1.039,
+    "virt_game_spread": 2.625
    }
   }
  },
@@ -6818,18 +6818,18 @@
     "virt_game_spread": 3.533
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 9.43,
-    "p95_wait_mins": 16.163,
-    "max_wait_mins": 19.022,
-    "avg_play_mins": 138.593,
-    "play_spread_mins": 31.689,
-    "competitive_game_pct": 56.358,
-    "mean_cohort_sd": 0.786,
-    "mean_team_diff": 0.357,
-    "repeat_recent_pct": 0.394,
-    "latecomer_consec_bursts": 7.933,
-    "bypass_rate_pct": 21.968,
-    "virt_game_spread": 2.267
+    "avg_wait_mins": 9.426,
+    "p95_wait_mins": 16.311,
+    "max_wait_mins": 20.035,
+    "avg_play_mins": 138.23,
+    "play_spread_mins": 31.092,
+    "competitive_game_pct": 64.182,
+    "mean_cohort_sd": 0.69,
+    "mean_team_diff": 0.356,
+    "repeat_recent_pct": 0.792,
+    "latecomer_consec_bursts": 8.067,
+    "bypass_rate_pct": 27.765,
+    "virt_game_spread": 2.067
    }
   }
  },
@@ -6869,18 +6869,18 @@
     "virt_game_spread": 2.8
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 15.041,
-    "p95_wait_mins": 23.935,
-    "max_wait_mins": 28.478,
-    "avg_play_mins": 111.694,
-    "play_spread_mins": 30.361,
-    "competitive_game_pct": 68.599,
-    "mean_cohort_sd": 0.676,
-    "mean_team_diff": 0.271,
+    "avg_wait_mins": 15.058,
+    "p95_wait_mins": 24.013,
+    "max_wait_mins": 27.994,
+    "avg_play_mins": 112.048,
+    "play_spread_mins": 29.163,
+    "competitive_game_pct": 71.565,
+    "mean_cohort_sd": 0.609,
+    "mean_team_diff": 0.287,
     "repeat_recent_pct": 0,
-    "latecomer_consec_bursts": 0.267,
-    "bypass_rate_pct": 58.944,
-    "virt_game_spread": 2
+    "latecomer_consec_bursts": 0.133,
+    "bypass_rate_pct": 59.624,
+    "virt_game_spread": 1.8
    }
   }
  },
@@ -6920,18 +6920,18 @@
     "virt_game_spread": 2.344
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.839,
-    "p95_wait_mins": 11.848,
-    "max_wait_mins": 15.583,
-    "avg_play_mins": 179.301,
-    "play_spread_mins": 33.902,
-    "competitive_game_pct": 50.6,
-    "mean_cohort_sd": 0.91,
-    "mean_team_diff": 0.369,
-    "repeat_recent_pct": 3.375,
-    "latecomer_consec_bursts": 39.563,
-    "bypass_rate_pct": 0.65,
-    "virt_game_spread": 2.813
+    "avg_wait_mins": 3.826,
+    "p95_wait_mins": 12.595,
+    "max_wait_mins": 16.18,
+    "avg_play_mins": 179.902,
+    "play_spread_mins": 34.945,
+    "competitive_game_pct": 56.257,
+    "mean_cohort_sd": 0.827,
+    "mean_team_diff": 0.367,
+    "repeat_recent_pct": 3.458,
+    "latecomer_consec_bursts": 36.375,
+    "bypass_rate_pct": 1.405,
+    "virt_game_spread": 2.688
    }
   }
  },
@@ -6971,18 +6971,18 @@
     "virt_game_spread": 3.333
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 9.349,
-    "p95_wait_mins": 16.014,
-    "max_wait_mins": 19.096,
-    "avg_play_mins": 138.448,
-    "play_spread_mins": 30.337,
-    "competitive_game_pct": 63.493,
-    "mean_cohort_sd": 0.745,
-    "mean_team_diff": 0.262,
-    "repeat_recent_pct": 0.392,
-    "latecomer_consec_bursts": 8.467,
-    "bypass_rate_pct": 24.096,
-    "virt_game_spread": 2.2
+    "avg_wait_mins": 9.328,
+    "p95_wait_mins": 16.264,
+    "max_wait_mins": 20.076,
+    "avg_play_mins": 138.548,
+    "play_spread_mins": 32.162,
+    "competitive_game_pct": 69.159,
+    "mean_cohort_sd": 0.66,
+    "mean_team_diff": 0.263,
+    "repeat_recent_pct": 0.394,
+    "latecomer_consec_bursts": 8.133,
+    "bypass_rate_pct": 29.37,
+    "virt_game_spread": 2.133
    }
   }
  },
@@ -7022,18 +7022,18 @@
     "virt_game_spread": 2.8
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 14.909,
-    "p95_wait_mins": 23.924,
-    "max_wait_mins": 28.126,
-    "avg_play_mins": 111.351,
-    "play_spread_mins": 28.788,
-    "competitive_game_pct": 71.411,
-    "mean_cohort_sd": 0.683,
-    "mean_team_diff": 0.193,
+    "avg_wait_mins": 14.905,
+    "p95_wait_mins": 23.638,
+    "max_wait_mins": 28.334,
+    "avg_play_mins": 112.075,
+    "play_spread_mins": 31.161,
+    "competitive_game_pct": 74.889,
+    "mean_cohort_sd": 0.63,
+    "mean_team_diff": 0.201,
     "repeat_recent_pct": 0,
-    "latecomer_consec_bursts": 0.133,
-    "bypass_rate_pct": 59.631,
-    "virt_game_spread": 1.933
+    "latecomer_consec_bursts": 0.267,
+    "bypass_rate_pct": 59.552,
+    "virt_game_spread": 2.067
    }
   }
  },
@@ -7073,18 +7073,18 @@
     "virt_game_spread": 2.469
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.915,
-    "p95_wait_mins": 12.019,
-    "max_wait_mins": 15.663,
-    "avg_play_mins": 180.369,
-    "play_spread_mins": 33.007,
-    "competitive_game_pct": 71.423,
-    "mean_cohort_sd": 0.566,
-    "mean_team_diff": 0.284,
-    "repeat_recent_pct": 1.621,
-    "latecomer_consec_bursts": 36.875,
-    "bypass_rate_pct": 0.096,
-    "virt_game_spread": 2.625
+    "avg_wait_mins": 3.894,
+    "p95_wait_mins": 12.448,
+    "max_wait_mins": 16.186,
+    "avg_play_mins": 181.048,
+    "play_spread_mins": 34.419,
+    "competitive_game_pct": 74.173,
+    "mean_cohort_sd": 0.517,
+    "mean_team_diff": 0.256,
+    "repeat_recent_pct": 0.951,
+    "latecomer_consec_bursts": 35.25,
+    "bypass_rate_pct": 1.049,
+    "virt_game_spread": 2.563
    }
   }
  },
@@ -7124,18 +7124,18 @@
     "virt_game_spread": 3.8
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 9.499,
-    "p95_wait_mins": 16.224,
-    "max_wait_mins": 18.788,
-    "avg_play_mins": 137.983,
-    "play_spread_mins": 32.416,
-    "competitive_game_pct": 78.992,
-    "mean_cohort_sd": 0.515,
-    "mean_team_diff": 0.204,
-    "repeat_recent_pct": 0.502,
-    "latecomer_consec_bursts": 6.533,
-    "bypass_rate_pct": 23.521,
-    "virt_game_spread": 2.2
+    "avg_wait_mins": 9.506,
+    "p95_wait_mins": 16.456,
+    "max_wait_mins": 19.659,
+    "avg_play_mins": 137.897,
+    "play_spread_mins": 31.483,
+    "competitive_game_pct": 84.01,
+    "mean_cohort_sd": 0.44,
+    "mean_team_diff": 0.169,
+    "repeat_recent_pct": 0.204,
+    "latecomer_consec_bursts": 8.133,
+    "bypass_rate_pct": 27.888,
+    "virt_game_spread": 2.067
    }
   }
  },
@@ -7175,18 +7175,18 @@
     "virt_game_spread": 2.933
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 15.161,
-    "p95_wait_mins": 24.173,
-    "max_wait_mins": 28.76,
-    "avg_play_mins": 112.399,
-    "play_spread_mins": 28.077,
-    "competitive_game_pct": 85.746,
-    "mean_cohort_sd": 0.423,
-    "mean_team_diff": 0.128,
+    "avg_wait_mins": 15.158,
+    "p95_wait_mins": 24.184,
+    "max_wait_mins": 28.242,
+    "avg_play_mins": 112.26,
+    "play_spread_mins": 31.438,
+    "competitive_game_pct": 87.158,
+    "mean_cohort_sd": 0.403,
+    "mean_team_diff": 0.132,
     "repeat_recent_pct": 0,
     "latecomer_consec_bursts": 0.2,
-    "bypass_rate_pct": 57.87,
-    "virt_game_spread": 1.867
+    "bypass_rate_pct": 57.842,
+    "virt_game_spread": 1.933
    }
   }
  },
@@ -7226,18 +7226,18 @@
     "virt_game_spread": 2.406
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 3.886,
-    "p95_wait_mins": 11.942,
-    "max_wait_mins": 15.88,
-    "avg_play_mins": 179.854,
-    "play_spread_mins": 35.031,
-    "competitive_game_pct": 40.548,
-    "mean_cohort_sd": 1.095,
-    "mean_team_diff": 0.633,
-    "repeat_recent_pct": 3.386,
-    "latecomer_consec_bursts": 37.938,
-    "bypass_rate_pct": 0.556,
-    "virt_game_spread": 2.594
+    "avg_wait_mins": 3.866,
+    "p95_wait_mins": 12.728,
+    "max_wait_mins": 16.009,
+    "avg_play_mins": 180.017,
+    "play_spread_mins": 34.865,
+    "competitive_game_pct": 44.449,
+    "mean_cohort_sd": 0.996,
+    "mean_team_diff": 0.588,
+    "repeat_recent_pct": 2.529,
+    "latecomer_consec_bursts": 36.75,
+    "bypass_rate_pct": 1.795,
+    "virt_game_spread": 2.656
    }
   }
  },
@@ -7277,18 +7277,18 @@
     "virt_game_spread": 3.333
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 9.413,
-    "p95_wait_mins": 16.032,
-    "max_wait_mins": 19.301,
-    "avg_play_mins": 138.003,
-    "play_spread_mins": 30.169,
-    "competitive_game_pct": 52.671,
-    "mean_cohort_sd": 0.871,
-    "mean_team_diff": 0.454,
-    "repeat_recent_pct": 0.587,
-    "latecomer_consec_bursts": 8.067,
-    "bypass_rate_pct": 24.288,
-    "virt_game_spread": 1.967
+    "avg_wait_mins": 9.394,
+    "p95_wait_mins": 16.317,
+    "max_wait_mins": 20.008,
+    "avg_play_mins": 138.637,
+    "play_spread_mins": 28.311,
+    "competitive_game_pct": 62.348,
+    "mean_cohort_sd": 0.724,
+    "mean_team_diff": 0.398,
+    "repeat_recent_pct": 0.293,
+    "latecomer_consec_bursts": 7.333,
+    "bypass_rate_pct": 27.67,
+    "virt_game_spread": 1.9
    }
   }
  },
@@ -7328,18 +7328,18 @@
     "virt_game_spread": 2.8
    },
    "EPSILON_LEX": {
-    "avg_wait_mins": 14.988,
-    "p95_wait_mins": 24.04,
-    "max_wait_mins": 28.712,
-    "avg_play_mins": 111.264,
-    "play_spread_mins": 28.294,
-    "competitive_game_pct": 60.798,
-    "mean_cohort_sd": 0.749,
-    "mean_team_diff": 0.342,
-    "repeat_recent_pct": 0,
-    "latecomer_consec_bursts": 0.267,
-    "bypass_rate_pct": 57.713,
-    "virt_game_spread": 1.867
+    "avg_wait_mins": 15.003,
+    "p95_wait_mins": 23.909,
+    "max_wait_mins": 27.857,
+    "avg_play_mins": 111.173,
+    "play_spread_mins": 28.415,
+    "competitive_game_pct": 67.545,
+    "mean_cohort_sd": 0.664,
+    "mean_team_diff": 0.343,
+    "repeat_recent_pct": 0.098,
+    "latecomer_consec_bursts": 0.533,
+    "bypass_rate_pct": 58.27,
+    "virt_game_spread": 1.8
    }
   }
  }

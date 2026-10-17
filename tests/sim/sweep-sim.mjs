@@ -18,6 +18,16 @@ const POLICIES = ["FIFO", "LOWEST_RAW_GAMES", "EPSILON_LEX"];
 const TA = "EPSILON_LEX";
 const LABEL = { FIFO: "FIFO", LOWEST_RAW_GAMES: "Lowest Raw Games", EPSILON_LEX: "This Algorithm" };
 
+// Candidate-config override for ε-tuning runs only: EPS_OVERRIDE="0.3,7"
+// (epsSkillVar,epsWaitMin) applies to EPSILON_LEX and redirects the output —
+// never use it for the committed report.
+const EPS_OVERRIDE = process.env.EPS_OVERRIDE
+  ?(([epsSkillVar, epsWaitMin]) => ({ epsSkillVar, epsWaitMin }))(
+    process.env.EPS_OVERRIDE.split(",").map(Number),
+  )
+  : null;
+const taCfg = (p) => (p === TA ? (EPS_OVERRIDE ?? {}) : {});
+
 const COURTS = [1, 2, 3, 4];
 const SESSION_MINS = [120, 180, 240];
 const SKILL_PROFILES = [
@@ -74,7 +84,7 @@ for (const mins of SESSION_MINS) {
           playersPerCourt: perCourt,
         };
         // Probe one seed to size the seed count for ≥ TARGET_GAMES games.
-        const probe = runSession(generateScenario(0, opts), TA);
+        const probe = runSession(generateScenario(0, opts), TA, taCfg(TA));
         const seeds = Math.max(
           MIN_SEEDS,
           Math.min(MAX_SEEDS, Math.ceil(TARGET_GAMES / Math.max(1, probe.total_games))),
@@ -86,7 +96,7 @@ for (const mins of SESSION_MINS) {
         for (let seed = 0; seed < seeds; seed++) {
           const scen = generateScenario(seed, opts);
           for (const p of POLICIES) {
-            const r = runSession(scen, p);
+            const r = runSession(scen, p, taCfg(p));
             games = Math.max(games, r.total_games);
             for (const f of FIELDS) acc[p][f].push(r[f]);
           }
@@ -221,7 +231,7 @@ const sdFails = cells.filter((c) => !c.gates.cohortSd);
 if (sdFails.length) {
   const sdPass = cells.filter((c) => c.gates.cohortSd);
   say(``);
-  say(`The cohort-SD check fails in ${sdFails.length}/${total} cells. Every pass needs both a deep bench (normal/peak density: ${sdPass.filter((c) => c.density !== "light").length}/${sdPass.length} of passes) and ≥2 courts of selection freedom — Stage A can only homogenize cohorts when there are more rested players than one court consumes. On top of that, the ε-bands are absolute (skill² units tuned for the doc's wide club mix), so on tight distributions FIFO's SD is already low and the ratio floors out:`);
+  say(`The cohort-SD check fails in ${sdFails.length}/${total} cells. Every pass needs both a deep bench (normal/peak density: ${sdPass.filter((c) => c.density !== "light").length}/${sdPass.length} of passes) and ≥2 courts of selection freedom — Stage A can only homogenize cohorts when there are more rested players than one court consumes. On top of that, the ε-bands are absolute (fixed skill² tolerances), so on tight distributions FIFO's SD is already low and the ratio floors out:`);
   say(``);
   say(`| Skill profile | FIFO SD | SD-check pass | SD ratios (TA/FIFO) |`);
   say(`|---|---|---|---|`);
@@ -285,7 +295,7 @@ say(``);
 say(`1. **Consistent direction, every cell.** This Algorithm cuts cohort skill SD below FIFO in all ${total} cells (ratios ${Math.min(...sdRatios).toFixed(2)}–${Math.max(...sdRatios).toFixed(2)}), holds max wait within 1.25× FIFO everywhere (${g.maxWait}/${total}, average penalty ${(mean(waitRatios) * 100 - 100).toFixed(0)}%), and keeps recent repeat partnerships ≤ ${Math.max(...c2p.map((c) => c[TA].repeat_recent_pct)).toFixed(1)}% whenever there are ≥2 courts (vs up to ${Math.max(...c1.map((c) => c[TA].repeat_recent_pct)).toFixed(0)}% in the 1-court corner where quartets are nearly forced). The fairness/variance trade-off is stable across every court count, session length, crowd density, and skill mix tested.`);
 say(`2. **The naive-fairness trap scales with courts.** Lowest Raw Games' latecomer consecutive-game bursts are lowest on a single court but grow once 3+ courts rotate quickly (up to ${lrgMaxBursts} per session at the worst cell) — raw game counts without the virtual-game offset let each latecomer monopolize courts until they hit the rest limit. This Algorithm's bursts stay far lower everywhere.`);
 say(`3. **Density, not court count, drives absolute waits.** Peak rosters (9 players/court) push p95/max waits up with the extra queue depth on every policy; court count mostly changes throughput. This Algorithm's wait penalty vs FIFO is stable across densities, and its playtime spread stays comparable to FIFO's while delivering several times FIFO's competitive-game share.`);
-say(`4. **Fixed thresholds need bench headroom, and the failures concentrate exactly there.** All-four-check pass rate: 1 court ${pct(allIn(c1), c1.length)}, 2+ courts ${pct(allIn(c2p), c2p.length)}; light density ${pct(allIn(light), light.length)} vs normal/peak ${pct(allIn(busy), busy.length)}. With a 6–9 player roster on 1 court there is no real selection freedom — any policy must play whoever is available, so team-diff, repeat, and SD checks fail for structural reasons, not algorithmic ones. On tight skill distributions (advanced-club) FIFO's SD is already low, capping the ratio; lowering \`epsSkillVar\` within the spec's envelope is the lever if that check matters there.`);
+say(`4. **Fixed thresholds need bench headroom, and the failures concentrate exactly there.** All-four-check pass rate: 1 court ${pct(allIn(c1), c1.length)}, 2+ courts ${pct(allIn(c2p), c2p.length)}; light density ${pct(allIn(light), light.length)} vs normal/peak ${pct(allIn(busy), busy.length)}. With a 6–9 player roster on 1 court there is no real selection freedom — any policy must play whoever is available, so team-diff, repeat, and SD checks fail for structural reasons, not algorithmic ones. On tight skill distributions (advanced-club) FIFO's SD is already low, capping the ratio; the shipped bands (\`epsSkillVar\` 0.45, \`epsWaitMin\` 7 min) are the sweep-tuned optimum across this grid — tightening them further balances cohorts better but starts failing the team-diff check.`);
 say(``);
 say(`## Conclusion`);
 say(``);

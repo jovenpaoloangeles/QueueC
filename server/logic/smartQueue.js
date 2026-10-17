@@ -38,10 +38,10 @@ export const MATCH_CONFIG = {
   betaOpponent: 0.25, // β: opponent-recency weight inside F5
   gammaDecay: 0.85, // γ: P/O decay per completed game
   alpha: 2.0, // π = wait_min − α·g_virt
-  epsWaitRatio: 0.1, // ε₁ = max(3.5 min, 10% of best quartet wait sum)
-  epsWaitMin: 3.5,
+  epsWaitRatio: 0.1, // ε₁ = max(epsWaitMin, 10% of best quartet wait sum)
+  epsWaitMin: 7.0, // sweep-tuned (tests/sim/epsilon-sweep.mjs): 7 min widens the Stage A window
   epsVirtGames: 1.0, // ε₂
-  epsSkillVar: 0.6, // ε₃ (skill² on the 1–7 scale)
+  epsSkillVar: 0.45, // ε₃ (skill² on the 1–7 scale) — sweep-tuned; feasible band 0.3–0.9
   epsTeamDiff: 0.35, // ε₄
   lambdaSkillVar: 1, // J(q) = λ₃f₃ + λ₄minF₄ + λ₅minF₅ (§5, weights unassigned)
   lambdaTeamDiff: 1,
