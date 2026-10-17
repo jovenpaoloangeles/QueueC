@@ -45,6 +45,7 @@ for (;;) {
 
 let code = 0;
 for (const f of [
+  "server/routes/automatch.test.js",
   "server/routes/two-match-end.test.js",
   "server/routes/court-stagger.test.js",
   "server/routes/queue-remove.test.js",

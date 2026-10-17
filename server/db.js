@@ -289,6 +289,13 @@ if (!sessionCols.has("shuttles_extra")) {
   db.exec("ALTER TABLE sessions ADD COLUMN shuttles_extra INTEGER NOT NULL DEFAULT 0");
 }
 
+// Late-arrival virtual game offset: g_virt = games_played + virt_offset.
+// Set once at check-in to the median g_virt of then-active entries (§2).
+const virtCols = new Set(db.prepare("PRAGMA table_info(queue_entries)").all().map((c) => c.name));
+if (!virtCols.has("virt_offset")) {
+  db.exec("ALTER TABLE queue_entries ADD COLUMN virt_offset REAL NOT NULL DEFAULT 0");
+}
+
 // backfill courts for sessions that predate the courts table
 const sessionsNeedingCourts = db
   .prepare(`

@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import db from "../db.js";
-import { suggestPlayers } from "../logic/smartQueue.js";
+import { planBatch, suggestPlayers } from "../logic/smartQueue.js";
 import { broadcast } from "./sse.js";
 
 /** Max lineups allowed on deck at once (existing + newly planned). */
@@ -48,42 +48,60 @@ router.post("/sessions/:id/automatch", async (c) => {
       .all(id);
 
   // Pure planner: same rules for dry-run and the real run (no writes).
+  // One ε-lexicographic batch over courts + slate slots (§5): quartets are
+  // picked jointly, not greedily court-by-court.
   function computePlan() {
-    const matches = [];
-    const taken = new Set();
-    const pool = () => getWaiting().filter((e) => !taken.has(e.id));
-    for (const court of slateOnly ? [] : freeCourts()) {
-      const p = pool();
-      const mode = p.length >= 4 ? "doubles" : p.length >= 2 ? "singles" : null;
-      if (!mode) break;
-      const slots = suggestPlayers(p, mode);
-      const ids = slots.filter(Boolean);
-      if (ids.length < 2) break;
-      const [t1p1, t1p2, t2p1, t2p2] = slots;
-      matches.push({
-        court_id: court.id,
-        court_label: court.label ?? null,
-        format: mode,
-        team1: [t1p1, t1p2].filter(Boolean),
-        team2: [t2p1, t2p2].filter(Boolean),
-      });
-      for (const eid of ids) taken.add(eid);
-    }
-    const slate = [];
+    const waiting = getWaiting();
+    const history = db
+      .prepare(
+        "SELECT team1_p1, team1_p2, team2_p1, team2_p2, started_at, ended_at FROM matches WHERE session_id = ? AND ended_at IS NOT NULL ORDER BY started_at, id",
+      )
+      .all(id)
+      .map((m) => ({
+        team1: [m.team1_p1, m.team1_p2].filter((x) => x != null),
+        team2: [m.team2_p1, m.team2_p2].filter((x) => x != null),
+        started_at: m.started_at,
+        ended_at: m.ended_at,
+      }));
+    const courts = slateOnly ? [] : freeCourts();
     const existing = db
       .prepare(
         "SELECT COUNT(*) AS n FROM matches WHERE session_id = ? AND state = 'slated' AND ended_at IS NULL",
       )
       .get(id).n;
-    while (existing + slate.length < SLATE_CAP) {
-      const remaining = pool();
-      if (remaining.length < 4) break;
-      const slots = suggestPlayers(remaining, "doubles");
-      if (slots.filter(Boolean).length !== 4) break;
-      slate.push({ format: "doubles", team1: [slots[0], slots[1]], team2: [slots[2], slots[3]] });
-      for (const eid of slots) taken.add(eid);
+    const courtCount = courts.length + Math.max(0, SLATE_CAP - existing);
+
+    const matches = [];
+    const slate = [];
+    let relaxed = false;
+    if (waiting.length >= 4 && courtCount > 0) {
+      const plan = planBatch({ waiting, history, courtCount, now });
+      relaxed = plan.relaxed;
+      plan.matches.forEach((m, i) => {
+        if (i < courts.length) {
+          matches.push({
+            court_id: courts[i].id,
+            court_label: courts[i].label ?? null,
+            format: "doubles",
+            team1: m.team1,
+            team2: m.team2,
+          });
+        } else {
+          slate.push({ format: "doubles", team1: m.team1, team2: m.team2 });
+        }
+      });
+    } else if (waiting.length >= 2 && courts.length > 0) {
+      // 2–3 waiting: singles fallback, best-π pair.
+      const slots = suggestPlayers(waiting, "singles", { history, now });
+      matches.push({
+        court_id: courts[0].id,
+        court_label: courts[0].label ?? null,
+        format: "singles",
+        team1: [slots[0]],
+        team2: [slots[2]],
+      });
     }
-    return { matches, slate };
+    return { matches, slate, relaxed_consecutive_rule: relaxed };
   }
 
   if (dryRun) return c.json({ plan: computePlan() });

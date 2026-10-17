@@ -1,9 +1,15 @@
-> **Status: design spec, not yet implemented.** This document describes the
-> target matchmaking engine. The matcher currently shipping is a simpler
-> heuristic in [`server/routes/automatch.js`](../server/routes/automatch.js)
-> (wait time, games played, skill variance, team balance, pair redundancy —
-> see [architecture](architecture.md)). This spec is the roadmap for replacing
-> it; the NumPy listing is reference material, not production code.
+> **Status: implemented** (`server/logic/smartQueue.js planBatch`, two-stage
+> ε-lexicographic engine; replaced the old heuristic in
+> [`server/routes/automatch.js`](../server/routes/automatch.js)). Sections 3–5
+> below match the shipped engine. Two selection-stage additions shipped after
+> this spec was written and are not yet spec'd here: **Hard Anchor** (when the
+> longest waiter has waited `anchorWaitMin` (15 min) or `anchorWaitRatio`
+> (1.35×) the 4th-longest waiter, Stage A widens its candidate window around
+> them so they are never left benched) and **Bench-First** (bench candidates
+> prefer players whose consecutive-game streak is highest, feeding the rest
+> rule). Consecutive counts are timestamped and decay with rest time, not
+> per-assignment. Parameters live in `MATCH_CONFIG` in `server/logic/smartQueue.js`.
+> The NumPy listing is reference material, not production code.
 
 ---
 

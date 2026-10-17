@@ -9,7 +9,9 @@
     "ensure-build": "bun scripts/ensure-build.js",
     "test:e2e": "bun run ensure-build && bunx playwright test --config=playwright.config.js",
     "test:unit": "bun unit/dnd.valid.test.js && bun unit/api.error.test.js && bun unit/timer.test.js",
-    "test:server": "bun scripts/run-server-tests.js"
+    "test:server": "bun scripts/run-server-tests.js",
+    "test:sim": "bun sim/benchmark-sim.mjs",
+    "test:sim:sweep": "bun sim/sweep-sim.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.0"

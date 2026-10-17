@@ -72,11 +72,25 @@ router.post("/sessions/:id/checkin", async (c) => {
     ).run(id, insertAt);
   }
 
+  // Late arrivals inherit the median virtual game count of active players
+  // (§2): g_virt = games_played + virt_offset, so they don't queue from zero
+  // behind players who've been playing all session.
+  const gVirts = db
+    .prepare(
+      "SELECT games_played + virt_offset AS gv FROM queue_entries WHERE session_id = ? AND status IN ('waiting','playing','resting')",
+    )
+    .all(id)
+    .map((r) => r.gv)
+    .sort((a, b) => a - b);
+  const virtOffset = gVirts.length
+    ? (gVirts[Math.floor((gVirts.length - 1) / 2)] + gVirts[Math.ceil((gVirts.length - 1) / 2)]) / 2
+    : 0;
+
   const { lastInsertRowid } = db
     .prepare(
-      "INSERT INTO queue_entries (session_id, player_id, checked_in_at, sort_order, status_updated_at) VALUES (?, ?, ?, ?, ?)",
+      "INSERT INTO queue_entries (session_id, player_id, checked_in_at, sort_order, virt_offset, status_updated_at) VALUES (?, ?, ?, ?, ?, ?)",
     )
-    .run(id, player_id, now, sortOrder, now);
+    .run(id, player_id, now, sortOrder, virtOffset, now);
 
   const entry = db.prepare("SELECT * FROM queue_entries WHERE id = ?").get(lastInsertRowid);
   broadcast();
@@ -156,7 +170,19 @@ router.get("/sessions/:id/suggest", (c) => {
       "SELECT qe.*, p.skill_level FROM queue_entries qe JOIN players p ON p.id = qe.player_id WHERE qe.session_id = ? AND qe.status = 'waiting'",
     )
     .all(id);
-  const suggestion = suggestPlayers(entries, mode);
+  // Completed matches, oldest→newest — the matcher's P/O + consecutive input.
+  const history = db
+    .prepare(
+      "SELECT team1_p1, team1_p2, team2_p1, team2_p2, started_at, ended_at FROM matches WHERE session_id = ? AND ended_at IS NOT NULL ORDER BY started_at, id",
+    )
+    .all(id)
+    .map((m) => ({
+      team1: [m.team1_p1, m.team1_p2].filter((x) => x != null),
+      team2: [m.team2_p1, m.team2_p2].filter((x) => x != null),
+      started_at: m.started_at,
+      ended_at: m.ended_at,
+    }));
+  const suggestion = suggestPlayers(entries, mode, { history });
   return c.json({ suggestion });
 });
 

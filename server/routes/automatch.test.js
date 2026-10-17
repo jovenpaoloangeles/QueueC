@@ -1,4 +1,4 @@
-// Run with: bun server/routes/automatch.test.js (server must be running on :3001)
+// Run via `bun run test:server` (throwaway server on :3991)
 import assert from "node:assert/strict";
 
 const BASE = process.env.BASE_URL ?? "http://localhost:3991/api";
