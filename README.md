@@ -66,6 +66,7 @@ Without Docker: install [Bun](https://bun.sh), then
 | [docs/testing.md](docs/testing.md) | Running the test suites |
 | [docs/ai-harness.md](docs/ai-harness.md) | Contributing with Claude Code / an AI agent |
 | [docs/workflow.md](docs/workflow.md) | The original product workflow spec |
+| [ROADMAP.md](ROADMAP.md) | Planned features by version — check off as shipped |
 | [CLAUDE.md](CLAUDE.md) | Agent policy this repo is developed under |
 
 ## Development
