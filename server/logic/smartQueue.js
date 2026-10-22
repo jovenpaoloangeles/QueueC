@@ -42,6 +42,7 @@ export const MATCH_CONFIG = {
   epsWaitMin: 7.0, // sweep-tuned (tests/sim/epsilon-sweep.mjs): 7 min widens the Stage A window
   epsVirtGames: 1.0, // ε₂
   epsSkillVar: 0.45, // ε₃ (skill² on the 1–7 scale) — sweep-tuned; feasible band 0.3–0.9
+  epsOverlap: 2.0, // ε₀ (cohort overlap, band FIRST in Stage A) — tuned on the 40-seed sweep; Task 2 widens the Pareto
   epsTeamDiff: 0.35, // ε₄
   lambdaSkillVar: 1, // J(q) = λ₃f₃ + λ₄minF₄ + λ₅minF₅ (§5, weights unassigned)
   lambdaTeamDiff: 1,
@@ -165,6 +166,29 @@ function buildPO(history, idIdx, n) {
   return { P, O };
 }
 
+// Recency-decayed shared-round co-play matrix S: like P/O but pair-agnostic —
+// every two players in the same completed match (either team, any side) count.
+// Feeds the cohort-overlap objective that keeps check-in waves mixing (§4 f₀).
+function buildS(history, idIdx, n) {
+  const S = new Float32Array(n * n);
+  const γ = MATCH_CONFIG.gammaDecay;
+  for (const m of history) {
+    for (let i = 0; i < n * n; i++) S[i] *= γ;
+    const roster = [...(m.team1 ?? []), ...(m.team2 ?? [])].filter((x) => x != null);
+    for (let a = 0; a < roster.length; a++) {
+      const i = idIdx.get(roster[a]);
+      if (i == null) continue;
+      for (let b = a + 1; b < roster.length; b++) {
+        const j = idIdx.get(roster[b]);
+        if (j == null) continue;
+        S[i * n + j] += 1;
+        S[j * n + i] += 1;
+      }
+    }
+  }
+  return S;
+}
+
 const comboCache = new Map();
 function combos(K) {
   let c = comboCache.get(K);
@@ -245,6 +269,7 @@ export function planBatch({ waiting, history = [], courtCount = 1, now = Math.fl
   const g = Float64Array.from(window, virtGames);
   const s = Float64Array.from(window, skillValue);
   const { P, O } = buildPO(history, idIdx, n);
+  const S = buildS(history, idIdx, n);
 
   const banSet = new Set();
   for (const [a, b] of bans) {
@@ -271,11 +296,15 @@ export function planBatch({ waiting, history = [], courtCount = 1, now = Math.fl
   const Q = combos(K);
   const M = Q.length;
   const need = Math.min(courtCount, Math.floor(K / 4));
+  const f0 = new Float64Array(M);
   const f1 = new Float64Array(M);
   const f2 = new Float64Array(M);
   const f3 = new Float64Array(M);
   for (let q = 0; q < M; q++) {
     const [a, b, c, d] = Q[q];
+    let overlap = 0;
+    for (let e = 0; e < 6; e++) overlap += S[Q[q][EDGE_U[e]] * K + Q[q][EDGE_V[e]]];
+    f0[q] = overlap;
     f1[q] = w[a] + w[b] + w[c] + w[d];
     f2[q] = g[a] + g[b] + g[c] + g[d];
     const mean = (s[a] + s[b] + s[c] + s[d]) / 4;
@@ -313,7 +342,7 @@ export function planBatch({ waiting, history = [], courtCount = 1, now = Math.fl
       (wFourth > 0 && anchorWait >= (C.anchorWaitRatio ?? MATCH_CONFIG.anchorWaitRatio) * wFourth) ||
       (g[anchorIdx] === gMinWin && gMaxWin - gMinWin >= 2));
 
-  const cascade = (requireAnchor) => {
+  const cascade = (requireAnchor, epsOv = C.epsOverlap) => {
     const m = new Uint8Array(M).fill(1);
     if (requireAnchor && need === 1) {
       for (let q = 0; q < M; q++) {
@@ -321,6 +350,13 @@ export function planBatch({ waiting, history = [], courtCount = 1, now = Math.fl
         if (a !== anchorIdx && b !== anchorIdx && c !== anchorIdx && d !== anchorIdx) m[q] = 0;
       }
     }
+    // Overlap band FIRST: a later band cannot resurrect quartets an earlier
+    // band killed, so cohort mixing must gate before the wait-sum band —
+    // otherwise wave-mixing quartets (lower wait sum) are eliminated forever.
+    let f0Min = Infinity;
+    for (let q = 0; q < M; q++) if (m[q] && f0[q] < f0Min) f0Min = f0[q];
+    for (let q = 0; q < M; q++) if (m[q] && f0[q] > f0Min + epsOv) m[q] = 0;
+
     let f1Max = -Infinity;
     for (let q = 0; q < M; q++) if (m[q] && f1[q] > f1Max) f1Max = f1[q];
     const epsW = Math.max(C.epsWaitMin, C.epsWaitRatio * f1Max);
@@ -335,8 +371,6 @@ export function planBatch({ waiting, history = [], courtCount = 1, now = Math.fl
     for (let q = 0; q < M; q++) if (m[q] && f3[q] > f3Min + C.epsSkillVar) m[q] = 0;
     return m;
   };
-
-  let mask = cascade(shouldAnchor);
 
   // Stage B: 3 K4 splits per surviving quartet.
   const all6O = new Float64Array(M);
@@ -371,13 +405,19 @@ export function planBatch({ waiting, history = [], courtCount = 1, now = Math.fl
     return out;
   };
 
-  let splits = collectSplits(mask);
-  if (!splits.length && C.anchorTopWaiter && C.epsWaitMin > 0) {
-    // Fallback if hard-ban pairs ruled out every quartet containing anchorIdx.
-    mask = cascade(false);
-    splits = collectSplits(mask);
-  }
-  if (!splits.length) return { matches: [], relaxed: didRelax };
+  // Stage B + multi-court selection, parameterised by the overlap band width:
+  // if a tight cohort band can't cover `need` disjoint quartets, widen it for
+  // this batch rather than silently idling courts (same spirit as the anchor
+  // fallback inside).
+  const select = (epsOv, requireAnchor) => {
+    let mask = cascade(requireAnchor, epsOv);
+    let splits = collectSplits(mask);
+    if (!splits.length && C.anchorTopWaiter && C.epsWaitMin > 0) {
+      // Fallback if hard-ban pairs ruled out every quartet containing anchorIdx.
+      mask = cascade(false, epsOv);
+      splits = collectSplits(mask);
+    }
+    if (!splits.length) return null;
 
   // ε₄ team-balance band across all (quartet, split) pairs (§4 step 4).
   let f4Min = Infinity;
@@ -453,6 +493,15 @@ export function planBatch({ waiting, history = [], courtCount = 1, now = Math.fl
       bestSet.sumJ += cand.J;
     }
   }
+    return bestSet;
+  };
+
+  let bestSet = select(C.epsOverlap, shouldAnchor);
+  if (bestSet && bestSet.set.length < need) {
+    // Tight overlap band couldn't cover all courts — widen it for this batch.
+    bestSet = select(Infinity, shouldAnchor);
+  }
+  if (!bestSet) return { matches: [], relaxed: didRelax };
 
   const matches = bestSet.set.map((cand) => {
     const locals = Q[cand.q];
