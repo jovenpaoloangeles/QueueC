@@ -254,7 +254,63 @@ async function malformedPresetTest() {
   }
 }
 
+// Per-session rotation settings: POST validates max_consecutive (1–5) and
+// rest_games (0–3), persists both; omitted fields get engine defaults (2 / 0)
+// and the session still plans via automatch dry-run.
+async function rotationSettingsTest() {
+  const api = async (path, method = "GET", body) => {
+    const res = await fetch(`${BASE}${path}`, {
+      method,
+      headers: body ? { "Content-Type": "application/json" } : {},
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    return { status: res.status, ...(await res.json().catch(() => ({}))) };
+  };
+
+  // Clear any active session
+  const active = await api("/sessions/active");
+  if (active.session) await api(`/sessions/${active.session.id}/end`, "PATCH");
+
+  const badConsec = await api("/sessions", "POST", {
+    name: "Rot Bad Consec", scheduled_start: 1, scheduled_end: 2, max_consecutive: 9,
+  });
+  assert.equal(badConsec.status, 400, "max_consecutive: 9 must be rejected");
+
+  const badRest = await api("/sessions", "POST", {
+    name: "Rot Bad Rest", scheduled_start: 1, scheduled_end: 2, rest_games: 7,
+  });
+  assert.equal(badRest.status, 400, "rest_games: 7 must be rejected");
+
+  const custom = await api("/sessions", "POST", {
+    name: "Rot Custom", scheduled_start: 1, scheduled_end: 2, max_consecutive: 3, rest_games: 1,
+  });
+  assert.equal(custom.status, 201, "valid rotation settings must be accepted");
+  assert.equal(custom.session.max_consecutive, 3, "max_consecutive persisted");
+  assert.equal(custom.session.rest_games, 1, "rest_games persisted");
+  await api(`/sessions/${custom.session.id}/end`, "PATCH");
+
+  // Defaults when omitted, and the session still plans (rest off).
+  const def = await api("/sessions", "POST", {
+    name: "Rot Defaults", scheduled_start: 1, scheduled_end: 2,
+  });
+  assert.equal(def.session.max_consecutive, 2, "default max_consecutive 2");
+  assert.equal(def.session.rest_games, 0, "default rest_games 0");
+  const sid = def.session.id;
+  await api(`/sessions/${sid}/start`, "PATCH");
+  const { players } = await api("/players");
+  for (const p of players.slice(0, 4)) {
+    await api(`/sessions/${sid}/checkin`, "POST", { player_id: p.id });
+  }
+  const dry = await api(`/sessions/${sid}/automatch`, "POST", { dry_run: true });
+  assert.equal(dry.status, 200, "dry-run on a defaults session must succeed");
+  assert.ok((dry.plan?.matches?.length ?? 0) >= 1, "defaults session must plan a match");
+  await api(`/sessions/${sid}/end`, "PATCH");
+
+  console.log("sessions.test.js: rotation-settings assertions passed");
+}
+
 run()
+  .then(rotationSettingsTest)
   .then(fkCleanupTest)
   .then(resetNoPresetTest)
   .then(malformedPresetTest)

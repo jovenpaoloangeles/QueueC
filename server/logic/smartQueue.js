@@ -28,6 +28,7 @@ const SKILL_MAP = {
 
 export const MATCH_CONFIG = {
   maxConsecutive: 2, // c_i < C_max
+  restGames: 0, // matches finished since the player's last game before they may field again (0 = off)
   minRestMinutes: 8.0, // bench rest threshold that resets consecutive streak
   minBenchWait: 0.5, // bench-first threshold (min): waiting > 0.5m preferred over just-finished (0m)
   anchorTopWaiter: true, // hard-anchor longest-waiting fair player when wait approaches ceiling
@@ -227,11 +228,27 @@ export function planBatch({ waiting, history = [], courtCount = 1, now = Math.fl
 
   // Module 1: unary filtering — consecutive-game rest limit, with graceful relax.
   const consec = consecutiveCounts(history, now, C.minRestMinutes * 60);
-  let eligible = avail.filter((e) => (consec.get(e.id) ?? 0) < C.maxConsecutive);
+  // rest_games: completed matches since the player's last one. A never-played
+  // player has rested every match so far (gamesRested = history.length).
+  const lastPlayed = new Map();
+  history.forEach((m, i) => {
+    for (const id of [...(m.team1 ?? []), ...(m.team2 ?? [])]) if (id != null) lastPlayed.set(id, i);
+  });
+  const gamesRested = (id) => {
+    const last = lastPlayed.get(id);
+    return last === undefined ? history.length : history.length - 1 - last;
+  };
+  let eligible = avail.filter(
+    (e) => (consec.get(e.id) ?? 0) < C.maxConsecutive && (C.restGames <= 0 || gamesRested(e.id) >= C.restGames),
+  );
   let didRelax = false;
   if (eligible.length < 4) {
     didRelax = true;
-    eligible = [...avail].sort((a, b) => (consec.get(a.id) ?? 0) - (consec.get(b.id) ?? 0));
+    eligible = [...avail].sort(
+      (a, b) =>
+        (consec.get(a.id) ?? 0) - (consec.get(b.id) ?? 0) ||
+        gamesRested(a.id) - gamesRested(b.id),
+    );
   }
 
   // Bench-first rule: when there is a full candidate window of rested bench

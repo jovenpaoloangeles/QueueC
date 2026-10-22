@@ -12,19 +12,28 @@ router.get("/active", (c) => {
 });
 
 router.post("/", async (c) => {
-  const { name, scheduled_start, scheduled_end, court_count, courts, checkin_order } = await c.req
-    .json()
-    .catch(() => ({}));
+  const { name, scheduled_start, scheduled_end, court_count, courts, checkin_order, max_consecutive, rest_games } =
+    await c.req
+      .json()
+      .catch(() => ({}));
   if (checkin_order != null && !["alphabetical", "arrival"].includes(checkin_order)) {
     return c.json({ error: "checkin_order must be 'alphabetical' or 'arrival'" }, 400);
+  }
+  const maxConsec = max_consecutive ?? 2;
+  if (!Number.isInteger(maxConsec) || maxConsec < 1 || maxConsec > 5) {
+    return c.json({ error: "max_consecutive must be an integer 1–5" }, 400);
+  }
+  const restGames = rest_games ?? 0;
+  if (!Number.isInteger(restGames) || restGames < 0 || restGames > 3) {
+    return c.json({ error: "rest_games must be an integer 0–3" }, 400);
   }
   const count = Array.isArray(courts) && courts.length > 0 ? courts.length : (court_count ?? 2);
   const order = checkin_order ?? "alphabetical";
   const { lastInsertRowid } = db
     .prepare(
-      "INSERT INTO sessions (name, scheduled_start, scheduled_end, court_count, checkin_order) VALUES (?, ?, ?, ?, ?)",
+      "INSERT INTO sessions (name, scheduled_start, scheduled_end, court_count, checkin_order, max_consecutive, rest_games) VALUES (?, ?, ?, ?, ?, ?, ?)",
     )
-    .run(name, scheduled_start, scheduled_end, count, order);
+    .run(name, scheduled_start, scheduled_end, count, order, maxConsec, restGames);
 
   // seed courts (custom configuration array or default Court 1..N)
   const insertCourt = db.prepare(

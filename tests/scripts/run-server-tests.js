@@ -45,6 +45,8 @@ for (;;) {
 
 let code = 0;
 for (const f of [
+  // first: run() asserts the pool equals the preset, so it needs a pristine server
+  "server/routes/sessions.test.js",
   "server/routes/automatch.test.js",
   "server/routes/two-match-end.test.js",
   "server/routes/court-stagger.test.js",
@@ -56,7 +58,7 @@ for (const f of [
 ]) {
   const r = Bun.spawnSync(["bun", join(root, f)], {
     cwd: root,
-    env: { ...process.env, QC_TEST_BASE: BASE },
+    env: { ...process.env, QC_TEST_BASE: BASE, PLAYERS_PATH: join(root, "tests/fixtures/players.json") },
     stdout: "inherit",
     stderr: "inherit",
   });

@@ -75,7 +75,13 @@ router.post("/sessions/:id/automatch", async (c) => {
     const slate = [];
     let relaxed = false;
     if (waiting.length >= 4 && courtCount > 0) {
-      const plan = planBatch({ waiting, history, courtCount, now });
+      const plan = planBatch({
+        waiting,
+        history,
+        courtCount,
+        now,
+        cfg: { maxConsecutive: s.max_consecutive ?? 2, restGames: s.rest_games ?? 0 },
+      });
       relaxed = plan.relaxed;
       plan.matches.forEach((m, i) => {
         if (i < courts.length) {

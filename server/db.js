@@ -50,6 +50,8 @@ db.exec(`
     scheduled_end INTEGER NOT NULL,
     court_count INTEGER NOT NULL DEFAULT 2,
     checkin_order TEXT NOT NULL DEFAULT 'alphabetical',
+    max_consecutive INTEGER NOT NULL DEFAULT 2,
+    rest_games INTEGER NOT NULL DEFAULT 0,
     started_at INTEGER,
     ended_at INTEGER
   );
@@ -126,6 +128,20 @@ if (!playersSql.includes("lower_intermediate")) {
 } else {
   // Normalize any stray 'advanced' rows to 'expert'
   db.exec("UPDATE players SET skill_level = 'expert' WHERE skill_level = 'advanced'");
+}
+
+// v1.2: per-session rotation settings (max_consecutive, rest_games)
+const sessionRotationCols = new Set(
+  db
+    .prepare("PRAGMA table_info(sessions)")
+    .all()
+    .map((c) => c.name),
+);
+if (!sessionRotationCols.has("max_consecutive")) {
+  db.exec("ALTER TABLE sessions ADD COLUMN max_consecutive INTEGER NOT NULL DEFAULT 2");
+}
+if (!sessionRotationCols.has("rest_games")) {
+  db.exec("ALTER TABLE sessions ADD COLUMN rest_games INTEGER NOT NULL DEFAULT 0");
 }
 
 // ponytail: one-shot column additions for queue_entries

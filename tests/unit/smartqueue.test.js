@@ -37,4 +37,35 @@ const T0 = 1_800_000_000, GAME = 720;
   assert.ok(mixed >= 4, `wave crossover: expected ≥4 mixed quartets of ${total}, got ${mixed}`);
 }
 
+// U5.2 — rest_games: a player in the most recent completed match is benched
+// until N later matches have finished. P1–4 last played in entry 0 (one entry
+// since → rested enough); P5 played in entry 1, the latest (0 since → benched).
+{
+  const restNow = T0 + 40 * 720;
+  const restPlayers = Array.from({ length: 5 }, (_, i) => ({
+    id: i + 1, status: "waiting", skill_level: "intermediate",
+    checked_in_at: T0, last_played_at: null, total_seconds_played: 0, games_played: 0,
+  }));
+  const restHistory = [
+    { team1: [1, 2], team2: [3, 4], started_at: T0, ended_at: T0 + 300 },
+    { team1: [5, 90], team2: [91, 92], started_at: T0 + 400, ended_at: T0 + 700 },
+  ];
+  const restedPlan = planBatch({
+    waiting: restPlayers, history: restHistory, courtCount: 1, now: restNow,
+    cfg: { restGames: 1 },
+  });
+  const restedIds = restedPlan.matches[0] ? [...restedPlan.matches[0].team1, ...restedPlan.matches[0].team2] : [];
+  assert.ok(!restedIds.includes(5), `rest_games=1 must bench P5 (played last round), got [${restedIds}]`);
+  assert.equal(restedPlan.matches.length, 1, "P1–4 are rested enough and must field");
+
+  // U5.3 — graceful relax overrides rest: exactly 4 players, all in the latest
+  // entry, rest_games=1 → 0 eligible → relax still fields a game.
+  const relaxHistory = [{ team1: [1, 2], team2: [3, 4], started_at: T0, ended_at: T0 + 300 }];
+  const relaxPlan = planBatch({
+    waiting: restPlayers.slice(0, 4), history: relaxHistory, courtCount: 1, now: restNow,
+    cfg: { restGames: 1 },
+  });
+  assert.ok(relaxPlan.matches.length === 1, "relax must field a game when only 4 are available");
+}
+
 console.log("smartqueue.test.js: all assertions passed");
