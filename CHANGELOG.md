@@ -4,6 +4,22 @@ Notable user-facing changes. Format follows Keep a Changelog; versions follow
 semver once there is a public API surface to break (the Docker image tag is
 the version that matters for self-hosters).
 
+## [1.2.0] — 2026-10-22
+
+Smarter matching.
+
+### Added
+
+- Wave crossover: Smart Match spreads play across check-in waves instead of
+  letting early and late arrivals play in separate bubbles (cohort-overlap
+  objective in the match planner).
+- Rotation rule settings per session — max consecutive games (1–5, default 2)
+  and minimum rest games (0–3, default off) — respected by Smart Match, with a
+  graceful relax so a short queue still fields a game.
+- Partial-lineup lock: players already drafted into the On Deck builder keep
+  their slots when you re-run Smart add; the planner fills the rest around
+  them (slate-only, up to 3 picks).
+
 ## [1.1.0] — 2026-10-22
 
 Session polish.

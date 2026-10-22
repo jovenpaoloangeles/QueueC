@@ -16,8 +16,8 @@ Status legend: no checkbox = not started. Check off as shipped; delete rejected 
 ## v1.2 — Smarter matching
 
 - [x] **Target optimizer (doc'd, not built)** — implement the optimizer design already specified in [docs/algorithm.md](docs/algorithm.md) behind the same dry-run-first gate.
-- [ ] **Rotation rule config** — "no more than 2 consecutive games" or "rest N games minimum" as session settings the heuristic respects.
-- [ ] **Partial-lineup lock** — keep 2 of 4 drafted players when re-running Smart Match instead of discarding the slate.
+- [x] **Rotation rule config** — "no more than 2 consecutive games" or "rest N games minimum" as session settings the heuristic respects.
+- [x] **Partial-lineup lock** — keep 2 of 4 drafted players when re-running Smart Match instead of discarding the slate.
 
 ## v1.3 — History
 

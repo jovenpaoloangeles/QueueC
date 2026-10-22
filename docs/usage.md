@@ -18,6 +18,10 @@ One screen, no modals:
   edit name/skill inline.
 - **Check-in order** — alphabetical (default) or arrival order, chosen per
   session at creation.
+- **Rotation rules** — max games in a row (1–5, default 2) and minimum rest
+  games (0–3, default off), chosen per session at creation. Smart Match obeys
+  them; when the queue is too short to satisfy a rule, it relaxes it rather
+  than fielding nothing.
 
 One **Start Session** button does everything: create session → check in the
 selection → start the court clocks. Nothing is written until that click.
@@ -48,7 +52,11 @@ skill-balance label and a next-free-court ETA.
 - **＋ Build lineup** — oversized 2×2 slots; drag 4 waiting players in and press
   **Add to On Deck**. Nothing slates until that click.
 - **Smart add / ✨ Smart Match** — pour a slate-only dry-run plan into the
-  builder for review; still nothing slated until **Add to On Deck**.
+  builder for review; still nothing slated until **Add to On Deck**. Players
+  already drafted into the builder are locked in their slots — the plan fills
+  the empty slots around them (up to 3 picks); re-running with all four
+  filled is disabled. If no fair quartet exists around your picks, Smart add
+  says so and leaves the builder untouched.
 - Up to 3 slates; reorder with ↑/↓; cancelling asks for confirmation (players
   return to the queue). When a match ends, the first slate auto-promotes to the
   freed court.
@@ -81,6 +89,11 @@ tubes) on top for the session; it can't go below zero.
 Asks the server for a dry-run plan, shows it, and executes exactly what you
 confirmed. If the queue changed in between, it refuses with
 `Queue changed — review and try again` rather than guessing.
+
+Smart Match spreads play across check-in waves — early and late arrivals mix
+instead of living in separate bubbles — and honors the session's rotation
+rules. With only 2–3 players waiting and a free court, it falls back to a
+singles match instead of fielding nothing.
 
 ## Stats sidebar
 
