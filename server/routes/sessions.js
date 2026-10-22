@@ -12,11 +12,19 @@ router.get("/active", (c) => {
 });
 
 router.post("/", async (c) => {
-  const { name, scheduled_start, scheduled_end, court_count, courts } = await c.req.json().catch(() => ({}));
+  const { name, scheduled_start, scheduled_end, court_count, courts, checkin_order } = await c.req
+    .json()
+    .catch(() => ({}));
+  if (checkin_order != null && !["alphabetical", "arrival"].includes(checkin_order)) {
+    return c.json({ error: "checkin_order must be 'alphabetical' or 'arrival'" }, 400);
+  }
   const count = Array.isArray(courts) && courts.length > 0 ? courts.length : (court_count ?? 2);
+  const order = checkin_order ?? "alphabetical";
   const { lastInsertRowid } = db
-    .prepare("INSERT INTO sessions (name, scheduled_start, scheduled_end, court_count) VALUES (?, ?, ?, ?)")
-    .run(name, scheduled_start, scheduled_end, count);
+    .prepare(
+      "INSERT INTO sessions (name, scheduled_start, scheduled_end, court_count, checkin_order) VALUES (?, ?, ?, ?, ?)",
+    )
+    .run(name, scheduled_start, scheduled_end, count, order);
 
   // seed courts (custom configuration array or default Court 1..N)
   const insertCourt = db.prepare(

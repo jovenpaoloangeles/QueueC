@@ -49,6 +49,7 @@ db.exec(`
     scheduled_start INTEGER NOT NULL,
     scheduled_end INTEGER NOT NULL,
     court_count INTEGER NOT NULL DEFAULT 2,
+    checkin_order TEXT NOT NULL DEFAULT 'alphabetical',
     started_at INTEGER,
     ended_at INTEGER
   );
@@ -290,6 +291,9 @@ if (!sessionCols.has("shuttles_extra")) {
 }
 if (!sessionCols.has("paused_at")) {
   db.exec("ALTER TABLE sessions ADD COLUMN paused_at INTEGER");
+}
+if (!sessionCols.has("checkin_order")) {
+  db.exec("ALTER TABLE sessions ADD COLUMN checkin_order TEXT NOT NULL DEFAULT 'alphabetical'");
 }
 
 // Late-arrival virtual game offset: g_virt = games_played + virt_offset.

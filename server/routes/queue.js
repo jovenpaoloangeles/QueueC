@@ -53,15 +53,20 @@ router.post("/sessions/:id/checkin", async (c) => {
 
   // New check-ins slot into alphabetical position among the current WAITING
   // entries (case-insensitive); everything at or after that spot shifts down one.
+  // Sessions with checkin_order='arrival' skip that and just append.
   const name = db.prepare("SELECT name FROM players WHERE id = ?").get(player_id)?.name;
-  const insertAt = alphabeticalSortOrder(
-    db
-      .prepare(
-        "SELECT qe.sort_order, p.name FROM queue_entries qe JOIN players p ON p.id = qe.player_id WHERE qe.session_id = ? AND qe.status = 'waiting'",
-      )
-      .all(id),
-    name ?? "",
-  );
+  const arrivalOrder =
+    db.prepare("SELECT checkin_order FROM sessions WHERE id = ?").get(id)?.checkin_order === "arrival";
+  const insertAt = arrivalOrder
+    ? null
+    : alphabeticalSortOrder(
+        db
+          .prepare(
+            "SELECT qe.sort_order, p.name FROM queue_entries qe JOIN players p ON p.id = qe.player_id WHERE qe.session_id = ? AND qe.status = 'waiting'",
+          )
+          .all(id),
+        name ?? "",
+      );
   let sortOrder;
   if (insertAt == null) {
     sortOrder = assignSortOrder(existingOrders);

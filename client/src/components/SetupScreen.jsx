@@ -231,6 +231,7 @@ export default function SetupScreen({ draft }) {
   const [name, setName] = useState(fmtSessionName);
   const [startTime, setStartTime] = useState(defaultStartTime);
   const [courtCount, setCourtCount] = useState("2");
+  const [checkinOrder, setCheckinOrder] = useState("alphabetical");
   const [courts, setCourts] = useState(() => syncCourts([], 2));
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -322,6 +323,7 @@ export default function SetupScreen({ draft }) {
         scheduled_start: scheduledStart,
         scheduled_end: scheduledStart + Math.round(maxHours * 3600),
         court_count: courts.length,
+        checkin_order: checkinOrder,
         courts: courts.map((c, i) => ({
           label: c.label.trim() || `Court ${i + 1}`,
           duration_minutes: Math.round(Number(c.hours) * 60),
@@ -406,6 +408,20 @@ export default function SetupScreen({ draft }) {
                     }}
                   />
                 </div>
+              </div>
+
+              <div className="flex flex-1 flex-col gap-1.5">
+                <Label htmlFor="setup-order">Check-in order</Label>
+                <select
+                  id="setup-order"
+                  aria-label="Check-in order"
+                  className="h-9 rounded-md border border-border bg-card px-3 text-sm text-foreground"
+                  value={checkinOrder}
+                  onChange={(e) => setCheckinOrder(e.target.value)}
+                >
+                  <option value="alphabetical">Alphabetical</option>
+                  <option value="arrival">Arrival order</option>
+                </select>
               </div>
 
               <div className="flex max-h-60 flex-col gap-2 overflow-y-auto pr-1" data-testid="court-rows">
