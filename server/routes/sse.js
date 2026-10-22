@@ -39,6 +39,9 @@ export function currentState() {
     };
 
   const now = Math.floor(Date.now() / 1000);
+  // While paused, every clock reads paused_at — serverTime freezes so client
+  // countdowns stop, and wait/fairness math holds at the pause value.
+  const effNow = session.paused_at ?? now;
 
   const queue = db
     .prepare(`
@@ -52,7 +55,7 @@ export function currentState() {
     WHERE qe.session_id = ? AND qe.status NOT IN ('left','staged')
     ORDER BY qe.sort_order, qe.checked_in_at, qe.id
   `)
-    .all(now, session.id);
+    .all(effNow, session.id);
 
   const activeMatches = db
     .prepare("SELECT * FROM matches WHERE session_id = ? AND state = 'active' AND ended_at IS NULL")
@@ -87,7 +90,7 @@ export function currentState() {
   const waiters = queue.filter((e) => e.status === "waiting");
   const avg_wait_seconds = waiters.length
     ? Math.round(
-        waiters.reduce((s, e) => s + (now - e.checked_in_at - e.total_seconds_played), 0) / waiters.length,
+        waiters.reduce((s, e) => s + (effNow - e.checked_in_at - e.total_seconds_played), 0) / waiters.length,
       )
     : 0;
 
@@ -112,7 +115,7 @@ export function currentState() {
     slatedMatches,
     courts,
     stats: { player_count: queue.length, match_count, avg_wait_seconds, leaderboard, shuttles },
-    serverTime: now,
+    serverTime: effNow,
   };
 }
 

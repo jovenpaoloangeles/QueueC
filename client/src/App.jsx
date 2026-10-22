@@ -317,7 +317,12 @@ export default function App() {
     document.title = session?.name ? `${session.name} · QueueC` : "QueueC";
   }, [session?.name]);
 
-  const { waitSeconds, playSeconds } = useTimers(sseData.serverTime, sseData.queue, sseData.activeMatches);
+  const { waitSeconds, playSeconds } = useTimers(
+    sseData.serverTime,
+    sseData.queue,
+    sseData.activeMatches,
+    sseData.session?.paused_at,
+  );
 
   return (
     <div className="flex min-h-screen flex-col bg-background">

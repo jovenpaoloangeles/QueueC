@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { pauseSession, resumeSession } from "@/api";
 import { toggleTheme } from "@/lib/theme";
 import { cn, fmtClock, fmtDur, netWait } from "@/lib/utils";
 import EndSessionConfirmDialog from "./EndSessionConfirmDialog.jsx";
@@ -7,14 +8,19 @@ import EndSessionConfirmDialog from "./EndSessionConfirmDialog.jsx";
 export default function Header({ session, sseData, draftedIds = new Set(), onSmartMatch, onEndSession }) {
   const [elapsed, setElapsed] = useState(0);
   const [confirmEnd, setConfirmEnd] = useState(false);
+  const paused = session?.paused_at != null;
 
   useEffect(() => {
     if (!session || session.started_at == null) return;
-    const base = Math.floor(Date.now() / 1000) - session.started_at;
+    // paused: the pill pins to the pause moment (server also freezes serverTime there)
+    const base = (session.paused_at ?? Math.floor(Date.now() / 1000)) - session.started_at;
     setElapsed(base);
+    if (paused) return;
     const id = setInterval(() => setElapsed((e) => e + 1), 1000);
     return () => clearInterval(id);
   }, [session?.id, session?.started_at, session]);
+
+  const togglePause = () => (paused ? resumeSession(session.id) : pauseSession(session.id)).catch(() => {});
 
   const fmtTime = (ts) =>
     ts ? new Date(ts * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—";
@@ -137,7 +143,10 @@ export default function Header({ session, sseData, draftedIds = new Set(), onSma
             title="Session elapsed"
             className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 font-mono text-[13.5px] font-bold tabular-nums text-green-deep"
           >
-            <span className="size-2 shrink-0 animate-pulse rounded-full bg-primary" aria-hidden="true" />
+            <span
+              className={cn("size-2 shrink-0 rounded-full bg-primary", !paused && "animate-pulse")}
+              aria-hidden="true"
+            />
             {fmtDur(elapsed)}
           </span>
         )}
@@ -177,6 +186,17 @@ export default function Header({ session, sseData, draftedIds = new Set(), onSma
         >
           ☾
         </Button>
+        {session && session.started_at != null && !session.ended_at && (
+          <Button
+            size="sm"
+            variant="ghost"
+            data-testid="btn-pause"
+            title="Freeze all countdowns for a break"
+            onClick={togglePause}
+          >
+            {paused ? "Resume" : "Pause"}
+          </Button>
+        )}
         {session && onEndSession && (
           <>
             <Button

@@ -78,6 +78,48 @@ router.patch("/:id/start", (c) => {
   return c.json({ session: updated });
 });
 
+// Pause: freeze every clock by pinning SSE serverTime to paused_at (clients'
+// countdowns stop for free). Resume shifts pause-anchored timestamps forward by
+// the pause delta so all time math (net wait, match duration, court rental)
+// continues as if no time passed.
+router.patch("/:id/pause", (c) => {
+  const id = c.req.param("id");
+  const session = db.prepare("SELECT * FROM sessions WHERE id = ?").get(id);
+  if (!session) return c.json({ error: "Session not found" }, 404);
+  if (session.ended_at) return c.json({ error: "Session already ended" }, 400);
+  if (session.started_at == null) return c.json({ error: "Session not started" }, 400);
+  if (session.paused_at != null) return c.json({ error: "Session already paused" }, 400);
+  const now = Math.floor(Date.now() / 1000);
+  db.prepare("UPDATE sessions SET paused_at = ? WHERE id = ?").run(now, id);
+  broadcast();
+  return c.json({ session: db.prepare("SELECT * FROM sessions WHERE id = ?").get(id) });
+});
+
+router.patch("/:id/resume", (c) => {
+  const id = c.req.param("id");
+  const session = db.prepare("SELECT * FROM sessions WHERE id = ?").get(id);
+  if (!session) return c.json({ error: "Session not found" }, 404);
+  if (session.paused_at == null) return c.json({ error: "Session is not paused" }, 400);
+  const now = Math.floor(Date.now() / 1000);
+  const delta = now - session.paused_at;
+  db.transaction(() => {
+    db.prepare("UPDATE queue_entries SET checked_in_at = checked_in_at + ? WHERE session_id = ?").run(
+      delta,
+      id,
+    );
+    // Ended matches keep their true timestamps — duration already fixed.
+    db.prepare(
+      "UPDATE matches SET started_at = started_at + ? WHERE session_id = ? AND ended_at IS NULL",
+    ).run(delta, id);
+    db.prepare(
+      "UPDATE courts SET active_from = active_from + ?, expires_at = expires_at + ? WHERE session_id = ? AND active_from IS NOT NULL",
+    ).run(delta, delta, id);
+    db.prepare("UPDATE sessions SET paused_at = NULL WHERE id = ?").run(id);
+  })();
+  broadcast();
+  return c.json({ session: db.prepare("SELECT * FROM sessions WHERE id = ?").get(id) });
+});
+
 router.patch("/:id/end", (c) => {
   const id = c.req.param("id");
   const now = Math.floor(Date.now() / 1000);

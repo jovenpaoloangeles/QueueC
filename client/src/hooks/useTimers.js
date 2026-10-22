@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { netWait } from "@/lib/utils";
 
-export function useTimers(serverTime, queue, activeMatches) {
+export function useTimers(serverTime, queue, activeMatches, pausedAt) {
   const [, setTick] = useState(0);
   const offsetRef = useRef(0);
 
@@ -22,7 +22,9 @@ export function useTimers(serverTime, queue, activeMatches) {
     if (Math.abs(drift - offsetRef.current) >= 2) offsetRef.current = drift;
   }, [serverTime]);
 
-  const now = Math.floor(Date.now() / 1000) + offsetRef.current;
+  // Paused session: pin `now` to paused_at — matches serverTime freeze, so every
+  // countdown (waits, play time) holds for free.
+  const now = pausedAt ?? Math.floor(Date.now() / 1000) + offsetRef.current;
 
   const waitSeconds = new Map();
   for (const e of queue ?? []) {

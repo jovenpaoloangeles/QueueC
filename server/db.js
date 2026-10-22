@@ -288,6 +288,9 @@ const sessionCols = new Set(
 if (!sessionCols.has("shuttles_extra")) {
   db.exec("ALTER TABLE sessions ADD COLUMN shuttles_extra INTEGER NOT NULL DEFAULT 0");
 }
+if (!sessionCols.has("paused_at")) {
+  db.exec("ALTER TABLE sessions ADD COLUMN paused_at INTEGER");
+}
 
 // Late-arrival virtual game offset: g_virt = games_played + virt_offset.
 // Set once at check-in to the median g_virt of then-active entries (§2).

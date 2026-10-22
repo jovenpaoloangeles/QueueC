@@ -116,6 +116,9 @@ router.patch("/:id/end", async (c) => {
 
   const match = db.prepare("SELECT * FROM matches WHERE id = ? AND state = 'active'").get(id);
   if (!match) return c.json({ error: "Match not found" }, 404);
+  if (db.prepare("SELECT paused_at FROM sessions WHERE id = ?").get(match.session_id)?.paused_at != null) {
+    return c.json({ error: "Session is paused" }, 409);
+  }
 
   const duration = now - match.started_at;
 
