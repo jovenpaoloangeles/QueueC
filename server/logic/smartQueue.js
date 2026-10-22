@@ -221,8 +221,9 @@ const EDGE_U = [0, 0, 0, 1, 1, 2], EDGE_V = [1, 2, 3, 2, 3, 3];
  * @param {object} [p.cfg]  per-call overrides merged over MATCH_CONFIG
  * @returns {{ matches: Array<{team1:number[],team2:number[],metrics:object}>, relaxed: boolean }}
  */
-export function planBatch({ waiting, history = [], courtCount = 1, now = Math.floor(Date.now() / 1000), bans = [], cfg = {} }) {
+export function planBatch({ waiting, history = [], courtCount = 1, now = Math.floor(Date.now() / 1000), bans = [], cfg = {}, locked = [] }) {
   const C = { ...MATCH_CONFIG, ...cfg };
+  const lockedSet = new Set(locked);
   const avail = waiting.filter((e) => e.status === "waiting");
   if (avail.length < 4) return { matches: [], relaxed: false };
 
@@ -239,7 +240,9 @@ export function planBatch({ waiting, history = [], courtCount = 1, now = Math.fl
     return last === undefined ? history.length : history.length - 1 - last;
   };
   let eligible = avail.filter(
-    (e) => (consec.get(e.id) ?? 0) < C.maxConsecutive && (C.restGames <= 0 || gamesRested(e.id) >= C.restGames),
+    (e) =>
+      lockedSet.has(e.id) ||
+      ((consec.get(e.id) ?? 0) < C.maxConsecutive && (C.restGames <= 0 || gamesRested(e.id) >= C.restGames)),
   );
   let didRelax = false;
   if (eligible.length < 4) {
@@ -257,7 +260,8 @@ export function planBatch({ waiting, history = [], courtCount = 1, now = Math.fl
   const minBenchWait = C.minBenchWait ?? 0.5;
   if (minBenchWait > 0 && C.epsWaitMin > 0) {
     const benchRested = eligible.filter((e) => waitMinutes(e, now) > minBenchWait);
-    if (benchRested.length >= Math.max(8, 4 * courtCount + 4)) eligible = benchRested;
+    if (benchRested.length >= Math.max(8, 4 * courtCount + 4))
+      eligible = eligible.filter((e) => lockedSet.has(e.id) || benchRested.includes(e));
   }
 
   // Candidate window: π = wait − α·g_virt, top K with boundary-tie expansion.
@@ -275,6 +279,13 @@ export function planBatch({ waiting, history = [], courtCount = 1, now = Math.fl
   if (sorted.length > kTarget) {
     const cutoff = prio.get(sorted[kTarget - 1].id);
     window = sorted.filter((e) => prio.get(e.id) >= cutoff - 1e-4);
+  }
+  // Locked picks join the window even if the priority slice cut them.
+  if (lockedSet.size) {
+    const inWin = new Set(window.map((e) => e.id));
+    window = window.concat(eligible.filter((e) => lockedSet.has(e.id) && !inWin.has(e.id)));
+    // keep locked ids safe from the K cap (order is irrelevant to the metrics)
+    window = [...window].sort((a, b) => (lockedSet.has(b.id) ? 1 : 0) - (lockedSet.has(a.id) ? 1 : 0));
   }
   if (window.length > 26) window = window.slice(0, 26); // spec domain K ≤ 26 (also keeps the 32-bit disjointness mask safe)
 
@@ -312,7 +323,16 @@ export function planBatch({ waiting, history = [], courtCount = 1, now = Math.fl
   // on the longest-waiting fair player so skill outliers never starve on the bench.
   const Q = combos(K);
   const M = Q.length;
-  const need = Math.min(courtCount, Math.floor(K / 4));
+  // A locked pick plans exactly one quartet — the user is filling one slate slot.
+  const need = lockedSet.size ? Math.min(1, Math.floor(K / 4)) : Math.min(courtCount, Math.floor(K / 4));
+  // Containment mask: with locked ids, only quartets containing all of them survive.
+  const containMask = lockedSet.size
+    ? combos(K).map((q) => {
+        const local = new Set(q.map((i) => ids[i]));
+        return [...lockedSet].every((id) => local.has(id));
+      })
+    : null;
+  if (containMask && !containMask.some(Boolean)) return { matches: [], relaxed: false };
   const f0 = new Float64Array(M);
   const f1 = new Float64Array(M);
   const f2 = new Float64Array(M);
@@ -361,6 +381,9 @@ export function planBatch({ waiting, history = [], courtCount = 1, now = Math.fl
 
   const cascade = (requireAnchor, epsOv = C.epsOverlap) => {
     const m = new Uint8Array(M).fill(1);
+    if (containMask) {
+      for (let q = 0; q < M; q++) if (!containMask[q]) m[q] = 0;
+    }
     if (requireAnchor && need === 1) {
       for (let q = 0; q < M; q++) {
         const [a, b, c, d] = Q[q];

@@ -68,4 +68,28 @@ const T0 = 1_800_000_000, GAME = 720;
   assert.ok(relaxPlan.matches.length === 1, "relax must field a game when only 4 are available");
 }
 
+// U5.4 — locked: planner returns exactly one quartet containing both locked
+// players, even when they sit outside the top-K priority window.
+{
+  const lockNow = T0 + 5 * 720;
+  const lockPlayers = Array.from({ length: 10 }, (_, i) => ({
+    id: i + 1, status: "waiting", skill_level: "intermediate",
+    checked_in_at: T0 + (i < 8 ? 0 : 4000), last_played_at: null,
+    total_seconds_played: 0, games_played: 0,
+  })); // ids 9,10 waited far longer → occupy the window top
+  const lockPlan = planBatch({
+    waiting: lockPlayers, history: [], courtCount: 3, now: lockNow,
+    locked: [1, 2],
+  });
+  assert.equal(lockPlan.matches.length, 1, `locked plans exactly one quartet, got ${lockPlan.matches.length}`);
+  const lockIds = [...lockPlan.matches[0].team1, ...lockPlan.matches[0].team2];
+  assert.ok(lockIds.includes(1) && lockIds.includes(2), `locked ids must be in the quartet, got [${lockIds}]`);
+
+  // U5.5 — locked + impossible containment → no matches, no crash.
+  const impossible = planBatch({
+    waiting: lockPlayers.slice(0, 3), history: [], courtCount: 1, now: lockNow, locked: [1, 2],
+  });
+  assert.deepEqual(impossible.matches, []);
+}
+
 console.log("smartqueue.test.js: all assertions passed");

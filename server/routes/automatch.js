@@ -19,6 +19,19 @@ router.post("/sessions/:id/automatch", async (c) => {
   const dryRun = body?.dry_run === true;
   const slateOnly = body?.slate_only === true;
   const givenPlan = body?.plan && typeof body.plan === "object" ? body.plan : null;
+  // locked: queue-entry ids to pin into exactly one planned quartet (slate-only)
+  let locked = [];
+  if (Array.isArray(body?.locked)) {
+    if (
+      body.locked.length > 3 ||
+      body.locked.some((x) => !Number.isInteger(x)) ||
+      new Set(body.locked).size !== body.locked.length
+    ) {
+      return c.json({ error: "locked must be unique queue-entry ids (0–3 of them)" }, 400);
+    }
+    if (!slateOnly) return c.json({ error: "locked requires slate_only" }, 400);
+    locked = body.locked;
+  }
 
   const freeCourts = () =>
     db
@@ -50,7 +63,7 @@ router.post("/sessions/:id/automatch", async (c) => {
   // Pure planner: same rules for dry-run and the real run (no writes).
   // One ε-lexicographic batch over courts + slate slots (§5): quartets are
   // picked jointly, not greedily court-by-court.
-  function computePlan() {
+  function computePlan(locked = []) {
     const waiting = getWaiting();
     const history = db
       .prepare(
@@ -80,7 +93,8 @@ router.post("/sessions/:id/automatch", async (c) => {
         history,
         courtCount,
         now,
-        cfg: { maxConsecutive: s.max_consecutive ?? 2, restGames: s.rest_games ?? 0 },
+        cfg: { maxConsecutive: s.max_consecutive, restGames: s.rest_games },
+        locked,
       });
       relaxed = plan.relaxed;
       plan.matches.forEach((m, i) => {
@@ -110,9 +124,20 @@ router.post("/sessions/:id/automatch", async (c) => {
     return { matches, slate, relaxed_consecutive_rule: relaxed };
   }
 
-  if (dryRun) return c.json({ plan: computePlan() });
+  if (locked.length) {
+    const waitingIds = new Set(getWaiting().map((e) => e.id));
+    if (!locked.every((x) => waitingIds.has(x))) {
+      return c.json({ error: "locked ids must all be currently waiting" }, 400);
+    }
+  }
 
-  let plan = computePlan();
+  if (dryRun) return c.json({ plan: computePlan(locked) });
+
+  let plan = computePlan(locked);
+  if (locked.length && givenPlan) {
+    // a client plan executes exactly as sent — locked has nothing to add
+    return c.json({ error: "locked requires server-computed plan (no plan in body)" }, 400);
+  }
   if (givenPlan) {
     // Re-validate the client's plan against live state; execute exactly it.
     const stale = () => c.json({ error: "Queue changed — review and try again" }, 409);

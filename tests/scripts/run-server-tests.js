@@ -55,6 +55,7 @@ for (const f of [
   "server/routes/pause.test.js",
   "server/routes/match-abort.test.js",
   "server/routes/checkin-order.test.js",
+  "server/routes/automatch-locked.test.js",
 ]) {
   const r = Bun.spawnSync(["bun", join(root, f)], {
     cwd: root,
