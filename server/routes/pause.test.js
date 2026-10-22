@@ -107,7 +107,21 @@ async function main() {
     "end match while paused → 409",
   );
 
+  // (d1) writes DURING the pause must not be future-dated by the resume shift:
+  // a check-in mid-pause keeps a wait clock >= 0 after resume (clamp, not +delta)
+  await Bun.sleep(2500); // land mid-pause, not in the pause's own second
+  const { player: midPausePlayer } = await api("/api/players", "POST", {
+    name: "Pz MidPause",
+    skill_level: "intermediate",
+  });
+  const midPause = await api(`/api/sessions/${session.id}/checkin`, "POST", {
+    player_id: midPausePlayer.id,
+  });
+  assert.equal(midPause.status, 201, "check-in during pause is allowed");
+  const midPauseEntryId = midPause.entry.id;
+
   // (d) resume shifts checked_in_at by the pause delta; waits continue
+  const startedAtPre = (await readFirstState()).session.started_at;
   const waiterPre = (await readFirstState()).queue.find((e) => e.id === ids[4]);
   const waitPre = stPaused.serverTime - waiterPre.checked_in_at - waiterPre.total_seconds_played;
   await Bun.sleep(2100);
@@ -116,12 +130,24 @@ async function main() {
   assert.equal(resumed.session.paused_at, null, "paused_at cleared");
   const waiterPost = (await readFirstState()).queue.find((e) => e.id === ids[4]);
   const grown = waiterPost.checked_in_at - waiterPre.checked_in_at;
-  assert.ok(grown >= 1 && grown <= 3, `checked_in_at grew ~2s, got ${grown}`);
+  assert.ok(grown >= 1 && grown <= 8, `checked_in_at grew by the pause length, got ${grown}`);
   const waitPost = waiterPost.checked_in_at == null ? 0 : Date.now() / 1000 - waiterPost.checked_in_at;
   const stPost = await readFirstState();
   const waitPostExact = stPost.serverTime - waiterPost.checked_in_at - waiterPost.total_seconds_played;
   assert.ok(Math.abs(waitPostExact - waitPre) <= 2, `wait preserved across pause (${waitPre} → ${waitPostExact})`);
   assert.ok(stPost.serverTime > stPaused.serverTime, "serverTime flowing again");
+
+  // the mid-pause check-in is clamped to resume-now, never in the future
+  const midPauseEntry = stPost.queue.find((e) => e.id === midPauseEntryId);
+  assert.ok(
+    midPauseEntry.checked_in_at <= stPost.serverTime,
+    `mid-pause check-in not future-dated (${midPauseEntry.checked_in_at} vs ${stPost.serverTime})`,
+  );
+
+  // (d2) sessions.started_at shifts too — the header elapsed pill continues
+  // through the pause instead of leaping forward on resume
+  const delta = waiterPost.checked_in_at - waiterPre.checked_in_at;
+  assert.equal(stPost.session.started_at - startedAtPre, delta, "started_at shifted by pause delta");
 
   // match duration math also survives: end the match, duration ≈ pre-pause elapsed
   const endRes = await api(`/api/matches/${live.id}/end`, "PATCH", { team1_score: 21, team2_score: 5 });

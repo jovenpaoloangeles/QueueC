@@ -111,18 +111,25 @@ router.patch("/:id/resume", (c) => {
   const now = Math.floor(Date.now() / 1000);
   const delta = now - session.paused_at;
   db.transaction(() => {
-    db.prepare("UPDATE queue_entries SET checked_in_at = checked_in_at + ? WHERE session_id = ?").run(
-      delta,
-      id,
-    );
+    // Clamped shift: writes made DURING the pause (check-ins, match starts) are
+    // pinned to resume-now instead of being pushed into the future, which would
+    // make wait clocks and match durations go negative.
+    db.prepare(
+      "UPDATE queue_entries SET checked_in_at = min(checked_in_at + ?, ?) WHERE session_id = ?",
+    ).run(delta, now, id);
     // Ended matches keep their true timestamps — duration already fixed.
     db.prepare(
-      "UPDATE matches SET started_at = started_at + ? WHERE session_id = ? AND ended_at IS NULL",
-    ).run(delta, id);
+      "UPDATE matches SET started_at = min(started_at + ?, ?) WHERE session_id = ? AND ended_at IS NULL",
+    ).run(delta, now, id);
     db.prepare(
       "UPDATE courts SET active_from = active_from + ?, expires_at = expires_at + ? WHERE session_id = ? AND active_from IS NOT NULL",
     ).run(delta, delta, id);
-    db.prepare("UPDATE sessions SET paused_at = NULL WHERE id = ?").run(id);
+    // started_at shifts unclamped — it always predates the pause, and shifting
+    // it is what keeps the header elapsed pill continuous across the break.
+    db.prepare("UPDATE sessions SET paused_at = NULL, started_at = started_at + ? WHERE id = ?").run(
+      delta,
+      id,
+    );
   })();
   broadcast();
   return c.json({ session: db.prepare("SELECT * FROM sessions WHERE id = ?").get(id) });
