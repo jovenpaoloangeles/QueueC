@@ -358,15 +358,25 @@ export default function OnDeckStrip({
   // slate-editor draft) leaves that slot empty rather than double-claiming;
   // the builder's own previous contents are replaced wholesale.
   const [filling, setFilling] = useState(false);
+  const filledCount = newDraft.filter(Boolean).length;
   async function runSmartFill() {
     if (filling) return;
     setFilling(true);
     try {
-      const ids = await onSmartFill();
+      // pre-placed picks are locked: the plan must build around them
+      const ids = await onSmartFill(newDraft.filter(Boolean));
       if (ids) {
         setBuilding(true);
+        const placed = new Set(newDraft.filter(Boolean));
         const other = new Set([...draftedIds].filter((id) => !newDraft.includes(id)));
-        setNewDraft(ids.map((id) => (other.has(id) ? null : id)));
+        const poured = [...newDraft];
+        let k = 0;
+        for (let i = 0; i < poured.length; i++) {
+          if (poured[i] != null) continue; // locked pick keeps its slot
+          while (k < ids.length && (placed.has(ids[k]) || other.has(ids[k]))) k++;
+          if (k < ids.length) poured[i] = ids[k++];
+        }
+        setNewDraft(poured);
       }
     } finally {
       setFilling(false);
@@ -560,7 +570,7 @@ export default function OnDeckStrip({
         variant="secondary"
         className="rounded-full"
         data-testid="ondeck-smart-add"
-        disabled={filling}
+        disabled={filling || filledCount === 4}
         onClick={runSmartFill}
       >
         <Spark /> Smart add
@@ -587,7 +597,7 @@ export default function OnDeckStrip({
         variant="secondary"
         className="rounded-full"
         data-testid="ondeck-smart-add"
-        disabled={filling}
+        disabled={filling || filledCount === 4}
         onClick={runSmartFill}
       >
         <Spark /> Smart add

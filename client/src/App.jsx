@@ -102,15 +102,24 @@ export default function App() {
   // first slate is poured into the On Deck builder for review — the builder IS
   // the review surface, so no confirm dialog and nothing is slated here.
   // Returns the 4 entry ids to fill (or null after toasting why not).
-  async function handleSmartFill() {
+  async function handleSmartFill(locked = []) {
     if (!session) return null;
     try {
-      const { plan } = await autoMatch(session.id, { dry_run: true, slate_only: true });
+      const { plan } = await autoMatch(session.id, {
+        dry_run: true,
+        slate_only: true,
+        ...(locked.length ? { locked } : {}),
+      });
       const ids = plan?.slate?.[0]
         ? [plan.slate[0].team1[0], plan.slate[0].team1[1], plan.slate[0].team2[0], plan.slate[0].team2[1]]
         : null;
       if (!ids || ids.some((id) => id == null)) {
-        toast("Nothing to add — need 4 waiting players", "info");
+        toast(
+          locked.length
+            ? "Nothing to add — no fair quartet around your picks"
+            : "Nothing to add — need 4 waiting players",
+          "info",
+        );
         return null;
       }
       return ids;
