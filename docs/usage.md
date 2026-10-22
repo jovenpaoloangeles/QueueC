@@ -15,7 +15,9 @@ One screen, no modals:
   rental clock starts then, not at session start.
 - **Player pool** — alphabetical, letter-grouped, with search-and-add,
   select-all, and a skill-tier filter. Click to select, double-click (or ✎) to
-  edit name/skill inline. Check-in can be reordered alphabetically.
+  edit name/skill inline.
+- **Check-in order** — alphabetical (default) or arrival order, chosen per
+  session at creation.
 
 One **Start Session** button does everything: create session → check in the
 selection → start the court clocks. Nothing is written until that click.
@@ -53,9 +55,16 @@ skill-balance label and a next-free-court ETA.
 
 ### Queue
 
+**Check In** opens the search panel — select several players (checkbox chips)
+and check them all in with one confirmation. **Pause** (header) freezes every
+countdown for a break; Resume shifts all clocks forward as if no time passed.
+Keyboard shortcuts: `c` check-in, `s` promote next slate, `e` end the
+longest-running game, `?` cheatsheet (ignored while typing in a field).
+
 All / Wait / Rest tabs. Rest and wake via buttons or drag-and-drop both ways.
 Cards can be removed entirely (check-in undo) via the card's Remove action —
-with a confirmation, and never for someone on court or slated.
+with a confirmation, and never for someone on court or slated. Check-ins and
+match starts show an Undo toast for a few seconds.
 
 ### Ending a match
 

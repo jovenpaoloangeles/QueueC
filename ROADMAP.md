@@ -4,14 +4,14 @@ Status legend: no checkbox = not started. Check off as shipped; delete rejected 
 
 ## v1.1 — Session polish
 
-- [ ] **Undo/redo for last action** — accidental check-in or confirm-start is the most common queue-master slip; a single "Undo" toast beats confirm dialogs.
-- [ ] **Pause session** — freeze all countdowns and net-wait clocks for a break (rain, court maintenance) without ending the session.
-- [ ] **Bulk check-in** — toggle whole rows in the player pool; 20 players arriving at once shouldn't be 20 clicks.
-- [ ] **Idle-court nudge** — visual pulse/banner when a court sits free for N minutes with a slate staged (or players waiting with no slate staged).
-- [ ] **Keyboard shortcuts for queue master** — check in (search-by-type), confirm start, end game, promote next slate — bound keys with a `?` cheatsheet.
-- [ ] **Late-game restore** — browser refresh mid-draft keeps the in-progress slate draft instead of silently dropping it.
-- [ ] **Named teams in score & UI** — score prompts say "Team 1/Team 2" instead of the actual player names; everywhere a team is referenced (score entry, confirm dialogs, toasts) show the four player names.
-- [ ] **Alphabetical vs. arrival toggle** — per-session choice of check-in ordering, defaulting to alphabetical (the current behavior).
+- [x] **Undo/redo for last action** — accidental check-in or confirm-start is the most common queue-master slip; a single "Undo" toast beats confirm dialogs.
+- [x] **Pause session** — freeze all countdowns and net-wait clocks for a break (rain, court maintenance) without ending the session.
+- [x] **Bulk check-in** — toggle whole rows in the player pool; 20 players arriving at once shouldn't be 20 clicks.
+- [x] **Idle-court nudge** — visual pulse/banner when a court sits free for N minutes with a slate staged (or players waiting with no slate staged).
+- [x] **Keyboard shortcuts for queue master** — check in (search-by-type), confirm start, end game, promote next slate — bound keys with a `?` cheatsheet.
+- [x] **Late-game restore** — browser refresh mid-draft keeps the in-progress slate draft instead of silently dropping it.
+- [x] **Named teams in score & UI** — score prompts say "Team 1/Team 2" instead of the actual player names; everywhere a team is referenced (score entry, confirm dialogs, toasts) show the four player names.
+- [x] **Alphabetical vs. arrival toggle** — per-session choice of check-in ordering, defaulting to alphabetical (the current behavior).
 
 ## v1.2 — Smarter matching
 
