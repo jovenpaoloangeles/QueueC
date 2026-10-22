@@ -44,6 +44,8 @@ export default function App() {
   const [builderDraftIds, setBuilderDraftIds] = useState([]);
   // bumped after a live register-new-player so QueueGrid refetches the pool
   const [playersVersion, setPlayersVersion] = useState(0);
+  // session id already restored from sessionStorage (one restore per session)
+  const restoredRef = useRef(null);
   // On Deck collapsible — plain local state, nothing persisted
   const [deckOpen, setDeckOpen] = useState(false);
 
@@ -232,6 +234,43 @@ export default function App() {
       return changed ? next : prev;
     });
   }, [queue]);
+
+  // Late-game restore: drafts+selection survive a refresh, per session id.
+  // Load once per session id; write on every change; gone when the session ends.
+  useEffect(() => {
+    if (!session || restoredRef.current === session.id) return;
+    restoredRef.current = session.id;
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(`queuec.drafts.${session.id}`) ?? "null");
+      if (saved) {
+        setDrafts(saved.drafts ?? {});
+        setSelection(saved.selection ?? []);
+      }
+    } catch {} // corrupted blob = no restore
+  }, [session?.id]);
+  useEffect(() => {
+    if (!session || session.ended_at != null) return;
+    sessionStorage.setItem(`queuec.drafts.${session.id}`, JSON.stringify({ drafts, selection }));
+  }, [session?.id, session?.ended_at, drafts, selection]);
+  // session ended or gone (SSE sends null after an end) → nothing left to
+  // restore; hadSessionRef keeps the pre-SSE "no session yet" frame from wiping
+  const hadSessionRef = useRef(false);
+  useEffect(() => {
+    if (!session) {
+      if (hadSessionRef.current) {
+        for (const k of Object.keys(sessionStorage)) {
+          if (k.startsWith("queuec.drafts.")) sessionStorage.removeItem(k);
+        }
+      }
+      return;
+    }
+    hadSessionRef.current = true;
+    if (session.ended_at != null) {
+      for (const k of Object.keys(sessionStorage)) {
+        if (k.startsWith("queuec.drafts.")) sessionStorage.removeItem(k);
+      }
+    }
+  }, [session?.id, session?.ended_at]);
 
   // Every entry id currently sitting in any court's draft OR in the OnDeck
   // strip's slate edit draft — excluded from the header waiting count so
