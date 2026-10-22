@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useToast } from "@/components/Toast";
-import { autoMatch, endSession, setQueueOrder, startMatch } from "./api.js";
+import { abortMatch, autoMatch, cancelSlate, endSession, setQueueOrder, startMatch } from "./api.js";
 import CourtsRow from "./components/CourtsRow.jsx";
 import Header from "./components/Header.jsx";
 import OnDeckStrip from "./components/OnDeckStrip.jsx";
@@ -114,6 +114,12 @@ export default function App() {
           ? `Added ${r.slated_count} lineups to On Deck for review`
           : "Added to On Deck for review",
         "success",
+        r.slate_ids?.length
+          ? {
+              undo: () =>
+                Promise.allSettled(r.slate_ids.map((id) => cancelSlate(id))).catch(() => {}),
+            }
+          : undefined,
       );
     } catch (err) {
       toast(err?.data?.error ?? (err?.status ? err.message : "Auto-match failed"), "error");
@@ -257,7 +263,7 @@ export default function App() {
     const mapped = validIds.length === 2 ? [validIds[0], null, validIds[1], null] : validIds;
     const [t1p1, t1p2, t2p1, t2p2] = mapped;
     try {
-      await startMatch({
+      const { match } = await startMatch({
         session_id: session.id,
         court_number: courtNumber,
         team1_p1: t1p1,
@@ -267,6 +273,12 @@ export default function App() {
       });
       if (source === "draft") clearDraft(courtNumber);
       else setSelection([]);
+      const label = sseData.courts.find((c) => c.id === courtNumber)?.label ?? `Court ${courtNumber}`;
+      toast(
+        `Started on ${label}`,
+        "success",
+        match ? { undo: () => abortMatch(match.id).catch(() => {}) } : undefined,
+      );
       return true;
     } catch (err) {
       toast(err?.data?.error ?? "Could not start match", "error");

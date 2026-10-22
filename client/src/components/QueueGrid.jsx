@@ -266,7 +266,9 @@ export default function QueueGrid({
                 queue={queue}
                 players={[]}
                 onPlayersChanged={onPlayersChanged}
-                onCheckedIn={(p) => toast(`Checked in: ${p.name}`, "success")}
+                onCheckedIn={(p, entryId) =>
+                  toast(`Checked in: ${p.name}`, "success", entryId != null ? { undo: () => removeEntry(entryId).catch(() => {}) } : undefined)
+                }
                 inputTestid="checkin-search"
                 requireConfirm
                 placeholder="Search or add player…"
@@ -279,7 +281,9 @@ export default function QueueGrid({
               queue={queue}
               players={allPlayers}
               onPlayersChanged={onPlayersChanged}
-              onCheckedIn={(p) => toast(`Checked in: ${p.name}`, "success")}
+              onCheckedIn={(p, entryId) =>
+                toast(`Checked in: ${p?.name}`, "success", entryId != null ? { undo: () => removeEntry(entryId).catch(() => {}) } : undefined)
+              }
               inputTestid="checkin-search"
               requireConfirm
               placeholder="Search or add player…"

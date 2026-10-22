@@ -102,7 +102,11 @@ async function planTests() {
     const plan2 = (await (await post({ dry_run: true })).json()).plan;
     const run = await post({ plan: plan2 });
     assert.equal(run.status, 200);
-    assert.deepEqual(await run.json(), { started: 2, slated: true, slated_count: 1 });
+    const body = await run.json();
+    assert.equal(body.started, 2);
+    assert.equal(body.slated, true);
+    assert.equal(body.slated_count, 1);
+    assert.equal(body.slate_ids?.length, 1, "slate ids returned for undo");
     st = await snap();
     for (const m of plan2.matches) {
       const am = st.activeMatches.find((x) => x.court_number === m.court_id);

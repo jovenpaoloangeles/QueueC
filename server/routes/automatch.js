@@ -166,6 +166,7 @@ router.post("/sessions/:id/automatch", async (c) => {
 
   let started = 0;
   let slated = 0;
+  const slateIds = [];
   db.transaction(() => {
     const setPlaying = db.prepare(
       "UPDATE queue_entries SET status = 'playing', status_updated_at = ? WHERE id = ?",
@@ -191,11 +192,12 @@ router.post("/sessions/:id/automatch", async (c) => {
         .get(id).n;
       const [t1p1, t1p2] = m.team1;
       const [t2p1, t2p2] = m.team2;
-      db.prepare(`
+      const { lastInsertRowid } = db.prepare(`
         INSERT INTO matches (session_id, court_number, format, state, slate_seq, team1_p1, team1_p2, team2_p1, team2_p2, started_at)
         VALUES (?, NULL, 'doubles', 'slated', ?, ?, ?, ?, ?, 0)
       `).run(id, seq, t1p1, t1p2, t2p1, t2p2);
       for (const eid of [...m.team1, ...m.team2]) setStaged.run(now, eid);
+      slateIds.push(lastInsertRowid);
       slated++;
     }
   })();
@@ -208,7 +210,7 @@ router.post("/sessions/:id/automatch", async (c) => {
   }
 
   broadcast();
-  return c.json({ started, slated: slated > 0, slated_count: slated });
+  return c.json({ started, slated: slated > 0, slated_count: slated, slate_ids: slateIds });
 });
 
 export default router;

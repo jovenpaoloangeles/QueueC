@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { drag, valid } from "@/lib/dnd";
 import { balanceHint, cn, fmtClock, shortSkill, TIER_CLASS } from "@/lib/utils";
-import { cancelSlate, moveSlate, slateMatch, startSlateOnCourt, updateSlate } from "../api.js";
+import { abortMatch, cancelSlate, moveSlate, slateMatch, startSlateOnCourt, updateSlate } from "../api.js";
 
 /** Slot order mirrors the slate payload: Team A = 0,1 · Team B = 2,3. */
 const SLOT_KEYS = ["team1_p1", "team1_p2", "team2_p1", "team2_p2"];
@@ -393,14 +393,14 @@ export default function OnDeckStrip({
     }
     setAdding(true);
     try {
-      await slateMatch({
+      const { slate } = await slateMatch({
         session_id: sessionId,
         team1_p1: newDraft[0],
         team1_p2: newDraft[1],
         team2_p1: newDraft[2],
         team2_p2: newDraft[3],
       });
-      toast("Added to On Deck", "success");
+      toast("Added to On Deck", "success", slate ? { undo: () => cancelSlate(slate.id) } : undefined);
       setNewDraft([null, null, null, null]);
     } catch (err) {
       toast(err?.data?.error ?? "Could not add to On Deck", "error"); // keep the builder
@@ -477,8 +477,17 @@ export default function OnDeckStrip({
     if (starting) return; // in-flight guard: no double POST / double toast
     setStarting(true);
     try {
-      await startSlateOnCourt(row.id, court.id);
-      toast(`Lineup started on ${court.label}`, "success");
+      const { match } = await startSlateOnCourt(row.id, court.id);
+      toast(`Lineup started on ${court.label}`, "success", {
+        undo: () => {
+          abortMatch(match.id).catch((err) => {
+            if (err?.status === 404) {
+              toast("Already ended — nothing to undo", "info");
+              return false; // handled its own failure — don't clobber with "Undone"
+            }
+          });
+        },
+      });
       setPendingStartId(null);
     } catch (err) {
       toast(err?.data?.error ?? "Could not start the lineup", "error"); // keep the dialog open
