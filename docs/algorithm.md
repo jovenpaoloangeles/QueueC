@@ -10,6 +10,20 @@
 > rule). Consecutive counts are timestamped and decay with rest time, not
 > per-assignment. Parameters live in `MATCH_CONFIG` in `server/logic/smartQueue.js`.
 > The NumPy listing is reference material, not production code.
+>
+> **v1.2 — cohort-overlap objective:** v1.1 segregated check-in waves (in a
+> 16-player / 2-court probe with two staggered waves, 0 of the post-wave
+> quartets mixed players across waves): skill-matched quartets are exactly the
+> ones that re-form, and the wait-sum band eliminated every mixed quartet.
+> v1.2 adds an ε₀ band on **cohort overlap** (S-matrix below) placed FIRST in
+> the Stage A cascade. Probe result: 11/16 post-wave quartets mix waves.
+> Because the band fixes quartet compositions before the skill-variance band
+> runs, average team skill gap widens ~8%; the acceptance gate in §7 moves
+> 0.40 → 0.45 by decision of the product owner (validated on a 100-seed CRN
+> sweep: `bun tests/sim/epsilon-sweep.mjs --overlap`). If the tight ε₀ band
+> leaves fewer than `need` disjoint quartets, the whole Stage B + selection
+> re-runs with ε₀ = ∞ (same fallback shape as the anchor relax) so courts
+> never idle on the new band.
 
 ---
 
@@ -66,6 +80,12 @@ $$\mathbf{P}^{(r+1)} = \gamma \mathbf{P}^{(r)} + \Delta \mathbf{P}^{(r)}, \quad 
 
 
 where $\Delta P_{ij}^{(r)} = 1$ if $i, j$ were partners in round $r$ (else $0$), and $\Delta O_{ij}^{(r)} = 1$ if $i, j$ were opponents in round $r$ (else $0$).
+
+* **Cohort Overlap Matrix ($\mathbf{S}$, v1.2):** A pair-agnostic companion to $\mathbf{P}/\mathbf{O}$ with the same decay schedule:
+
+$$\mathbf{S}^{(r+1)} = \gamma \mathbf{S}^{(r)} + \Delta \mathbf{S}^{(r)}, \quad \Delta S_{ij}^{(r)} = 1 \text{ if } i, j \text{ shared the court in round } r \text{ (partner or opponent, else } 0\text{)}$$
+
+$S_{ij}$ estimates "if I play now, how much recent co-play do I re-encounter with $j$?" Quartet overlap is the sum of $\mathbf{S}$ over the six $K_4$ edges: $f_0(q) = \sum_{e=0}^{5} S_{q_{u_e}, q_{v_e}}$. Unlike $\mathbf{P}/\mathbf{O}$, $\mathbf{S}$ is consumed in **Stage A** — it shapes which quartets exist, not how they split.
 
 ---
 
@@ -149,6 +169,7 @@ Gather candidate attributes into $(M, 4)$ tensors using $\mathbf{Q}$ (e.g., $\ma
 
 | Hierarchy Rank | Quartet Metric | Vectorized Tensor Formulation (Shape: $(M,)$) | Direction | Tolerance $\epsilon$ |
 | --- | --- | --- | --- | --- |
+| **Objective 0** | **Cohort Overlap** ($f_0$, v1.2) | $\mathbf{f}_0 = \sum_{e=0}^{5} \mathbf{S}[\mathbf{Q}_{:, u_e}, \mathbf{Q}_{:, v_e}]$ | Minimize | $\epsilon_0$ (default $2.0$) |
 | **Objective 1** | **Queue Fairness** ($f_1$) | $\mathbf{f}_1 = \sum_{d=0}^{3} \mathbf{w}[\mathbf{Q}_{:, d}]$ | Maximize | $\epsilon_1$ (e.g., $10\text{--}15\%$ of $f_1^*$) |
 | **Objective 2** | **Participation Fairness** ($f_2$) | $\mathbf{f}_2 = \sum_{d=0}^{3} \mathbf{g}^{\text{virt}}[\mathbf{Q}_{:, d}]$ | Minimize | $\epsilon_2$ (e.g., $1.0$ virtual game) |
 | **Objective 3** | **Cohort Skill Variance** ($f_3$) | $\mathbf{f}_3 = \text{Var}_{d=0..3}\left(\mathbf{s}[\mathbf{Q}_{:, d}]\right)$ | Minimize | $\epsilon_3$ (e.g., $1.5\text{ skill}^2$) |
@@ -156,6 +177,12 @@ Gather candidate attributes into $(M, 4)$ tensors using $\mathbf{Q}$ (e.g., $\ma
 #### Cascaded $\epsilon$-Masking (Stage A)
 
 Rather than sorting all $M$ combinations by a composite scalar, sequentially narrow the boolean survivor mask $\mathbf{m} \in \{\text{True}, \text{False}\}^M$ (initialized to all `True`):
+
+0. **Filter by Cohort Overlap (FIRST, v1.2):**
+
+$$f_0^* = \min_{q : m_q = \text{True}} f_0(q), \quad \mathbf{m} \leftarrow \mathbf{m} \;\land\; \left(\mathbf{f}_0 \le f_0^* + \epsilon_0\right)$$
+
+The overlap band runs **before** the others by construction: a later band cannot resurrect quartets an earlier band killed, so cohort novelty must gate first or the wait band re-segregates check-in waves (the v1.1 defect). Tuned default $\epsilon_0 = 2.0$ — the smallest value on the 100-seed CRN sweep (`tests/sim/epsilon-sweep.mjs --overlap`) passing all §7 gates at the relaxed 0.45 team-diff bar; below 1.75 both fairness gates fail, above 2.5 the band stops binding and wave segregation returns. If the band leaves fewer disjoint quartets than there are open courts, Stage B + selection re-run with $\epsilon_0 = \infty$ (widen-retry fallback).
 
 1. **Filter by Queue Fairness:**
 
@@ -484,5 +511,6 @@ To validate parameter tuning ($\epsilon_1, \dots, \epsilon_4, \omega, \gamma$) a
 | **Participation Equity** | **Virtual Game Spread** | $\max_i g_i^{\text{virt}} - \min_i g_i^{\text{virt}}$ at session end (incorporating late arrivals) | $\le 1.0\text{ game}$ |
 | **Constraint Compliance** | **Consecutive Limit Violations** | Count of games where `relaxed_consecutive_rule == True` while $N_{\text{avail}} \ge 8$ | Exactly $0$ |
 | **Match Quality** | **Cohort Skill SD** | Mean of $\sqrt{f_3(q^*)}$ across all played games | $\ge 35\%$ reduction vs. FIFO |
-| **Match Competitiveness** | **Weak-Link Team Diff** | Mean of $F_4(q^*, s^*)$ across all played games | $\le 0.40$ rating points |
+| **Match Competitiveness** | **Weak-Link Team Diff** | Mean of $F_4(q^*, s^*)$ across all played games | $\le 0.45$ rating points (raised from 0.40 in v1.2: the ε₀ cohort-overlap band trades ~8% wider average team gap for cross-wave mixing — product-owner decision, 100-seed sweep validated) |
+| **Social Mixing** | **Novel Cohort Rate** (v1.2) | Fraction of games whose quartet's γ-decayed 6-edge co-play sum $f_0(q^*) < 1.0$ | ≥ 65% (sweep: 78% at ε₀=2.0 vs 66% with the band off) |
 | **Social Mixing** | **Repeat Partnership Rate** | Fraction of games where a partnered pair has already played together in the same session | $< 10\%$ for $N \ge 12$ |
