@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { cn, SKILL_TIERS, TIER_CLASS, titleCaseSkill } from "@/lib/utils";
-import { checkinPlayer, createPlayer } from "../api.js";
+import { checkinPlayer, createPlayer, removeEntry } from "../api.js";
 
 export function SkillChip({ level }) {
   return (
@@ -42,10 +42,13 @@ export default function PlayerSearchAdd({
   hint,
   maxMatches = Infinity,
   requireConfirm = false,
+  multi = false,
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [newPlayerSkill, setNewPlayerSkill] = useState("intermediate");
   const [registering, setRegistering] = useState(false);
+  // multi mode: chips toggle into a pending batch, one button confirms them all
+  const [picked, setPicked] = useState(new Set());
   // pending confirm: { playerId } for an existing registrant, or
   // { name, skill } for register-new (player not created until confirmed)
   const [pending, setPending] = useState(null);
@@ -68,6 +71,15 @@ export default function PlayerSearchAdd({
   const matchingPool = matchingAll.slice(0, maxMatches);
 
   async function handleQuickCheckIn(playerId) {
+    if (multi && !pre) {
+      setPicked((prev) => {
+        const next = new Set(prev);
+        if (next.has(playerId)) next.delete(playerId);
+        else next.add(playerId);
+        return next;
+      });
+      return;
+    }
     if (pre) {
       const found = players.find((p) => p.id === playerId);
       setSearchQuery("");
@@ -93,6 +105,36 @@ export default function PlayerSearchAdd({
     setSearchQuery("");
     // a just-registered player isn't in the (stale) pool yet — pass them through
     onCheckedIn?.(players.find((p) => p.id === playerId) ?? created, entryId);
+  }
+
+  // multi mode batch: sequential check-ins (409 duplicates skipped), one toast
+  // for the whole batch with an undo that removes every entry created here.
+  async function doBulkCheckIn() {
+    if (!picked.size) return;
+    setRegistering(true);
+    const entryIds = [];
+    let failed = 0;
+    try {
+      for (const playerId of picked) {
+        try {
+          const { entry } = await checkinPlayer(session.id, playerId);
+          entryIds.push(entry.id);
+        } catch {
+          failed++;
+        }
+      }
+      setPicked(new Set());
+      setSearchQuery("");
+      toast(
+        failed
+          ? `Checked in ${entryIds.length} players — ${failed} skipped (already active)`
+          : `Checked in ${entryIds.length} players`,
+        entryIds.length ? "success" : "info",
+        entryIds.length ? { undo: () => Promise.allSettled(entryIds.map((id) => removeEntry(id))) } : undefined,
+      );
+    } finally {
+      setRegistering(false);
+    }
   }
 
   // The confirm gate's Add: create first for register-new, then check in.
@@ -195,12 +237,14 @@ export default function PlayerSearchAdd({
               <div className="flex flex-wrap gap-1.5">
                 {matchingPool.map((p) => {
                   const isExact = exactPoolMatch?.id === p.id;
+                  const isPicked = picked.has(p.id);
                   return (
                     <Button
                       key={p.id}
-                      variant={isExact ? "default" : "outline"}
+                      variant={isPicked || isExact ? "default" : "outline"}
                       size="xs"
                       className="rounded-full"
+                      aria-pressed={isPicked}
                       onClick={() => handleQuickCheckIn(p.id)}
                     >
                       {p.name}
@@ -209,6 +253,19 @@ export default function PlayerSearchAdd({
                   );
                 })}
               </div>
+              {multi && picked.size > 0 && (
+                <div className="border-t border-border/60 pt-2">
+                  <Button
+                    size="xs"
+                    className="rounded-full"
+                    disabled={registering}
+                    data-testid="bulk-checkin-btn"
+                    onClick={doBulkCheckIn}
+                  >
+                    {registering ? "..." : `Check in (${picked.size})`}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 

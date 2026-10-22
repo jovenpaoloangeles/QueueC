@@ -281,6 +281,7 @@ export default function QueueGrid({
               queue={queue}
               players={allPlayers}
               onPlayersChanged={onPlayersChanged}
+              multi
               onCheckedIn={(p, entryId) =>
                 toast(`Checked in: ${p?.name}`, "success", entryId != null ? { undo: () => removeEntry(entryId).catch(() => {}) } : undefined)
               }
