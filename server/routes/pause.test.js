@@ -131,7 +131,6 @@ async function main() {
   const waiterPost = (await readFirstState()).queue.find((e) => e.id === ids[4]);
   const grown = waiterPost.checked_in_at - waiterPre.checked_in_at;
   assert.ok(grown >= 1 && grown <= 8, `checked_in_at grew by the pause length, got ${grown}`);
-  const waitPost = waiterPost.checked_in_at == null ? 0 : Date.now() / 1000 - waiterPost.checked_in_at;
   const stPost = await readFirstState();
   const waitPostExact = stPost.serverTime - waiterPost.checked_in_at - waiterPost.total_seconds_played;
   assert.ok(Math.abs(waitPostExact - waitPre) <= 2, `wait preserved across pause (${waitPre} → ${waitPostExact})`);

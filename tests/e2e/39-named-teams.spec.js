@@ -30,6 +30,15 @@ test("39.1 confirm gate and score modal show the team names", async ({ page }) =
   await page.getByRole("button", { name: "Cancel" }).click();
 });
 
+test("39.3 Enter on the confirm gate advances to the score form", async ({ page }) => {
+  await seedLiveMatch(page);
+  await page.getByRole("button", { name: "End Match" }).first().click();
+  await expect(page.getByTestId("confirm-end-end")).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(page.getByLabel("Team 1")).toBeVisible();
+  await page.getByRole("button", { name: "Cancel" }).click();
+});
+
 test("39.2 endMatch helper unchanged — label contract holds", async ({ page }) => {
   await seedLiveMatch(page);
   await endMatch(page, null, { team1: 21, team2: 15 });

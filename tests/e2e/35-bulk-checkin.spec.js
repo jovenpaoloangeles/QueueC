@@ -12,7 +12,7 @@ test("35.1 multi-select checks in both players, undo removes both", async ({ pag
 
   await page.getByTestId("checkin-toggle").click();
   await page.getByTestId("checkin-search").fill("Expert");
-  // pick two of the Inter C1–C4 chips
+  // pick two of the Expert E1/E2 chips
   const chips = page.getByTestId("combobox-matches").getByRole("button");
   await chips.nth(0).click();
   await expect(chips.nth(0)).toHaveAttribute("aria-pressed", "true");

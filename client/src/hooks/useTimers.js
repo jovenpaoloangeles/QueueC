@@ -10,6 +10,16 @@ export function useTimers(serverTime, queue, activeMatches, pausedAt) {
     return () => clearInterval(id);
   }, []);
 
+  // While paused, `now` is pinned to paused_at so the drift check below sees a
+  // huge negative delta and goes stale. Resume must drop back to the local
+  // clock with offset 0 — otherwise the first post-resume render shows a time
+  // one snapshot behind (≤1s cosmetic skew).
+  const wasPausedRef = useRef(false);
+  useEffect(() => {
+    if (pausedAt == null && wasPausedRef.current) offsetRef.current = 0;
+    wasPausedRef.current = pausedAt != null;
+  }, [pausedAt]);
+
   // `now` derives from the local clock plus an offset adopted from the last
   // serverTime snapshot — never from snapshot + tick. Extrapolating a snapshot
   // with a tick counter made every broadcast render `newServerTime + stale

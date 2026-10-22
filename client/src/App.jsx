@@ -343,7 +343,17 @@ export default function App() {
       toast(
         `Started on ${label}`,
         "success",
-        match ? { undo: () => abortMatch(match.id).catch(() => {}) } : undefined,
+        match
+          ? {
+              undo: () =>
+                abortMatch(match.id).catch((err) => {
+                  if (err?.status === 404) {
+                    toast("Already ended — nothing to undo", "info");
+                    return false; // handled its own failure — don't clobber with "Undone"
+                  }
+                }),
+            }
+          : undefined,
       );
       return true;
     } catch (err) {
@@ -473,6 +483,7 @@ export default function App() {
     const t = e.target;
     if (t instanceof HTMLElement && (["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName) || t.isContentEditable)) return;
     if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (pending || cheatsheetOpen || endTarget) return; // a dialog owns the keyboard
     if (e.key === "c") {
       e.preventDefault();
       setCheckinOpen(true);

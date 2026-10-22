@@ -15,7 +15,15 @@ import {
 export default function ConfirmEndDialog({ open, onOpenChange, onConfirm, teamsLine }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xs shadow-lift">
+      <DialogContent
+        className="sm:max-w-xs shadow-lift"
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            onConfirm();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span aria-hidden="true">⚑</span>
@@ -48,6 +56,7 @@ export default function ConfirmEndDialog({ open, onOpenChange, onConfirm, teamsL
             size="sm"
             className="rounded-full"
             data-testid="confirm-end-end"
+            autoFocus
             onClick={onConfirm}
           >
             End Match

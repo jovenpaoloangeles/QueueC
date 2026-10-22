@@ -51,6 +51,16 @@ export default function QueueGrid({
   const [removing, setRemoving] = useState(false);
   const toast = useToast();
 
+  // check-in undo: if the entry is already gone (another client checked them
+  // out), say so instead of toasting a false "Undone" — OnDeckStrip convention
+  const undoRemove = (entryId) =>
+    removeEntry(entryId).catch((err) => {
+      if (err?.status === 404) {
+        toast("Already removed — nothing to undo", "info");
+        return false; // handled its own failure — don't clobber with "Undone"
+      }
+    });
+
   // order survives SSE pushes (every 1s) so an optimistic drag doesn't snap
   // back — but when the id SET changes (check-in insert, removal) the server's
   // order is the truth: alphabetical inserts land mid-list, not at the end
@@ -271,7 +281,7 @@ export default function QueueGrid({
                 players={[]}
                 onPlayersChanged={onPlayersChanged}
                 onCheckedIn={(p, entryId) =>
-                  toast(`Checked in: ${p.name}`, "success", entryId != null ? { undo: () => removeEntry(entryId).catch(() => {}) } : undefined)
+                  toast(`Checked in: ${p.name}`, "success", entryId != null ? { undo: () => undoRemove(entryId) } : undefined)
                 }
                 inputTestid="checkin-search"
                 requireConfirm
@@ -287,7 +297,7 @@ export default function QueueGrid({
               onPlayersChanged={onPlayersChanged}
               multi
               onCheckedIn={(p, entryId) =>
-                toast(`Checked in: ${p?.name}`, "success", entryId != null ? { undo: () => removeEntry(entryId).catch(() => {}) } : undefined)
+                toast(`Checked in: ${p?.name}`, "success", entryId != null ? { undo: () => undoRemove(entryId) } : undefined)
               }
               inputTestid="checkin-search"
               requireConfirm

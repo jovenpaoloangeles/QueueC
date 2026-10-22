@@ -40,3 +40,18 @@ test("37.5 typing c in the queue filter does not open check-in", async ({ page }
   await page.waitForTimeout(400);
   await expect(page.getByTestId("checkin-search")).toHaveCount(0);
 });
+
+test("37.6 shortcuts are inert while a dialog is open", async ({ page }) => {
+  await fullSetup(page);
+  for (let i = 0; i < 4; i++) await page.locator("[data-entry-id]").nth(i).click();
+  await page.getByRole("button", { name: "Start Match" }).first().click();
+  await expect(page.getByTestId("start-confirm-dialog")).toBeVisible();
+
+  await page.keyboard.press("e");
+  await page.keyboard.press("c");
+  await page.keyboard.press("s");
+  // nothing stacked, nothing replaced: exactly the confirm dialog remains
+  await expect(page.getByRole("dialog")).toHaveCount(1);
+  await expect(page.getByTestId("start-confirm-dialog")).toContainText("Start this match?");
+  await expect(page.getByTestId("checkin-search")).toHaveCount(0);
+});

@@ -10,10 +10,12 @@ test("33.1 pause freezes the session timer, reload keeps it frozen, resume resta
   await expect(pill).toBeVisible();
 
   const read = () => pill.innerText().then((t) => t.trim());
-  const before = await read();
 
   await page.getByTestId("btn-pause").click();
   await expect(page.getByTestId("btn-pause")).toHaveText("Resume");
+  // read the pill only after the pause has settled — reading before the click
+  // raced the next SSE broadcast and captured a mid-flight frame
+  const before = await read();
   await expect(pill).toHaveText(before, { timeout: 2000 });
 
   // frozen: two reads 1.5s apart are equal
