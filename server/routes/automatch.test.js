@@ -184,7 +184,10 @@ async function multiSlateTests() {
     assert.equal((await post({ plan: { matches: [], slate: so.slate.slice(0, 1) } })).status, 409);
     // normal run fills the free court only (cap reached -> no extra slate)
     const full = await post({});
-    assert.deepEqual(await full.json(), { started: 1, slated: false, slated_count: 0 });
+    const fullBody = await full.json();
+    assert.equal(fullBody.started, 1);
+    assert.equal(fullBody.slated, false);
+    assert.equal(fullBody.slated_count, 0);
   } finally {
     await fetch(`${BASE}/sessions/${session.id}/end`, { method: "PATCH" });
   }
@@ -251,11 +254,9 @@ async function run() {
     const autoRes1 = await fetch(`${BASE}/sessions/${session.id}/automatch`, { method: "POST" });
     assert.equal(autoRes1.status, 200, "Expected 200 on first automatch");
     const autoBody1 = await autoRes1.json();
-    assert.deepEqual(
-      autoBody1,
-      { started: 2, slated: true, slated_count: 1 },
-      "Expected { started: 2, slated: true }",
-    );
+    assert.equal(autoBody1.started, 2);
+    assert.equal(autoBody1.slated, true);
+    assert.equal(autoBody1.slated_count, 1);
 
     // 3) Verify via SSE: 2 active matches on Courts 1 & 2 (none on Court 3), 1 slated match, 2 waiting players remaining
     const sseRes = await fetch(`${BASE}/sse`);
