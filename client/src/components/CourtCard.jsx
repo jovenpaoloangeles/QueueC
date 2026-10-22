@@ -223,6 +223,12 @@ export default function CourtCard({
   const toast = useToast();
   const isActive = !!match;
   const secs = isActive ? (playSeconds.get(match.id) ?? 0) : 0;
+  // player names for the end-flow dialogs (match rows carry entry ids only)
+  const nameOf = (id) => queue.find((e) => e.id === id)?.name;
+  const joinTeam = (ids) => ids.filter(Boolean).map(nameOf).join(" & ");
+  const teamNames = isActive
+    ? { team1: joinTeam([match.team1_p1, match.team1_p2]), team2: joinTeam([match.team2_p1, match.team2_p2]) }
+    : null;
 
   // A match can vanish mid-flow (ended on another client, slate promotion) —
   // without this the stale flags would auto-open the dialog for the NEXT match
@@ -501,13 +507,14 @@ export default function CourtCard({
       <ConfirmEndDialog
         open={showConfirm}
         onOpenChange={setShowConfirm}
+        teamsLine={teamNames ? `${teamNames.team1} vs ${teamNames.team2}` : undefined}
         onConfirm={() => {
           setShowConfirm(false);
           setShowEnd(true);
         }}
       />
       {showEnd && match && (
-        <EndMatchModal match={match} courtLabel={court.label} onClose={() => setShowEnd(false)} />
+        <EndMatchModal match={match} courtLabel={court.label} teamNames={teamNames} onClose={() => setShowEnd(false)} />
       )}
     </Card>
   );

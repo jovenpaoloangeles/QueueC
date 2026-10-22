@@ -466,7 +466,9 @@ export default function OnDeckStrip({
     setStarting(true);
     try {
       const { match } = await startSlateOnCourt(row.id, court.id);
-      toast(`Lineup started on ${court.label}`, "success", {
+      const t1 = [row.team1_p1_name, row.team1_p2_name].filter(Boolean).join(" & ");
+      const t2 = [row.team2_p1_name, row.team2_p2_name].filter(Boolean).join(" & ");
+      toast(`Lineup started on ${court.label} — ${t1} vs ${t2}`, "success", {
         undo: () => {
           abortMatch(match.id).catch((err) => {
             if (err?.status === 404) {

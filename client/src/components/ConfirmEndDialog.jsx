@@ -12,7 +12,7 @@ import {
  * Step 1 of the End Match flow: a dumb confirm gate.
  * Parent owns `open` state; onConfirm() is called when the user commits.
  */
-export default function ConfirmEndDialog({ open, onOpenChange, onConfirm }) {
+export default function ConfirmEndDialog({ open, onOpenChange, onConfirm, teamsLine }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xs shadow-lift">
@@ -22,6 +22,11 @@ export default function ConfirmEndDialog({ open, onOpenChange, onConfirm }) {
             Conclude live match?
           </DialogTitle>
           <DialogDescription>Record final score, shuttle usage and match rating.</DialogDescription>
+          {teamsLine && (
+            <p data-testid="confirm-end-teams" className="text-sm font-semibold text-foreground">
+              {teamsLine}
+            </p>
+          )}
         </DialogHeader>
         <DialogFooter>
           <Button

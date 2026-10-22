@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import { endMatch } from "../api.js";
 
 /** Step 2 of the End Match flow: final score, shuttle usage and match rating. */
-export default function EndMatchModal({ match, courtLabel, onClose }) {
+export default function EndMatchModal({ match, courtLabel, teamNames, onClose }) {
   const [scores, setScores] = useState({ team1: match.team1_score ?? 0, team2: match.team2_score ?? 0 });
   const [shuttles, setShuttles] = useState({
     newShuttles: match.new_shuttles ?? 1,
@@ -64,7 +64,7 @@ export default function EndMatchModal({ match, courtLabel, onClose }) {
                   htmlFor="end-match-team1"
                   className="text-2xs uppercase tracking-wider text-muted-foreground"
                 >
-                  Team 1
+                  Team 1{teamNames?.team1 ? ` · ${teamNames.team1}` : ""}
                 </FieldLabel>
                 <Input
                   id="end-match-team1"
@@ -83,7 +83,7 @@ export default function EndMatchModal({ match, courtLabel, onClose }) {
                   htmlFor="end-match-team2"
                   className="text-2xs uppercase tracking-wider text-muted-foreground"
                 >
-                  Team 2
+                  Team 2{teamNames?.team2 ? ` · ${teamNames.team2}` : ""}
                 </FieldLabel>
                 <Input
                   id="end-match-team2"
