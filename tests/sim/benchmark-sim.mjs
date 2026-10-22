@@ -280,6 +280,8 @@ export function runSession(scenario, policy, cfg = {}) {
   let bypassEvents = 0;
   let repeatPartnerEvents = 0;
   let recentRepeatEvents = 0;
+  let novelCohorts = 0; // quartets whose 6-pair co-play sum < 1.0 at selection (v1.2 mixing telemetry)
+  const lastCoplayGame = new Map(); // all-pairs (not just partners) → gameCounter
   let consecViolations = 0;
   let latecomerBursts = 0;
   const lastPairGame = new Map();
@@ -497,6 +499,18 @@ export function runSession(scenario, policy, cfg = {}) {
             if (gap <= RECENT_GAMES) recentRepeatEvents++;
           }
 
+          // Cohort-overlap telemetry: f0 = Σ of the 6 pair co-play values,
+          // γ-decayed per game since (mirrors buildS). f0 < 1.0 ⇒ not all four
+          // have shared a recent round — a "fresh cohort".
+          let f0 = 0;
+          for (let a = 0; a < 4; a++) {
+            for (let b = a + 1; b < 4; b++) {
+              const g = lastCoplayGame.get(quartet[a] * N + quartet[b]);
+              if (g !== undefined) f0 += 0.85 ** (gameCounter - g); // γ = MATCH_CONFIG.gammaDecay
+            }
+          }
+          if (f0 < 1.0) novelCohorts++;
+
           for (const p of quartet) {
             onCourt[p] = true;
             wait[p] = 0;
@@ -511,6 +525,12 @@ export function runSession(scenario, policy, cfg = {}) {
           lastPairGame.set(quartet[1] * N + quartet[0], gameCounter);
           lastPairGame.set(quartet[2] * N + quartet[3], gameCounter);
           lastPairGame.set(quartet[3] * N + quartet[2], gameCounter);
+          for (let a = 0; a < 4; a++) {
+            for (let b = a + 1; b < 4; b++) {
+              lastCoplayGame.set(quartet[a] * N + quartet[b], gameCounter);
+              lastCoplayGame.set(quartet[b] * N + quartet[a], gameCounter);
+            }
+          }
 
           const idx = gameCounter++;
           const baseDur = durations[idx % durations.length];
@@ -557,6 +577,7 @@ export function runSession(scenario, policy, cfg = {}) {
     mean_team_diff: mean(teamDiffs),
     repeat_partner_pct: (100 * repeatPartnerEvents) / nGames,
     repeat_recent_pct: (100 * recentRepeatEvents) / nGames,
+    novel_cohorts_pct: (100 * novelCohorts) / nGames,
     solve_time_us: mean(solveUs),
   };
 }
@@ -566,7 +587,7 @@ export function runSession(scenario, policy, cfg = {}) {
 if (import.meta.main) {
   const POLICIES = ["FIFO", "LOWEST_RAW_GAMES", "STRICT_LEX", "EPSILON_LEX"];
   const N_SEEDS = 100;
-  const GATE_SEEDS = 50;
+  const GATE_SEEDS = N_SEEDS; // full sample: gates are mean-based, more seeds = tighter estimate
 
   console.log(`Running ${N_SEEDS} seeds × ${POLICIES.length} policies (N=22, C=3, T=180min, realistic club dynamics)...`);
   const tStart = performance.now();
@@ -644,8 +665,10 @@ if (import.meta.main) {
       `${meanOf(lex, "mean_cohort_sd").toFixed(3)} vs limit ${(0.65 * meanOf(fifo, "mean_cohort_sd")).toFixed(3)} (FIFO ${meanOf(fifo, "mean_cohort_sd").toFixed(3)})`,
     ],
     [
-      "Gate 4a: mean team diff ≤ 0.40",
-      meanOf(lex, "mean_team_diff") <= 0.4,
+      // 0.45 per the user-ruled v1.2 trade-off: cohort mixing widens avg team gap ~8%
+      // (docs/algorithm.md §cascade); validated on the 100-seed overlap sweep.
+      "Gate 4a: mean team diff ≤ 0.45",
+      meanOf(lex, "mean_team_diff") <= 0.45,
       `${meanOf(lex, "mean_team_diff").toFixed(3)}`,
     ],
     [
