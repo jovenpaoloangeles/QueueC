@@ -5,7 +5,7 @@ import { toggleTheme } from "@/lib/theme";
 import { cn, fmtClock, fmtDur, netWait } from "@/lib/utils";
 import EndSessionConfirmDialog from "./EndSessionConfirmDialog.jsx";
 
-export default function Header({ session, sseData, draftedIds = new Set(), onSmartMatch, onEndSession }) {
+export default function Header({ session, sseData, draftedIds = new Set(), onSmartMatch, onEndSession, onCheatsheet }) {
   const [elapsed, setElapsed] = useState(0);
   const [confirmEnd, setConfirmEnd] = useState(false);
   const paused = session?.paused_at != null;
@@ -186,6 +186,17 @@ export default function Header({ session, sseData, draftedIds = new Set(), onSma
         >
           ☾
         </Button>
+        {session && session.started_at != null && !session.ended_at && (
+          <Button
+            size="sm"
+            variant="ghost"
+            data-testid="btn-cheatsheet"
+            title="Keyboard shortcuts (?)"
+            onClick={() => onCheatsheet?.()}
+          >
+            ?
+          </Button>
+        )}
         {session && session.started_at != null && !session.ended_at && (
           <Button
             size="sm"

@@ -1,17 +1,27 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useToast } from "@/components/Toast";
-import { abortMatch, autoMatch, cancelSlate, endSession, setQueueOrder, startMatch } from "./api.js";
+import {
+  abortMatch,
+  autoMatch,
+  cancelSlate,
+  endSession,
+  setQueueOrder,
+  startMatch,
+  startSlateOnCourt,
+} from "./api.js";
 import CourtsRow from "./components/CourtsRow.jsx";
+import EndMatchModal from "./components/EndMatchModal.jsx";
 import Header from "./components/Header.jsx";
 import OnDeckStrip from "./components/OnDeckStrip.jsx";
 import QueueGrid from "./components/QueueGrid.jsx";
 import SetupScreen from "./components/SetupScreen.jsx";
+import ShortcutCheatsheet from "./components/ShortcutCheatsheet.jsx";
 import StartMatchConfirmDialog from "./components/StartMatchConfirmDialog.jsx";
 import StatsSidebar from "./components/StatsSidebar.jsx";
 import { useSSE } from "./hooks/useSSE.js";
 import { useTimers } from "./hooks/useTimers.js";
 import { EMPTY_DRAFT } from "./lib/dnd.js";
-import { fmtDur, idleNudgeSec, nudgeKind } from "./lib/utils.js";
+import { fmtDur, freeCourts, idleNudgeSec, nudgeKind } from "./lib/utils.js";
 
 export default function App() {
   const [sseData, setSseData] = useState({
@@ -42,6 +52,10 @@ export default function App() {
   // Pending start awaiting confirmation:
   //  { kind:'manual', courtId, sel, source, matches } | { kind:'smart', plan, matches, slate }
   const [pending, setPending] = useState(null);
+  const [checkinOpen, setCheckinOpen] = useState(false);
+  const [cheatsheetOpen, setCheatsheetOpen] = useState(false);
+  // keyboard `e` target: {match, courtLabel} for the App-level EndMatchModal
+  const [endTarget, setEndTarget] = useState(null);
   const [pendingBusy, setPendingBusy] = useState(false);
 
   const resolveTeam = (ids) =>
@@ -133,6 +147,18 @@ export default function App() {
   async function confirmPending() {
     if (!pending || pendingBusy) return;
     if (pending.kind === "smart") return confirmSmartMatch(pending.plan);
+    if (pending.kind === "promote") {
+      setPendingBusy(true);
+      try {
+        await startSlateOnCourt(pending.slateId, pending.courtId);
+      } catch (err) {
+        toast(err?.data?.error ?? "Could not start lineup", "error");
+      } finally {
+        setPendingBusy(false);
+        setPending(null);
+      }
+      return;
+    }
     const { courtId, sel, source } = pending;
     setPendingBusy(true);
     try {
@@ -360,6 +386,88 @@ export default function App() {
   const nudgeIdleSecs = freeSinceRef.current == null ? 0 : nowRender - freeSinceRef.current;
   const showNudge = nudge != null && nudgeIdleSecs >= idleNudgeSec();
 
+  // ---- keyboard shortcuts (queue-master keys; ignored while typing) ----
+  function promoteNextSlate() {
+    const slate = slatedMatches[0];
+    const free = freeCourts(courts, activeMatches, Math.floor(Date.now() / 1000));
+    if (!slate || !free.length) {
+      toast("Nothing to promote", "info");
+      return;
+    }
+    setPending({
+      kind: "promote",
+      slateId: slate.id,
+      courtId: free[0].id,
+      matches: [
+        {
+          courtLabel: free[0].label ?? `Court ${free[0].id}`,
+          format: slate.format,
+          team1: [
+            { name: slate.team1_p1_name, skill_level: slate.team1_p1_skill },
+            ...(slate.team1_p2_name ? [{ name: slate.team1_p2_name, skill_level: slate.team1_p2_skill }] : []),
+          ],
+          team2: [
+            { name: slate.team2_p1_name, skill_level: slate.team2_p1_skill },
+            ...(slate.team2_p2_name ? [{ name: slate.team2_p2_name, skill_level: slate.team2_p2_skill }] : []),
+          ],
+        },
+      ],
+      slate: [],
+    });
+  }
+
+  function endLongestMatch() {
+    const live = [...activeMatches].sort((a, b) => (a.started_at ?? 0) - (b.started_at ?? 0))[0];
+    if (!live) {
+      toast("No active match to end", "info");
+      return;
+    }
+    setEndTarget({
+      match: live,
+      courtLabel: courts.find((c) => c.id === live.court_number)?.label ?? `Court ${live.court_number}`,
+    });
+  }
+
+  // handler identity refreshed each render; listener registered once
+  const keyHandlerRef = useRef(() => {});
+  keyHandlerRef.current = (e) => {
+    const t = e.target;
+    if (t instanceof HTMLElement && (["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName) || t.isContentEditable)) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === "c") {
+      e.preventDefault();
+      setCheckinOpen(true);
+    } else if (e.key === "s") {
+      e.preventDefault();
+      promoteNextSlate();
+    } else if (e.key === "e") {
+      e.preventDefault();
+      endLongestMatch();
+    } else if (e.key === "?") {
+      e.preventDefault();
+      setCheatsheetOpen((v) => !v);
+    }
+  };
+  useEffect(() => {
+    const onKey = (e) => keyHandlerRef.current(e);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // `c` opens the panel and lands focus in the search input; the panel shows a
+  // skeleton until the player pool loads, so poll until the input mounts
+  useEffect(() => {
+    if (!checkinOpen) return;
+    const id = setInterval(() => {
+      const el = document.querySelector('[data-testid="checkin-search"]');
+      if (el) {
+        el.focus();
+        clearInterval(id);
+      }
+    }, 100);
+    return () => clearInterval(id);
+  }, [checkinOpen]);
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Header
@@ -368,6 +476,7 @@ export default function App() {
         draftedIds={draftedIds}
         onSmartMatch={handleSmartMatch}
         onEndSession={session ? handleEndSession : undefined}
+        onCheatsheet={() => setCheatsheetOpen(true)}
       />
       {showNudge && (
         <div
@@ -435,6 +544,8 @@ export default function App() {
               onReorder={handleReorder}
               playersVersion={playersVersion}
               onPlayersChanged={() => setPlayersVersion((v) => v + 1)}
+              checkinOpen={checkinOpen}
+              onCheckinOpenChange={setCheckinOpen}
             />
           </main>
           {/* fixed stats sidebar: own scroll, never scrolls with the page */}
@@ -443,6 +554,14 @@ export default function App() {
           </aside>
         </div>
       )}
+      {endTarget && (
+        <EndMatchModal
+          match={endTarget.match}
+          courtLabel={endTarget.courtLabel}
+          onClose={() => setEndTarget(null)}
+        />
+      )}
+      <ShortcutCheatsheet open={cheatsheetOpen} onOpenChange={setCheatsheetOpen} />
       {pending && (
         <StartMatchConfirmDialog
           open

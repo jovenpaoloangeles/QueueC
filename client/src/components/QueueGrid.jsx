@@ -35,11 +35,15 @@ export default function QueueGrid({
   onSelectionChange,
   onReorder,
   onPlayersChanged,
+  checkinOpen,
+  onCheckinOpenChange,
 }) {
   const [allPlayers, setAllPlayers] = useState([]);
   const [playersLoading, setPlayersLoading] = useState(true);
   const [playersError, setPlayersError] = useState(false);
-  const [showCheckin, setShowCheckin] = useState(false);
+  // check-in panel open state lives in App (keyboard `c` needs to reach it)
+  const showCheckin = checkinOpen ?? false;
+  const setShowCheckin = onCheckinOpenChange ?? (() => {});
   const [order, setOrder] = useState([]);
   const [tab, setTab] = useState("all");
   const [filter, setFilter] = useState("");
