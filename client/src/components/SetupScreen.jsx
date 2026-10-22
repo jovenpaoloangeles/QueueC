@@ -232,6 +232,8 @@ export default function SetupScreen({ draft }) {
   const [startTime, setStartTime] = useState(defaultStartTime);
   const [courtCount, setCourtCount] = useState("2");
   const [checkinOrder, setCheckinOrder] = useState("alphabetical");
+  const [maxConsecutive, setMaxConsecutive] = useState(2);
+  const [restGames, setRestGames] = useState(0);
   const [courts, setCourts] = useState(() => syncCourts([], 2));
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -324,6 +326,8 @@ export default function SetupScreen({ draft }) {
         scheduled_end: scheduledStart + Math.round(maxHours * 3600),
         court_count: courts.length,
         checkin_order: checkinOrder,
+        max_consecutive: maxConsecutive,
+        rest_games: restGames,
         courts: courts.map((c, i) => ({
           label: c.label.trim() || `Court ${i + 1}`,
           duration_minutes: Math.round(Number(c.hours) * 60),
@@ -421,6 +425,43 @@ export default function SetupScreen({ draft }) {
                 >
                   <option value="alphabetical">Alphabetical</option>
                   <option value="arrival">Arrival order</option>
+                </select>
+              </div>
+
+              <div className="flex flex-1 flex-col gap-1.5">
+                <Label htmlFor="setup-max-consecutive">No more than (consecutive)</Label>
+                <select
+                  id="setup-max-consecutive"
+                  aria-label="No more than (consecutive)"
+                  data-testid="setup-max-consecutive"
+                  className="h-9 rounded-md border border-border bg-card px-3 text-sm text-foreground"
+                  value={maxConsecutive}
+                  onChange={(e) => setMaxConsecutive(Number(e.target.value))}
+                >
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <option key={n} value={n}>
+                      {n} game{n > 1 ? "s" : ""} in a row
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-1 flex-col gap-1.5">
+                <Label htmlFor="setup-rest-games">Rest between games</Label>
+                <select
+                  id="setup-rest-games"
+                  aria-label="Rest between games"
+                  data-testid="setup-rest-games"
+                  className="h-9 rounded-md border border-border bg-card px-3 text-sm text-foreground"
+                  value={restGames}
+                  onChange={(e) => setRestGames(Number(e.target.value))}
+                >
+                  <option value="0">Off</option>
+                  {[1, 2, 3].map((n) => (
+                    <option key={n} value={n}>
+                      {n} game{n > 1 ? "s" : ""}
+                    </option>
+                  ))}
                 </select>
               </div>
 
