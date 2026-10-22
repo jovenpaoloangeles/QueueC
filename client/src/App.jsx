@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useToast } from "@/components/Toast";
 import { abortMatch, autoMatch, cancelSlate, endSession, setQueueOrder, startMatch } from "./api.js";
 import CourtsRow from "./components/CourtsRow.jsx";
@@ -11,6 +11,7 @@ import StatsSidebar from "./components/StatsSidebar.jsx";
 import { useSSE } from "./hooks/useSSE.js";
 import { useTimers } from "./hooks/useTimers.js";
 import { EMPTY_DRAFT } from "./lib/dnd.js";
+import { fmtDur, idleNudgeSec, nudgeKind } from "./lib/utils.js";
 
 export default function App() {
   const [sseData, setSseData] = useState({
@@ -336,6 +337,29 @@ export default function App() {
     sseData.session?.paused_at,
   );
 
+  // Idle-court nudge: how long the nudge condition has held without a break.
+  // useTimers re-renders App every second, so no extra ticker; hidden while
+  // paused (ruled cosmetic — a paused session is already "nudged" everywhere).
+  const freeSinceRef = useRef(null);
+  const nowRender = Math.floor(Date.now() / 1000);
+  const nudge =
+    session?.paused_at == null
+      ? nudgeKind(
+          sseData.courts,
+          sseData.activeMatches,
+          (sseData.slatedMatches ?? []).length,
+          sseData.queue?.filter((e) => e.status === "waiting").length ?? 0,
+          nowRender,
+        )
+      : null;
+  if (nudge) {
+    if (freeSinceRef.current == null) freeSinceRef.current = nowRender;
+  } else {
+    freeSinceRef.current = null;
+  }
+  const nudgeIdleSecs = freeSinceRef.current == null ? 0 : nowRender - freeSinceRef.current;
+  const showNudge = nudge != null && nudgeIdleSecs >= idleNudgeSec();
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Header
@@ -345,6 +369,17 @@ export default function App() {
         onSmartMatch={handleSmartMatch}
         onEndSession={session ? handleEndSession : undefined}
       />
+      {showNudge && (
+        <div
+          data-testid="idle-nudge"
+          role="status"
+          className="flex items-center justify-center gap-2 bg-wash-amber px-4 py-1.5 text-xs font-semibold text-amber animate-pulse"
+        >
+          {nudge.kind === "staged"
+            ? `Court free for ${fmtDur(nudgeIdleSecs)} — a slate is waiting on deck`
+            : `Court free for ${fmtDur(nudgeIdleSecs)} — 4+ players waiting, nothing slated`}
+        </div>
+      )}
       {!connected && (
         <div
           data-testid="sse-reconnecting"

@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { drag, valid } from "@/lib/dnd";
-import { balanceHint, cn, fmtClock, shortSkill, TIER_CLASS } from "@/lib/utils";
+import { balanceHint, cn, fmtClock, freeCourts, shortSkill, TIER_CLASS } from "@/lib/utils";
 import { abortMatch, cancelSlate, moveSlate, slateMatch, startSlateOnCourt, updateSlate } from "../api.js";
 
 /** Slot order mirrors the slate payload: Team A = 0,1 · Team B = 2,3. */
@@ -202,18 +202,6 @@ function nextFreeCourt(courts, activeMatches, now) {
 
 /** Free courts, same rule as the server (automatch.js): enabled, not expired,
  *  active window open, and no live match sitting on the court. */
-function freeCourts(courts, activeMatches, now) {
-  const busy = new Set((activeMatches ?? []).map((m) => m.court_number).filter((v) => v != null));
-  return (courts ?? []).filter(
-    (c) =>
-      c.enabled &&
-      (c.active_from == null || now >= c.active_from) &&
-      (c.expires_at == null || now < c.expires_at) &&
-      (c.active_until == null || now < c.active_until) &&
-      !busy.has(c.id),
-  );
-}
-
 export default function OnDeckStrip({
   slatedMatches,
   queue = [],

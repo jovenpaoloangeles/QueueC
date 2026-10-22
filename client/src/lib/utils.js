@@ -116,3 +116,33 @@ export function balanceHint(m) {
   if (d <= 150) return { label: "Slight edge", tone: "text-amber" };
   return { label: "Lopsided", tone: "text-destructive" };
 }
+
+/** A court with no live match and an open rental window right now. */
+export function freeCourts(courts, activeMatches, now) {
+  const busy = new Set((activeMatches ?? []).map((m) => m.court_number).filter((v) => v != null));
+  return (courts ?? []).filter(
+    (c) =>
+      c.enabled &&
+      (c.active_from == null || now >= c.active_from) &&
+      (c.expires_at == null || now < c.expires_at) &&
+      (c.active_until == null || now < c.active_until) &&
+      !busy.has(c.id),
+  );
+}
+
+// ponytail: fixed 2-minute threshold; per-venue config only if ever asked
+export const IDLE_NUDGE_AFTER_SEC = 120;
+
+/** Test/e2e override for the idle threshold (e2e sets window.__IDLE_NUDGE_SEC__). */
+export function idleNudgeSec() {
+  return (typeof window !== "undefined" && window.__IDLE_NUDGE_SEC__) || IDLE_NUDGE_AFTER_SEC;
+}
+
+/** Idle-court nudge: a free court going to waste. "staged" (slate waiting on
+ *  deck) beats "waiting" (≥4 players queued with nothing slated); null = quiet. */
+export function nudgeKind(courts, activeMatches, slateCount, waitingCount, now) {
+  if (freeCourts(courts, activeMatches, now).length === 0) return null;
+  if (slateCount > 0) return { kind: "staged" };
+  if (waitingCount >= 4) return { kind: "waiting" };
+  return null;
+}
