@@ -55,11 +55,11 @@ export function computeLeaderboard(sessionId) {
 }
 
 // v1.3 session detail: everything the history page renders, read straight
-// from the tables (no live-broadcast coupling).
-router.get("/sessions/:id/detail", (c) => {
-  const sid = c.req.param("id");
-  const session = db.prepare("SELECT * FROM sessions WHERE id = ?").get(sid);
-  if (!session) return c.json({ error: "Session not found" }, 404);
+// from the tables (no live-broadcast coupling). Export reuses the same
+// builder so a downloaded file never diverges from the page.
+export function getSessionDetail(sessionId) {
+  const session = db.prepare("SELECT * FROM sessions WHERE id = ?").get(sessionId);
+  if (!session) return null;
 
   const seat = (eid) =>
     eid == null
@@ -75,7 +75,7 @@ router.get("/sessions/:id/detail", (c) => {
     .prepare(
       "SELECT id, format, state, court_number, started_at, ended_at, team1_score, team2_score, rating, new_shuttles, used_shuttles, team1_p1, team1_p2, team2_p1, team2_p2 FROM matches WHERE session_id = ? ORDER BY started_at, id",
     )
-    .all(sid)
+    .all(sessionId)
     .map((m) => ({
       id: m.id,
       format: m.format,
@@ -98,17 +98,23 @@ router.get("/sessions/:id/detail", (c) => {
        FROM queue_entries qe JOIN players p ON p.id = qe.player_id
        WHERE qe.session_id = ? ORDER BY qe.sort_order, qe.id`,
     )
-    .all(sid);
+    .all(sessionId);
 
   const shuttles = db
     .prepare(
       "SELECT COALESCE(SUM(new_shuttles), 0) as new, COALESCE(SUM(used_shuttles), 0) as used FROM matches WHERE session_id = ?",
     )
-    .get(sid);
+    .get(sessionId);
   shuttles.extra = session.shuttles_extra ?? 0;
   shuttles.total = shuttles.new + shuttles.extra;
 
-  return c.json({ session, leaderboard: computeLeaderboard(sid), games, attendance, shuttles });
+  return { session, leaderboard: computeLeaderboard(sessionId), games, attendance, shuttles };
+}
+
+router.get("/sessions/:id/detail", (c) => {
+  const detail = getSessionDetail(c.req.param("id"));
+  if (!detail) return c.json({ error: "Session not found" }, 404);
+  return c.json(detail);
 });
 
 router.get("/sessions/:id/stats", (c) => {
@@ -153,11 +159,10 @@ router.get("/sessions/:id/stats", (c) => {
 
 // v1.3 career page: all-time totals, doubles partners, session attendance and
 // monthly attendance % (a session counts toward a month iff the player
-// existed when it was scheduled).
-router.get("/players/:id/career", (c) => {
-  const pid = c.req.param("id");
-  const player = db.prepare("SELECT id, name, skill_level FROM players WHERE id = ?").get(pid);
-  if (!player) return c.json({ error: "Player not found" }, 404);
+// existed when it was scheduled). Export reuses this builder.
+export function getCareer(playerId) {
+  const player = db.prepare("SELECT id, name, skill_level FROM players WHERE id = ?").get(playerId);
+  if (!player) return null;
 
   const rows = db
     .prepare(`
@@ -169,7 +174,7 @@ router.get("/players/:id/career", (c) => {
     WHERE qe.player_id = ? AND m.state = 'active' AND m.ended_at IS NOT NULL
     ORDER BY m.started_at, m.id
   `)
-    .all(pid);
+    .all(playerId);
 
   const won = (r) => (r.side === 1 ? r.team1_score > r.team2_score : r.team2_score > r.team1_score);
   const games = rows.length;
@@ -213,7 +218,7 @@ router.get("/players/:id/career", (c) => {
     WHERE qe.player_id = ? AND s.ended_at IS NOT NULL
     ORDER BY s.ended_at DESC
   `)
-    .all(pid);
+    .all(playerId);
 
   // monthly %: denominator is every ended session eligible for this player
   // (scheduled after they joined the pool), numerator is the ones they
@@ -235,12 +240,18 @@ router.get("/players/:id/career", (c) => {
     pct: m.total > 0 ? Math.round((m.attended / m.total) * 100) : 0,
   }));
 
-  return c.json({
+  return {
     player,
     totals,
     partners: [...partners.values()].sort((a, b) => b.games - a.games || a.name.localeCompare(b.name)),
     attendance: { sessions, months },
-  });
+  };
+}
+
+router.get("/players/:id/career", (c) => {
+  const career = getCareer(c.req.param("id"));
+  if (!career) return c.json({ error: "Player not found" }, 404);
+  return c.json(career);
 });
 
 router.get("/players/:id/history", (c) => {

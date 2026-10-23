@@ -5,6 +5,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import automatchRouter from "./routes/automatch.js";
 import courtsRouter from "./routes/courts.js";
+import exportRouter from "./routes/export.js";
 import matchesRouter from "./routes/matches.js";
 import playersRouter from "./routes/players.js";
 import queueRouter from "./routes/queue.js";
@@ -25,6 +26,7 @@ app.route("/api", statsRouter);
 app.route("/api/sse", sseRouter);
 app.route("/api", courtsRouter);
 app.route("/api", automatchRouter);
+app.route("/api", exportRouter);
 
 // Broadcast state every second for live timers
 setInterval(broadcast, 1000);
