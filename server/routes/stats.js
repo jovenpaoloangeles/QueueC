@@ -73,7 +73,7 @@ export function getSessionDetail(sessionId) {
 
   const games = db
     .prepare(
-      "SELECT id, format, state, court_number, started_at, ended_at, team1_score, team2_score, rating, new_shuttles, used_shuttles, team1_p1, team1_p2, team2_p1, team2_p2 FROM matches WHERE session_id = ? ORDER BY started_at, id",
+      "SELECT id, format, state, court_number, started_at, ended_at, team1_score, team2_score, rating, new_shuttles, used_shuttles, team1_p1, team1_p2, team2_p1, team2_p2 FROM matches WHERE session_id = ? AND state != 'slated' ORDER BY started_at, id",
     )
     .all(sessionId)
     .map((m) => ({
@@ -161,14 +161,18 @@ router.get("/sessions/:id/stats", (c) => {
 // monthly attendance % (a session counts toward a month iff the player
 // existed when it was scheduled). Export reuses this builder.
 export function getCareer(playerId) {
-  const player = db.prepare("SELECT id, name, skill_level FROM players WHERE id = ?").get(playerId);
+  const player = db.prepare("SELECT id, name, skill_level, created_at FROM players WHERE id = ?").get(playerId);
   if (!player) return null;
 
   const rows = db
     .prepare(`
     SELECT m.id, m.team1_score, m.team2_score, m.started_at, m.ended_at,
       m.team1_p1, m.team1_p2, m.team2_p1, m.team2_p2,
-      CASE WHEN m.team1_p1 = qe.id OR m.team1_p2 = qe.id THEN 1 ELSE 2 END AS side
+      CASE WHEN m.team1_p1 = qe.id OR m.team1_p2 = qe.id THEN 1 ELSE 2 END AS side,
+      CASE WHEN m.team1_p1 = qe.id THEN m.team1_p2
+           WHEN m.team1_p2 = qe.id THEN m.team1_p1
+           WHEN m.team2_p1 = qe.id THEN m.team2_p2
+           ELSE m.team2_p1 END AS mate_entry
     FROM matches m
     JOIN queue_entries qe ON qe.id IN (m.team1_p1, m.team1_p2, m.team2_p1, m.team2_p2)
     WHERE qe.player_id = ? AND m.state = 'active' AND m.ended_at IS NOT NULL
@@ -194,7 +198,7 @@ export function getCareer(playerId) {
   // doubles teammates only: the other entry on the player's side
   const partners = new Map();
   for (const r of rows) {
-    const mateEntry = r.side === 1 ? r.team1_p2 : r.team2_p2;
+    const mateEntry = r.mate_entry;
     if (mateEntry == null) continue;
     const mate = db
       .prepare(

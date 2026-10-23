@@ -481,7 +481,7 @@ export default function OnDeckStrip({
       toast(`Lineup started on ${court.label} — ${t1} vs ${t2}`, "success", {
         undo: () => {
           abortMatch(match.id).catch((err) => {
-            if (err?.status === 404) {
+            if (err?.status === 404 || err?.status === 409) {
               toast("Already ended — nothing to undo", "info");
               return false; // handled its own failure — don't clobber with "Undone"
             }

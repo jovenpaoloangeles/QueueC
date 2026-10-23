@@ -57,7 +57,7 @@ async function main() {
 
   await new Promise((r) => setTimeout(r, 1100));
   const now2 = Math.floor(Date.now() / 1000);
-  const s2 = await api("/api/sessions", "POST", { name: "Career Two", scheduled_start: now2, scheduled_end: now2 + 3600, court_count: 2 });
+  const s2 = await api("/api/sessions", "POST", { name: "Career Two", scheduled_start: now, scheduled_end: now + 3600, court_count: 2 });
   const e2 = await checkinAll(s2.session.id);
   await api(`/api/sessions/${s2.session.id}/start`, "PATCH");
   await playDoubles(s2.session.id, 1, e2.C1, e2.C2, e2.C3, e2.C4, 15, 21);
@@ -99,6 +99,45 @@ async function main() {
   assert.equal(opp.partners.find((p) => p.player_id === c1), undefined, "opponent is not a partner");
 
   assert.equal((await api(`/api/players/999999/career`)).status, 404, "unknown player 404s");
+
+
+  // subject seated at team1_p2: the partner is team1_p1 — both p2-slot
+  // placements must still credit the mate (regression: p2 subjects lost
+  // their partner rows entirely)
+  const tag2 = `CareerB${Date.now().toString(36)}`;
+  const p5 = await mk(`${tag2} S5`);
+  const p6 = await mk(`${tag2} S6`);
+  const p7 = await mk(`${tag2} S7`);
+  const p8 = await mk(`${tag2} S8`);
+  const s3 = await api("/api/sessions", "POST", { name: "Career Three", scheduled_start: now2 + 10, scheduled_end: now2 + 3610, court_count: 2 });
+  const e3 = {};
+  for (const [k, id] of [["S5", p5], ["S6", p6], ["S7", p7], ["S8", p8]]) {
+    e3[k] = (await api(`/api/sessions/${s3.session.id}/checkin`, "POST", { player_id: id })).entry.id;
+  }
+  await api(`/api/sessions/${s3.session.id}/start`, "PATCH");
+  await playDoubles(s3.session.id, 1, e3.S6, e3.S5, e3.S7, e3.S8, 21, 15);
+  await api(`/api/sessions/${s3.session.id}/end`, "PATCH");
+
+  const subj = await api(`/api/players/${p5}/career`);
+  const subjPartner = subj.partners.find((x) => x.player_id === p6);
+  assert.ok(subjPartner, "p2-seated subject still credits their partner");
+  assert.deepEqual(
+    { g: subjPartner.games, w: subjPartner.wins, l: subjPartner.losses },
+    { g: 1, w: 1, l: 0 },
+  );
+
+  // eligibility: a player created AFTER an earlier ended session must not
+  // have that session in their monthly denominator (created_at filter)
+  const p9 = await mk(`${tag2} S9`);
+  const late = await api(`/api/sessions/${s3.session.id}/attendance`, "POST", { player_id: p9 });
+  assert.equal(late.status, 201);
+  const fresh = await api(`/api/players/${p9}/career`);
+  const fmonth = new Date().toISOString().slice(0, 7);
+  const frow = fresh.attendance.months.find((m) => m.month === fmonth);
+  assert.ok(frow, "fresh player has a month row");
+  assert.equal(frow.total, 1, "sessions predating the player are excluded from the denominator");
+  assert.equal(frow.attended, 1);
+  assert.equal(frow.pct, 100);
 
   console.log("career.test.js: all assertions passed");
 }

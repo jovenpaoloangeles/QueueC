@@ -407,8 +407,10 @@ export function resetPlayersToPreset() {
       db
         .prepare(
           `SELECT DISTINCT qe.player_id AS pid FROM queue_entries qe
-           WHERE qe.id IN (SELECT team1_p1 FROM matches UNION SELECT team1_p2 FROM matches
-                           UNION SELECT team2_p1 FROM matches UNION SELECT team2_p2 FROM matches)`,
+           WHERE qe.id IN (SELECT team1_p1 FROM matches WHERE state != 'slated'
+                           UNION SELECT team1_p2 FROM matches WHERE state != 'slated'
+                           UNION SELECT team2_p1 FROM matches WHERE state != 'slated'
+                           UNION SELECT team2_p2 FROM matches WHERE state != 'slated')`,
         )
         .all()
         .map((r) => r.pid),

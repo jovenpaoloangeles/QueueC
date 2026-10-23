@@ -37,7 +37,7 @@ export default function SessionDetailPage({ id }) {
 
   async function handleDeleteMatch() {
     try {
-      await abortMatch(deleteMatchTarget.id);
+      await abortMatch(deleteMatchTarget.id, true); // history page: explicit ended-match delete
       toast("Match deleted — stats recomputed", "success");
       setDeleteMatchTarget(null);
       refetch();

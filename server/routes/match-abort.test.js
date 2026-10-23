@@ -87,9 +87,20 @@ async function main() {
     team2_p2: ids[3],
   });
   await api(`/api/matches/${m2.id}/end`, "PATCH", { team1_score: 21, team2_score: 3 });
-  // v1.3: ended matches delete (history correction) instead of 404ing; the
-  // ex-players' games_played recomputes back down to their pre-match counts.
-  assert.equal((await api(`/api/matches/${m2.id}`, "DELETE")).status, 200, "ended match delete → 200");
+  // v1.3: ended matches delete (history correction) instead of 404ing — but
+  // only via the explicit historical path. A bare DELETE (the toast-undo's
+  // abort) refuses, so a stray undo click can't erase a fully-played game;
+  // the ex-players' games_played recomputes back down to their pre-match counts.
+  assert.equal(
+    (await api(`/api/matches/${m2.id}`, "DELETE")).status,
+    409,
+    "bare DELETE of ended match → 409",
+  );
+  assert.equal(
+    (await api(`/api/matches/${m2.id}?historical=1`, "DELETE")).status,
+    200,
+    "historical delete of ended match → 200",
+  );
   assert.equal(
     (await api(`/api/matches/${m2.id}`, "DELETE")).status,
     404,

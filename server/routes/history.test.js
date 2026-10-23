@@ -36,6 +36,12 @@ async function main() {
   assert.equal(ma.status, 201);
   await api(`/api/matches/${ma.match.id}/end`, "PATCH", { team1_score: 21, team2_score: 15 });
   await api(`/api/sessions/${aid}/shuttles`, "PATCH", { delta: 2 }); // shuttles_extra = 2
+  // a staged slate survives session end — it is not a game and must not leak
+  // into the detail games log or the exports
+  const sl = await api("/api/matches/slate", "POST", {
+    session_id: aid, team1_p1: eA["Inter C1"], team1_p2: eA["Inter C2"], team2_p1: eA["Inter C3"], team2_p2: eA["Inter C4"],
+  });
+  assert.equal(sl.status, 201, "slate staged");
   await api(`/api/sessions/${aid}/end`, "PATCH");
   const leftRow = await api(`/api/sessions/${aid}/attendance`, "POST", { player_id: await pid("Beginner B1"), checked_in_at: 777 });
   assert.equal(leftRow.entry.status, "left");
@@ -73,7 +79,8 @@ async function main() {
   assert.equal(det.session.id, aid);
   assert.equal(det.leaderboard.length, 4, "leaderboard has the four doubles players");
   assert.equal(det.leaderboard.find((r) => r.name === "Inter C1").wins, 1);
-  assert.equal(det.games.length, 1);
+  assert.equal(det.games.length, 1, "surviving slated rows are not games");
+  assert.ok(det.games.every((g) => g.state !== "slated"), "no slated rows in the games log");
   const g = det.games[0];
   assert.equal(g.format, "doubles");
   assert.equal(g.state, "active");

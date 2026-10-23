@@ -43,7 +43,8 @@ export const endMatch = (id, scores) => req("PATCH", `/matches/${id}/end`, score
 export const correctMatch = (id, body) => req("PATCH", `/matches/${id}/correct`, body);
 export const addAttendance = (sessionId, playerId) =>
   req("POST", `/sessions/${sessionId}/attendance`, { player_id: playerId });
-export const abortMatch = (id) => req("DELETE", `/matches/${id}`);
+export const abortMatch = (id, historical = false) =>
+  req("DELETE", `/matches/${id}${historical ? "?historical=1" : ""}`);
 export const updateMatchTeams = (id, teams) => req("PATCH", `/matches/${id}/teams`, teams);
 export const setQueueOrder = (sessionId, order) =>
   req("PATCH", "/queue/order", { session_id: sessionId, order });

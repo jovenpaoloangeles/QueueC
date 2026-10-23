@@ -88,13 +88,18 @@ router.post("/", async (c) => {
 
 // Abort a live match — the undo of POST /. Entries return to waiting with
 // sort_order untouched (they never left the queue's ordering); the row is
-// deleted. v1.3: ended matches delete too (history correction) — the row goes
+// deleted. v1.3: ended matches delete too (history correction), but only via
+// the explicit ?historical=1 path — a bare DELETE (the toast-undo's abort)
+// 409s, so a stray undo click can't erase a fully-played game. The row goes
 // and the ex-players' derived stats are recomputed from the remaining log.
 // Slated rows still refuse: unstage them via DELETE /matches/:id/slate.
 router.delete("/:id", (c) => {
   const id = c.req.param("id");
   const match = db.prepare("SELECT * FROM matches WHERE id = ? AND state = 'active'").get(id);
   if (!match) return c.json({ error: "Match not found" }, 404);
+  if (match.ended_at != null && c.req.query("historical") !== "1") {
+    return c.json({ error: "Match already ended — delete it from the session history page" }, 409);
+  }
   const now = Math.floor(Date.now() / 1000);
   const entryIds = [match.team1_p1, match.team1_p2, match.team2_p1, match.team2_p2].filter(Boolean);
   db.transaction(() => {

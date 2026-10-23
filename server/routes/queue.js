@@ -118,6 +118,9 @@ router.post("/sessions/:id/attendance", async (c) => {
   if (!db.prepare("SELECT id FROM players WHERE id = ?").get(player_id)) {
     return c.json({ error: "Player not found" }, 404);
   }
+  if (db.prepare("SELECT id FROM queue_entries WHERE session_id = ? AND player_id = ?").get(id, player_id)) {
+    return c.json({ error: "Player already checked in" }, 409);
+  }
 
   let result;
   if (session.ended_at == null) {

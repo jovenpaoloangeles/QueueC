@@ -72,8 +72,13 @@ async function main() {
   await api(`/api/matches/${slatedId}/slate`, "DELETE");
 
   // ended match delete → row gone, counts recomputed to pre-match values
-  const del = await api(`/api/matches/${m1.match.id}`, "DELETE");
-  assert.equal(del.status, 200, "ended match delete 200s");
+  assert.equal(
+    (await api(`/api/matches/${m1.match.id}`, "DELETE")).status,
+    409,
+    "bare DELETE of ended match 409s (toast-undo guard)",
+  );
+  const del = await api(`/api/matches/${m1.match.id}?historical=1`, "DELETE");
+  assert.equal(del.status, 200, "historical delete of ended match 200s");
   const after = await api(`/api/sessions/${s1.session.id}/stats`);
   assert.equal(after.stats.leaderboard.filter((r) => r.played > 0).length, 0, "no games counted after match delete");
 
@@ -117,7 +122,7 @@ async function main() {
   // be undone afterwards
   const b2 = await api(`/api/sessions/${s2.session.id}/attendance`, "POST", { player_id: pid("Beginner B2") });
   assert.equal(b2.status, 201);
-  await api(`/api/matches/${m2.match.id}`, "DELETE");
+  await api(`/api/matches/${m2.match.id}?historical=1`, "DELETE");
   await api(`/api/sessions/${s2.session.id}/end`, "PATCH");
 
   const undo = await api(`/api/queue/${a1.entry.id}`, "DELETE");
@@ -129,6 +134,12 @@ async function main() {
   assert.equal(late.entry.status, "left", "ended-session attendance row is 'left'");
   assert.equal(late.entry.checked_in_at, 12345, "body checked_in_at honored");
   assert.equal((await api(`/api/queue/${late.entry.id}`, "DELETE")).status, 200, "ended-session attendance undoable");
+
+
+  // duplicate attendance on an ended session 409s (same contract as check-in)
+  await api(`/api/sessions/${s2.session.id}/attendance`, "POST", { player_id: pid("Beginner B3") });
+  const dupLate = await api(`/api/sessions/${s2.session.id}/attendance`, "POST", { player_id: pid("Beginner B3") });
+  assert.equal(dupLate.status, 409, "duplicate attendance on an ended session 409s");
 
   console.log("attendance.test.js: all assertions passed");
 }
