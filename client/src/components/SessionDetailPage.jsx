@@ -1,5 +1,16 @@
 import { useEffect, useState } from "react";
-import { getSessionDetail } from "@/api";
+import { abortMatch, addAttendance, getPlayers, getSessionDetail, removeEntry } from "@/api";
+import { useToast } from "@/components/Toast";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import CorrectMatchDialog from "./CorrectMatchDialog.jsx";
 import HistoryShell from "./HistoryShell.jsx";
 
 // v1.3 session detail: the ended-session view of GET /sessions/:id/detail —
@@ -13,6 +24,46 @@ export default function SessionDetailPage({ id }) {
   const [error, setError] = useState(null);
   const [live, setLive] = useState(false);
   const [liveTick, setLiveTick] = useState(0);
+  // corrections: {match} for the edit dialog; entry id pending remove confirmation
+  const [editTarget, setEditTarget] = useState(null);
+  const [removeEntryId, setRemoveEntryId] = useState(null);
+  const [deleteMatchTarget, setDeleteMatchTarget] = useState(null);
+  const [addPlayerId, setAddPlayerId] = useState(null);
+  const [players, setPlayers] = useState([]);
+  const toast = useToast();
+
+  const refetch = () => setLiveTick((n) => n + 1);
+
+  async function handleDeleteMatch() {
+    try {
+      await abortMatch(deleteMatchTarget.id);
+      toast("Match deleted — stats recomputed", "success");
+      setDeleteMatchTarget(null);
+      refetch();
+    } catch (err) {
+      toast(err?.data?.error ?? "Could not delete match", "error");
+    }
+  }
+
+  async function handleRemoveAttendance(entryId) {
+    try {
+      await removeEntry(entryId);
+      toast("Removed from attendance", "success");
+      refetch();
+    } catch (err) {
+      toast(err?.data?.error ?? "Could not remove entry", "error");
+    }
+  }
+
+  async function handleAddAttendance(playerId) {
+    try {
+      await addAttendance(id, playerId);
+      toast("Added to attendance", "success");
+      refetch();
+    } catch (err) {
+      toast(err?.data?.error ?? "Could not add player", "error");
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -34,6 +85,13 @@ export default function SessionDetailPage({ id }) {
     return () => clearInterval(t);
   }, [live]);
 
+  // pool for the "add a missed player" select
+  useEffect(() => {
+    getPlayers()
+      .then((d) => setPlayers(d.players))
+      .catch(() => {});
+  }, []);
+
   if (error)
     return (
       <HistoryShell title="Session">
@@ -50,6 +108,9 @@ export default function SessionDetailPage({ id }) {
     );
 
   const { session, leaderboard, games, attendance, shuttles } = detail;
+  const availablePlayers = players.filter(
+    (p) => !attendance.some((a) => a.player_id === p.id),
+  );
 
   return (
     <HistoryShell title={session.name}>
@@ -118,6 +179,7 @@ export default function SessionDetailPage({ id }) {
                 <th className="px-2 py-2 font-medium">Score</th>
                 <th className="px-2 py-2 font-medium">Shuttles</th>
                 <th className="px-2 py-2 font-medium">Rating</th>
+                <th className="px-2 py-2 font-medium" aria-label="Actions" />
               </tr>
             </thead>
             <tbody>
@@ -135,11 +197,33 @@ export default function SessionDetailPage({ id }) {
                   </td>
                   <td className="px-2 py-2 font-mono tabular-nums text-muted-foreground">{g.new_shuttles}</td>
                   <td className="px-2 py-2 font-mono tabular-nums text-muted-foreground">{g.rating ?? "—"}</td>
+                  <td className="px-2 py-2 text-right">
+                    {g.state === "active" && g.ended_at != null && (
+                      <span className="inline-flex gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          data-testid="detail-edit-match"
+                          onClick={() => setEditTarget(g)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-destructive hover:bg-wash-red hover:text-destructive"
+                          onClick={() => setDeleteMatchTarget(g)}
+                        >
+                          Delete
+                        </Button>
+                      </span>
+                    )}
+                  </td>
                 </tr>
               ))}
               {games.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">
+                  <td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">
                     No games played.
                   </td>
                 </tr>
@@ -168,13 +252,110 @@ export default function SessionDetailPage({ id }) {
               <li key={a.entry_id} data-testid="detail-attendance-row" className="flex items-center justify-between px-4 py-2 text-sm">
                 <a href={`#/players/${a.player_id}`} className="font-medium text-foreground hover:text-primary">
                   {a.name}
+                  <span className="ml-2 text-[12.5px] text-muted-foreground">{a.status}</span>
                 </a>
-                <span className="text-[12.5px] text-muted-foreground">{a.status}</span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  data-testid="attendance-remove"
+                  className="text-destructive hover:bg-wash-red hover:text-destructive"
+                  onClick={() => setRemoveEntryId(a.entry_id)}
+                >
+                  Remove
+                </Button>
               </li>
             ))}
           </ul>
+          {/* add a missed player: everyone in the pool not already checked in */}
+          <div className="flex items-center gap-2 border-t border-border px-4 py-2.5">
+            <select
+              data-testid="attendance-add-select"
+              aria-label="Add a missed player"
+              className="h-8 rounded-md border border-border bg-card px-2 text-sm"
+              value={addPlayerId ?? ""}
+              onChange={(e) => setAddPlayerId(e.target.value ? Number(e.target.value) : null)}
+            >
+              <option value="">Add a missed player…</option>
+              {availablePlayers.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+</option>
+              ))}
+            </select>
+            <Button
+              size="sm"
+              variant="secondary"
+              data-testid="attendance-add-button"
+              disabled={!addPlayerId}
+              onClick={() => {
+                handleAddAttendance(addPlayerId);
+                setAddPlayerId(null);
+              }}
+            >
+              Add
+            </Button>
+          </div>
         </section>
       </div>
+      {editTarget && (
+        <CorrectMatchDialog
+          match={editTarget}
+          attendance={attendance}
+          onDone={refetch}
+          onClose={() => setEditTarget(null)}
+        />
+      )}
+      {removeEntryId != null && (
+        <Dialog open onOpenChange={(open) => !open && setRemoveEntryId(null)}>
+          <DialogContent className="sm:max-w-xs shadow-lift">
+            <DialogHeader>
+              <DialogTitle>Remove from attendance?</DialogTitle>
+              <DialogDescription>
+                A checked-in player who never played can be removed; their stats are untouched.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setRemoveEntryId(null)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                data-testid="attendance-remove-confirm"
+                onClick={() => {
+                  const eid = removeEntryId;
+                  setRemoveEntryId(null);
+                  handleRemoveAttendance(eid);
+                }}
+              >
+                Remove
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+      {deleteMatchTarget && (
+        <Dialog open onOpenChange={(open) => !open && setDeleteMatchTarget(null)}>
+          <DialogContent className="sm:max-w-xs shadow-lift">
+            <DialogHeader>
+              <DialogTitle>Delete this match? Stats update immediately.</DialogTitle>
+              <DialogDescription>
+                The game log row goes away and every ex-player's totals are recomputed.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setDeleteMatchTarget(null)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => handleDeleteMatch()}
+              >
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </HistoryShell>
   );
 }

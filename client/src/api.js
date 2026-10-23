@@ -40,6 +40,9 @@ export const updateShuttles = (sessionId, delta) =>
   req("PATCH", `/sessions/${sessionId}/shuttles`, { delta });
 export const startMatch = (data) => req("POST", "/matches", data);
 export const endMatch = (id, scores) => req("PATCH", `/matches/${id}/end`, scores);
+export const correctMatch = (id, body) => req("PATCH", `/matches/${id}/correct`, body);
+export const addAttendance = (sessionId, playerId) =>
+  req("POST", `/sessions/${sessionId}/attendance`, { player_id: playerId });
 export const abortMatch = (id) => req("DELETE", `/matches/${id}`);
 export const updateMatchTeams = (id, teams) => req("PATCH", `/matches/${id}/teams`, teams);
 export const setQueueOrder = (sessionId, order) =>
