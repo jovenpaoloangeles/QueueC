@@ -383,8 +383,10 @@ function loadPresetRows() {
   }
 }
 
-// Reset the pool to the preset: drop everyone not in the file, resync preset
-// skills, re-add any missing preset players. Missing/unparseable file = no-op.
+// Reset the pool to the preset: drop non-preset players with no match history
+// (v1.3: anyone who actually played is kept so history/career survive session
+// end), resync preset skills, re-add any missing preset players.
+// Missing/unparseable file = no-op.
 export function resetPlayersToPreset() {
   const rows = loadPresetRows();
   if (!rows) return;
@@ -396,9 +398,22 @@ export function resetPlayersToPreset() {
     // Collect players leaving the pool BEFORE deleting anything, so their
     // dependent rows can go first — queue_entries/matches reference players.id
     // with no ON DELETE action and foreign_keys is ON.
-    const doomed = names.length
+    const nonPreset = names.length
       ? db.prepare(`SELECT id FROM players WHERE LOWER(TRIM(name)) NOT IN (${placeholders})`).all(...names)
       : db.prepare("SELECT id FROM players").all();
+    // A player appears in any match = match history = kept (history joins
+    // their queue_entries; deleting them would orphan the session record).
+    const played = new Set(
+      db
+        .prepare(
+          `SELECT DISTINCT qe.player_id AS pid FROM queue_entries qe
+           WHERE qe.id IN (SELECT team1_p1 FROM matches UNION SELECT team1_p2 FROM matches
+                           UNION SELECT team2_p1 FROM matches UNION SELECT team2_p2 FROM matches)`,
+        )
+        .all()
+        .map((r) => r.pid),
+    );
+    const doomed = nonPreset.filter((p) => !played.has(p.id));
     if (doomed.length) {
       const playerIds = doomed.map((r) => r.id);
       const idPh = playerIds.map(() => "?").join(",");

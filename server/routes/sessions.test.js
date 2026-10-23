@@ -110,7 +110,8 @@ async function run() {
   console.log("sessions.test.js: all assertions passed");
 }
 
-// Checked-in players from OLD sessions with matches must be removable FK-safely
+// Checked-in players from OLD sessions with no match history must be removable
+// FK-safely; strays WITH match history survive the reset (v1.3 data preservation).
 // (in-process, temp DB + temp preset; query string busts the module cache so the
 // fresh DB_PATH/PLAYERS_PATH take effect)
 async function fkCleanupTest() {
@@ -136,12 +137,14 @@ async function fkCleanupTest() {
     const { lastInsertRowid: presetId } = insPlayer.run("Fk Preset One");
     const { lastInsertRowid: strayA } = insPlayer.run("Fk Stray A");
     const { lastInsertRowid: strayB } = insPlayer.run("Fk Stray B");
+    const { lastInsertRowid: strayC } = insPlayer.run("Fk Stray C"); // no matches → still pruned
     const insEntry = db.prepare(
       "INSERT INTO queue_entries (session_id, player_id, checked_in_at, sort_order, status_updated_at) VALUES (?, ?, 1, 1, 1)",
     );
     const { lastInsertRowid: presetEntry } = insEntry.run(sessionId, presetId);
     const { lastInsertRowid: entryA } = insEntry.run(sessionId, strayA);
     const { lastInsertRowid: entryB } = insEntry.run(sessionId, strayB);
+    const { lastInsertRowid: entryC } = insEntry.run(sessionId, strayC);
     const { lastInsertRowid: strayMatch } = db
       .prepare(
         "INSERT INTO matches (session_id, court_number, format, team1_p1, team2_p1, started_at) VALUES (?, 1, 'singles', ?, ?, 1)",
@@ -155,19 +158,24 @@ async function fkCleanupTest() {
 
     resetPlayersToPreset();
 
-    assert.ok(!db.prepare("SELECT id FROM players WHERE id = ?").get(strayA), "Expected stray player A gone");
-    assert.ok(!db.prepare("SELECT id FROM players WHERE id = ?").get(strayB), "Expected stray player B gone");
+    assert.ok(db.prepare("SELECT id FROM players WHERE id = ?").get(strayA), "Expected stray A (match history) kept");
+    assert.ok(db.prepare("SELECT id FROM players WHERE id = ?").get(strayB), "Expected stray B (match history) kept");
     assert.ok(
-      !db.prepare("SELECT id FROM queue_entries WHERE id = ?").get(entryA),
-      "Expected stray entry A gone",
+      db.prepare("SELECT id FROM queue_entries WHERE id = ?").get(entryA),
+      "Expected stray entry A kept",
     );
     assert.ok(
-      !db.prepare("SELECT id FROM queue_entries WHERE id = ?").get(entryB),
-      "Expected stray entry B gone",
+      db.prepare("SELECT id FROM queue_entries WHERE id = ?").get(entryB),
+      "Expected stray entry B kept",
     );
     assert.ok(
-      !db.prepare("SELECT id FROM matches WHERE id = ?").get(strayMatch),
-      "Expected match on stray entries gone",
+      db.prepare("SELECT id FROM matches WHERE id = ?").get(strayMatch),
+      "Expected match on stray entries kept",
+    );
+    assert.ok(!db.prepare("SELECT id FROM players WHERE id = ?").get(strayC), "Expected matchless stray C gone");
+    assert.ok(
+      !db.prepare("SELECT id FROM queue_entries WHERE id = ?").get(entryC),
+      "Expected matchless stray entry C gone",
     );
     assert.ok(db.prepare("SELECT id FROM players WHERE id = ?").get(presetId), "Expected preset player kept");
     assert.ok(
