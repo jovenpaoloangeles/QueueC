@@ -105,3 +105,30 @@ Players / Matches / Avg-wait figures, shuttles used, and the live leaderboard
 **End Session** and **New Session** (both confirm first) close the session;
 history and the leaderboard persist in SQLite. Court expiry and timers stop
 with it.
+
+## History
+
+**History** (top bar) lists every ended session — date, headcount, shuttle
+totals. Click one for the full record: final leaderboard, games log, shuttle
+totals and attendance. While a session is still live its page refreshes every
+10 seconds.
+
+### Fixing mistakes
+
+Ended games keep **Edit** / **Delete** buttons on the session page — scores,
+shuttles, rating, even the four players can be corrected, and every stat
+(leaderboard, career totals, partner records) recomputes immediately. The same
+works mid-session. Attendance rows can be removed (only if the player never
+played) or missed players added after the fact.
+
+### Player careers
+
+Click any player's name on a session page for their career: all-time games,
+W/L, win %, point differential, hours on court, doubles partners, sessions
+attended and attendance % per month.
+
+### Export
+
+**Export CSV** / **Export JSON** on a session or career page downloads that
+page's data — the CSV uses `#`-commented sections so it opens cleanly in any
+spreadsheet.

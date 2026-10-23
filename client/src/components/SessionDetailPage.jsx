@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { abortMatch, addAttendance, getPlayers, getSessionDetail, removeEntry } from "@/api";
+import downloadExport from "@/lib/download";
 import { useToast } from "@/components/Toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -121,6 +122,16 @@ export default function SessionDetailPage({ id }) {
             Session in progress — this page refreshes every 10s
           </div>
         )}
+
+        {/* exports */}
+        <div className="flex gap-2">
+          <Button size="sm" variant="secondary" data-testid="export-csv" onClick={() => downloadExport(`/sessions/${id}/export`)}>
+            Export CSV
+          </Button>
+          <Button size="sm" variant="secondary" data-testid="export-json" onClick={() => downloadExport(`/sessions/${id}/export?format=json`)}>
+            Export JSON
+          </Button>
+        </div>
 
         {/* final leaderboard — sidebar table idiom */}
         <section className="rounded-lg border border-border bg-card shadow-card" aria-label="Final leaderboard">

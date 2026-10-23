@@ -21,10 +21,10 @@ Status legend: no checkbox = not started. Check off as shipped; delete rejected 
 
 ## v1.3 — History
 
-- [ ] **Session history browser** — past sessions list with final leaderboard, games log, shuttle count; currently only the live session exists.
-- [ ] **Player career page** — all-time W/L, partners played with, hours on court.
-- [ ] **Attendance tracking** — who played each session, attendance % per player per month; groundwork for Reclub-style "who's coming" (RSVP lives in Nice to Have).
-- [ ] **CSV/JSON export** — one-click export of session and per-player stats.
+- [x] **Session history browser** — past sessions list with final leaderboard, games log, shuttle count; currently only the live session exists.
+- [x] **Player career page** — all-time W/L, partners played with, hours on court.
+- [x] **Attendance tracking** — who played each session, attendance % per player per month; groundwork for Reclub-style "who's coming" (RSVP lives in Nice to Have).
+- [x] **CSV/JSON export** — one-click export of session and per-player stats.
 
 ## v1.4 — Stats improvements
 

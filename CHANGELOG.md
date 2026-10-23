@@ -4,6 +4,30 @@ Notable user-facing changes. Format follows Keep a Changelog; versions follow
 semver once there is a public API surface to break (the Docker image tag is
 the version that matters for self-hosters).
 
+## [1.3.0] — 2026-10-23
+
+History & corrections.
+
+### Added
+
+- Session history browser: every ended session listed with date, headcount and
+  shuttle totals; a detail page shows the final leaderboard, full games log
+  (court, matchup, score, shuttles, rating) and per-player attendance. A live
+  session's detail page refreshes every 10s.
+- Player career page: all-time games, W/L, win %, point differential and hours
+  on court, doubles partners with combined record, sessions attended, and
+  monthly attendance % (missed sessions count against it).
+- Corrections: edit a finished match's scores, shuttles, rating or players —
+  or delete it outright — with every derived stat recomputed immediately, live
+  or after the session ends. Attendance can be fixed too: remove a checked-in
+  player who never played, add a missed one.
+- One-click export: session detail and player career download as CSV
+  (spreadsheet-friendly, `#`-commented sections) or JSON. Downloads mirror the
+  pages — same builders, so they can never disagree.
+- Data preservation: ending a session no longer purges drop-in players who
+  have match history, so careers survive ad-hoc guests. History-less drop-ins
+  still clean up as before.
+
 ## [1.2.0] — 2026-10-22
 
 Smarter matching.

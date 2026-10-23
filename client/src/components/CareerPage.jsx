@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { getPlayerCareer } from "@/api";
+import downloadExport from "@/lib/download";
 import HistoryShell from "./HistoryShell.jsx";
+import { Button } from "./ui/button";
 
 // v1.3 player career: all-time totals, doubles partners, per-session
 // attendance and monthly attendance %. Data from GET /players/:id/career.
@@ -44,6 +46,16 @@ export default function CareerPage({ id }) {
   return (
     <HistoryShell title={player.name} back="#/history">
       <div className="flex flex-col gap-4">
+        {/* exports */}
+        <div className="flex gap-2">
+          <Button size="sm" variant="secondary" data-testid="export-csv" onClick={() => downloadExport(`/players/${id}/career/export`)}>
+            Export CSV
+          </Button>
+          <Button size="sm" variant="secondary" data-testid="export-json" onClick={() => downloadExport(`/players/${id}/career/export?format=json`)}>
+            Export JSON
+          </Button>
+        </div>
+
         {/* all-time totals strip */}
         <section
           data-testid="career-totals"
