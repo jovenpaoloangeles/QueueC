@@ -59,6 +59,7 @@ for (const f of [
   // boots its own server on :3992 (needs direct SQL read-back for recompute)
   "server/routes/corrections.test.js",
   "server/routes/attendance.test.js",
+  "server/routes/history.test.js",
 ]) {
   const r = Bun.spawnSync(["bun", join(root, f)], {
     cwd: root,

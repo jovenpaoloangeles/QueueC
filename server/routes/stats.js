@@ -54,6 +54,63 @@ export function computeLeaderboard(sessionId) {
     );
 }
 
+// v1.3 session detail: everything the history page renders, read straight
+// from the tables (no live-broadcast coupling).
+router.get("/sessions/:id/detail", (c) => {
+  const sid = c.req.param("id");
+  const session = db.prepare("SELECT * FROM sessions WHERE id = ?").get(sid);
+  if (!session) return c.json({ error: "Session not found" }, 404);
+
+  const seat = (eid) =>
+    eid == null
+      ? []
+      : db
+          .prepare(
+            `SELECT qe.id AS entry_id, qe.player_id, p.name FROM queue_entries qe
+             JOIN players p ON p.id = qe.player_id WHERE qe.id = ?`,
+          )
+          .all(eid);
+
+  const games = db
+    .prepare(
+      "SELECT id, format, state, court_number, started_at, ended_at, team1_score, team2_score, rating, new_shuttles, used_shuttles, team1_p1, team1_p2, team2_p1, team2_p2 FROM matches WHERE session_id = ? ORDER BY started_at, id",
+    )
+    .all(sid)
+    .map((m) => ({
+      id: m.id,
+      format: m.format,
+      state: m.state,
+      court_number: m.court_number,
+      started_at: m.started_at,
+      ended_at: m.ended_at,
+      team1_score: m.team1_score,
+      team2_score: m.team2_score,
+      rating: m.rating,
+      new_shuttles: m.new_shuttles,
+      used_shuttles: m.used_shuttles,
+      team1: [...seat(m.team1_p1), ...seat(m.team1_p2)],
+      team2: [...seat(m.team2_p1), ...seat(m.team2_p2)],
+    }));
+
+  const attendance = db
+    .prepare(
+      `SELECT qe.id AS entry_id, qe.player_id, p.name, qe.checked_in_at, qe.status
+       FROM queue_entries qe JOIN players p ON p.id = qe.player_id
+       WHERE qe.session_id = ? ORDER BY qe.sort_order, qe.id`,
+    )
+    .all(sid);
+
+  const shuttles = db
+    .prepare(
+      "SELECT COALESCE(SUM(new_shuttles), 0) as new, COALESCE(SUM(used_shuttles), 0) as used FROM matches WHERE session_id = ?",
+    )
+    .get(sid);
+  shuttles.extra = session.shuttles_extra ?? 0;
+  shuttles.total = shuttles.new + shuttles.extra;
+
+  return c.json({ session, leaderboard: computeLeaderboard(sid), games, attendance, shuttles });
+});
+
 router.get("/sessions/:id/stats", (c) => {
   const sid = c.req.param("id");
   const now = Math.floor(Date.now() / 1000);

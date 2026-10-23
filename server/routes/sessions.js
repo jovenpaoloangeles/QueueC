@@ -11,6 +11,27 @@ router.get("/active", (c) => {
   return c.json({ session: session ?? null });
 });
 
+// v1.3 history list: ended sessions, newest first, with card aggregates.
+router.get("/", (c) => {
+  const sessions = db
+    .prepare("SELECT id, name, scheduled_start, ended_at, court_count FROM sessions WHERE ended_at IS NOT NULL ORDER BY ended_at DESC")
+    .all();
+  const players = db.prepare("SELECT COUNT(DISTINCT player_id) AS n FROM queue_entries WHERE session_id = ?");
+  const matches = db.prepare(
+    "SELECT COUNT(*) AS n FROM matches WHERE session_id = ? AND state = 'active' AND ended_at IS NOT NULL",
+  );
+  const shuttles = db.prepare(
+    `SELECT COALESCE((SELECT SUM(m.new_shuttles) FROM matches m WHERE m.session_id = s.id), 0) + s.shuttles_extra AS n
+     FROM sessions s WHERE s.id = ?`,
+  );
+  for (const s of sessions) {
+    s.players = players.get(s.id).n;
+    s.matches = matches.get(s.id).n;
+    s.shuttles_total = shuttles.get(s.id).n;
+  }
+  return c.json({ sessions });
+});
+
 router.post("/", async (c) => {
   const { name, scheduled_start, scheduled_end, court_count, courts, checkin_order, max_consecutive, rest_games } =
     await c.req
