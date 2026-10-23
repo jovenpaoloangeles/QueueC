@@ -60,6 +60,7 @@ for (const f of [
   "server/routes/corrections.test.js",
   "server/routes/attendance.test.js",
   "server/routes/history.test.js",
+  "server/routes/career.test.js",
 ]) {
   const r = Bun.spawnSync(["bun", join(root, f)], {
     cwd: root,
