@@ -10,6 +10,7 @@ import {
   startSlateOnCourt,
 } from "./api.js";
 import CourtsRow from "./components/CourtsRow.jsx";
+import HistoryPage from "./components/HistoryPage.jsx";
 import EndMatchModal from "./components/EndMatchModal.jsx";
 import Header from "./components/Header.jsx";
 import OnDeckStrip from "./components/OnDeckStrip.jsx";
@@ -19,11 +20,12 @@ import ShortcutCheatsheet from "./components/ShortcutCheatsheet.jsx";
 import StartMatchConfirmDialog from "./components/StartMatchConfirmDialog.jsx";
 import StatsSidebar from "./components/StatsSidebar.jsx";
 import { useSSE } from "./hooks/useSSE.js";
+import useHashRoute from "./hooks/useHashRoute.js";
 import { useTimers } from "./hooks/useTimers.js";
 import { EMPTY_DRAFT } from "./lib/dnd.js";
 import { fmtDur, freeCourts, idleNudgeSec, nudgeKind } from "./lib/utils.js";
 
-export default function App() {
+function LiveView() {
   const [sseData, setSseData] = useState({
     session: null,
     queue: [],
@@ -637,4 +639,13 @@ export default function App() {
       )}
     </div>
   );
+}
+
+// v1.3 route switch: the live view keeps every hook subscription (SSE, timers,
+// shortcuts) to itself; history views render without them. LiveView is the
+// pre-v1.3 App body, unchanged.
+export default function App() {
+  const route = useHashRoute();
+  if (route.name === "history") return <HistoryPage />;
+  return <LiveView />;
 }

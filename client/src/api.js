@@ -28,6 +28,7 @@ export const endSession = (id) => req("PATCH", `/sessions/${id}/end`);
 export const pauseSession = (id) => req("PATCH", `/sessions/${id}/pause`);
 export const resumeSession = (id) => req("PATCH", `/sessions/${id}/resume`);
 export const getPlayers = () => req("GET", "/players");
+export const getSessions = () => req("GET", "/sessions");
 export const createPlayer = (data) => req("POST", "/players", data);
 export const updatePlayer = (id, data) => req("PATCH", `/players/${id}`, data);
 export const checkinPlayer = (sessionId, playerId) =>
