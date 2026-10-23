@@ -15,8 +15,13 @@ import { cn } from "@/lib/utils";
 import { endMatch } from "../api.js";
 
 /** Step 2 of the End Match flow: final score, shuttle usage and match rating. */
-export default function EndMatchModal({ match, courtLabel, teamNames, onClose }) {
-  const [scores, setScores] = useState({ team1: match.team1_score ?? 0, team2: match.team2_score ?? 0 });
+export default function EndMatchModal({ match, courtLabel, teamNames, winner, onClose }) {
+  // scores start empty (not 0) so users type "31", never "031"; a winner picked
+  // in the confirm dialog presets the winning side to 31
+  const [scores, setScores] = useState({
+    team1: winner === "team1" ? 31 : (match.team1_score ?? ""),
+    team2: winner === "team2" ? 31 : (match.team2_score ?? ""),
+  });
   const [shuttles, setShuttles] = useState({
     newShuttles: match.new_shuttles ?? 1,
   });
@@ -64,10 +69,11 @@ export default function EndMatchModal({ match, courtLabel, teamNames, onClose })
                   htmlFor="end-match-team1"
                   className="text-2xs uppercase tracking-wider text-muted-foreground"
                 >
-                  Team 1{teamNames?.team1 ? ` · ${teamNames.team1}` : ""}
+                  {teamNames?.team1 || "Team 1"}
                 </FieldLabel>
                 <Input
                   id="end-match-team1"
+                  aria-label="Team 1 score"
                   autoFocus
                   type="number"
                   min="0"
@@ -83,10 +89,11 @@ export default function EndMatchModal({ match, courtLabel, teamNames, onClose })
                   htmlFor="end-match-team2"
                   className="text-2xs uppercase tracking-wider text-muted-foreground"
                 >
-                  Team 2{teamNames?.team2 ? ` · ${teamNames.team2}` : ""}
+                  {teamNames?.team2 || "Team 2"}
                 </FieldLabel>
                 <Input
                   id="end-match-team2"
+                  aria-label="Team 2 score"
                   type="number"
                   min="0"
                   max="99"
@@ -103,29 +110,52 @@ export default function EndMatchModal({ match, courtLabel, teamNames, onClose })
               Shuttle Usage
             </FieldLabel>
             <Field className="flex-1">
-              <FieldLabel htmlFor="end-match-new" className="text-2xs text-muted-foreground">
-                New Shuttles
-              </FieldLabel>
-              <Input
-                id="end-match-new"
-                data-testid="final-new"
-                type="number"
-                min="0"
-                value={shuttles.newShuttles}
-                onChange={(e) => setShuttles((s) => ({ ...s, newShuttles: e.target.value }))}
-                className="h-9 rounded-md border-border bg-card font-mono font-semibold tabular-nums"
-              />
+              <FieldLabel className="text-2xs text-muted-foreground">New Shuttles</FieldLabel>
+              <div className="flex items-center gap-2" data-testid="final-new">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon-lg"
+                  aria-label="Fewer shuttles"
+                  data-testid="final-new-minus"
+                  className="rounded-full font-mono text-lg font-semibold"
+                  onClick={() =>
+                    setShuttles((s) => ({ ...s, newShuttles: Math.max(0, toInt(s.newShuttles, 999) - 1) }))
+                  }
+                >
+                  −
+                </Button>
+                <span
+                  aria-live="polite"
+                  className="flex-1 rounded-md border border-border bg-card py-1.5 text-center font-mono text-base font-semibold tabular-nums"
+                >
+                  {toInt(shuttles.newShuttles, 999)}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon-lg"
+                  aria-label="More shuttles"
+                  data-testid="final-new-plus"
+                  className="rounded-full font-mono text-lg font-semibold"
+                  onClick={() =>
+                    setShuttles((s) => ({ ...s, newShuttles: Math.min(999, toInt(s.newShuttles, 999) + 1) }))
+                  }
+                >
+                  +
+                </Button>
+              </div>
             </Field>
           </FieldGroup>
 
           <FieldGroup>
             <FieldLabel className="text-2xs uppercase tracking-wider text-muted-foreground">
-              Match Quality Rating (1-5)
+              How was the match?
             </FieldLabel>
             <div
               role="radiogroup"
               aria-label="Match Quality Rating"
-              className="flex items-center gap-1"
+              className="flex items-center justify-center gap-1"
               data-rating={rating}
               data-testid="rating-row"
             >

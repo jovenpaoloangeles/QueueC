@@ -16,7 +16,7 @@ export default function HistoryPage() {
       .catch(() => live && setSessions([]));
   }, []);
   return (
-    <HistoryShell title="History">
+    <HistoryShell title="History" back="#/">
       <div data-testid="history-list" className="flex flex-col gap-2">
         {sessions === null && (
           <div className="text-sm text-muted-foreground">Loading…</div>

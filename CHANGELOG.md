@@ -4,6 +4,24 @@ Notable user-facing changes. Format follows Keep a Changelog; versions follow
 semver once there is a public API surface to break (the Docker image tag is
 the version that matters for self-hosters).
 
+## [1.4.1] — 2026-10-23
+
+End-match flow polish and history navigation fixes.
+
+### Changed
+
+- End Match confirm dialog asks "Who won?" — picking a team opens the score
+  modal with that side preset to 31 (scores start empty, never "031").
+- Shuttle count in the end-match modal is a +/− stepper instead of a text input.
+- Score modal labels show the team names only (no "Team N ·" prefix); score
+  inputs have explicit aria-labels.
+
+### Fixed
+
+- The header History link no longer disappears when a session ends — it is the
+  only way back to history.
+- History page's ← Back returns to the live/setup view instead of itself.
+
 ## [1.3.0] — 2026-10-23
 
 History & corrections.

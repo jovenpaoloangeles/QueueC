@@ -507,14 +507,20 @@ export default function CourtCard({
       <ConfirmEndDialog
         open={showConfirm}
         onOpenChange={setShowConfirm}
-        teamsLine={teamNames ? `${teamNames.team1} vs ${teamNames.team2}` : undefined}
-        onConfirm={() => {
+        teamNames={teamNames}
+        onConfirm={(winner) => {
           setShowConfirm(false);
-          setShowEnd(true);
+          setShowEnd(winner ?? true);
         }}
       />
       {showEnd && match && (
-        <EndMatchModal match={match} courtLabel={court.label} teamNames={teamNames} onClose={() => setShowEnd(false)} />
+        <EndMatchModal
+          match={match}
+          courtLabel={court.label}
+          teamNames={teamNames}
+          winner={showEnd === "team1" || showEnd === "team2" ? showEnd : null}
+          onClose={() => setShowEnd(false)}
+        />
       )}
     </Card>
   );

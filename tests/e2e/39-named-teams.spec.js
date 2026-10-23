@@ -25,8 +25,21 @@ test("39.1 confirm gate and score modal show the team names", async ({ page }) =
   await expect(line).toContainText(team1);
   await expect(line).toContainText(team2);
   await page.getByTestId("confirm-end-end").click();
-  await expect(page.getByText(`Team 1 · ${team1}`)).toBeVisible();
-  await expect(page.getByText(`Team 2 · ${team2}`)).toBeVisible();
+  const modal = page.getByRole("dialog").last();
+  await expect(modal).toBeVisible();
+  const modalText = (await modal.innerText()).toLowerCase();
+  expect(modalText).toContain(team1.toLowerCase()); // labels show the names only…
+  expect(modalText).toContain(team2.toLowerCase());
+  expect(modalText).not.toContain("team 1 ·"); // …never the "Team N ·" prefix
+  await page.getByRole("button", { name: "Cancel" }).click();
+});
+
+test("39.4 Who won? presets the winning side to 31", async ({ page }) => {
+  await seedLiveMatch(page);
+  await page.getByRole("button", { name: "End Match" }).first().click();
+  await page.getByTestId("confirm-end-winner1").click();
+  await expect(page.getByLabel("Team 1 score")).toHaveValue("31"); // winner autocompleted
+  await expect(page.getByLabel("Team 2 score")).toHaveValue(""); // loser still empty
   await page.getByRole("button", { name: "Cancel" }).click();
 });
 

@@ -12,7 +12,7 @@ import {
  * Step 1 of the End Match flow: a dumb confirm gate.
  * Parent owns `open` state; onConfirm() is called when the user commits.
  */
-export default function ConfirmEndDialog({ open, onOpenChange, onConfirm, teamsLine }) {
+export default function ConfirmEndDialog({ open, onOpenChange, onConfirm, teamNames }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -30,10 +30,32 @@ export default function ConfirmEndDialog({ open, onOpenChange, onConfirm, teamsL
             Conclude live match?
           </DialogTitle>
           <DialogDescription>Record final score, shuttle usage and match rating.</DialogDescription>
-          {teamsLine && (
-            <p data-testid="confirm-end-teams" className="text-sm font-semibold text-foreground">
-              {teamsLine}
-            </p>
+          {teamNames && (
+            <div data-testid="confirm-end-teams" className="flex flex-col gap-2 pt-1">
+              <p className="text-2xs uppercase tracking-wider text-muted-foreground">Who won?</p>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 rounded-full"
+                  data-testid="confirm-end-winner1"
+                  onClick={() => onConfirm("team1")}
+                >
+                  {teamNames.team1}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 rounded-full"
+                  data-testid="confirm-end-winner2"
+                  onClick={() => onConfirm("team2")}
+                >
+                  {teamNames.team2}
+                </Button>
+              </div>
+            </div>
           )}
         </DialogHeader>
         <DialogFooter>

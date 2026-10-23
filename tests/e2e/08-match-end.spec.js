@@ -25,11 +25,11 @@ test("8.2 modal title shows court label", async ({ page }) => {
   await expect(page.getByRole("dialog").locator("text=Court")).toBeVisible();
 });
 
-test("8.3 score inputs default to 0", async ({ page }) => {
+test("8.3 score inputs start empty", async ({ page }) => {
   await page.getByRole("button", { name: "End Match" }).first().click();
   await page.getByTestId("confirm-end-end").click(); // pass the confirm gate
-  await expect(page.getByLabel("Team 1")).toHaveValue("0");
-  await expect(page.getByLabel("Team 2")).toHaveValue("0");
+  await expect(page.getByLabel("Team 1")).toHaveValue("");
+  await expect(page.getByLabel("Team 2")).toHaveValue("");
 });
 
 test("8.4 score inputs accept 0–99", async ({ page }) => {

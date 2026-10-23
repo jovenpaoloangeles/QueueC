@@ -49,3 +49,13 @@ test("43.3 History link in the header navigates to the list", async ({ page }) =
   await expect(page).toHaveURL(/#\/history/);
   await expect(page.getByTestId("history-list")).toBeVisible();
 });
+
+test("43.4 the shell's ← Back leaves the History list for the live view", async ({ page }) => {
+  await fullSetup(page);
+  await page.goto("/#/history");
+  const back = page.locator("a", { hasText: "← Back" });
+  await expect(back).toBeVisible();
+  await expect(back).toHaveAttribute("href", "#/"); // not a self-link — clicking must do something
+  await back.click();
+  await expect(page.getByTestId("session-setup")).toBeVisible(); // back on the live/setup view
+});
