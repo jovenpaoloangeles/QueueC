@@ -37,26 +37,25 @@ export function normalizeOrder(order, allowed) {
   return out;
 }
 
-router.post("/sessions/:id/checkin", async (c) => {
-  const id = c.req.param("id");
-  const { player_id } = await c.req.json().catch(() => ({}));
-  const now = Math.floor(Date.now() / 1000);
+// Check-in body, shared by the live check-in route and the v1.3 attendance
+// endpoint (which delegates to it for live sessions).
+export function checkinPlayer(sessionId, playerId, when = Math.floor(Date.now() / 1000)) {
   const existing = db
     .prepare("SELECT id FROM queue_entries WHERE session_id = ? AND player_id = ?")
-    .get(id, player_id);
-  if (existing) return c.json({ error: "Player already checked in" }, 409);
+    .get(sessionId, playerId);
+  if (existing) return { error: "Player already checked in", status: 409 };
 
   const existingOrders = db
     .prepare("SELECT sort_order FROM queue_entries WHERE session_id = ?")
-    .all(id)
+    .all(sessionId)
     .map((r) => r.sort_order);
 
   // New check-ins slot into alphabetical position among the current WAITING
   // entries (case-insensitive); everything at or after that spot shifts down one.
   // Sessions with checkin_order='arrival' skip that and just append.
-  const name = db.prepare("SELECT name FROM players WHERE id = ?").get(player_id)?.name;
+  const name = db.prepare("SELECT name FROM players WHERE id = ?").get(playerId)?.name;
   const arrivalOrder =
-    db.prepare("SELECT checkin_order FROM sessions WHERE id = ?").get(id)?.checkin_order === "arrival";
+    db.prepare("SELECT checkin_order FROM sessions WHERE id = ?").get(sessionId)?.checkin_order === "arrival";
   const insertAt = arrivalOrder
     ? null
     : alphabeticalSortOrder(
@@ -64,7 +63,7 @@ router.post("/sessions/:id/checkin", async (c) => {
           .prepare(
             "SELECT qe.sort_order, p.name FROM queue_entries qe JOIN players p ON p.id = qe.player_id WHERE qe.session_id = ? AND qe.status = 'waiting'",
           )
-          .all(id),
+          .all(sessionId),
         name ?? "",
       );
   let sortOrder;
@@ -74,7 +73,7 @@ router.post("/sessions/:id/checkin", async (c) => {
     sortOrder = insertAt;
     db.prepare(
       "UPDATE queue_entries SET sort_order = sort_order + 1 WHERE session_id = ? AND sort_order >= ?",
-    ).run(id, insertAt);
+    ).run(sessionId, insertAt);
   }
 
   // Late arrivals inherit the median virtual game count of active players
@@ -84,7 +83,7 @@ router.post("/sessions/:id/checkin", async (c) => {
     .prepare(
       "SELECT games_played + virt_offset AS gv FROM queue_entries WHERE session_id = ? AND status IN ('waiting','playing','resting')",
     )
-    .all(id)
+    .all(sessionId)
     .map((r) => r.gv)
     .sort((a, b) => a - b);
   const virtOffset = gVirts.length
@@ -95,11 +94,48 @@ router.post("/sessions/:id/checkin", async (c) => {
     .prepare(
       "INSERT INTO queue_entries (session_id, player_id, checked_in_at, sort_order, virt_offset, status_updated_at) VALUES (?, ?, ?, ?, ?, ?)",
     )
-    .run(id, player_id, now, sortOrder, virtOffset, now);
+    .run(sessionId, playerId, when, sortOrder, virtOffset, when);
 
-  const entry = db.prepare("SELECT * FROM queue_entries WHERE id = ?").get(lastInsertRowid);
+  return { entry: db.prepare("SELECT * FROM queue_entries WHERE id = ?").get(lastInsertRowid), status: 201 };
+}
+
+router.post("/sessions/:id/checkin", async (c) => {
+  const id = c.req.param("id");
+  const { player_id } = await c.req.json().catch(() => ({}));
+  const result = checkinPlayer(id, player_id);
+  if (result.error) return c.json({ error: result.error }, result.status);
   broadcast();
-  return c.json({ entry }, 201);
+  return c.json({ entry: result.entry }, result.status);
+});
+
+// v1.3 attendance: a live session takes a normal check-in; an ended session
+// back-fills a plain attendance row (status 'left') with the given timestamp.
+router.post("/sessions/:id/attendance", async (c) => {
+  const id = c.req.param("id");
+  const { player_id, checked_in_at } = await c.req.json().catch(() => ({}));
+  const session = db.prepare("SELECT * FROM sessions WHERE id = ?").get(id);
+  if (!session) return c.json({ error: "Session not found" }, 404);
+  if (!db.prepare("SELECT id FROM players WHERE id = ?").get(player_id)) {
+    return c.json({ error: "Player not found" }, 404);
+  }
+
+  let result;
+  if (session.ended_at == null) {
+    result = checkinPlayer(id, player_id);
+  } else {
+    const maxOrder = db
+      .prepare("SELECT COALESCE(MAX(sort_order), 0) AS m FROM queue_entries WHERE session_id = ?")
+      .get(id).m;
+    const { lastInsertRowid } = db
+      .prepare(
+        "INSERT INTO queue_entries (session_id, player_id, checked_in_at, sort_order, virt_offset, status, status_updated_at) VALUES (?, ?, ?, ?, 0, 'left', ?)",
+      )
+      .run(id, player_id, checked_in_at ?? Math.floor(Date.now() / 1000), maxOrder + 1, session.ended_at);
+    result = { entry: db.prepare("SELECT * FROM queue_entries WHERE id = ?").get(lastInsertRowid), status: 201 };
+  }
+  if (result.error) return c.json({ error: result.error }, result.status);
+  broadcast();
+  return c.json({ entry: result.entry }, result.status);
 });
 
 router.delete("/queue/:entryId", (c) => {
@@ -111,6 +147,13 @@ router.delete("/queue/:entryId", (c) => {
   // race: the card can leave the grid via SSE between arm and Confirm.
   if (entry.status === "playing" || entry.status === "staged") {
     return c.json({ error: "Cannot remove a playing entry" }, 409);
+  }
+  // v1.3: any match appearance is history — fix or delete the match instead.
+  const inMatch = db
+    .prepare(`SELECT 1 FROM matches WHERE ? IN (team1_p1, team1_p2, team2_p1, team2_p2) LIMIT 1`)
+    .get(Number(entryId));
+  if (inMatch) {
+    return c.json({ error: "Entry has match history — fix the match instead" }, 409);
   }
   db.prepare("DELETE FROM queue_entries WHERE id = ?").run(entryId);
   broadcast();

@@ -87,7 +87,14 @@ async function main() {
     team2_p2: ids[3],
   });
   await api(`/api/matches/${m2.id}/end`, "PATCH", { team1_score: 21, team2_score: 3 });
-  assert.equal((await api(`/api/matches/${m2.id}`, "DELETE")).status, 404, "ended match abort → 404");
+  // v1.3: ended matches delete (history correction) instead of 404ing; the
+  // ex-players' games_played recomputes back down to their pre-match counts.
+  assert.equal((await api(`/api/matches/${m2.id}`, "DELETE")).status, 200, "ended match delete → 200");
+  assert.equal(
+    (await api(`/api/matches/${m2.id}`, "DELETE")).status,
+    404,
+    "double delete → 404",
+  );
 
   await api(`/api/sessions/${session.id}/end`, "PATCH");
   console.log("match-abort.test.js: all assertions passed");

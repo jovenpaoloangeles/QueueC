@@ -88,22 +88,24 @@ router.post("/", async (c) => {
 
 // Abort a live match — the undo of POST /. Entries return to waiting with
 // sort_order untouched (they never left the queue's ordering); the row is
-// deleted. Only a not-yet-ended active match aborts.
+// deleted. v1.3: ended matches delete too (history correction) — the row goes
+// and the ex-players' derived stats are recomputed from the remaining log.
+// Slated rows still refuse: unstage them via DELETE /matches/:id/slate.
 router.delete("/:id", (c) => {
   const id = c.req.param("id");
-  const match = db
-    .prepare("SELECT * FROM matches WHERE id = ? AND state = 'active' AND ended_at IS NULL")
-    .get(id);
+  const match = db.prepare("SELECT * FROM matches WHERE id = ? AND state = 'active'").get(id);
   if (!match) return c.json({ error: "Match not found" }, 404);
   const now = Math.floor(Date.now() / 1000);
+  const entryIds = [match.team1_p1, match.team1_p2, match.team2_p1, match.team2_p2].filter(Boolean);
   db.transaction(() => {
-    const setWaiting = db.prepare(
-      "UPDATE queue_entries SET status = 'waiting', status_updated_at = ? WHERE id = ?",
-    );
-    for (const eid of [match.team1_p1, match.team1_p2, match.team2_p1, match.team2_p2].filter(Boolean)) {
-      setWaiting.run(now, eid);
+    if (match.ended_at == null) {
+      const setWaiting = db.prepare(
+        "UPDATE queue_entries SET status = 'waiting', status_updated_at = ? WHERE id = ?",
+      );
+      for (const eid of entryIds) setWaiting.run(now, eid);
     }
     db.prepare("DELETE FROM matches WHERE id = ?").run(id);
+    if (match.ended_at != null) recomputeEntries(entryIds);
   })();
   broadcast();
   return c.json({ ok: true });
