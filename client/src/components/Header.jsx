@@ -186,13 +186,11 @@ export default function Header({ session, sseData, draftedIds = new Set(), onSma
         >
           ☾
         </Button>
-        {session && (
-          <Button asChild size="sm" variant="ghost" className="rounded-full">
-            <a data-testid="nav-history" href="#/history">
-              History
-            </a>
-          </Button>
-        )}
+        <Button asChild size="sm" variant="ghost" className="rounded-full">
+          <a data-testid="nav-history" href="#/history">
+            History
+          </a>
+        </Button>
         {session && session.started_at != null && !session.ended_at && (
           <Button
             size="sm"

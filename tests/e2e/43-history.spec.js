@@ -38,6 +38,8 @@ test("43.2 #/history renders the history list, / still renders the live view", a
   // no active session after the end → setup screen, not a frozen live view
   await expect(page.getByTestId("session-setup")).toBeVisible();
   await expect(page.getByTestId("history-list")).toHaveCount(0);
+  // the History nav link survives the end — it's the only way back in
+  await expect(page.getByTestId("nav-history")).toBeVisible();
 });
 
 test("43.3 History link in the header navigates to the list", async ({ page }) => {
