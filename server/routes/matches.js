@@ -238,4 +238,129 @@ router.patch("/:id/shuttles", async (c) => {
   return c.json({ match: db.prepare("SELECT * FROM matches WHERE id = ?").get(id) });
 });
 
+// v1.3: rebuild derived stats from the match log. Ended matches are the source
+// of truth, so corrections and deletes call this instead of decrementing —
+// games_played/total_seconds_played/last_played_at can never drift. Does NOT
+// touch status/sort_order/virt_offset/checked_in_at.
+export function recomputeEntries(entryIds) {
+  const agg = db.prepare(`
+    SELECT COUNT(*) AS games,
+           COALESCE(SUM(m.ended_at - m.started_at), 0) AS seconds,
+           MAX(m.ended_at) AS last
+    FROM matches m
+    WHERE m.state = 'active' AND m.ended_at IS NOT NULL
+      AND ? IN (m.team1_p1, m.team1_p2, m.team2_p1, m.team2_p2)
+  `);
+  const update = db.prepare(
+    "UPDATE queue_entries SET games_played = ?, total_seconds_played = ?, last_played_at = ? WHERE id = ?",
+  );
+  for (const eid of entryIds) {
+    const { games, seconds, last } = agg.get(eid);
+    update.run(games, seconds, last, eid);
+  }
+}
+
+// Correct an ended match: scores, shuttles, rating, and the lineup itself.
+// The recompute (not arithmetic) updates the affected entries' stats, so a
+// player swap leaves both the removed and the added entry exact.
+router.patch("/:id/correct", async (c) => {
+  const id = c.req.param("id");
+  const match = db
+    .prepare("SELECT * FROM matches WHERE id = ? AND state = 'active' AND ended_at IS NOT NULL")
+    .get(id);
+  if (!match) return c.json({ error: "Ended match not found" }, 404);
+
+  const b = await c.req.json().catch(() => ({}));
+  const fields = ["team1_score", "team2_score", "new_shuttles", "used_shuttles", "rating", "players"];
+  if (!fields.some((k) => b[k] !== undefined)) {
+    return c.json({ error: "Nothing to correct" }, 400);
+  }
+  for (const [name, v] of [
+    ["team1_score", b.team1_score],
+    ["team2_score", b.team2_score],
+  ]) {
+    if (v !== undefined && (typeof v !== "number" || !Number.isInteger(v) || v < 0 || v > 99)) {
+      return c.json({ error: `${name} must be an integer between 0 and 99` }, 400);
+    }
+  }
+  for (const name of ["new_shuttles", "used_shuttles"]) {
+    const v = b[name];
+    if (v !== undefined && (typeof v !== "number" || !Number.isInteger(v) || v < 0)) {
+      return c.json({ error: `${name} must be a non-negative integer` }, 400);
+    }
+  }
+  if (b.rating !== undefined && (typeof b.rating !== "number" || !Number.isFinite(b.rating) || b.rating < 1 || b.rating > 5)) {
+    return c.json({ error: "rating must be between 1 and 5" }, 400);
+  }
+
+  let slots = null;
+  if (b.players !== undefined) {
+    if (!Array.isArray(b.players)) return c.json({ error: "players must be an array" }, 400);
+    const expected = match.format === "doubles" ? 4 : 2;
+    if (b.players.length !== expected) {
+      return c.json({ error: `a ${match.format} match takes ${expected} players` }, 400);
+    }
+    if (new Set(b.players).size !== b.players.length) {
+      return c.json({ error: "duplicate entry in players" }, 400);
+    }
+    const inSession = db.prepare("SELECT id FROM queue_entries WHERE id = ? AND session_id = ?");
+    const inLive = db.prepare(`
+      SELECT 1 FROM matches
+      WHERE state = 'active' AND ended_at IS NULL
+        AND ? IN (team1_p1, team1_p2, team2_p1, team2_p2) LIMIT 1
+    `);
+    for (const eid of b.players) {
+      if (!inSession.get(eid, match.session_id)) {
+        return c.json({ error: `entry ${eid} is not in this session` }, 400);
+      }
+      if (inLive.get(eid)) {
+        return c.json({ error: `entry ${eid} is playing a match` }, 409);
+      }
+    }
+    slots =
+      match.format === "doubles"
+        ? { team1_p1: b.players[0], team1_p2: b.players[1], team2_p1: b.players[2], team2_p2: b.players[3] }
+        : { team1_p1: b.players[0], team1_p2: null, team2_p1: b.players[1], team2_p2: null };
+  }
+
+  const to = slots ?? {
+    team1_p1: match.team1_p1,
+    team1_p2: match.team1_p2,
+    team2_p1: match.team2_p1,
+    team2_p2: match.team2_p2,
+  };
+
+  db.transaction(() => {
+    db.prepare(`
+      UPDATE matches
+      SET team1_score = COALESCE(?, team1_score),
+          team2_score = COALESCE(?, team2_score),
+          new_shuttles = COALESCE(?, new_shuttles),
+          used_shuttles = COALESCE(?, used_shuttles),
+          rating = COALESCE(?, rating),
+          team1_p1 = ?, team1_p2 = ?, team2_p1 = ?, team2_p2 = ?
+      WHERE id = ?
+    `).run(
+      b.team1_score ?? null,
+      b.team2_score ?? null,
+      b.new_shuttles ?? null,
+      b.used_shuttles ?? null,
+      b.rating ?? null,
+      to.team1_p1,
+      to.team1_p2,
+      to.team2_p1,
+      to.team2_p2,
+      id,
+    );
+    const affected = new Set([
+      match.team1_p1, match.team1_p2, match.team2_p1, match.team2_p2,
+      to.team1_p1, to.team1_p2, to.team2_p1, to.team2_p2,
+    ].filter(Boolean));
+    recomputeEntries([...affected]);
+  })();
+
+  broadcast();
+  return c.json({ match: db.prepare("SELECT * FROM matches WHERE id = ?").get(id) });
+});
+
 export default router;

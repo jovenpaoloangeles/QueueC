@@ -56,6 +56,8 @@ for (const f of [
   "server/routes/match-abort.test.js",
   "server/routes/checkin-order.test.js",
   "server/routes/automatch-locked.test.js",
+  // boots its own server on :3992 (needs direct SQL read-back for recompute)
+  "server/routes/corrections.test.js",
 ]) {
   const r = Bun.spawnSync(["bun", join(root, f)], {
     cwd: root,
