@@ -11,6 +11,7 @@ import {
 } from "./api.js";
 import CourtsRow from "./components/CourtsRow.jsx";
 import HistoryPage from "./components/HistoryPage.jsx";
+import SessionDetailPage from "./components/SessionDetailPage.jsx";
 import EndMatchModal from "./components/EndMatchModal.jsx";
 import Header from "./components/Header.jsx";
 import OnDeckStrip from "./components/OnDeckStrip.jsx";
@@ -647,5 +648,6 @@ function LiveView() {
 export default function App() {
   const route = useHashRoute();
   if (route.name === "history") return <HistoryPage />;
+  if (route.name === "session") return <SessionDetailPage id={route.id} />;
   return <LiveView />;
 }
