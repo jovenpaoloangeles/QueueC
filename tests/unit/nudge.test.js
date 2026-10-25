@@ -1,7 +1,7 @@
 // v1.1 idle-court nudge: nudgeKind fires only when a court is truly free and
 // someone is waiting to use it — a staged slate wins over a bare queue.
 import assert from "node:assert/strict";
-import { IDLE_NUDGE_AFTER_SEC, freeCourts, nudgeKind } from "../../client/src/lib/utils.js";
+import { freeCourts, IDLE_NUDGE_AFTER_SEC, nudgeKind } from "../../client/src/lib/utils.js";
 
 const court = (id, over = {}) => ({ id, enabled: true, ...over });
 const NOW = 10_000;

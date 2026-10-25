@@ -19,7 +19,7 @@
 //
 // Run: bun tests/sim/benchmark-sim.mjs   (or `bun run test:sim` from tests/)
 
-import { planBatch, consecutiveCounts, MATCH_CONFIG } from "../../server/logic/smartQueue.js";
+import { consecutiveCounts, MATCH_CONFIG, planBatch } from "../../server/logic/smartQueue.js";
 
 // ---------- RNG (mulberry32 + Box-Muller) ----------
 
@@ -395,9 +395,18 @@ export function runSession(scenario, policy, cfg = {}) {
           const chosen = elig.slice(0, 4);
           if (policy === "LOWEST_RAW_GAMES") {
             const splits = [
-              [[0, 1], [2, 3]],
-              [[0, 2], [1, 3]],
-              [[0, 3], [1, 2]],
+              [
+                [0, 1],
+                [2, 3],
+              ],
+              [
+                [0, 2],
+                [1, 3],
+              ],
+              [
+                [0, 3],
+                [1, 2],
+              ],
             ];
             let best = splits[0];
             let bestDiff = Infinity;
@@ -482,18 +491,14 @@ export function runSession(scenario, policy, cfg = {}) {
           const qm = mean(qs);
           const cSd = Math.sqrt(mean(qs.map((v) => (v - qm) ** 2)));
           const tDiff = Math.abs(
-            weakLink(quartet[0], quartet[1], skillTiers) -
-              weakLink(quartet[2], quartet[3], skillTiers),
+            weakLink(quartet[0], quartet[1], skillTiers) - weakLink(quartet[2], quartet[3], skillTiers),
           );
           cohortSds.push(cSd);
           teamDiffs.push(tDiff);
           if (cSd <= 1.0 && tDiff <= 0.5) competitiveGames++;
 
           const gapOf = (pair) => gameCounter - (lastPairGame.get(pair) ?? -Infinity);
-          const gap = Math.min(
-            gapOf(quartet[0] * N + quartet[1]),
-            gapOf(quartet[2] * N + quartet[3]),
-          );
+          const gap = Math.min(gapOf(quartet[0] * N + quartet[1]), gapOf(quartet[2] * N + quartet[3]));
           if (Praw[quartet[0] * N + quartet[1]] > 0 || Praw[quartet[2] * N + quartet[3]] > 0) {
             repeatPartnerEvents++;
             if (gap <= RECENT_GAMES) recentRepeatEvents++;
@@ -539,12 +544,7 @@ export function runSession(scenario, policy, cfg = {}) {
           const balanceAdj = realistic ? 0.12 * (qm - 4) - 0.2 * Math.max(0, tDiff - 0.75) : 0;
           const playDuration = clamp(baseDur + balanceAdj, 8.5, 21.0);
           const court = freeCourts.shift();
-          events.push([
-            t + playDuration + lag,
-            1,
-            seq++,
-            { court, quartet, startedAt: t, playDuration },
-          ]);
+          events.push([t + playDuration + lag, 1, seq++, { court, quartet, startedAt: t, playDuration }]);
         }
       }
     }
@@ -589,7 +589,9 @@ if (import.meta.main) {
   const N_SEEDS = 100;
   const GATE_SEEDS = N_SEEDS; // full sample: gates are mean-based, more seeds = tighter estimate
 
-  console.log(`Running ${N_SEEDS} seeds × ${POLICIES.length} policies (N=22, C=3, T=180min, realistic club dynamics)...`);
+  console.log(
+    `Running ${N_SEEDS} seeds × ${POLICIES.length} policies (N=22, C=3, T=180min, realistic club dynamics)...`,
+  );
   const tStart = performance.now();
 
   const runs = [];

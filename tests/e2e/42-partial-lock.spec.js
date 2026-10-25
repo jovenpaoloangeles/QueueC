@@ -55,8 +55,7 @@ test("42.1 Smart add keeps drafted players in their slots", async ({ page }) => 
   await page.getByTestId("ondeck-smart-add").click();
   await expect(page.getByTestId("ondeck-new-slot-0")).toContainText(names[0]);
   await expect(page.getByTestId("ondeck-new-slot-1")).toContainText(names[1]);
-  for (let i = 2; i < 4; i++)
-    await expect(page.getByTestId(`ondeck-new-slot-${i}`)).not.toHaveText("Drop…");
+  for (let i = 2; i < 4; i++) await expect(page.getByTestId(`ondeck-new-slot-${i}`)).not.toHaveText("Drop…");
   // builder shows exactly 4 distinct players
   const filled = [];
   for (let i = 0; i < 4; i++) filled.push(await page.getByTestId(`ondeck-new-slot-${i}`).innerText());

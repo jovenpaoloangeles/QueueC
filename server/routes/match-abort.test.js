@@ -73,7 +73,11 @@ async function main() {
   }
   // sort_order kept: the four entries hold their original relative order
   const orders = ids.map((id) => st1.queue.find((q) => q.id === id).sort_order);
-  assert.deepEqual(orders, [...orders].sort((a, b) => a - b), "sort_order preserved");
+  assert.deepEqual(
+    orders,
+    [...orders].sort((a, b) => a - b),
+    "sort_order preserved",
+  );
 
   assert.equal((await api(`/api/matches/${match.id}`, "DELETE")).status, 404, "second DELETE → 404");
 
@@ -101,11 +105,7 @@ async function main() {
     200,
     "historical delete of ended match → 200",
   );
-  assert.equal(
-    (await api(`/api/matches/${m2.id}`, "DELETE")).status,
-    404,
-    "double delete → 404",
-  );
+  assert.equal((await api(`/api/matches/${m2.id}`, "DELETE")).status, 404, "double delete → 404");
 
   await api(`/api/sessions/${session.id}/end`, "PATCH");
   console.log("match-abort.test.js: all assertions passed");

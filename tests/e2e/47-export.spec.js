@@ -24,10 +24,7 @@ test("47.1 session detail exports CSV and JSON", async ({ page }) => {
     ["export-csv", `session-${sid}-detail.csv`],
     ["export-json", `session-${sid}-detail.json`],
   ]) {
-    const [download] = await Promise.all([
-      page.waitForEvent("download"),
-      page.getByTestId(testid).click(),
-    ]);
+    const [download] = await Promise.all([page.waitForEvent("download"), page.getByTestId(testid).click()]);
     expect(download.suggestedFilename()).toBe(name);
   }
 });
@@ -43,10 +40,7 @@ test("47.2 career page exports CSV and JSON", async ({ page }) => {
     ["export-csv", `player-${pid}-career.csv`],
     ["export-json", `player-${pid}-career.json`],
   ]) {
-    const [download] = await Promise.all([
-      page.waitForEvent("download"),
-      page.getByTestId(testid).click(),
-    ]);
+    const [download] = await Promise.all([page.waitForEvent("download"), page.getByTestId(testid).click()]);
     expect(download.suggestedFilename()).toBe(name);
   }
 });

@@ -2,11 +2,11 @@
 
 Three layers, deliberately cheap at the bottom:
 
-| Layer | What | Speed |
-|---|---|---|
-| Unit (`tests/unit/`) | pure logic (dnd validity, api error shape, timer math) | ms |
-| Server/API (`server/**/*.test.js` + `tests/scripts/run-server-tests.js`) | route behavior over a real throwaway server + temp DB | seconds |
-| E2E (`tests/e2e/*.spec.js`) | Playwright, one real server + temp DB **per worker** | ~1 min full |
+| Layer                                                                    | What                                                   | Speed       |
+| ------------------------------------------------------------------------ | ------------------------------------------------------ | ----------- |
+| Unit (`tests/unit/`)                                                     | pure logic (dnd validity, api error shape, timer math) | ms          |
+| Server/API (`server/**/*.test.js` + `tests/scripts/run-server-tests.js`) | route behavior over a real throwaway server + temp DB  | seconds     |
+| E2E (`tests/e2e/*.spec.js`)                                              | Playwright, one real server + temp DB **per worker**   | ~1 min full |
 
 ## Running
 

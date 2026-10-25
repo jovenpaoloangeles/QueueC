@@ -77,9 +77,9 @@ dist is fresh; `bun run test:e2e` runs the same guard before Playwright.
 
 ## Configuration
 
-| Env var | Default | Description |
-|---------|---------|-------------|
-| `DB_PATH` | `/tmp/queuec-test.db` | Test database path |
+| Env var        | Default                 | Description          |
+| -------------- | ----------------------- | -------------------- |
+| `DB_PATH`      | `/tmp/queuec-test.db`   | Test database path   |
 | `PLAYERS_PATH` | `fixtures/players.json` | Fixture players file |
 
 ## CI

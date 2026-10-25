@@ -314,7 +314,12 @@ if (!sessionCols.has("checkin_order")) {
 
 // Late-arrival virtual game offset: g_virt = games_played + virt_offset.
 // Set once at check-in to the median g_virt of then-active entries (§2).
-const virtCols = new Set(db.prepare("PRAGMA table_info(queue_entries)").all().map((c) => c.name));
+const virtCols = new Set(
+  db
+    .prepare("PRAGMA table_info(queue_entries)")
+    .all()
+    .map((c) => c.name),
+);
 if (!virtCols.has("virt_offset")) {
   db.exec("ALTER TABLE queue_entries ADD COLUMN virt_offset REAL NOT NULL DEFAULT 0");
 }

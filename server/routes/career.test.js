@@ -17,8 +17,12 @@ const pid = async (name) => (await api("/api/players")).players.find((p) => p.na
 
 async function playDoubles(sessionId, court, a, b, c, d, s1, s2) {
   const m = await api("/api/matches", "POST", {
-    session_id: sessionId, court_number: court,
-    team1_p1: a, team1_p2: b, team2_p1: c, team2_p2: d,
+    session_id: sessionId,
+    court_number: court,
+    team1_p1: a,
+    team1_p2: b,
+    team2_p1: c,
+    team2_p2: d,
   });
   assert.equal(m.status, 201);
   const end = await api(`/api/matches/${m.match.id}/end`, "PATCH", { team1_score: s1, team2_score: s2 });
@@ -42,14 +46,24 @@ async function main() {
   // two ended sessions, C1+C2 together: win then loss
   const checkinAll = async (sid) => {
     const e = {};
-    for (const [name, p] of [["C1", c1], ["C2", c2], ["C3", c3], ["C4", c4]]) {
+    for (const [name, p] of [
+      ["C1", c1],
+      ["C2", c2],
+      ["C3", c3],
+      ["C4", c4],
+    ]) {
       const ci = await api(`/api/sessions/${sid}/checkin`, "POST", { player_id: p });
       e[name] = ci.entry.id;
     }
     return e;
   };
   const now = Math.floor(Date.now() / 1000);
-  const s1 = await api("/api/sessions", "POST", { name: "Career One", scheduled_start: now, scheduled_end: now + 3600, court_count: 2 });
+  const s1 = await api("/api/sessions", "POST", {
+    name: "Career One",
+    scheduled_start: now,
+    scheduled_end: now + 3600,
+    court_count: 2,
+  });
   const e1 = await checkinAll(s1.session.id);
   await api(`/api/sessions/${s1.session.id}/start`, "PATCH");
   await playDoubles(s1.session.id, 1, e1.C1, e1.C2, e1.C3, e1.C4, 21, 15);
@@ -57,7 +71,12 @@ async function main() {
 
   await new Promise((r) => setTimeout(r, 1100));
   const now2 = Math.floor(Date.now() / 1000);
-  const s2 = await api("/api/sessions", "POST", { name: "Career Two", scheduled_start: now, scheduled_end: now + 3600, court_count: 2 });
+  const s2 = await api("/api/sessions", "POST", {
+    name: "Career Two",
+    scheduled_start: now,
+    scheduled_end: now + 3600,
+    court_count: 2,
+  });
   const e2 = await checkinAll(s2.session.id);
   await api(`/api/sessions/${s2.session.id}/start`, "PATCH");
   await playDoubles(s2.session.id, 1, e2.C1, e2.C2, e2.C3, e2.C4, 15, 21);
@@ -70,7 +89,13 @@ async function main() {
   assert.ok(career.player.skill_level);
 
   assert.deepEqual(
-    { g: career.totals.games, w: career.totals.wins, l: career.totals.losses, r: career.totals.win_rate, d: career.totals.point_diff },
+    {
+      g: career.totals.games,
+      w: career.totals.wins,
+      l: career.totals.losses,
+      r: career.totals.win_rate,
+      d: career.totals.point_diff,
+    },
     { g: 2, w: 1, l: 1, r: 50, d: 0 },
     "career totals",
   );
@@ -78,11 +103,21 @@ async function main() {
 
   assert.equal(career.partners.length, 1, "one partner: Inter C2");
   assert.deepEqual(
-    { id: career.partners[0].player_id, name: career.partners[0].name, g: career.partners[0].games, w: career.partners[0].wins, l: career.partners[0].losses },
+    {
+      id: career.partners[0].player_id,
+      name: career.partners[0].name,
+      g: career.partners[0].games,
+      w: career.partners[0].wins,
+      l: career.partners[0].losses,
+    },
     { id: c2, name: `${tag} P2`, g: 2, w: 1, l: 1 },
   );
 
-  assert.deepEqual(career.attendance.sessions.map((s) => s.name), ["Career Two", "Career One"], "sessions ended_at DESC");
+  assert.deepEqual(
+    career.attendance.sessions.map((s) => s.name),
+    ["Career Two", "Career One"],
+    "sessions ended_at DESC",
+  );
   assert.ok(career.attendance.sessions.every((s) => s.games_played === 1 && s.session_id));
 
   const month = new Date().toISOString().slice(0, 7);
@@ -96,10 +131,13 @@ async function main() {
   const opp = await api(`/api/players/${c3}/career`);
   assert.equal(opp.totals.games, 2);
   assert.equal(opp.totals.losses, 1);
-  assert.equal(opp.partners.find((p) => p.player_id === c1), undefined, "opponent is not a partner");
+  assert.equal(
+    opp.partners.find((p) => p.player_id === c1),
+    undefined,
+    "opponent is not a partner",
+  );
 
   assert.equal((await api(`/api/players/999999/career`)).status, 404, "unknown player 404s");
-
 
   // subject seated at team1_p2: the partner is team1_p1 — both p2-slot
   // placements must still credit the mate (regression: p2 subjects lost
@@ -109,9 +147,19 @@ async function main() {
   const p6 = await mk(`${tag2} S6`);
   const p7 = await mk(`${tag2} S7`);
   const p8 = await mk(`${tag2} S8`);
-  const s3 = await api("/api/sessions", "POST", { name: "Career Three", scheduled_start: now2 + 10, scheduled_end: now2 + 3610, court_count: 2 });
+  const s3 = await api("/api/sessions", "POST", {
+    name: "Career Three",
+    scheduled_start: now2 + 10,
+    scheduled_end: now2 + 3610,
+    court_count: 2,
+  });
   const e3 = {};
-  for (const [k, id] of [["S5", p5], ["S6", p6], ["S7", p7], ["S8", p8]]) {
+  for (const [k, id] of [
+    ["S5", p5],
+    ["S6", p6],
+    ["S7", p7],
+    ["S8", p8],
+  ]) {
     e3[k] = (await api(`/api/sessions/${s3.session.id}/checkin`, "POST", { player_id: id })).entry.id;
   }
   await api(`/api/sessions/${s3.session.id}/start`, "PATCH");

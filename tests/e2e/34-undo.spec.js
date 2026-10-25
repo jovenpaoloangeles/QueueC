@@ -33,13 +33,17 @@ test("34.2 match-start undo empties the court and frees the entries", async ({ p
   await page.getByTestId("toast-undo").click();
   await expect(page.getByTestId("toast")).toContainText("Undone");
   await expect
-    .poll(async () => {
-      const s = await liveState(page);
-      return (
-        s.activeMatches.filter((m) => m.id === match.id).length +
-        s.queue.filter((e) => e.status === "waiting").length - waitingBefore
-      );
-    }, { timeout: 5000 })
+    .poll(
+      async () => {
+        const s = await liveState(page);
+        return (
+          s.activeMatches.filter((m) => m.id === match.id).length +
+          s.queue.filter((e) => e.status === "waiting").length -
+          waitingBefore
+        );
+      },
+      { timeout: 5000 },
+    )
     .toBe(0);
 });
 

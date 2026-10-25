@@ -197,17 +197,19 @@ function combos(K) {
     c = [];
     for (let a = 0; a < K - 3; a++)
       for (let b = a + 1; b < K - 2; b++)
-        for (let d = b + 1; d < K - 1; d++)
-          for (let e = d + 1; e < K; e++) c.push([a, b, d, e]);
+        for (let d = b + 1; d < K - 1; d++) for (let e = d + 1; e < K; e++) c.push([a, b, d, e]);
     comboCache.set(K, c);
   }
   return c;
 }
 
 // Split index vectors for K4 duality (§4 step 4): split s pairs (u1[s],v1[s]) vs (u2[s],v2[s]).
-const U1 = [0, 0, 0], V1 = [1, 2, 3];
-const U2 = [2, 1, 1], V2 = [3, 3, 2];
-const EDGE_U = [0, 0, 0, 1, 1, 2], EDGE_V = [1, 2, 3, 2, 3, 3];
+const U1 = [0, 0, 0],
+  V1 = [1, 2, 3];
+const U2 = [2, 1, 1],
+  V2 = [3, 3, 2];
+const EDGE_U = [0, 0, 0, 1, 1, 2],
+  EDGE_V = [1, 2, 3, 2, 3, 3];
 
 /**
  * Plan up to `courtCount` doubles matches from the waiting pool.
@@ -221,7 +223,15 @@ const EDGE_U = [0, 0, 0, 1, 1, 2], EDGE_V = [1, 2, 3, 2, 3, 3];
  * @param {object} [p.cfg]  per-call overrides merged over MATCH_CONFIG
  * @returns {{ matches: Array<{team1:number[],team2:number[],metrics:object}>, relaxed: boolean }}
  */
-export function planBatch({ waiting, history = [], courtCount = 1, now = Math.floor(Date.now() / 1000), bans = [], cfg = {}, locked = [] }) {
+export function planBatch({
+  waiting,
+  history = [],
+  courtCount = 1,
+  now = Math.floor(Date.now() / 1000),
+  bans = [],
+  cfg = {},
+  locked = [],
+}) {
   const C = { ...MATCH_CONFIG, ...cfg };
   const lockedSet = new Set(locked);
   const avail = waiting.filter((e) => e.status === "waiting");
@@ -248,9 +258,7 @@ export function planBatch({ waiting, history = [], courtCount = 1, now = Math.fl
   if (eligible.length < 4) {
     didRelax = true;
     eligible = [...avail].sort(
-      (a, b) =>
-        (consec.get(a.id) ?? 0) - (consec.get(b.id) ?? 0) ||
-        gamesRested(a.id) - gamesRested(b.id),
+      (a, b) => (consec.get(a.id) ?? 0) - (consec.get(b.id) ?? 0) || gamesRested(a.id) - gamesRested(b.id),
     );
   }
 
@@ -266,15 +274,11 @@ export function planBatch({ waiting, history = [], courtCount = 1, now = Math.fl
 
   // Candidate window: π = wait − α·g_virt, top K with boundary-tie expansion.
   const waitMap = new Map(eligible.map((e) => [e.id, waitMinutes(e, now)]));
-  const prio = new Map(
-    eligible.map((e) => [e.id, waitMap.get(e.id) - C.alpha * virtGames(e)]),
-  );
+  const prio = new Map(eligible.map((e) => [e.id, waitMap.get(e.id) - C.alpha * virtGames(e)]));
   const sorted = [...eligible].sort(
     (a, b) => prio.get(b.id) - prio.get(a.id) || waitMap.get(b.id) - waitMap.get(a.id),
   );
-  const kTarget = courtCount > 1
-    ? Math.max(C.poolSize, 4 * courtCount + 4)
-    : C.poolSize;
+  const kTarget = courtCount > 1 ? Math.max(C.poolSize, 4 * courtCount + 4) : C.poolSize;
   let window = sorted;
   if (sorted.length > kTarget) {
     const cutoff = prio.get(sorted[kTarget - 1].id);
@@ -301,7 +305,8 @@ export function planBatch({ waiting, history = [], courtCount = 1, now = Math.fl
 
   const banSet = new Set();
   for (const [a, b] of bans) {
-    const i = idIdx.get(a), j = idIdx.get(b);
+    const i = idIdx.get(a),
+      j = idIdx.get(b);
     if (i != null && j != null) {
       banSet.add(i * n + j);
       banSet.add(j * n + i);
@@ -426,8 +431,10 @@ export function planBatch({ waiting, history = [], courtCount = 1, now = Math.fl
       if (!m[q]) continue;
       const locals = Q[q];
       for (let sp = 0; sp < 3; sp++) {
-        const a = locals[U1[sp]], b = locals[V1[sp]];
-        const c = locals[U2[sp]], d = locals[V2[sp]];
+        const a = locals[U1[sp]],
+          b = locals[V1[sp]];
+        const c = locals[U2[sp]],
+          d = locals[V2[sp]];
         if (banSet.has(a * K + b) || banSet.has(c * K + d)) continue;
         const f4 = Math.abs(R[a * K + b] - R[c * K + d]);
         const partner = P[a * K + b] + P[c * K + d];
@@ -459,80 +466,70 @@ export function planBatch({ waiting, history = [], courtCount = 1, now = Math.fl
     }
     if (!splits.length) return null;
 
-  // ε₄ team-balance band across all (quartet, split) pairs (§4 step 4).
-  let f4Min = Infinity;
-  for (const sv of splits) if (sv.f4 < f4Min) f4Min = sv.f4;
-  const band = splits.filter((sv) => sv.f4 <= f4Min + C.epsTeamDiff);
+    // ε₄ team-balance band across all (quartet, split) pairs (§4 step 4).
+    let f4Min = Infinity;
+    for (const sv of splits) if (sv.f4 < f4Min) f4Min = sv.f4;
+    const band = splits.filter((sv) => sv.f4 <= f4Min + C.epsTeamDiff);
 
-  let cands;
-  if (need === 1) {
-    // Single court: lexicographic min F5 (bucketed to ignore ancient decay dust) → min F4 → min F3 → max wait sum (§4).
-    cands = [...band].sort(
-      (a, b) =>
-        (Math.abs(a.f5 - b.f5) > 0.12 ? a.f5 - b.f5 : 0) ||
-        a.f4 - b.f4 ||
-        a.f3 - b.f3 ||
-        b.f1 - a.f1,
-    );
-  } else {
-    // Multi court: J(q) = λ₃f₃ + λ₄minF₄ + λ₅minF₅ per quartet (§5).
-    const perQuartet = new Map();
-    for (const sv of band) {
-      const J =
-        C.lambdaSkillVar * sv.f3 +
-        C.lambdaTeamDiff * sv.f4 +
-        C.lambdaVariety * sv.f5;
-      const prev = perQuartet.get(sv.q);
-      if (!prev || J < prev.J) perQuartet.set(sv.q, { ...sv, J });
-    }
-    cands = [...perQuartet.values()].sort((a, b) => a.J - b.J);
-  }
-
-  // Pick `need` bitmask-disjoint quartets minimising (max J, sum J).
-  // ponytail: exhaustive DFS under maxBatchNodes, falls back to greedy when the
-  // survivor set explodes — swap in an ILP/heuristic if C courts > ~6 matters.
-  let nodes = 0;
-  let bestSet = null;
-  const bt = (start, chosen, used) => {
-    if (chosen.length === need) {
-      const maxJ = Math.max(...chosen.map((x) => x.J));
-      const sumJ = chosen.reduce((t, x) => t + x.J, 0);
-      if (
-        !bestSet ||
-        maxJ < bestSet.maxJ ||
-        (maxJ === bestSet.maxJ && sumJ < bestSet.sumJ)
-      ) {
-        bestSet = { set: [...chosen], maxJ, sumJ };
+    let cands;
+    if (need === 1) {
+      // Single court: lexicographic min F5 (bucketed to ignore ancient decay dust) → min F4 → min F3 → max wait sum (§4).
+      cands = [...band].sort(
+        (a, b) =>
+          (Math.abs(a.f5 - b.f5) > 0.12 ? a.f5 - b.f5 : 0) || a.f4 - b.f4 || a.f3 - b.f3 || b.f1 - a.f1,
+      );
+    } else {
+      // Multi court: J(q) = λ₃f₃ + λ₄minF₄ + λ₅minF₅ per quartet (§5).
+      const perQuartet = new Map();
+      for (const sv of band) {
+        const J = C.lambdaSkillVar * sv.f3 + C.lambdaTeamDiff * sv.f4 + C.lambdaVariety * sv.f5;
+        const prev = perQuartet.get(sv.q);
+        if (!prev || J < prev.J) perQuartet.set(sv.q, { ...sv, J });
       }
-      return;
+      cands = [...perQuartet.values()].sort((a, b) => a.J - b.J);
     }
-    if (++nodes > C.maxBatchNodes) return;
-    for (let i = start; i < cands.length; i++) {
-      const [a, b, c, d] = Q[cands[i].q];
-      const m = (1 << a) | (1 << b) | (1 << c) | (1 << d);
-      if (used & m) continue;
-      chosen.push(cands[i]);
-      bt(i + 1, chosen, used | m);
-      chosen.pop();
-      if (nodes > C.maxBatchNodes) return;
+
+    // Pick `need` bitmask-disjoint quartets minimising (max J, sum J).
+    // ponytail: exhaustive DFS under maxBatchNodes, falls back to greedy when the
+    // survivor set explodes — swap in an ILP/heuristic if C courts > ~6 matters.
+    let nodes = 0;
+    let bestSet = null;
+    const bt = (start, chosen, used) => {
+      if (chosen.length === need) {
+        const maxJ = Math.max(...chosen.map((x) => x.J));
+        const sumJ = chosen.reduce((t, x) => t + x.J, 0);
+        if (!bestSet || maxJ < bestSet.maxJ || (maxJ === bestSet.maxJ && sumJ < bestSet.sumJ)) {
+          bestSet = { set: [...chosen], maxJ, sumJ };
+        }
+        return;
+      }
+      if (++nodes > C.maxBatchNodes) return;
+      for (let i = start; i < cands.length; i++) {
+        const [a, b, c, d] = Q[cands[i].q];
+        const m = (1 << a) | (1 << b) | (1 << c) | (1 << d);
+        if (used & m) continue;
+        chosen.push(cands[i]);
+        bt(i + 1, chosen, used | m);
+        chosen.pop();
+        if (nodes > C.maxBatchNodes) return;
+      }
+    };
+    bt(0, [], 0);
+    if (!bestSet) {
+      // Greedy fallback over J-sorted candidates.
+      bestSet = { set: [], maxJ: 0, sumJ: 0 };
+      let used = 0;
+      for (const cand of cands) {
+        if (bestSet.set.length === need) break;
+        const [a, b, c, d] = Q[cand.q];
+        const m = (1 << a) | (1 << b) | (1 << c) | (1 << d);
+        if (used & m) continue;
+        used |= m;
+        bestSet.set.push(cand);
+        bestSet.maxJ = Math.max(bestSet.maxJ, cand.J);
+        bestSet.sumJ += cand.J;
+      }
     }
-  };
-  bt(0, [], 0);
-  if (!bestSet) {
-    // Greedy fallback over J-sorted candidates.
-    bestSet = { set: [], maxJ: 0, sumJ: 0 };
-    let used = 0;
-    for (const cand of cands) {
-      if (bestSet.set.length === need) break;
-      const [a, b, c, d] = Q[cand.q];
-      const m = (1 << a) | (1 << b) | (1 << c) | (1 << d);
-      if (used & m) continue;
-      used |= m;
-      bestSet.set.push(cand);
-      bestSet.maxJ = Math.max(bestSet.maxJ, cand.J);
-      bestSet.sumJ += cand.J;
-    }
-  }
     return bestSet;
   };
 

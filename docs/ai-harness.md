@@ -2,7 +2,7 @@
 
 QueueC is developed with Claude Code (and works with Codex, Cursor, etc.). The
 repo's agent policy lives in the root [CLAUDE.md](../CLAUDE.md) — read it
-first; this page explains the *why* so an agent (or its human) doesn't fight
+first; this page explains the _why_ so an agent (or its human) doesn't fight
 the repo.
 
 ## What CLAUDE.md asks for, and why

@@ -1,4 +1,5 @@
 # QueueC — Initialization Phase & Session Fix
+
 **Date:** 2026-10-13
 **Status:** Approved
 
@@ -35,10 +36,7 @@ Remove the manual `onClose()` call from `CreateSessionModal.submit()`. Instead, 
 `players.json` in the repo root. QMs edit this file before game day.
 
 ```json
-[
-  { "name": "Alice", "skill_level": "intermediate" },
-  { "name": "Bob", "skill_level": "beginner" }
-]
+[{ "name": "Alice", "skill_level": "intermediate" }, { "name": "Bob", "skill_level": "beginner" }]
 ```
 
 Valid `skill_level` values: `newbie`, `beginner`, `intermediate`, `upper_intermediate`, `advanced`.
@@ -52,7 +50,7 @@ On server startup, `db.js` reads `players.json` (resolved relative to the server
 `players.json` is mounted as a volume alongside the DB:
 ```yaml
 volumes:
-  - ./data:/data   # DB_PATH=/data/queuec.db, reads /data/players.json
+  - ./data:/data # DB_PATH=/data/queuec.db, reads /data/players.json
 ```
 
 QM edits `/data/players.json` on the host, restarts the container. No endpoint needed.
@@ -89,12 +87,12 @@ Evaluated client-side using server time from SSE.
 
 ### API
 
-| Method | Path | Body | Notes |
-|--------|------|------|-------|
-| `GET` | `/api/sessions/:id/courts` | — | Returns all courts for session |
-| `POST` | `/api/sessions/:id/courts` | `{ label }` | Add a court |
-| `DELETE` | `/api/courts/:id` | — | Only if no matches on this court |
-| `PATCH` | `/api/courts/:id` | `{ active_from?, active_until?, enabled? }` | Update any field |
+| Method   | Path                       | Body                                        | Notes                            |
+| -------- | -------------------------- | ------------------------------------------- | -------------------------------- |
+| `GET`    | `/api/sessions/:id/courts` | —                                           | Returns all courts for session   |
+| `POST`   | `/api/sessions/:id/courts` | `{ label }`                                 | Add a court                      |
+| `DELETE` | `/api/courts/:id`          | —                                           | Only if no matches on this court |
+| `PATCH`  | `/api/courts/:id`          | `{ active_from?, active_until?, enabled? }` | Update any field                 |
 
 All mutating routes call `broadcast()`.
 

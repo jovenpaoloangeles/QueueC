@@ -158,8 +158,14 @@ async function fkCleanupTest() {
 
     resetPlayersToPreset();
 
-    assert.ok(db.prepare("SELECT id FROM players WHERE id = ?").get(strayA), "Expected stray A (match history) kept");
-    assert.ok(db.prepare("SELECT id FROM players WHERE id = ?").get(strayB), "Expected stray B (match history) kept");
+    assert.ok(
+      db.prepare("SELECT id FROM players WHERE id = ?").get(strayA),
+      "Expected stray A (match history) kept",
+    );
+    assert.ok(
+      db.prepare("SELECT id FROM players WHERE id = ?").get(strayB),
+      "Expected stray B (match history) kept",
+    );
     assert.ok(
       db.prepare("SELECT id FROM queue_entries WHERE id = ?").get(entryA),
       "Expected stray entry A kept",
@@ -172,7 +178,10 @@ async function fkCleanupTest() {
       db.prepare("SELECT id FROM matches WHERE id = ?").get(strayMatch),
       "Expected match on stray entries kept",
     );
-    assert.ok(!db.prepare("SELECT id FROM players WHERE id = ?").get(strayC), "Expected matchless stray C gone");
+    assert.ok(
+      !db.prepare("SELECT id FROM players WHERE id = ?").get(strayC),
+      "Expected matchless stray C gone",
+    );
     assert.ok(
       !db.prepare("SELECT id FROM queue_entries WHERE id = ?").get(entryC),
       "Expected matchless stray entry C gone",
@@ -280,17 +289,27 @@ async function rotationSettingsTest() {
   if (active.session) await api(`/sessions/${active.session.id}/end`, "PATCH");
 
   const badConsec = await api("/sessions", "POST", {
-    name: "Rot Bad Consec", scheduled_start: 1, scheduled_end: 2, max_consecutive: 9,
+    name: "Rot Bad Consec",
+    scheduled_start: 1,
+    scheduled_end: 2,
+    max_consecutive: 9,
   });
   assert.equal(badConsec.status, 400, "max_consecutive: 9 must be rejected");
 
   const badRest = await api("/sessions", "POST", {
-    name: "Rot Bad Rest", scheduled_start: 1, scheduled_end: 2, rest_games: 7,
+    name: "Rot Bad Rest",
+    scheduled_start: 1,
+    scheduled_end: 2,
+    rest_games: 7,
   });
   assert.equal(badRest.status, 400, "rest_games: 7 must be rejected");
 
   const custom = await api("/sessions", "POST", {
-    name: "Rot Custom", scheduled_start: 1, scheduled_end: 2, max_consecutive: 3, rest_games: 1,
+    name: "Rot Custom",
+    scheduled_start: 1,
+    scheduled_end: 2,
+    max_consecutive: 3,
+    rest_games: 1,
   });
   assert.equal(custom.status, 201, "valid rotation settings must be accepted");
   assert.equal(custom.session.max_consecutive, 3, "max_consecutive persisted");
@@ -299,7 +318,9 @@ async function rotationSettingsTest() {
 
   // Defaults when omitted, and the session still plans (rest off).
   const def = await api("/sessions", "POST", {
-    name: "Rot Defaults", scheduled_start: 1, scheduled_end: 2,
+    name: "Rot Defaults",
+    scheduled_start: 1,
+    scheduled_end: 2,
   });
   assert.equal(def.session.max_consecutive, 2, "default max_consecutive 2");
   assert.equal(def.session.rest_games, 0, "default rest_games 0");

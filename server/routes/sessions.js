@@ -14,7 +14,9 @@ router.get("/active", (c) => {
 // v1.3 history list: ended sessions, newest first, with card aggregates.
 router.get("/", (c) => {
   const sessions = db
-    .prepare("SELECT id, name, scheduled_start, ended_at, court_count FROM sessions WHERE ended_at IS NOT NULL ORDER BY ended_at DESC")
+    .prepare(
+      "SELECT id, name, scheduled_start, ended_at, court_count FROM sessions WHERE ended_at IS NOT NULL ORDER BY ended_at DESC",
+    )
     .all();
   const players = db.prepare("SELECT COUNT(DISTINCT player_id) AS n FROM queue_entries WHERE session_id = ?");
   const matches = db.prepare(
@@ -33,10 +35,16 @@ router.get("/", (c) => {
 });
 
 router.post("/", async (c) => {
-  const { name, scheduled_start, scheduled_end, court_count, courts, checkin_order, max_consecutive, rest_games } =
-    await c.req
-      .json()
-      .catch(() => ({}));
+  const {
+    name,
+    scheduled_start,
+    scheduled_end,
+    court_count,
+    courts,
+    checkin_order,
+    max_consecutive,
+    rest_games,
+  } = await c.req.json().catch(() => ({}));
   if (checkin_order != null && !["alphabetical", "arrival"].includes(checkin_order)) {
     return c.json({ error: "checkin_order must be 'alphabetical' or 'arrival'" }, 400);
   }
@@ -144,9 +152,11 @@ router.patch("/:id/resume", (c) => {
     // Clamped shift: writes made DURING the pause (check-ins, match starts) are
     // pinned to resume-now instead of being pushed into the future, which would
     // make wait clocks and match durations go negative.
-    db.prepare(
-      "UPDATE queue_entries SET checked_in_at = min(checked_in_at + ?, ?) WHERE session_id = ?",
-    ).run(delta, now, id);
+    db.prepare("UPDATE queue_entries SET checked_in_at = min(checked_in_at + ?, ?) WHERE session_id = ?").run(
+      delta,
+      now,
+      id,
+    );
     // Ended matches keep their true timestamps — duration already fixed.
     db.prepare(
       "UPDATE matches SET started_at = min(started_at + ?, ?) WHERE session_id = ? AND ended_at IS NULL",

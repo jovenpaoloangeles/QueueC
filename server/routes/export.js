@@ -2,7 +2,7 @@
 // pages render (builders in stats.js). CSV sections are #-comment headers so
 // the file stays readable in a text editor.
 import { Hono } from "hono";
-import { getSessionDetail, getCareer } from "./stats.js";
+import { getCareer, getSessionDetail } from "./stats.js";
 
 const router = new Hono();
 
@@ -36,11 +36,35 @@ router.get("/sessions/:id/export", (c) => {
     detail.leaderboard.map((r) => [r.name, r.played, r.wins, r.losses, r.win_rate, r.point_diff]),
   );
   const games = csvTable(
-    ["id", "format", "state", "court_number", "started_at", "ended_at", "team1", "team2", "team1_score", "team2_score", "rating", "new_shuttles", "used_shuttles"],
+    [
+      "id",
+      "format",
+      "state",
+      "court_number",
+      "started_at",
+      "ended_at",
+      "team1",
+      "team2",
+      "team1_score",
+      "team2_score",
+      "rating",
+      "new_shuttles",
+      "used_shuttles",
+    ],
     detail.games.map((g) => [
-      g.id, g.format, g.state, g.court_number ?? "", iso(g.started_at), iso(g.ended_at),
-      g.team1.map((p) => p.name).join(" & "), g.team2.map((p) => p.name).join(" & "),
-      g.team1_score, g.team2_score, g.rating ?? "", g.new_shuttles, g.used_shuttles,
+      g.id,
+      g.format,
+      g.state,
+      g.court_number ?? "",
+      iso(g.started_at),
+      iso(g.ended_at),
+      g.team1.map((p) => p.name).join(" & "),
+      g.team2.map((p) => p.name).join(" & "),
+      g.team1_score,
+      g.team2_score,
+      g.rating ?? "",
+      g.new_shuttles,
+      g.used_shuttles,
     ]),
   );
   const attendance = csvTable(

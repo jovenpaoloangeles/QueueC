@@ -14,18 +14,18 @@ server/  Bun + Hono, SQLite via bun:sqlite
 
 `server/index.js` mounts the routers and serves the client build:
 
-| Mount | Router | Responsibility |
-|---|---|---|
-| `/api/sessions` | `routes/sessions.js` | create/start/end session lifecycle |
-| `/api/sessions` | `routes/sessions.js` + `routes/stats.js` | per-session stats read |
-| `/api/players` | `routes/players.js` | the persistent player roster |
-| `/api` | `routes/queue.js` | queue entries: check-in, status (waiting/resting/…), reorder, remove |
-| `/api` | `routes/slate.js` | on-deck slates: create/edit/reorder/cancel/start |
-| `/api/matches` | `routes/matches.js` | start/end matches, team edits, per-match shuttles |
-| `/api` | `routes/stats.js` | stats + leaderboard; session-level shuttle adjustments |
-| `/api` | `routes/sse.js` | the state stream (see below) |
-| `/api/sessions` | `routes/courts.js` | court add/remove/update, rental windows |
-| `/api` | `routes/automatch.js` | Smart Match dry-run + execute |
+| Mount           | Router                                   | Responsibility                                                       |
+| --------------- | ---------------------------------------- | -------------------------------------------------------------------- |
+| `/api/sessions` | `routes/sessions.js`                     | create/start/end session lifecycle                                   |
+| `/api/sessions` | `routes/sessions.js` + `routes/stats.js` | per-session stats read                                               |
+| `/api/players`  | `routes/players.js`                      | the persistent player roster                                         |
+| `/api`          | `routes/queue.js`                        | queue entries: check-in, status (waiting/resting/…), reorder, remove |
+| `/api`          | `routes/slate.js`                        | on-deck slates: create/edit/reorder/cancel/start                     |
+| `/api/matches`  | `routes/matches.js`                      | start/end matches, team edits, per-match shuttles                    |
+| `/api`          | `routes/stats.js`                        | stats + leaderboard; session-level shuttle adjustments               |
+| `/api`          | `routes/sse.js`                          | the state stream (see below)                                         |
+| `/api/sessions` | `routes/courts.js`                       | court add/remove/update, rental windows                              |
+| `/api`          | `routes/automatch.js`                    | Smart Match dry-run + execute                                        |
 
 `server/db.js` owns the schema and runs idempotent migrations on boot (PRAGMA
 column checks, table rebuilds where a column had to change). On first boot it

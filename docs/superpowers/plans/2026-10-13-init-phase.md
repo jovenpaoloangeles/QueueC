@@ -54,16 +54,16 @@ In `CreateSessionModal.jsx`, change `submit`:
 
 ```jsx
 async function submit(e) {
-  e.preventDefault()
-  setLoading(true)
+  e.preventDefault();
+  setLoading(true);
   await createSession({
     name: form.name,
     scheduled_start: toUnix(form.date, form.start),
     scheduled_end: toUnix(form.date, form.end),
-    court_count: Number(form.courts)
-  })
+    court_count: Number(form.courts),
+  });
   // intentionally no onClose() here — App closes reactively via SSE
-  setLoading(false)
+  setLoading(false);
 }
 ```
 
@@ -74,8 +74,8 @@ Add a `useEffect` after the existing `useSSE` call:
 ```jsx
 // close the "new session" modal as soon as SSE confirms a draft session arrived
 useEffect(() => {
-  if (session != null) setShowCreate(false)
-}, [session])
+  if (session != null) setShowCreate(false);
+}, [session]);
 ```
 
 - [ ] **Step 3: Verify manually**
@@ -105,24 +105,24 @@ git commit -m "fix: close session modal reactively via SSE instead of optimistic
 Add to `server/db.test.js` (create if it doesn't exist):
 
 ```js
-import assert from 'node:assert/strict'
-import { seedPlayersFromFile } from './db.js'
+import assert from "node:assert/strict";
+import { seedPlayersFromFile } from "./db.js";
 
 // seedPlayersFromFile is a function we will export from db.js
 // It takes an array of { name, skill_level } objects and inserts missing ones
-import db from './db.js'
+import db from "./db.js";
 
-const before = db.prepare('SELECT COUNT(*) as c FROM players').get().c
+const before = db.prepare("SELECT COUNT(*) as c FROM players").get().c;
 seedPlayersFromFile([
-  { name: '__test_seed_alice__', skill_level: 'beginner' },
-  { name: '__test_seed_alice__', skill_level: 'beginner' }, // duplicate — should skip
-])
-const after = db.prepare('SELECT COUNT(*) as c FROM players').get().c
-assert.equal(after - before, 1, 'should insert exactly 1 (duplicate skipped)')
+  { name: "__test_seed_alice__", skill_level: "beginner" },
+  { name: "__test_seed_alice__", skill_level: "beginner" }, // duplicate — should skip
+]);
+const after = db.prepare("SELECT COUNT(*) as c FROM players").get().c;
+assert.equal(after - before, 1, "should insert exactly 1 (duplicate skipped)");
 
 // cleanup
-db.prepare("DELETE FROM players WHERE name LIKE '__test_seed_%'").run()
-console.log('db.test.js: seedPlayersFromFile assertions passed')
+db.prepare("DELETE FROM players WHERE name LIKE '__test_seed_%'").run();
+console.log("db.test.js: seedPlayersFromFile assertions passed");
 ```
 
 - [ ] **Step 2: Run test to confirm it fails**
@@ -138,12 +138,12 @@ Add after the existing pragma/migration block at the bottom of `db.js`:
 
 ```js
 export function seedPlayersFromFile(rows) {
-  const now = Math.floor(Date.now() / 1000)
+  const now = Math.floor(Date.now() / 1000);
   const insert = db.prepare(
-    'INSERT OR IGNORE INTO players (name, skill_level, created_at) SELECT ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM players WHERE name = ?)'
-  )
+    "INSERT OR IGNORE INTO players (name, skill_level, created_at) SELECT ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM players WHERE name = ?)",
+  );
   for (const { name, skill_level } of rows) {
-    insert.run(name, skill_level, now, name)
+    insert.run(name, skill_level, now, name);
   }
 }
 ```
@@ -151,18 +151,18 @@ export function seedPlayersFromFile(rows) {
 Then add the startup call at the very bottom of `db.js`:
 
 ```js
-import { readFileSync, existsSync } from 'fs'
-import { dirname } from 'path'
+import { readFileSync, existsSync } from "fs";
+import { dirname } from "path";
 
-const dbDir = dirname(dbPath)
+const dbDir = dirname(dbPath);
 const presetPath = existsSync(`${dbDir}/players.json`)
   ? `${dbDir}/players.json`
-  : join(__dirname, '../players.json')
+  : join(__dirname, "../players.json");
 
 if (existsSync(presetPath)) {
   try {
-    const rows = JSON.parse(readFileSync(presetPath, 'utf8'))
-    if (Array.isArray(rows)) seedPlayersFromFile(rows)
+    const rows = JSON.parse(readFileSync(presetPath, "utf8"));
+    if (Array.isArray(rows)) seedPlayersFromFile(rows);
   } catch {}
 }
 ```
@@ -170,8 +170,8 @@ if (existsSync(presetPath)) {
 Note: `readFileSync` and `existsSync` are from `node:fs` (already in stdlib). Add `readFileSync, existsSync` to the existing `import { join, dirname } from 'path'` line (split into two imports):
 
 ```js
-import { join, dirname } from 'path'
-import { readFileSync, existsSync } from 'fs'
+import { join, dirname } from "path";
+import { readFileSync, existsSync } from "fs";
 ```
 
 - [ ] **Step 4: Run test to confirm it passes**
@@ -184,10 +184,7 @@ Expected: `db.test.js: seedPlayersFromFile assertions passed`
 - [ ] **Step 5: Add a sample `players.json` to repo root**
 
 ```json
-[
-  { "name": "Alice", "skill_level": "intermediate" },
-  { "name": "Bob", "skill_level": "beginner" }
-]
+[{ "name": "Alice", "skill_level": "intermediate" }, { "name": "Bob", "skill_level": "beginner" }]
 ```
 
 Save to `/home/klodsjoven/QueueC/players.json`.
@@ -239,22 +236,22 @@ After the existing migrations (sort_order, sessions rebuild), add:
 
 ```js
 // backfill courts for sessions that predate the courts table
-const sessionsNeedingCourts = db.prepare(`
+const sessionsNeedingCourts = db
+  .prepare(`
   SELECT s.id, s.court_count FROM sessions s
   WHERE s.court_count > 0
     AND NOT EXISTS (SELECT 1 FROM courts c WHERE c.session_id = s.id)
-`).all()
+`)
+  .all();
 if (sessionsNeedingCourts.length > 0) {
-  const insertCourt = db.prepare(
-    'INSERT INTO courts (session_id, label) VALUES (?, ?)'
-  )
+  const insertCourt = db.prepare("INSERT INTO courts (session_id, label) VALUES (?, ?)");
   db.transaction(() => {
     for (const { id, court_count } of sessionsNeedingCourts) {
       for (let i = 1; i <= court_count; i++) {
-        insertCourt.run(id, `Court ${i}`)
+        insertCourt.run(id, `Court ${i}`);
       }
     }
-  })()
+  })();
 }
 ```
 
@@ -263,24 +260,24 @@ if (sessionsNeedingCourts.length > 0) {
 In `router.post('/', ...)`, after inserting the session:
 
 ```js
-router.post('/', (req, res) => {
-  const { name, scheduled_start, scheduled_end, court_count } = req.body
-  const { lastInsertRowid } = db.prepare(
-    'INSERT INTO sessions (name, scheduled_start, scheduled_end, court_count) VALUES (?, ?, ?, ?)'
-  ).run(name, scheduled_start, scheduled_end, court_count ?? 2)
+router.post("/", (req, res) => {
+  const { name, scheduled_start, scheduled_end, court_count } = req.body;
+  const { lastInsertRowid } = db
+    .prepare("INSERT INTO sessions (name, scheduled_start, scheduled_end, court_count) VALUES (?, ?, ?, ?)")
+    .run(name, scheduled_start, scheduled_end, court_count ?? 2);
 
   // seed courts
-  const insertCourt = db.prepare('INSERT INTO courts (session_id, label) VALUES (?, ?)')
+  const insertCourt = db.prepare("INSERT INTO courts (session_id, label) VALUES (?, ?)");
   db.transaction(() => {
     for (let i = 1; i <= (court_count ?? 2); i++) {
-      insertCourt.run(lastInsertRowid, `Court ${i}`)
+      insertCourt.run(lastInsertRowid, `Court ${i}`);
     }
-  })()
+  })();
 
-  const session = db.prepare('SELECT * FROM sessions WHERE id = ?').get(lastInsertRowid)
-  broadcast()
-  res.status(201).json({ session })
-})
+  const session = db.prepare("SELECT * FROM sessions WHERE id = ?").get(lastInsertRowid);
+  broadcast();
+  res.status(201).json({ session });
+});
 ```
 
 - [ ] **Step 4: Verify manually**
@@ -331,45 +328,45 @@ git commit -m "feat: courts table, backfill migration, seed on session create"
 Create `server/routes/courts.test.js`:
 
 ```js
-import assert from 'node:assert/strict'
+import assert from "node:assert/strict";
 
-const BASE = 'http://localhost:3001/api'
+const BASE = "http://localhost:3001/api";
 
 // create a throwaway session
 const s = await fetch(`${BASE}/sessions`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ name: 'Test', scheduled_start: 1, scheduled_end: 2, court_count: 1 })
-}).then(r => r.json())
-const sid = s.session.id
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ name: "Test", scheduled_start: 1, scheduled_end: 2, court_count: 1 }),
+}).then((r) => r.json());
+const sid = s.session.id;
 
 // GET courts — should have 1 seeded by session create
-const { courts } = await fetch(`${BASE}/sessions/${sid}/courts`).then(r => r.json())
-assert.equal(courts.length, 1)
-assert.equal(courts[0].label, 'Court 1')
-assert.equal(courts[0].enabled, 1)
+const { courts } = await fetch(`${BASE}/sessions/${sid}/courts`).then((r) => r.json());
+assert.equal(courts.length, 1);
+assert.equal(courts[0].label, "Court 1");
+assert.equal(courts[0].enabled, 1);
 
 // POST — add a second court
 const added = await fetch(`${BASE}/sessions/${sid}/courts`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ label: 'Court 2' })
-}).then(r => r.json())
-assert.equal(added.court.label, 'Court 2')
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ label: "Court 2" }),
+}).then((r) => r.json());
+assert.equal(added.court.label, "Court 2");
 
 // PATCH — disable court 1
 const patched = await fetch(`${BASE}/courts/${courts[0].id}`, {
-  method: 'PATCH',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ enabled: 0 })
-}).then(r => r.json())
-assert.equal(patched.court.enabled, 0)
+  method: "PATCH",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ enabled: 0 }),
+}).then((r) => r.json());
+assert.equal(patched.court.enabled, 0);
 
 // DELETE — delete court 2 (no matches)
-const del = await fetch(`${BASE}/courts/${added.court.id}`, { method: 'DELETE' })
-assert.equal(del.status, 204)
+const del = await fetch(`${BASE}/courts/${added.court.id}`, { method: "DELETE" });
+assert.equal(del.status, 204);
 
-console.log('courts.test.js: all assertions passed')
+console.log("courts.test.js: all assertions passed");
 ```
 
 - [ ] **Step 2: Run test to confirm it fails**
@@ -382,63 +379,63 @@ Expected: connection refused or 404 (route not registered yet).
 - [ ] **Step 3: Implement `server/routes/courts.js`**
 
 ```js
-import { Router } from 'express'
-import db from '../db.js'
-import { broadcast } from './sse.js'
+import { Router } from "express";
+import db from "../db.js";
+import { broadcast } from "./sse.js";
 
-const router = Router()
+const router = Router();
 
-router.get('/sessions/:id/courts', (req, res) => {
-  const courts = db.prepare('SELECT * FROM courts WHERE session_id = ? ORDER BY id').all(req.params.id)
-  res.json({ courts })
-})
+router.get("/sessions/:id/courts", (req, res) => {
+  const courts = db.prepare("SELECT * FROM courts WHERE session_id = ? ORDER BY id").all(req.params.id);
+  res.json({ courts });
+});
 
-router.post('/sessions/:id/courts', (req, res) => {
-  const { label } = req.body
-  const { lastInsertRowid } = db.prepare(
-    'INSERT INTO courts (session_id, label) VALUES (?, ?)'
-  ).run(req.params.id, label)
-  const court = db.prepare('SELECT * FROM courts WHERE id = ?').get(lastInsertRowid)
-  broadcast()
-  res.status(201).json({ court })
-})
+router.post("/sessions/:id/courts", (req, res) => {
+  const { label } = req.body;
+  const { lastInsertRowid } = db
+    .prepare("INSERT INTO courts (session_id, label) VALUES (?, ?)")
+    .run(req.params.id, label);
+  const court = db.prepare("SELECT * FROM courts WHERE id = ?").get(lastInsertRowid);
+  broadcast();
+  res.status(201).json({ court });
+});
 
-router.patch('/courts/:id', (req, res) => {
-  const { active_from, active_until, enabled } = req.body
-  const court = db.prepare('SELECT * FROM courts WHERE id = ?').get(req.params.id)
-  if (!court) return res.status(404).json({ error: 'Court not found' })
-  db.prepare(
-    'UPDATE courts SET active_from = ?, active_until = ?, enabled = ? WHERE id = ?'
-  ).run(
+router.patch("/courts/:id", (req, res) => {
+  const { active_from, active_until, enabled } = req.body;
+  const court = db.prepare("SELECT * FROM courts WHERE id = ?").get(req.params.id);
+  if (!court) return res.status(404).json({ error: "Court not found" });
+  db.prepare("UPDATE courts SET active_from = ?, active_until = ?, enabled = ? WHERE id = ?").run(
     active_from !== undefined ? active_from : court.active_from,
     active_until !== undefined ? active_until : court.active_until,
     enabled !== undefined ? enabled : court.enabled,
-    req.params.id
-  )
-  const updated = db.prepare('SELECT * FROM courts WHERE id = ?').get(req.params.id)
-  broadcast()
-  res.json({ court: updated })
-})
+    req.params.id,
+  );
+  const updated = db.prepare("SELECT * FROM courts WHERE id = ?").get(req.params.id);
+  broadcast();
+  res.json({ court: updated });
+});
 
-router.delete('/courts/:id', (req, res) => {
-  const inUse = db.prepare(
-    'SELECT COUNT(*) as c FROM matches WHERE court_number = (SELECT id FROM courts WHERE id = ?) AND session_id = (SELECT session_id FROM courts WHERE id = ?)'
-  ).get(req.params.id, req.params.id).c
-  if (inUse > 0) return res.status(409).json({ error: 'Court has matches' })
-  db.prepare('DELETE FROM courts WHERE id = ?').run(req.params.id)
-  broadcast()
-  res.status(204).end()
-})
+router.delete("/courts/:id", (req, res) => {
+  const inUse = db
+    .prepare(
+      "SELECT COUNT(*) as c FROM matches WHERE court_number = (SELECT id FROM courts WHERE id = ?) AND session_id = (SELECT session_id FROM courts WHERE id = ?)",
+    )
+    .get(req.params.id, req.params.id).c;
+  if (inUse > 0) return res.status(409).json({ error: "Court has matches" });
+  db.prepare("DELETE FROM courts WHERE id = ?").run(req.params.id);
+  broadcast();
+  res.status(204).end();
+});
 
-export default router
+export default router;
 ```
 
 - [ ] **Step 4: Register in `server/index.js`**
 
 ```js
-import courtsRouter from './routes/courts.js'
+import courtsRouter from "./routes/courts.js";
 // ...
-app.use('/api', courtsRouter)
+app.use("/api", courtsRouter);
 ```
 
 - [ ] **Step 5: Run test to confirm it passes**
@@ -472,9 +469,7 @@ git commit -m "feat: courts API routes (GET/POST/PATCH/DELETE)"
 Inside `currentState()`, after the `activeMatches` query:
 
 ```js
-const courts = db.prepare(
-  'SELECT * FROM courts WHERE session_id = ? ORDER BY id'
-).all(session.id)
+const courts = db.prepare("SELECT * FROM courts WHERE session_id = ? ORDER BY id").all(session.id);
 ```
 
 Add `courts` to the returned object:
@@ -499,24 +494,31 @@ if (!session) return { session: null, queue: [], activeMatches: [], courts: [], 
 - [ ] **Step 2: Update `App.jsx` to destructure `courts` from SSE data**
 
 ```jsx
-const [sseData, setSseData] = useState({ session: null, queue: [], activeMatches: [], courts: [], stats: null, serverTime: null })
+const [sseData, setSseData] = useState({
+  session: null,
+  queue: [],
+  activeMatches: [],
+  courts: [],
+  stats: null,
+  serverTime: null,
+});
 // ...
-const { session, queue, activeMatches, courts, stats } = sseData
+const { session, queue, activeMatches, courts, stats } = sseData;
 ```
 
 Pass `courts` down to `SetupScreen` and `CourtsRow`:
 
 ```jsx
-{session && session.started_at == null && (
-  <SetupScreen session={session} queue={queue} courts={courts} />
-)}
+{
+  session && session.started_at == null && <SetupScreen session={session} queue={queue} courts={courts} />;
+}
 // ...
 <CourtsRow
   session={session}
   courts={courts}
   activeMatches={activeMatches}
   // ... rest unchanged
-/>
+/>;
 ```
 
 - [ ] **Step 3: Verify via browser console**
@@ -546,14 +548,11 @@ git commit -m "feat: include courts in SSE state payload"
 - [ ] **Step 1: Add the three helpers**
 
 ```js
-export const addCourt = (sessionId, label) =>
-  req('POST', `/sessions/${sessionId}/courts`, { label })
+export const addCourt = (sessionId, label) => req("POST", `/sessions/${sessionId}/courts`, { label });
 
-export const deleteCourt = courtId =>
-  fetch(`/api/courts/${courtId}`, { method: 'DELETE' })
+export const deleteCourt = (courtId) => fetch(`/api/courts/${courtId}`, { method: "DELETE" });
 
-export const updateCourt = (courtId, patch) =>
-  req('PATCH', `/courts/${courtId}`, patch)
+export const updateCourt = (courtId, patch) => req("PATCH", `/courts/${courtId}`, patch);
 ```
 
 Note: `deleteCourt` uses `fetch` directly since the 204 response has no JSON body; `req` calls `res.json()` which would throw on empty body.
@@ -590,14 +589,13 @@ export default function SetupScreen({ session, queue, courts }) {
 - [ ] **Step 2: Add helper to convert unix epoch to HH:MM string for time input**
 
 ```jsx
-const fmtTimeInput = ts =>
-  ts ? new Date(ts * 1000).toISOString().slice(11, 16) : ''
+const fmtTimeInput = (ts) => (ts ? new Date(ts * 1000).toISOString().slice(11, 16) : "");
 
 const timeToUnix = (dateRef, timeStr) => {
   // dateRef is a unix epoch from the session — extract the date part
-  const dateStr = new Date(dateRef * 1000).toISOString().split('T')[0]
-  return Math.floor(new Date(`${dateStr}T${timeStr}`).getTime() / 1000)
-}
+  const dateStr = new Date(dateRef * 1000).toISOString().split("T")[0];
+  return Math.floor(new Date(`${dateStr}T${timeStr}`).getTime() / 1000);
+};
 ```
 
 - [ ] **Step 3: Add the Courts section JSX below the existing Queue section**
@@ -614,11 +612,9 @@ const timeToUnix = (dateRef, timeStr) => {
       + Add Court
     </Button>
   </div>
-  {courts.length === 0 && (
-    <span className="text-xs text-muted-foreground">No courts yet.</span>
-  )}
+  {courts.length === 0 && <span className="text-xs text-muted-foreground">No courts yet.</span>}
   <div className="flex flex-col gap-2">
-    {courts.map(c => (
+    {courts.map((c) => (
       <div
         key={c.id}
         className="flex items-center gap-3 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm"
@@ -630,9 +626,11 @@ const timeToUnix = (dateRef, timeStr) => {
             className="rounded border border-border bg-background px-1 py-0.5 text-xs"
             value={fmtTimeInput(c.active_from)}
             placeholder={fmtTimeInput(session.scheduled_start)}
-            onChange={e => updateCourt(c.id, {
-              active_from: e.target.value ? timeToUnix(session.scheduled_start, e.target.value) : null
-            }).catch(() => {})}
+            onChange={(e) =>
+              updateCourt(c.id, {
+                active_from: e.target.value ? timeToUnix(session.scheduled_start, e.target.value) : null,
+              }).catch(() => {})
+            }
           />
           <span>–</span>
           <input
@@ -640,16 +638,18 @@ const timeToUnix = (dateRef, timeStr) => {
             className="rounded border border-border bg-background px-1 py-0.5 text-xs"
             value={fmtTimeInput(c.active_until)}
             placeholder={fmtTimeInput(session.scheduled_end)}
-            onChange={e => updateCourt(c.id, {
-              active_until: e.target.value ? timeToUnix(session.scheduled_start, e.target.value) : null
-            }).catch(() => {})}
+            onChange={(e) =>
+              updateCourt(c.id, {
+                active_until: e.target.value ? timeToUnix(session.scheduled_start, e.target.value) : null,
+              }).catch(() => {})
+            }
           />
         </div>
         <label className="flex items-center gap-1 text-xs text-muted-foreground">
           <input
             type="checkbox"
             checked={!!c.enabled}
-            onChange={e => updateCourt(c.id, { enabled: e.target.checked ? 1 : 0 }).catch(() => {})}
+            onChange={(e) => updateCourt(c.id, { enabled: e.target.checked ? 1 : 0 }).catch(() => {})}
           />
           On
         </label>
@@ -664,7 +664,7 @@ const timeToUnix = (dateRef, timeStr) => {
       </div>
     ))}
   </div>
-</div>
+</div>;
 ```
 
 - [ ] **Step 4: Verify manually**
@@ -713,39 +713,54 @@ const { session, queue, activeMatches, courts, stats } = sseData
 - [ ] **Step 2: Rewrite `CourtsRow.jsx` to filter live courts**
 
 ```jsx
-import { cn } from '@/lib/utils'
-import CourtCard from './CourtCard.jsx'
+import { cn } from "@/lib/utils";
+import CourtCard from "./CourtCard.jsx";
 
 function isLive(court, serverTime) {
-  if (!court.enabled) return false
-  if (court.active_from != null && serverTime < court.active_from) return false
-  if (court.active_until != null && serverTime >= court.active_until) return false
-  return true
+  if (!court.enabled) return false;
+  if (court.active_from != null && serverTime < court.active_from) return false;
+  if (court.active_until != null && serverTime >= court.active_until) return false;
+  return true;
 }
 
-export default function CourtsRow({ session, courts, serverTime, activeMatches, queue, playSeconds, selection, onStartMatch, onDropPlayer, armedCourt }) {
-  const liveCourts = courts.filter(c => isLive(c, serverTime))
-  const canStart = selection?.length === 2 || selection?.length === 4
+export default function CourtsRow({
+  session,
+  courts,
+  serverTime,
+  activeMatches,
+  queue,
+  playSeconds,
+  selection,
+  onStartMatch,
+  onDropPlayer,
+  armedCourt,
+}) {
+  const liveCourts = courts.filter((c) => isLive(c, serverTime));
+  const canStart = selection?.length === 2 || selection?.length === 4;
 
   return (
-    <div className={cn('grid h-full min-h-[300px] auto-rows-[minmax(260px,auto)] gap-4 overflow-y-auto',
-      liveCourts.length <= 4 ? 'grid-cols-2' : 'grid-cols-3')}>
-      {liveCourts.map(court => (
+    <div
+      className={cn(
+        "grid h-full min-h-[300px] auto-rows-[minmax(260px,auto)] gap-4 overflow-y-auto",
+        liveCourts.length <= 4 ? "grid-cols-2" : "grid-cols-3",
+      )}
+    >
+      {liveCourts.map((court) => (
         <CourtCard
           key={court.id}
           court={court}
-          match={activeMatches.find(m => m.court_number === court.id) ?? null}
+          match={activeMatches.find((m) => m.court_number === court.id) ?? null}
           queue={queue}
           playSeconds={playSeconds}
           canStart={canStart}
-          onStartClick={courtId => onStartMatch(courtId, selection)}
+          onStartClick={(courtId) => onStartMatch(courtId, selection)}
           onDropPlayer={onDropPlayer}
-          canDropPlayer={entryId => selection.length < 4 || selection.includes(entryId)}
+          canDropPlayer={(entryId) => selection.length < 4 || selection.includes(entryId)}
           armedEntryIds={armedCourt === court.id ? selection : []}
         />
       ))}
     </div>
-  )
+  );
 }
 ```
 

@@ -48,10 +48,20 @@ export default function CareerPage({ id }) {
       <div className="flex flex-col gap-4">
         {/* exports */}
         <div className="flex gap-2">
-          <Button size="sm" variant="secondary" data-testid="export-csv" onClick={() => downloadExport(`/players/${id}/career/export`)}>
+          <Button
+            size="sm"
+            variant="secondary"
+            data-testid="export-csv"
+            onClick={() => downloadExport(`/players/${id}/career/export`)}
+          >
             Export CSV
           </Button>
-          <Button size="sm" variant="secondary" data-testid="export-json" onClick={() => downloadExport(`/players/${id}/career/export?format=json`)}>
+          <Button
+            size="sm"
+            variant="secondary"
+            data-testid="export-json"
+            onClick={() => downloadExport(`/players/${id}/career/export?format=json`)}
+          >
             Export JSON
           </Button>
         </div>
@@ -91,9 +101,16 @@ export default function CareerPage({ id }) {
             </thead>
             <tbody>
               {partners.map((p) => (
-                <tr key={p.player_id} data-testid="career-partner-row" className="border-b border-border last:border-0">
+                <tr
+                  key={p.player_id}
+                  data-testid="career-partner-row"
+                  className="border-b border-border last:border-0"
+                >
                   <td className="px-4 py-2">
-                    <a href={`#/players/${p.player_id}`} className="font-medium text-foreground hover:text-primary">
+                    <a
+                      href={`#/players/${p.player_id}`}
+                      className="font-medium text-foreground hover:text-primary"
+                    >
                       {p.name}
                     </a>
                   </td>
@@ -116,14 +133,20 @@ export default function CareerPage({ id }) {
 
         <div className="grid gap-4 sm:grid-cols-2">
           {/* per-session attendance */}
-          <section className="rounded-lg border border-border bg-card shadow-card" aria-label="Sessions attended">
+          <section
+            className="rounded-lg border border-border bg-card shadow-card"
+            aria-label="Sessions attended"
+          >
             <h2 className="border-b border-border px-4 py-2.5 text-[12.5px] font-semibold uppercase tracking-wider text-muted-foreground">
               Sessions
             </h2>
             <ul className="divide-y divide-border">
               {attendance.sessions.map((s) => (
                 <li key={s.session_id} className="flex items-center justify-between px-4 py-2 text-sm">
-                  <a href={`#/history/${s.session_id}`} className="font-medium text-foreground hover:text-primary">
+                  <a
+                    href={`#/history/${s.session_id}`}
+                    className="font-medium text-foreground hover:text-primary"
+                  >
                     {s.name}
                   </a>
                   <span className="font-mono text-[13px] tabular-nums text-muted-foreground">
@@ -138,7 +161,10 @@ export default function CareerPage({ id }) {
           </section>
 
           {/* monthly attendance % */}
-          <section className="rounded-lg border border-border bg-card shadow-card" aria-label="Monthly attendance">
+          <section
+            className="rounded-lg border border-border bg-card shadow-card"
+            aria-label="Monthly attendance"
+          >
             <h2 className="border-b border-border px-4 py-2.5 text-[12.5px] font-semibold uppercase tracking-wider text-muted-foreground">
               Attendance by month
             </h2>
@@ -152,7 +178,11 @@ export default function CareerPage({ id }) {
               </thead>
               <tbody>
                 {attendance.months.map((m) => (
-                  <tr key={m.month} data-testid="career-month-row" className="border-b border-border last:border-0">
+                  <tr
+                    key={m.month}
+                    data-testid="career-month-row"
+                    className="border-b border-border last:border-0"
+                  >
                     <td className="px-4 py-2">{fmtMonth(m.month)}</td>
                     <td className="px-2 py-2 font-mono tabular-nums text-muted-foreground">
                       {m.attended}/{m.total}

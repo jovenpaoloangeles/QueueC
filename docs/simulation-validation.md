@@ -7,17 +7,15 @@ Executing the simulation validation requires a **Discrete-Event Simulation (DES)
 To prevent subtle multi-court state bugs during simulation, the DES engine enforces four operational rules:
 
 1. **Common Random Numbers (Variance Reduction):** For each Monte Carlo seed $s \in \{1, \dots, S\}$, pre-generate the player skill vector $\mathbf{s}$, arrival times $\mathbf{t}_{\text{arrive}}$, and court game durations $\mathbf{D}$. Replay the exact same realizations across **Strict FIFO**, **Naive Lowest-Games-First**, and **v2.0 ($\epsilon$-Lexicographic)** so differences in telemetry are strictly caused by the algorithm, not sampling noise.
-2. **Asynchronous Sit-Out Reset Rule (Crucial Multi-Court Edge Case):** In a multi-court club, if Court 1 finishes at $t = 14.0\text{ min}$ and Court 2 finishes at $t = 14.5\text{ min}$, resetting `consecutive_games = 0` for everyone on the bench whenever *any* court finishes would wipe the consecutive counter of Court 1's players after just 30 seconds of rest. Instead, a player's `consecutive_games` counter resets to $0$ only when:
-* They are eligible in the queue during a court assignment and are **not selected** (they sat out a selection cycle), **OR**
-* Their continuous bench wait time exceeds a minimum rest threshold $t_{\text{rest}} \ge 8.0\text{ min}$.
+2. **Asynchronous Sit-Out Reset Rule (Crucial Multi-Court Edge Case):** In a multi-court club, if Court 1 finishes at $t = 14.0\text{ min}$ and Court 2 finishes at $t = 14.5\text{ min}$, resetting `consecutive_games = 0` for everyone on the bench whenever _any_ court finishes would wipe the consecutive counter of Court 1's players after just 30 seconds of rest. Instead, a player's `consecutive_games` counter resets to $0$ only when:
 
+- They are eligible in the queue during a court assignment and are **not selected** (they sat out a selection cycle), **OR**
+- Their continuous bench wait time exceeds a minimum rest threshold $t_{\text{rest}} \ge 8.0\text{ min}$.
 
 3. **Continuous Wait-Time Integration:** Whenever the simulation clock advances from $t_{\text{prev}}$ to $t_{\text{curr}}$, every player who is checked in (`arrived == True`) and currently on the bench (`on_court == False`) accumulates $\Delta t = t_{\text{curr}} - t_{\text{prev}}$ onto their `wait_mins`.
 4. **Virtual Game Offset on `PLAYER_ARRIVAL`:** When a late arrival triggers at $t_{\text{curr}} \gt 0$, the player is marked available, their `wait_mins` is set to $0$, and their virtual game counter is initialized to the median of currently active players:
 
 $$g_i^{\text{virt}}(t_{\text{curr}}) = \text{median}_{j \in \text{Active}}\left(g_j^{\text{virt}}(t_{\text{curr}})\right)$$
-
-
 
 ---
 
@@ -25,12 +23,12 @@ $$g_i^{\text{virt}}(t_{\text{curr}}) = \text{median}_{j \in \text{Active}}\left(
 
 To isolate the impact of each design choice in `v2.0`, run a 4-way comparison across every Monte Carlo seed:
 
-| Policy ID | Candidate Selection | Quartet & Split Logic | What It Tests |
-| --- | --- | --- | --- |
-| **`FIFO`** | Top 4 by `wait_mins` (tie-break: lowest `virt_games`) | Random split among the 4 longest-waiting players | Baseline maximum queue fairness; exposes random skill mismatches and Carry+Anchor traps. |
-| **`LOWEST_RAW_GAMES`** | Top 4 by lowest raw `games_played` (tie-break: `wait_mins`) | Best team balance among the 4 selected players | Demonstrates why unnormalized raw game counts cause latecomers to monopolize courts and slam into $C_{\max}$. |
-| **`STRICT_LEX`** | `v2.0` with $\epsilon_1 = \epsilon_2 = \epsilon_3 = \epsilon_4 = 0$ | Strict lexicographic tie-breaking | Demonstrates how zero tolerance bands cause a hierarchical optimizer to degenerate back into `FIFO`. |
-| **`EPSILON_LEX`** | Full `v2.0` — shipped tuning: `epsWaitRatio` = 0.10, `epsWaitMin` = 7.0 min, `epsVirtGames` = 1.0, `epsSkillVar` = 0.45, `epsTeamDiff` = 0.35 (see "Parameter Tuning Takeaway"; the listing's $\epsilon_3 = 1.25$ predates the shipped skill² scale) | Two-stage $\epsilon$-lexicographic + $K_4$ edge duality | Full proposed algorithm balancing queue fairness, late-arrival equity, cohort homogeneity, and partner variety. |
+| Policy ID              | Candidate Selection                                                                                                                                                                                                                                  | Quartet & Split Logic                                   | What It Tests                                                                                                   |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| **`FIFO`**             | Top 4 by `wait_mins` (tie-break: lowest `virt_games`)                                                                                                                                                                                                | Random split among the 4 longest-waiting players        | Baseline maximum queue fairness; exposes random skill mismatches and Carry+Anchor traps.                        |
+| **`LOWEST_RAW_GAMES`** | Top 4 by lowest raw `games_played` (tie-break: `wait_mins`)                                                                                                                                                                                          | Best team balance among the 4 selected players          | Demonstrates why unnormalized raw game counts cause latecomers to monopolize courts and slam into $C_{\max}$.   |
+| **`STRICT_LEX`**       | `v2.0` with $\epsilon_1 = \epsilon_2 = \epsilon_3 = \epsilon_4 = 0$                                                                                                                                                                                  | Strict lexicographic tie-breaking                       | Demonstrates how zero tolerance bands cause a hierarchical optimizer to degenerate back into `FIFO`.            |
+| **`EPSILON_LEX`**      | Full `v2.0` — shipped tuning: `epsWaitRatio` = 0.10, `epsWaitMin` = 7.0 min, `epsVirtGames` = 1.0, `epsSkillVar` = 0.45, `epsTeamDiff` = 0.35 (see "Parameter Tuning Takeaway"; the listing's $\epsilon_3 = 1.25$ predates the shipped skill² scale) | Two-stage $\epsilon$-lexicographic + $K_4$ edge duality | Full proposed algorithm balancing queue fairness, late-arrival equity, cohort homogeneity, and partner variety. |
 
 ---
 
@@ -341,17 +339,17 @@ def run_des_session(
 
 Running `run_des_session` across 100 matched random seeds ($16$ initial arrivals at $t = 0$, $6$ staggered arrivals between $t = 15$ and $t = 75\text{ min}$, $C_{\max} = 2$) yields the following empirical benchmark profile:
 
-| Telemetry Metric | `FIFO` | `LOWEST_RAW_GAMES` | `STRICT_LEX` ($\epsilon = 0$) | `EPSILON_LEX` (Recommended) | Target Threshold |
-| --- | --- | --- | --- | --- | --- |
-| **Avg Wait Time (mins)** | $11.8 \pm 0.4$ | $12.1 \pm 0.5$ | $11.8 \pm 0.4$ | **$11.9 \pm 0.4$** | $\le 1.05 \times \text{FIFO}$ |
-| **Max Wait Time (mins)** | $21.4 \pm 1.8$ | $34.6 \pm 4.2$ | $21.5 \pm 1.8$ | **$23.8 \pm 2.1$** | $\le 1.25 \times \text{FIFO}$ |
-| **Priority Bypass Rate (%)** | $0.0\%$ | $28.4\%$ | $0.2\%$ | **$3.4\%$** | $\lt 5.0\%$ |
-| **Virtual Game Spread ($\Delta g^{\text{virt}}$)** | $1.15 \pm 0.35$ | $3.10 \pm 0.65$ | $1.12 \pm 0.32$ | **$0.92 \pm 0.18$** | $\le 1.00\text{ game}$ |
-| **Latecomer Consecutive Bursts** | $2.1 \pm 1.1$ | $11.4 \pm 1.9$ | $2.0 \pm 1.0$ | **$1.8 \pm 0.9$** | No artificial burst |
-| **Cohort Skill SD ($\sqrt{f_3}$)** | $1.98 \pm 0.16$ | $1.95 \pm 0.17$ | $1.91 \pm 0.16$ | **$0.89 \pm 0.11$** | $\ge 35\%$ drop vs. FIFO |
-| **Weak-Link Team Diff ($F_4$)** | $1.42 \pm 0.21$ | $0.68 \pm 0.14$ | $0.64 \pm 0.13$ | **$0.24 \pm 0.06$** | $\le 0.40\text{ pts}$ |
-| **Repeat Partnership Rate (%)** | $26.5\%$ | $31.2\%$ | $24.8\%$ | **$4.2\%$** | $\lt 10.0\%$ |
-| **Mean Compute Time / Match** | $14\text{ }\mu\text{s}$ | $18\text{ }\mu\text{s}$ | $185\text{ }\mu\text{s}$ | **$210\text{ }\mu\text{s}$** | $\lt 5{,}000\text{ }\mu\text{s}$ ($5\text{ ms}$) |
+| Telemetry Metric                                   | `FIFO`                  | `LOWEST_RAW_GAMES`      | `STRICT_LEX` ($\epsilon = 0$) | `EPSILON_LEX` (Recommended)  | Target Threshold                                 |
+| -------------------------------------------------- | ----------------------- | ----------------------- | ----------------------------- | ---------------------------- | ------------------------------------------------ |
+| **Avg Wait Time (mins)**                           | $11.8 \pm 0.4$          | $12.1 \pm 0.5$          | $11.8 \pm 0.4$                | **$11.9 \pm 0.4$**           | $\le 1.05 \times \text{FIFO}$                    |
+| **Max Wait Time (mins)**                           | $21.4 \pm 1.8$          | $34.6 \pm 4.2$          | $21.5 \pm 1.8$                | **$23.8 \pm 2.1$**           | $\le 1.25 \times \text{FIFO}$                    |
+| **Priority Bypass Rate (%)**                       | $0.0\%$                 | $28.4\%$                | $0.2\%$                       | **$3.4\%$**                  | $\lt 5.0\%$                                      |
+| **Virtual Game Spread ($\Delta g^{\text{virt}}$)** | $1.15 \pm 0.35$         | $3.10 \pm 0.65$         | $1.12 \pm 0.32$               | **$0.92 \pm 0.18$**          | $\le 1.00\text{ game}$                           |
+| **Latecomer Consecutive Bursts**                   | $2.1 \pm 1.1$           | $11.4 \pm 1.9$          | $2.0 \pm 1.0$                 | **$1.8 \pm 0.9$**            | No artificial burst                              |
+| **Cohort Skill SD ($\sqrt{f_3}$)**                 | $1.98 \pm 0.16$         | $1.95 \pm 0.17$         | $1.91 \pm 0.16$               | **$0.89 \pm 0.11$**          | $\ge 35\%$ drop vs. FIFO                         |
+| **Weak-Link Team Diff ($F_4$)**                    | $1.42 \pm 0.21$         | $0.68 \pm 0.14$         | $0.64 \pm 0.13$               | **$0.24 \pm 0.06$**          | $\le 0.40\text{ pts}$                            |
+| **Repeat Partnership Rate (%)**                    | $26.5\%$                | $31.2\%$                | $24.8\%$                      | **$4.2\%$**                  | $\lt 10.0\%$                                     |
+| **Mean Compute Time / Match**                      | $14\text{ }\mu\text{s}$ | $18\text{ }\mu\text{s}$ | $185\text{ }\mu\text{s}$      | **$210\text{ }\mu\text{s}$** | $\lt 5{,}000\text{ }\mu\text{s}$ ($5\text{ ms}$) |
 
 ### Key Diagnostic Findings from the Simulation
 

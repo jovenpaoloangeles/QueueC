@@ -134,7 +134,10 @@ router.post("/sessions/:id/attendance", async (c) => {
         "INSERT INTO queue_entries (session_id, player_id, checked_in_at, sort_order, virt_offset, status, status_updated_at) VALUES (?, ?, ?, ?, 0, 'left', ?)",
       )
       .run(id, player_id, checked_in_at ?? Math.floor(Date.now() / 1000), maxOrder + 1, session.ended_at);
-    result = { entry: db.prepare("SELECT * FROM queue_entries WHERE id = ?").get(lastInsertRowid), status: 201 };
+    result = {
+      entry: db.prepare("SELECT * FROM queue_entries WHERE id = ?").get(lastInsertRowid),
+      status: 201,
+    };
   }
   if (result.error) return c.json({ error: result.error }, result.status);
   broadcast();

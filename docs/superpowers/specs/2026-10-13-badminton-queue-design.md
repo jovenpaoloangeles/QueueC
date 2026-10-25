@@ -1,4 +1,5 @@
 # QueueC — Badminton Queue Manager
+
 **Date:** 2026-10-13
 **Status:** Approved
 
@@ -12,12 +13,12 @@ A local web app for a queue master to organize casual badminton sessions. The qu
 
 ## Stack
 
-| Layer | Choice |
-|-------|--------|
-| Frontend | React (Vite) |
-| Backend | Node.js + Express |
-| Database | SQLite via `better-sqlite3` |
-| Real-time | Server-Sent Events (SSE) for live timer updates |
+| Layer      | Choice                                            |
+| ---------- | ------------------------------------------------- |
+| Frontend   | React (Vite)                                      |
+| Backend    | Node.js + Express                                 |
+| Database   | SQLite via `better-sqlite3`                       |
+| Real-time  | Server-Sent Events (SSE) for live timer updates   |
 | Dev runner | `concurrently` — single `npm run dev` starts both |
 
 Runs locally at `localhost:3000`. No auth. No deployment.
@@ -49,51 +50,55 @@ Runs locally at `localhost:3000`. No auth. No deployment.
 ## Data Model (SQLite)
 
 ### `players`
-| Column | Type | Notes |
-|--------|------|-------|
-| id | INTEGER PK | |
-| name | TEXT | |
-| skill_level | TEXT | `newbie` `beginner` `intermediate` `upper_intermediate` `advanced` |
-| created_at | INTEGER | Unix timestamp |
+
+| Column      | Type       | Notes                                                              |
+| ----------- | ---------- | ------------------------------------------------------------------ |
+| id          | INTEGER PK |                                                                    |
+| name        | TEXT       |                                                                    |
+| skill_level | TEXT       | `newbie` `beginner` `intermediate` `upper_intermediate` `advanced` |
+| created_at  | INTEGER    | Unix timestamp                                                     |
 
 ### `sessions`
-| Column | Type | Notes |
-|--------|------|-------|
-| id | INTEGER PK | |
-| name | TEXT | e.g. "Evening Session" |
-| scheduled_start | INTEGER | Unix timestamp |
-| scheduled_end | INTEGER | Unix timestamp |
-| started_at | INTEGER | |
-| ended_at | INTEGER | NULL while active |
+
+| Column          | Type       | Notes                  |
+| --------------- | ---------- | ---------------------- |
+| id              | INTEGER PK |                        |
+| name            | TEXT       | e.g. "Evening Session" |
+| scheduled_start | INTEGER    | Unix timestamp         |
+| scheduled_end   | INTEGER    | Unix timestamp         |
+| started_at      | INTEGER    |                        |
+| ended_at        | INTEGER    | NULL while active      |
 
 ### `queue_entries`
+
 One row per player per session. Tracks their full lifecycle for the day.
 
-| Column | Type | Notes |
-|--------|------|-------|
-| id | INTEGER PK | |
-| session_id | INTEGER FK | |
-| player_id | INTEGER FK | |
-| checked_in_at | INTEGER | Start of their wait timer |
-| status | TEXT | `waiting` `playing` `resting` `left` |
-| last_played_at | INTEGER | NULL if never played; used for wait timer |
-| total_seconds_played | INTEGER | Running sum (seconds) updated on each match end |
+| Column               | Type       | Notes                                           |
+| -------------------- | ---------- | ----------------------------------------------- |
+| id                   | INTEGER PK |                                                 |
+| session_id           | INTEGER FK |                                                 |
+| player_id            | INTEGER FK |                                                 |
+| checked_in_at        | INTEGER    | Start of their wait timer                       |
+| status               | TEXT       | `waiting` `playing` `resting` `left`            |
+| last_played_at       | INTEGER    | NULL if never played; used for wait timer       |
+| total_seconds_played | INTEGER    | Running sum (seconds) updated on each match end |
 
 ### `matches`
-| Column | Type | Notes |
-|--------|------|-------|
-| id | INTEGER PK | |
-| session_id | INTEGER FK | |
-| court_number | INTEGER | |
-| format | TEXT | `singles` `doubles` |
-| team1_p1 | INTEGER FK → queue_entries | |
-| team1_p2 | INTEGER FK → queue_entries | NULL for singles |
-| team2_p1 | INTEGER FK → queue_entries | |
-| team2_p2 | INTEGER FK → queue_entries | NULL for singles |
-| team1_score | INTEGER | NULL until match ends |
-| team2_score | INTEGER | NULL until match ends |
-| started_at | INTEGER | |
-| ended_at | INTEGER | NULL while playing |
+
+| Column       | Type                       | Notes                 |
+| ------------ | -------------------------- | --------------------- |
+| id           | INTEGER PK                 |                       |
+| session_id   | INTEGER FK                 |                       |
+| court_number | INTEGER                    |                       |
+| format       | TEXT                       | `singles` `doubles`   |
+| team1_p1     | INTEGER FK → queue_entries |                       |
+| team1_p2     | INTEGER FK → queue_entries | NULL for singles      |
+| team2_p1     | INTEGER FK → queue_entries |                       |
+| team2_p2     | INTEGER FK → queue_entries | NULL for singles      |
+| team1_score  | INTEGER                    | NULL until match ends |
+| team2_score  | INTEGER                    | NULL until match ends |
+| started_at   | INTEGER                    |                       |
+| ended_at     | INTEGER                    | NULL while playing    |
 
 ---
 
@@ -101,10 +106,10 @@ One row per player per session. Tracks their full lifecycle for the day.
 
 All timers computed from timestamps — nothing stored as a running counter.
 
-| Timer | Formula |
-|-------|---------|
-| **Waiting** | `NOW − checked_in_at − total_seconds_played` |
-| **Playing** | `NOW − match.started_at` (live, on court card) |
+| Timer                  | Formula                                                   |
+| ---------------------- | --------------------------------------------------------- |
+| **Waiting**            | `NOW − checked_in_at − total_seconds_played`              |
+| **Playing**            | `NOW − match.started_at` (live, on court card)            |
 | **Total played today** | `queue_entry.total_seconds_played` (updated on match end) |
 
 Timers update via SSE every second; the client increments them locally between pushes.
@@ -114,17 +119,20 @@ Timers update via SSE every second; the client increments them locally between p
 ## Features
 
 ### Session Management
+
 - Create session: name + scheduled start/end time, number of courts
 - Session elapsed timer in header
 - End session: marks `sessions.ended_at`, archives all queue entries
 
 ### Player Management
+
 - Global player roster (persists across sessions)
 - Add player to roster: name + skill level
 - Check player into current session: creates `queue_entry`, starts waiting timer
 - Mark player as resting or left (removes from queue display, preserves history)
 
 ### Queue
+
 - **Manual mode:** Queue master clicks any players freely
 - **Smart mode:** System highlights suggested next players sorted by:
   1. Longest wait time (primary)
@@ -137,6 +145,7 @@ Timers update via SSE every second; the client increments them locally between p
 - "Send to Court ▼" dropdown appears when 2 or 4 players selected; queue master picks target court
 
 ### Courts
+
 - Configurable number of courts per session (set at session creation)
 - Each court card shows:
   - Status: empty or playing
@@ -149,12 +158,14 @@ Timers update via SSE every second; the client increments them locally between p
   3. On confirm: match saved, `queue_entry.last_played_at` set to now, `total_seconds_played` incremented by match duration, players' status → `waiting`, court → empty
 
 ### Stats Sidebar
+
 - Players currently in session
 - Total matches played today
 - Average wait time across all waiting players
 - Leaderboard: top 3-5 players by wins today
 
 ### History & Persistence
+
 - All matches saved to SQLite with full player/score/time data
 - Per-player win/loss record queryable across all sessions
 - Sessions are archived (not deleted) on end; `queue_entries` and `matches` retain their `session_id` for historical queries

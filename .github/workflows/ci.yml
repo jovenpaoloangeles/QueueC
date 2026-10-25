@@ -30,7 +30,7 @@ jobs:
           bun install --cwd tests
 
       - name: Lint (Biome)
-        run: bunx @biomejs/biome check
+        run: bunx biome check
 
       - name: Build client
         run: bun run --cwd client build

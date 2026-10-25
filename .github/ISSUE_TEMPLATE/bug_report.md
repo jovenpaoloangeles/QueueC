@@ -1,4 +1,5 @@
 ---
+
 name: Bug report
 about: Something behaved wrong during a session
 labels: bug

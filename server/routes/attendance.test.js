@@ -41,7 +41,12 @@ async function main() {
 
   // ---- Session 1: ended-match delete recomputes; slated delete still 404s ----
   const now = Math.floor(Date.now() / 1000);
-  const s1 = await api("/api/sessions", "POST", { name: "Att One", scheduled_start: now, scheduled_end: now + 3600, court_count: 2 });
+  const s1 = await api("/api/sessions", "POST", {
+    name: "Att One",
+    scheduled_start: now,
+    scheduled_end: now + 3600,
+    court_count: 2,
+  });
   const ids = {};
   const entryIds = {};
   for (const name of ["Inter C1", "Inter C2", "Inter C3", "Inter C4"]) {
@@ -53,8 +58,12 @@ async function main() {
   await api(`/api/sessions/${s1.session.id}/start`, "PATCH");
 
   const m1 = await api("/api/matches", "POST", {
-    session_id: s1.session.id, court_number: 1,
-    team1_p1: entryIds["Inter C1"], team1_p2: entryIds["Inter C2"], team2_p1: entryIds["Inter C3"], team2_p2: entryIds["Inter C4"],
+    session_id: s1.session.id,
+    court_number: 1,
+    team1_p1: entryIds["Inter C1"],
+    team1_p2: entryIds["Inter C2"],
+    team2_p1: entryIds["Inter C3"],
+    team2_p2: entryIds["Inter C4"],
   });
   assert.equal(m1.status, 201);
   await api(`/api/matches/${m1.match.id}/end`, "PATCH", { team1_score: 21, team2_score: 15 });
@@ -80,7 +89,11 @@ async function main() {
   const del = await api(`/api/matches/${m1.match.id}?historical=1`, "DELETE");
   assert.equal(del.status, 200, "historical delete of ended match 200s");
   const after = await api(`/api/sessions/${s1.session.id}/stats`);
-  assert.equal(after.stats.leaderboard.filter((r) => r.played > 0).length, 0, "no games counted after match delete");
+  assert.equal(
+    after.stats.leaderboard.filter((r) => r.played > 0).length,
+    0,
+    "no games counted after match delete",
+  );
 
   // live attendance delegates to check-in: alphabetical slot, dup 409
   const { players: pool1 } = await api("/api/players");
@@ -104,13 +117,23 @@ async function main() {
 
   // ---- Session 2: queue-delete guard, matchless undo, ended-session rows ----
   const now2 = Math.floor(Date.now() / 1000);
-  const s2 = await api("/api/sessions", "POST", { name: "Att Two", scheduled_start: now2, scheduled_end: now2 + 3600, court_count: 1 });
+  const s2 = await api("/api/sessions", "POST", {
+    name: "Att Two",
+    scheduled_start: now2,
+    scheduled_end: now2 + 3600,
+    court_count: 1,
+  });
   const { players: pool } = await api("/api/players");
   const pid = (name) => pool.find((p) => p.name === name).id;
   const a1 = await api(`/api/sessions/${s2.session.id}/checkin`, "POST", { player_id: pid("Newbie A1") });
   const a2 = await api(`/api/sessions/${s2.session.id}/checkin`, "POST", { player_id: pid("Newbie A2") });
   await api(`/api/sessions/${s2.session.id}/start`, "PATCH");
-  const m2 = await api("/api/matches", "POST", { session_id: s2.session.id, court_number: 1, team1_p1: a1.entry.id, team2_p1: a2.entry.id });
+  const m2 = await api("/api/matches", "POST", {
+    session_id: s2.session.id,
+    court_number: 1,
+    team1_p1: a1.entry.id,
+    team2_p1: a2.entry.id,
+  });
   await api(`/api/matches/${m2.match.id}/end`, "PATCH", { team1_score: 5, team2_score: 3 });
 
   const guarded = await api(`/api/queue/${a1.entry.id}`, "DELETE");
@@ -120,7 +143,9 @@ async function main() {
   // a matchless check-in on the live session, then delete the match: the
   // preset players + entries survive session end, so the wrong check-in can
   // be undone afterwards
-  const b2 = await api(`/api/sessions/${s2.session.id}/attendance`, "POST", { player_id: pid("Beginner B2") });
+  const b2 = await api(`/api/sessions/${s2.session.id}/attendance`, "POST", {
+    player_id: pid("Beginner B2"),
+  });
   assert.equal(b2.status, 201);
   await api(`/api/matches/${m2.match.id}?historical=1`, "DELETE");
   await api(`/api/sessions/${s2.session.id}/end`, "PATCH");
@@ -129,16 +154,24 @@ async function main() {
   assert.equal(undo.status, 200, "matchless entry on ended session removes");
 
   // attendance on an ended session → plain row, status 'left', body checked_in_at
-  const late = await api(`/api/sessions/${s2.session.id}/attendance`, "POST", { player_id: pid("Beginner B3"), checked_in_at: 12345 });
+  const late = await api(`/api/sessions/${s2.session.id}/attendance`, "POST", {
+    player_id: pid("Beginner B3"),
+    checked_in_at: 12345,
+  });
   assert.equal(late.status, 201, "ended-session attendance 201s");
   assert.equal(late.entry.status, "left", "ended-session attendance row is 'left'");
   assert.equal(late.entry.checked_in_at, 12345, "body checked_in_at honored");
-  assert.equal((await api(`/api/queue/${late.entry.id}`, "DELETE")).status, 200, "ended-session attendance undoable");
-
+  assert.equal(
+    (await api(`/api/queue/${late.entry.id}`, "DELETE")).status,
+    200,
+    "ended-session attendance undoable",
+  );
 
   // duplicate attendance on an ended session 409s (same contract as check-in)
   await api(`/api/sessions/${s2.session.id}/attendance`, "POST", { player_id: pid("Beginner B3") });
-  const dupLate = await api(`/api/sessions/${s2.session.id}/attendance`, "POST", { player_id: pid("Beginner B3") });
+  const dupLate = await api(`/api/sessions/${s2.session.id}/attendance`, "POST", {
+    player_id: pid("Beginner B3"),
+  });
   assert.equal(dupLate.status, 409, "duplicate attendance on an ended session 409s");
 
   console.log("attendance.test.js: all assertions passed");

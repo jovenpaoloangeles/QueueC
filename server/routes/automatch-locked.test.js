@@ -85,11 +85,11 @@ async function main() {
     locked: [ids[0], ids[1]],
   });
   assert.equal(dry.status, 200, "valid locked dry-run must 200");
-  const quartet = [
-    ...(dry.plan.slate[0]?.team1 ?? []),
-    ...(dry.plan.slate[0]?.team2 ?? []),
-  ];
-  assert.ok(quartet.includes(ids[0]) && quartet.includes(ids[1]), `locked ids in dry-run slate quartet, got [${quartet}]`);
+  const quartet = [...(dry.plan.slate[0]?.team1 ?? []), ...(dry.plan.slate[0]?.team2 ?? [])];
+  assert.ok(
+    quartet.includes(ids[0]) && quartet.includes(ids[1]),
+    `locked ids in dry-run slate quartet, got [${quartet}]`,
+  );
   assert.equal(dry.plan.slate.length, 1, "locked plans exactly one quartet");
 
   // Committed (non-dry) run slates them

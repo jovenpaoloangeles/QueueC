@@ -19,7 +19,7 @@ vulnerability class we track, but it means:
 
 ## Reporting a vulnerability
 
-If you find something that matters *within that model* — injection, path
+If you find something that matters _within that model_ — injection, path
 traversal, data corruption, a crash that loses session state — please open a
 private security advisory via GitHub's **Report a vulnerability** on the
 Security tab, or an issue if it's low severity. Include reproduction steps and

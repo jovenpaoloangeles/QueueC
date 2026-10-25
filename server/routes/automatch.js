@@ -223,10 +223,12 @@ router.post("/sessions/:id/automatch", async (c) => {
         .get(id).n;
       const [t1p1, t1p2] = m.team1;
       const [t2p1, t2p2] = m.team2;
-      const { lastInsertRowid } = db.prepare(`
+      const { lastInsertRowid } = db
+        .prepare(`
         INSERT INTO matches (session_id, court_number, format, state, slate_seq, team1_p1, team1_p2, team2_p1, team2_p2, started_at)
         VALUES (?, NULL, 'doubles', 'slated', ?, ?, ?, ?, ?, 0)
-      `).run(id, seq, t1p1, t1p2, t2p1, t2p2);
+      `)
+        .run(id, seq, t1p1, t1p2, t2p1, t2p2);
       for (const eid of [...m.team1, ...m.team2]) setStaged.run(now, eid);
       slateIds.push(lastInsertRowid);
       slated++;

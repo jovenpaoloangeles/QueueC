@@ -62,7 +62,11 @@ async function main() {
   await api(`/api/sessions/${throwaway.id}/start`, "PATCH");
   await api(`/api/sessions/${throwaway.id}/end`, "PATCH");
   assert.equal((await api(`/api/sessions/${throwaway.id}/pause`, "PATCH")).status, 400, "ended pause → 400");
-  assert.equal((await api(`/api/sessions/${throwaway.id}/resume`, "PATCH")).status, 400, "resume unpaused → 400");
+  assert.equal(
+    (await api(`/api/sessions/${throwaway.id}/resume`, "PATCH")).status,
+    400,
+    "resume unpaused → 400",
+  );
 
   // (a) live session pauses
   const { session } = await api("/api/sessions", "POST", {
@@ -133,7 +137,10 @@ async function main() {
   assert.ok(grown >= 1 && grown <= 8, `checked_in_at grew by the pause length, got ${grown}`);
   const stPost = await readFirstState();
   const waitPostExact = stPost.serverTime - waiterPost.checked_in_at - waiterPost.total_seconds_played;
-  assert.ok(Math.abs(waitPostExact - waitPre) <= 2, `wait preserved across pause (${waitPre} → ${waitPostExact})`);
+  assert.ok(
+    Math.abs(waitPostExact - waitPre) <= 2,
+    `wait preserved across pause (${waitPre} → ${waitPostExact})`,
+  );
   assert.ok(stPost.serverTime > stPaused.serverTime, "serverTime flowing again");
 
   // the mid-pause check-in is clamped to resume-now, never in the future

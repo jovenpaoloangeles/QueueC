@@ -130,7 +130,9 @@ export default function PlayerSearchAdd({
           ? `Checked in ${entryIds.length} players — ${failed} skipped (already active)`
           : `Checked in ${entryIds.length} players`,
         entryIds.length ? "success" : "info",
-        entryIds.length ? { undo: () => Promise.allSettled(entryIds.map((id) => removeEntry(id))) } : undefined,
+        entryIds.length
+          ? { undo: () => Promise.allSettled(entryIds.map((id) => removeEntry(id))) }
+          : undefined,
       );
     } finally {
       setRegistering(false);

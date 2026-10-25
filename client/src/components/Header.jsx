@@ -1,11 +1,36 @@
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { pauseSession, resumeSession } from "@/api";
+import { Button } from "@/components/ui/button";
 import { toggleTheme } from "@/lib/theme";
 import { cn, fmtClock, fmtDur, netWait } from "@/lib/utils";
 import EndSessionConfirmDialog from "./EndSessionConfirmDialog.jsx";
 
-export default function Header({ session, sseData, draftedIds = new Set(), onSmartMatch, onEndSession, onCheatsheet }) {
+const ChipDot = ({ tone }) => (
+  <span className={cn("size-2 shrink-0 rounded-full", tone)} aria-hidden="true" />
+);
+
+// session name "NAME (date)" → one line: NAME (uppercased) · date;
+// without ' (' the full name renders alone (defensive path)
+function SessionNameBlock({ name }) {
+  const idx = (name ?? "").indexOf(" (");
+  const namePart = idx === -1 ? (name ?? "") : name.slice(0, idx);
+  const datePart = idx === -1 ? null : name.slice(idx + 2, name.length - 1);
+  return (
+    <span data-testid="header-session-name" className="whitespace-nowrap">
+      <span className="text-[13.5px] font-bold tracking-wide text-foreground">{namePart.toUpperCase()}</span>
+      {datePart != null && <span className="text-[12.5px] text-muted-foreground"> · {datePart}</span>}
+    </span>
+  );
+}
+
+export default function Header({
+  session,
+  sseData,
+  draftedIds = new Set(),
+  onSmartMatch,
+  onEndSession,
+  onCheatsheet,
+}) {
   const [elapsed, setElapsed] = useState(0);
   const [confirmEnd, setConfirmEnd] = useState(false);
   const paused = session?.paused_at != null;
@@ -18,7 +43,7 @@ export default function Header({ session, sseData, draftedIds = new Set(), onSma
     if (paused) return;
     const id = setInterval(() => setElapsed((e) => e + 1), 1000);
     return () => clearInterval(id);
-  }, [session?.id, session?.started_at, session]);
+  }, [session?.id, session?.started_at, session, paused]);
 
   const togglePause = () => (paused ? resumeSession(session.id) : pauseSession(session.id)).catch(() => {});
 
@@ -49,26 +74,6 @@ export default function Header({ session, sseData, draftedIds = new Set(), onSma
     },
     { secs: 0, name: null },
   );
-
-  const ChipDot = ({ tone }) => (
-    <span className={cn("size-2 shrink-0 rounded-full", tone)} aria-hidden="true" />
-  );
-
-  // session name "NAME (date)" → one line: NAME (uppercased) · date;
-  // without ' (' the full name renders alone (defensive path)
-  function SessionNameBlock({ name }) {
-    const idx = (name ?? "").indexOf(" (");
-    const namePart = idx === -1 ? (name ?? "") : name.slice(0, idx);
-    const datePart = idx === -1 ? null : name.slice(idx + 2, name.length - 1);
-    return (
-      <span data-testid="header-session-name" className="whitespace-nowrap">
-        <span className="text-[13.5px] font-bold tracking-wide text-foreground">
-          {namePart.toUpperCase()}
-        </span>
-        {datePart != null && <span className="text-[12.5px] text-muted-foreground"> · {datePart}</span>}
-      </span>
-    );
-  }
 
   return (
     <div className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b border-border bg-card/70 px-5 backdrop-blur-xl backdrop-saturate-150">

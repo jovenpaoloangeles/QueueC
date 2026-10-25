@@ -46,6 +46,7 @@ Status legend: no checkbox = not started. Check off as shipped; delete rejected 
 - [ ] **Health endpoint + Docker healthcheck** — `/healthz` wired into the Dockerfile `HEALTHCHECK`.
 
 ## Nice to Have
+
 - [ ] **Guest self check-in** — QR code that opens a check-in page (name entry + join queue), removing the queue master as bottleneck.
 - [ ] **Simple auth** — single shared password or passkey for queue-master actions; viewers stay read-only.
 - [ ] **Multiple concurrent sessions** — separate venues/sections under one install, each with its own courts and queue.

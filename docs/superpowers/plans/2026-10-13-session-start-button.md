@@ -47,64 +47,71 @@ Replace the whole of `server/routes/sessions.test.js` with:
 
 ```js
 // Run with: node server/routes/sessions.test.js (server must be running on :3001)
-import assert from 'node:assert/strict'
+import assert from "node:assert/strict";
 
-const BASE = 'http://localhost:3001/api'
+const BASE = "http://localhost:3001/api";
 
 async function run() {
   // No active session initially (end any stray unended session first)
-  let r = await fetch(`${BASE}/sessions/active`).then(res => res.json())
+  let r = await fetch(`${BASE}/sessions/active`).then((res) => res.json());
   if (r.session) {
-    await fetch(`${BASE}/sessions/${r.session.id}/end`, { method: 'PATCH' })
+    await fetch(`${BASE}/sessions/${r.session.id}/end`, { method: "PATCH" });
   }
-  r = await fetch(`${BASE}/sessions/active`).then(res => res.json())
-  assert.equal(r.session, null, 'Expected null active session')
+  r = await fetch(`${BASE}/sessions/active`).then((res) => res.json());
+  assert.equal(r.session, null, "Expected null active session");
 
   // Create session → draft (started_at null)
   const created = await fetch(`${BASE}/sessions`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: 'Test', scheduled_start: 1000, scheduled_end: 2000, court_count: 2 })
-  }).then(res => res.json())
-  assert.ok(created.session.id, 'Expected session id')
-  assert.equal(created.session.court_count, 2, 'Expected court_count 2')
-  assert.equal(created.session.started_at, null, 'Draft session must have started_at null')
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: "Test", scheduled_start: 1000, scheduled_end: 2000, court_count: 2 }),
+  }).then((res) => res.json());
+  assert.ok(created.session.id, "Expected session id");
+  assert.equal(created.session.court_count, 2, "Expected court_count 2");
+  assert.equal(created.session.started_at, null, "Draft session must have started_at null");
 
   // Active session returns the draft
-  const active = await fetch(`${BASE}/sessions/active`).then(res => res.json())
-  assert.equal(active.session.id, created.session.id, 'Active session mismatch')
+  const active = await fetch(`${BASE}/sessions/active`).then((res) => res.json());
+  assert.equal(active.session.id, created.session.id, "Active session mismatch");
 
   // Starting a match on a draft is rejected
   const matchRes = await fetch(`${BASE}/matches`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ session_id: created.session.id, court_number: 1, team1_p1: 1, team2_p1: 2 })
-  })
-  assert.equal(matchRes.status, 400, 'Match on draft session must be 400')
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ session_id: created.session.id, court_number: 1, team1_p1: 1, team2_p1: 2 }),
+  });
+  assert.equal(matchRes.status, 400, "Match on draft session must be 400");
 
   // Start the session → started_at set
-  const started = await fetch(`${BASE}/sessions/${created.session.id}/start`, { method: 'PATCH' }).then(res => res.json())
-  assert.ok(started.session.started_at !== null, 'Expected started_at set after start')
+  const started = await fetch(`${BASE}/sessions/${created.session.id}/start`, { method: "PATCH" }).then(
+    (res) => res.json(),
+  );
+  assert.ok(started.session.started_at !== null, "Expected started_at set after start");
 
   // Starting twice → 400
-  const again = await fetch(`${BASE}/sessions/${created.session.id}/start`, { method: 'PATCH' })
-  assert.equal(again.status, 400, 'Second start must be 400')
+  const again = await fetch(`${BASE}/sessions/${created.session.id}/start`, { method: "PATCH" });
+  assert.equal(again.status, 400, "Second start must be 400");
 
   // End it
-  const ended = await fetch(`${BASE}/sessions/${created.session.id}/end`, { method: 'PATCH' }).then(res => res.json())
-  assert.ok(ended.session.ended_at !== null, 'Expected ended_at set')
+  const ended = await fetch(`${BASE}/sessions/${created.session.id}/end`, { method: "PATCH" }).then((res) =>
+    res.json(),
+  );
+  assert.ok(ended.session.ended_at !== null, "Expected ended_at set");
 
   // Starting an ended session → 400
-  const afterEnd = await fetch(`${BASE}/sessions/${created.session.id}/start`, { method: 'PATCH' })
-  assert.equal(afterEnd.status, 400, 'Start after end must be 400')
+  const afterEnd = await fetch(`${BASE}/sessions/${created.session.id}/start`, { method: "PATCH" });
+  assert.equal(afterEnd.status, 400, "Start after end must be 400");
 
   // Active now null
-  const final = await fetch(`${BASE}/sessions/active`).then(res => res.json())
-  assert.equal(final.session, null, 'Expected null after end')
+  const final = await fetch(`${BASE}/sessions/active`).then((res) => res.json());
+  assert.equal(final.session, null, "Expected null after end");
 
-  console.log('sessions.test.js: all assertions passed')
+  console.log("sessions.test.js: all assertions passed");
 }
-run().catch(e => { console.error(e); process.exit(1) })
+run().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
@@ -133,10 +140,12 @@ Then add this migration directly after the existing `sort_order` migration block
 
 ```js
 // ponytail: rebuild sessions to relax started_at — drafts have NULL until PATCH /start
-const startedAt = db.prepare('PRAGMA table_info(sessions)').all()
-  .find(c => c.name === 'started_at')
+const startedAt = db
+  .prepare("PRAGMA table_info(sessions)")
+  .all()
+  .find((c) => c.name === "started_at");
 if (startedAt?.notnull === 1) {
-  db.pragma('foreign_keys = OFF')
+  db.pragma("foreign_keys = OFF");
   db.exec(`
     CREATE TABLE sessions_new (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -151,8 +160,8 @@ if (startedAt?.notnull === 1) {
       SELECT id, name, scheduled_start, scheduled_end, court_count, started_at, ended_at FROM sessions;
     DROP TABLE sessions;
     ALTER TABLE sessions_new RENAME TO sessions;
-  `)
-  db.pragma('foreign_keys = ON')
+  `);
+  db.pragma("foreign_keys = ON");
 }
 ```
 
@@ -163,31 +172,31 @@ if (startedAt?.notnull === 1) {
 In `server/routes/sessions.js`, replace the POST handler's INSERT (lines 14-23) with:
 
 ```js
-router.post('/', (req, res) => {
-  const { name, scheduled_start, scheduled_end, court_count } = req.body
-  const { lastInsertRowid } = db.prepare(
-    'INSERT INTO sessions (name, scheduled_start, scheduled_end, court_count) VALUES (?, ?, ?, ?)'
-  ).run(name, scheduled_start, scheduled_end, court_count ?? 2)
-  const session = db.prepare('SELECT * FROM sessions WHERE id = ?').get(lastInsertRowid)
-  broadcast()
-  res.status(201).json({ session })
-})
+router.post("/", (req, res) => {
+  const { name, scheduled_start, scheduled_end, court_count } = req.body;
+  const { lastInsertRowid } = db
+    .prepare("INSERT INTO sessions (name, scheduled_start, scheduled_end, court_count) VALUES (?, ?, ?, ?)")
+    .run(name, scheduled_start, scheduled_end, court_count ?? 2);
+  const session = db.prepare("SELECT * FROM sessions WHERE id = ?").get(lastInsertRowid);
+  broadcast();
+  res.status(201).json({ session });
+});
 ```
 
 Add this route immediately after the POST handler:
 
 ```js
-router.patch('/:id/start', (req, res) => {
-  const session = db.prepare('SELECT * FROM sessions WHERE id = ?').get(req.params.id)
-  if (!session) return res.status(404).json({ error: 'Session not found' })
-  if (session.ended_at) return res.status(400).json({ error: 'Session already ended' })
-  if (session.started_at != null) return res.status(400).json({ error: 'Session already started' })
-  const now = Math.floor(Date.now() / 1000)
-  db.prepare('UPDATE sessions SET started_at = ? WHERE id = ?').run(now, req.params.id)
-  const updated = db.prepare('SELECT * FROM sessions WHERE id = ?').get(req.params.id)
-  broadcast()
-  res.json({ session: updated })
-})
+router.patch("/:id/start", (req, res) => {
+  const session = db.prepare("SELECT * FROM sessions WHERE id = ?").get(req.params.id);
+  if (!session) return res.status(404).json({ error: "Session not found" });
+  if (session.ended_at) return res.status(400).json({ error: "Session already ended" });
+  if (session.started_at != null) return res.status(400).json({ error: "Session already started" });
+  const now = Math.floor(Date.now() / 1000);
+  db.prepare("UPDATE sessions SET started_at = ? WHERE id = ?").run(now, req.params.id);
+  const updated = db.prepare("SELECT * FROM sessions WHERE id = ?").get(req.params.id);
+  broadcast();
+  res.json({ session: updated });
+});
 ```
 
 - [ ] **Step 5: Guard match creation on unstarted sessions**
@@ -242,7 +251,7 @@ git commit -m "feat: sessions create as drafts; PATCH /sessions/:id/start; block
 In `client/src/api.js`, after line 13 (`createSession`), add:
 
 ```js
-export const startSession = id => req('PATCH', `/sessions/${id}/start`)
+export const startSession = (id) => req("PATCH", `/sessions/${id}/start`);
 ```
 
 - [ ] **Step 2: Create SetupScreen**
@@ -250,49 +259,49 @@ export const startSession = id => req('PATCH', `/sessions/${id}/start`)
 Create `client/src/components/SetupScreen.jsx` with these contents:
 
 ```jsx
-import { useState, useEffect } from 'react'
-import { cn, SKILL_BADGE } from '@/lib/utils'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
-import { checkinPlayer, getPlayers, startSession } from '../api.js'
+import { useState, useEffect } from "react";
+import { cn, SKILL_BADGE } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { checkinPlayer, getPlayers, startSession } from "../api.js";
 
-const fmtTime = ts =>
-  ts ? new Date(ts * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'
+const fmtTime = (ts) =>
+  ts ? new Date(ts * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—";
 
 function SkillChip({ level }) {
   return (
-    <Badge className={cn('border-0 text-2xs', SKILL_BADGE[level] ?? SKILL_BADGE.intermediate)}>
-      {level?.replace('_', ' ') ?? ''}
+    <Badge className={cn("border-0 text-2xs", SKILL_BADGE[level] ?? SKILL_BADGE.intermediate)}>
+      {level?.replace("_", " ") ?? ""}
     </Badge>
-  )
+  );
 }
 
 export default function SetupScreen({ session, queue }) {
-  const [players, setPlayers] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [starting, setStarting] = useState(false)
+  const [players, setPlayers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [starting, setStarting] = useState(false);
 
   useEffect(() => {
     getPlayers()
-      .then(d => setPlayers(d.players))
+      .then((d) => setPlayers(d.players))
       .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [])
+      .finally(() => setLoading(false));
+  }, []);
 
-  const inQueue = new Set(queue.map(e => e.player_id))
-  const pool = players.filter(p => !inQueue.has(p.id))
-  const canStart = queue.length >= 2
+  const inQueue = new Set(queue.map((e) => e.player_id));
+  const pool = players.filter((p) => !inQueue.has(p.id));
+  const canStart = queue.length >= 2;
 
   async function handleStart() {
-    setStarting(true)
+    setStarting(true);
     try {
-      await startSession(session.id)
+      await startSession(session.id);
     } catch {
       // SSE keeps the truth; re-enable the button to retry
     } finally {
-      setStarting(false)
+      setStarting(false);
     }
   }
 
@@ -302,13 +311,14 @@ export default function SetupScreen({ session, queue }) {
         <CardHeader className="gap-1">
           <CardTitle className="text-lg">{session.name}</CardTitle>
           <span className="text-2xs uppercase tracking-wider text-muted-foreground">
-            {fmtTime(session.scheduled_start)}–{fmtTime(session.scheduled_end)} · {session.court_count} courts · Not started
+            {fmtTime(session.scheduled_start)}–{fmtTime(session.scheduled_end)} · {session.court_count} courts
+            · Not started
           </span>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="flex items-center gap-3">
             <Button size="sm" disabled={!canStart || starting} onClick={handleStart}>
-              {starting ? '...' : 'Start Session'}
+              {starting ? "..." : "Start Session"}
             </Button>
             {!canStart && (
               <span className="text-xs text-muted-foreground">
@@ -330,7 +340,7 @@ export default function SetupScreen({ session, queue }) {
               <span className="text-xs text-muted-foreground">All registered players are in the queue.</span>
             )}
             <div className="flex flex-wrap gap-2">
-              {pool.map(p => (
+              {pool.map((p) => (
                 <Button
                   key={p.id}
                   variant="outline"
@@ -348,9 +358,7 @@ export default function SetupScreen({ session, queue }) {
             <span className="text-sm font-semibold text-foreground">
               Queue · <span className="font-mono tabular-nums">{queue.length}</span>
             </span>
-            {queue.length === 0 && (
-              <span className="text-xs text-muted-foreground">No players yet.</span>
-            )}
+            {queue.length === 0 && <span className="text-xs text-muted-foreground">No players yet.</span>}
             <ol className="flex flex-col gap-1">
               {queue.map((e, i) => (
                 <li
@@ -367,7 +375,7 @@ export default function SetupScreen({ session, queue }) {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
 ```
 
@@ -380,49 +388,55 @@ In `client/src/App.jsx`:
 2. Replace the dashboard/empty branches (lines 58-96) with:
 
 ```jsx
-      {session && session.started_at == null && (
-        <SetupScreen session={session} queue={queue} />
-      )}
-      {session && session.started_at != null && (
-        <div className="flex flex-1 overflow-hidden">
-          <main className="flex min-w-0 flex-1 flex-col gap-4 overflow-hidden p-4">
-            {/* band heights from the target arrangement: courts h-[45%] min-h-[300px], queue flex-1 */}
-            <div className="grid h-[45%] min-h-[300px] shrink-0 overflow-hidden">
-              <CourtsRow
-                session={session}
-                activeMatches={activeMatches}
-                queue={queue}
-                playSeconds={playSeconds}
-                selection={selection}
-                onStartMatch={handleStartMatch}
-                onDropPlayer={handleDropOnCourt}
-                armedCourt={armedCourt}
-              />
-            </div>
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-              <QueueGrid
-                session={session}
-                queue={queue}
-                waitSeconds={waitSeconds}
-                selection={selection}
-                onSelectionChange={setSelection}
-                onReorder={handleReorder}
-              />
-            </div>
-          </main>
-          <aside className="w-72 shrink-0 overflow-y-auto border-l border-border bg-card">
-            <StatsSidebar stats={stats} />
-          </aside>
+{
+  session && session.started_at == null && <SetupScreen session={session} queue={queue} />;
+}
+{
+  session && session.started_at != null && (
+    <div className="flex flex-1 overflow-hidden">
+      <main className="flex min-w-0 flex-1 flex-col gap-4 overflow-hidden p-4">
+        {/* band heights from the target arrangement: courts h-[45%] min-h-[300px], queue flex-1 */}
+        <div className="grid h-[45%] min-h-[300px] shrink-0 overflow-hidden">
+          <CourtsRow
+            session={session}
+            activeMatches={activeMatches}
+            queue={queue}
+            playSeconds={playSeconds}
+            selection={selection}
+            onStartMatch={handleStartMatch}
+            onDropPlayer={handleDropOnCourt}
+            armedCourt={armedCourt}
+          />
         </div>
-      )}
-      {!session && (
-        <div className="flex flex-1 items-center justify-center">
-          <Button size="lg" onClick={() => setShowCreate(true)}>
-            + Start New Session
-          </Button>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <QueueGrid
+            session={session}
+            queue={queue}
+            waitSeconds={waitSeconds}
+            selection={selection}
+            onSelectionChange={setSelection}
+            onReorder={handleReorder}
+          />
         </div>
-      )}
-      {showCreate && <CreateSessionModal onClose={() => setShowCreate(false)} />}
+      </main>
+      <aside className="w-72 shrink-0 overflow-y-auto border-l border-border bg-card">
+        <StatsSidebar stats={stats} />
+      </aside>
+    </div>
+  );
+}
+{
+  !session && (
+    <div className="flex flex-1 items-center justify-center">
+      <Button size="lg" onClick={() => setShowCreate(true)}>
+        + Start New Session
+      </Button>
+    </div>
+  );
+}
+{
+  showCreate && <CreateSessionModal onClose={() => setShowCreate(false)} />;
+}
 ```
 
 (The dashboard JSX inside the started branch is byte-identical to the current block — only the wrapping condition changed from `session &&` to `session && session.started_at != null &&`.)
@@ -434,16 +448,20 @@ In `client/src/components/Header.jsx`:
 2. Replace the elapsed Badge block (lines 35-39) with:
 
 ```jsx
-        {session && session.started_at != null && (
-          <Badge variant="outline" className="font-mono tabular-nums text-primary border-primary/30">
-            ● {fmtDur(elapsed)}
-          </Badge>
-        )}
-        {session && session.started_at == null && (
-          <Badge variant="outline" className="text-2xs uppercase tracking-wider text-muted-foreground">
-            Not started
-          </Badge>
-        )}
+{
+  session && session.started_at != null && (
+    <Badge variant="outline" className="font-mono tabular-nums text-primary border-primary/30">
+      ● {fmtDur(elapsed)}
+    </Badge>
+  );
+}
+{
+  session && session.started_at == null && (
+    <Badge variant="outline" className="text-2xs uppercase tracking-wider text-muted-foreground">
+      Not started
+    </Badge>
+  );
+}
 ```
 
 - [ ] **Step 5: Modal button copy**

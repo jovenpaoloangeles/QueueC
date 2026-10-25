@@ -20,7 +20,12 @@ async function main() {
   if (stray) await api(`/api/sessions/${stray.id}/end`, "PATCH");
 
   const now = Math.floor(Date.now() / 1000);
-  const s = await api("/api/sessions", "POST", { name: "Export One", scheduled_start: now, scheduled_end: now + 3600, court_count: 2 });
+  const s = await api("/api/sessions", "POST", {
+    name: "Export One",
+    scheduled_start: now,
+    scheduled_end: now + 3600,
+    court_count: 2,
+  });
   const sid = s.session.id;
   const e = {};
   for (const name of ["Inter C1", "Inter C2", "Inter C3", "Inter C4"]) {
@@ -29,8 +34,12 @@ async function main() {
   }
   await api(`/api/sessions/${sid}/start`, "PATCH");
   const m = await api("/api/matches", "POST", {
-    session_id: sid, court_number: 1,
-    team1_p1: e["Inter C1"], team1_p2: e["Inter C2"], team2_p1: e["Inter C3"], team2_p2: e["Inter C4"],
+    session_id: sid,
+    court_number: 1,
+    team1_p1: e["Inter C1"],
+    team1_p2: e["Inter C2"],
+    team2_p1: e["Inter C3"],
+    team2_p2: e["Inter C4"],
   });
   await api(`/api/matches/${m.match.id}/end`, "PATCH", { team1_score: 21, team2_score: 15 });
   await api(`/api/sessions/${sid}/shuttles`, "PATCH", { delta: 2 });
@@ -41,10 +50,7 @@ async function main() {
   const jres = await fetch(`${BASE}/api/sessions/${sid}/export?format=json`);
   assert.equal(jres.status, 200);
   assert.match(jres.headers.get("content-type") ?? "", /application\/json/);
-  assert.equal(
-    jres.headers.get("content-disposition"),
-    `attachment; filename="session-${sid}-detail.json"`,
-  );
+  assert.equal(jres.headers.get("content-disposition"), `attachment; filename="session-${sid}-detail.json"`);
   const jexp = await jres.json();
   const detail = await (await fetch(`${BASE}/api/sessions/${sid}/detail`)).json();
   assert.deepEqual(jexp, detail, "session export JSON equals detail payload");
@@ -67,11 +73,17 @@ async function main() {
   const csv = await cres.text();
   assert.ok(csv.startsWith("# Leaderboard\n"), "CSV starts with the leaderboard section");
   for (const section of ["# Games", "# Attendance", "# Shuttles"]) {
-    assert.ok(csv.includes(`\n# ${section.replace("# ", "")}\n`) || csv.includes(`# ${section}\n`), `CSV has a ${section} section`);
+    assert.ok(
+      csv.includes(`\n# ${section.replace("# ", "")}\n`) || csv.includes(`# ${section}\n`),
+      `CSV has a ${section} section`,
+    );
   }
   const lbRows = csv.split("\n# Games")[0].trim().split("\n").slice(2); // skip # comment + header row
   assert.equal(lbRows.length, 4, "one row per leaderboard player");
-  assert.ok(lbRows.every((r) => r.split(",").length >= 6), "leaderboard rows carry the header's columns");
+  assert.ok(
+    lbRows.every((r) => r.split(",").length >= 6),
+    "leaderboard rows carry the header's columns",
+  );
 
   const kres = await fetch(`${BASE}/api/players/${c1}/career/export`);
   assert.equal(kres.status, 200);
@@ -84,14 +96,24 @@ async function main() {
   // RFC 4180: a player name with a comma is quoted. The player must PLAY —
   // session end purges history-less drop-ins, taking their attendance along.
   const qp = await api("/api/players", "POST", { name: "Quote, Player", skill_level: "intermediate" });
-  const qs = await api("/api/sessions", "POST", { name: "Export Quoted", scheduled_start: now, scheduled_end: now + 3600, court_count: 1 });
+  const qs = await api("/api/sessions", "POST", {
+    name: "Export Quoted",
+    scheduled_start: now,
+    scheduled_end: now + 3600,
+    court_count: 1,
+  });
   const qe = [qp.player.id, await pid("Inter C1"), await pid("Inter C2"), await pid("Inter C3")].map(
-    (player_id) => api(`/api/sessions/${qs.session.id}/checkin`, "POST", { player_id }).then((r) => r.entry.id),
+    (player_id) =>
+      api(`/api/sessions/${qs.session.id}/checkin`, "POST", { player_id }).then((r) => r.entry.id),
   );
   await api(`/api/sessions/${qs.session.id}/start`, "PATCH");
   const qm = await api("/api/matches", "POST", {
-    session_id: qs.session.id, court_number: 1,
-    team1_p1: await qe[0], team1_p2: await qe[1], team2_p1: await qe[2], team2_p2: await qe[3],
+    session_id: qs.session.id,
+    court_number: 1,
+    team1_p1: await qe[0],
+    team1_p2: await qe[1],
+    team2_p1: await qe[2],
+    team2_p2: await qe[3],
   });
   await api(`/api/matches/${qm.match.id}/end`, "PATCH", { team1_score: 21, team2_score: 19 });
   await api(`/api/sessions/${qs.session.id}/end`, "PATCH");

@@ -1,6 +1,7 @@
 # TODO
 
 ## Done
+
 - [x] Single-screen session setup — `ASTIRISK (DD-Mmm-YYYY)` name default, whole-hour start select (06:00–23:00), per-court label + hours (0.5–12), alphabetical pool with select-all/tier filter, double-click inline name/skill edit, one Start Session button (create → check in → start); create-session modal flow removed
 - [x] Court rental expiry — no Open toggle; expired court (idle or mid-match) offers **Extend Court (+1hr)?**, the live match keeps running under a Last Game badge, server extends from max(expires_at, now)
 - [x] Resting tray drag-and-drop both ways (plus Rest/Wake buttons, shift-click)
@@ -17,6 +18,7 @@
 - [x] Parallel e2e (per-worker server + DB) — ~200 tests / 28 specs
 
 ## Remaining ideas
+
 - [ ] QR check-in
 - [ ] Automated "you're up next" announcements/notifications
 - [ ] Session fee management / billing models

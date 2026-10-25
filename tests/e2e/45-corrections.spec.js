@@ -54,7 +54,5 @@ test("45.3 add a missed player to attendance", async ({ page }) => {
 
   await page.getByTestId("attendance-add-select").selectOption({ label: "Upper D3" });
   await page.getByTestId("attendance-add-button").click();
-  await expect(
-    page.getByTestId("detail-attendance-row").filter({ hasText: "Upper D3" }),
-  ).toHaveCount(1);
+  await expect(page.getByTestId("detail-attendance-row").filter({ hasText: "Upper D3" })).toHaveCount(1);
 });

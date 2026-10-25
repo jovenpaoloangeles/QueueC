@@ -58,16 +58,16 @@ Without Docker: install [Bun](https://bun.sh), then
 
 ## Documentation
 
-| Doc | For |
-|---|---|
-| [docs/usage.md](docs/usage.md) | Operating a session (queue-master guide) |
-| [docs/architecture.md](docs/architecture.md) | How the server, SSE state model and client fit together |
-| [docs/algorithm.md](docs/algorithm.md) | Smart Match: the shipped heuristic + the target optimizer design |
-| [docs/testing.md](docs/testing.md) | Running the test suites |
-| [docs/ai-harness.md](docs/ai-harness.md) | Contributing with Claude Code / an AI agent |
-| [docs/workflow.md](docs/workflow.md) | The original product workflow spec |
-| [ROADMAP.md](ROADMAP.md) | Planned features by version — check off as shipped |
-| [CLAUDE.md](CLAUDE.md) | Agent policy this repo is developed under |
+| Doc                                          | For                                                              |
+| -------------------------------------------- | ---------------------------------------------------------------- |
+| [docs/usage.md](docs/usage.md)               | Operating a session (queue-master guide)                         |
+| [docs/architecture.md](docs/architecture.md) | How the server, SSE state model and client fit together          |
+| [docs/algorithm.md](docs/algorithm.md)       | Smart Match: the shipped heuristic + the target optimizer design |
+| [docs/testing.md](docs/testing.md)           | Running the test suites                                          |
+| [docs/ai-harness.md](docs/ai-harness.md)     | Contributing with Claude Code / an AI agent                      |
+| [docs/workflow.md](docs/workflow.md)         | The original product workflow spec                               |
+| [ROADMAP.md](ROADMAP.md)                     | Planned features by version — check off as shipped               |
+| [CLAUDE.md](CLAUDE.md)                       | Agent policy this repo is developed under                        |
 
 ## Development
 

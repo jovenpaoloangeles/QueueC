@@ -41,7 +41,7 @@ The algorithm assigns available players to doubles courts by optimizing **queue 
 
 To avoid the failure modes of naive weighted-sum scoring and strict lexicographic tie-breaking, the engine is built around five structural guarantees:
 
-1. **Unary-First Constraint Pruning:** Player-level hard constraints (availability, rest/consecutive-game limits) are enforced *before* candidate window slicing and combinatorial expansion.
+1. **Unary-First Constraint Pruning:** Player-level hard constraints (availability, rest/consecutive-game limits) are enforced _before_ candidate window slicing and combinatorial expansion.
 2. **Virtual Game Offset for Late Arrivals:** Latecomers are initialized with the active median virtual game count rather than dividing games by attendance duration, eliminating cold-start rate singularities and consecutive-game bursts.
 3. **Quartet vs. Split Decoupling:** Metrics that depend only on the 4-player cohort (wait time, games played, cohort skill variance) are evaluated in **Stage A** on $\binom{K}{4}$ quartets. Metrics that depend on team assignment (team balance, partnership history, opponent history) are evaluated in **Stage B** on the 3 perfect matchings of each surviving quartet.
 4. **$\epsilon$-Lexicographic Tolerance Bands:** Higher-priority objectives prune the search space to a tolerance band $[f_m^*, f_m^* \pm \epsilon_m]$ rather than requiring exact floating-point ties, preventing the optimizer from degenerating into naive FIFO.
@@ -53,27 +53,27 @@ To avoid the failure modes of naive weighted-sum scoring and strict lexicographi
 
 For $N$ total session players ($N \le 26$), the session state at decision epoch $t$ is stored as contiguous 1D vectors and 2D symmetric matrices. After unary filtering and candidate slicing to $K$ eligible players ($4 \le K \le 26$), all vectors have shape $(K,)$ and matrices have shape $(K, K)$:
 
-| Symbol | Shape | DType | Description |
-| --- | --- | --- | --- |
-| $\mathbf{a}$ | $(N,)$ | `bool` | Availability mask (`True` if checked in, idle, and not resting/injured). |
-| $\mathbf{c}$ | $(N,)$ | `int32` | Consecutive games played without sitting out at least one cycle. |
-| $\mathbf{w}$ | $(K,)$ | `float32` | Elapsed waiting time (minutes) since becoming available. |
-| $\mathbf{g}^{\text{virt}}$ | $(K,)$ | `float32` | Virtual games played (offset-adjusted for late arrivals). |
-| $\mathbf{s}$ | $(K,)$ | `float32` | Individual skill rating (e.g., $1.0\text{--}10.0$ or Elo/MMR). |
-| $\mathbf{P}$ | $(K, K)$ | `float32` | Symmetric recency-weighted partnership penalty matrix. |
-| $\mathbf{O}$ | $(K, K)$ | `float32` | Symmetric recency-weighted opponent penalty matrix. |
-| $\mathbf{B}_{\text{pair}}$ | $(K, K)$ | `bool` | Hard relational ban mask (`True` if pair $(i, j)$ cannot be partnered). |
+| Symbol                     | Shape    | DType     | Description                                                              |
+| -------------------------- | -------- | --------- | ------------------------------------------------------------------------ |
+| $\mathbf{a}$               | $(N,)$   | `bool`    | Availability mask (`True` if checked in, idle, and not resting/injured). |
+| $\mathbf{c}$               | $(N,)$   | `int32`   | Consecutive games played without sitting out at least one cycle.         |
+| $\mathbf{w}$               | $(K,)$   | `float32` | Elapsed waiting time (minutes) since becoming available.                 |
+| $\mathbf{g}^{\text{virt}}$ | $(K,)$   | `float32` | Virtual games played (offset-adjusted for late arrivals).                |
+| $\mathbf{s}$               | $(K,)$   | `float32` | Individual skill rating (e.g., $1.0\text{--}10.0$ or Elo/MMR).           |
+| $\mathbf{P}$               | $(K, K)$ | `float32` | Symmetric recency-weighted partnership penalty matrix.                   |
+| $\mathbf{O}$               | $(K, K)$ | `float32` | Symmetric recency-weighted opponent penalty matrix.                      |
+| $\mathbf{B}_{\text{pair}}$ | $(K, K)$ | `bool`    | Hard relational ban mask (`True` if pair $(i, j)$ cannot be partnered).  |
 
 ### Late-Arrival Initialization & History Updates
 
-* **Virtual Game Counter ($\mathbf{g}^{\text{virt}}$):** When player $i$ checks in late at time $t_{\text{arrive}}$, their virtual game counter is initialized to the median of currently active players:
+- **Virtual Game Counter ($\mathbf{g}^{\text{virt}}$):** When player $i$ checks in late at time $t_{\text{arrive}}$, their virtual game counter is initialized to the median of currently active players:
 
 $$g_i^{\text{virt}}(t_{\text{arrive}}) = \text{median}_{j \in \text{Active}}\left(g_j^{\text{virt}}(t_{\text{arrive}})\right)$$
 
 
 
 Whenever player $i$ completes a game, $g_i^{\text{virt}} \leftarrow g_i^{\text{virt}} + 1$.
-* **Recency-Decayed Interaction Matrices ($\mathbf{P}, \mathbf{O}$):** After every completed game on a court, global matrices decay by factor $\gamma \in (0, 1)$ (e.g., $\gamma = 0.85$ per round) and increment for the active pairs:
+- **Recency-Decayed Interaction Matrices ($\mathbf{P}, \mathbf{O}$):** After every completed game on a court, global matrices decay by factor $\gamma \in (0, 1)$ (e.g., $\gamma = 0.85$ per round) and increment for the active pairs:
 
 $$\mathbf{P}^{(r+1)} = \gamma \mathbf{P}^{(r)} + \Delta \mathbf{P}^{(r)}, \quad \mathbf{O}^{(r+1)} = \gamma \mathbf{O}^{(r)} + \Delta \mathbf{O}^{(r)}$$
 
@@ -81,7 +81,7 @@ $$\mathbf{P}^{(r+1)} = \gamma \mathbf{P}^{(r)} + \Delta \mathbf{P}^{(r)}, \quad 
 
 where $\Delta P_{ij}^{(r)} = 1$ if $i, j$ were partners in round $r$ (else $0$), and $\Delta O_{ij}^{(r)} = 1$ if $i, j$ were opponents in round $r$ (else $0$).
 
-* **Cohort Overlap Matrix ($\mathbf{S}$, v1.2):** A pair-agnostic companion to $\mathbf{P}/\mathbf{O}$ with the same decay schedule:
+- **Cohort Overlap Matrix ($\mathbf{S}$, v1.2):** A pair-agnostic companion to $\mathbf{P}/\mathbf{O}$ with the same decay schedule:
 
 $$\mathbf{S}^{(r+1)} = \gamma \mathbf{S}^{(r)} + \Delta \mathbf{S}^{(r)}, \quad \Delta S_{ij}^{(r)} = 1 \text{ if } i, j \text{ shared the court in round } r \text{ (partner or opponent, else } 0\text{)}$$
 
@@ -144,7 +144,7 @@ $$E = \left\{ i \in \{0, \dots, N-1\} \;\middle\vert{}\; a_i = \text{True} \;\la
 
 
 
-*Fallback policy:* If $\vert{}E\vert{} < 4$ and total available players $\sum a_i \ge 4$, relax the consecutive-game constraint ($c_i < C_{\max}$) for players with the lowest $c_i$ until $\vert{}E\vert{} = 4$, logging a `CONSECUTIVE_LIMIT_RELAXED` telemetry flag. If $\sum a_i < 4$, return `NO_FEASIBLE_GAME`.
+_Fallback policy:_ If $\vert{}E\vert{} < 4$ and total available players $\sum a_i \ge 4$, relax the consecutive-game constraint ($c_i < C_{\max}$) for players with the lowest $c_i$ until $\vert{}E\vert{} = 4$, logging a `CONSECUTIVE_LIMIT_RELAXED` telemetry flag. If $\sum a_i < 4$, return `NO_FEASIBLE_GAME`.
 2. **Enforce Anti-Starvation Window ($K$):** Compute each eligible player's primary priority key $\pi_i = w_i - \alpha g_i^{\text{virt}}$ (where $\alpha > 0$ breaks wait ties in favor of fewer virtual games). Sort $E$ descending by $\pi_i$ and select the top $K$ players (default $K = 12$ for single-court, or $K = \min(\vert{}E\vert{}, 26)$ when full exhaustive search is enabled), expanding $K$ automatically to include any boundary players whose $\pi_i$ falls within $\delta_{\text{tie}}$ of $\pi_K$.
 
 ---
@@ -167,12 +167,12 @@ Next, slice the preallocated combinations lookup table to fetch the quartet inde
 
 Gather candidate attributes into $(M, 4)$ tensors using $\mathbf{Q}$ (e.g., $\mathbf{W}_Q = \mathbf{w}[\mathbf{Q}]$) and compute all cohort-level metrics along axis 1:
 
-| Hierarchy Rank | Quartet Metric | Vectorized Tensor Formulation (Shape: $(M,)$) | Direction | Tolerance $\epsilon$ |
-| --- | --- | --- | --- | --- |
-| **Objective 0** | **Cohort Overlap** ($f_0$, v1.2) | $\mathbf{f}_0 = \sum_{e=0}^{5} \mathbf{S}[\mathbf{Q}_{:, u_e}, \mathbf{Q}_{:, v_e}]$ | Minimize | $\epsilon_0$ (default $2.0$) |
-| **Objective 1** | **Queue Fairness** ($f_1$) | $\mathbf{f}_1 = \sum_{d=0}^{3} \mathbf{w}[\mathbf{Q}_{:, d}]$ | Maximize | $\epsilon_1$ (e.g., $10\text{--}15\%$ of $f_1^*$) |
-| **Objective 2** | **Participation Fairness** ($f_2$) | $\mathbf{f}_2 = \sum_{d=0}^{3} \mathbf{g}^{\text{virt}}[\mathbf{Q}_{:, d}]$ | Minimize | $\epsilon_2$ (e.g., $1.0$ virtual game) |
-| **Objective 3** | **Cohort Skill Variance** ($f_3$) | $\mathbf{f}_3 = \text{Var}_{d=0..3}\left(\mathbf{s}[\mathbf{Q}_{:, d}]\right)$ | Minimize | $\epsilon_3$ (e.g., $1.5\text{ skill}^2$) |
+| Hierarchy Rank  | Quartet Metric                     | Vectorized Tensor Formulation (Shape: $(M,)$)                                        | Direction | Tolerance $\epsilon$                              |
+| --------------- | ---------------------------------- | ------------------------------------------------------------------------------------ | --------- | ------------------------------------------------- |
+| **Objective 0** | **Cohort Overlap** ($f_0$, v1.2)   | $\mathbf{f}_0 = \sum_{e=0}^{5} \mathbf{S}[\mathbf{Q}_{:, u_e}, \mathbf{Q}_{:, v_e}]$ | Minimize  | $\epsilon_0$ (default $2.0$)                      |
+| **Objective 1** | **Queue Fairness** ($f_1$)         | $\mathbf{f}_1 = \sum_{d=0}^{3} \mathbf{w}[\mathbf{Q}_{:, d}]$                        | Maximize  | $\epsilon_1$ (e.g., $10\text{--}15\%$ of $f_1^*$) |
+| **Objective 2** | **Participation Fairness** ($f_2$) | $\mathbf{f}_2 = \sum_{d=0}^{3} \mathbf{g}^{\text{virt}}[\mathbf{Q}_{:, d}]$          | Minimize  | $\epsilon_2$ (e.g., $1.0$ virtual game)           |
+| **Objective 3** | **Cohort Skill Variance** ($f_3$)  | $\mathbf{f}_3 = \text{Var}_{d=0..3}\left(\mathbf{s}[\mathbf{Q}_{:, d}]\right)$       | Minimize  | $\epsilon_3$ (e.g., $1.5\text{ skill}^2$)         |
 
 #### Cascaded $\epsilon$-Masking (Stage A)
 
@@ -214,15 +214,15 @@ $$\mathbf{u} = [0, 0, 0, 1, 1, 2], \quad \mathbf{v} = [1, 2, 3, 2, 3, 3]$$
 
 any edge $e \in \{0, 1, 2\}$ is the exact complement of edge $5 - e$:
 
-* **Split 0:** Team 1 $= (q_0, q_1)$ [edge $0$] vs. Team 2 $= (q_2, q_3)$ [edge $5$]
-* **Split 1:** Team 1 $= (q_0, q_2)$ [edge $1$] vs. Team 2 $= (q_1, q_3)$ [edge $4$]
-* **Split 2:** Team 1 $= (q_0, q_3)$ [edge $2$] vs. Team 2 $= (q_1, q_2)$ [edge $3$]
+- **Split 0:** Team 1 $= (q_0, q_1)$ [edge $0$] vs. Team 2 $= (q_2, q_3)$ [edge $5$]
+- **Split 1:** Team 1 $= (q_0, q_2)$ [edge $1$] vs. Team 2 $= (q_1, q_3)$ [edge $4$]
+- **Split 2:** Team 1 $= (q_0, q_3)$ [edge $2$] vs. Team 2 $= (q_1, q_2)$ [edge $3$]
 
 Define split index vectors $\mathbf{u}_1 = [0, 0, 0]$, $\mathbf{v}_1 = [1, 2, 3]$ (Team 1) and $\mathbf{u}_2 = [2, 1, 1]$, $\mathbf{v}_2 = [3, 3, 2]$ (Team 2). For all $M'$ surviving quartets and all 3 splits simultaneously (shape $(M', 3)$):
 
 1. **Relational Hard Constraint Mask ($\mathbf{M}_{\text{valid}} \in \text{bool}^{M' \times 3}$):**
 
-$$\mathbf{M}_{\text{valid}} = \neg \left( \mathbf{B}_{\text{pair}}\left[\mathbf{Q}_{\text{surv}}[:, \mathbf{u}_1], \mathbf{Q}_{\text{surv}}[:, \mathbf{v}_1]\right] \;\lor\; \mathbf{B}_{\text{pair}}\left[\mathbf{Q}_{\text{surv}}[:, \mathbf{u}_2], \mathbf{Q}_{\text{surv}}[:, \mathbf{v}_2]\right] \right)$$
+$$\mathbf{M}_{\text{valid}} = \neg \left( \mathbf{B}_{\text{pair}}\left[\mathbf{Q}_{\text{surv}}[:, \mathbf{u}*1], \mathbf{Q}*{\text{surv}}[:, \mathbf{v}*1]\right] \;\lor\; \mathbf{B}*{\text{pair}}\left[\mathbf{Q}_{\text{surv}}[:, \mathbf{u}_2], \mathbf{Q}_{\text{surv}}[:, \mathbf{v}_2]\right] \right)$$
 
 
 2. **Objective 4 — Team Balance Disparity ($\mathbf{F}_4 \in \mathbb{R}^{M' \times 3}$):**
@@ -231,7 +231,7 @@ $$\mathbf{F}_4 = \left\vert{} \mathbf{R}\left[\mathbf{Q}_{\text{surv}}[:, \mathb
 
 
 3. **Objective 5 — Partnership & Opponent Redundancy ($\mathbf{F}_5 \in \mathbb{R}^{M' \times 3}$):**
-Let $\mathbf{P}_{\text{split}} = \mathbf{P}[\mathbf{Q}_{\text{surv}}[:, \mathbf{u}_1], \mathbf{Q}_{\text{surv}}[:, \mathbf{v}_1]] + \mathbf{P}[\mathbf{Q}_{\text{surv}}[:, \mathbf{u}_2], \mathbf{Q}_{\text{surv}}[:, \mathbf{v}_2]]$ be the partner penalty for each split. Since the 4 opposing pairs in a split are simply the 4 non-partner edges of $K_4$, the opponent penalty is:
+   Let $\mathbf{P}_{\text{split}} = \mathbf{P}[\mathbf{Q}_{\text{surv}}[:, \mathbf{u}_1], \mathbf{Q}_{\text{surv}}[:, \mathbf{v}_1]] + \mathbf{P}[\mathbf{Q}_{\text{surv}}[:, \mathbf{u}_2], \mathbf{Q}_{\text{surv}}[:, \mathbf{v}_2]]$ be the partner penalty for each split. Since the 4 opposing pairs in a split are simply the 4 non-partner edges of $K_4$, the opponent penalty is:
 
 $$\mathbf{O}_{\text{split}} = \left(\sum_{e=0}^{5} \mathbf{O}\left[\mathbf{Q}_{\text{surv}}[:, u_e], \mathbf{Q}_{\text{surv}}[:, v_e]\right]\right)_{:, \text{None}} - \left(\mathbf{O}\left[\mathbf{Q}_{\text{surv}}[:, \mathbf{u}_1], \mathbf{Q}_{\text{surv}}[:, \mathbf{v}_1]\right] + \mathbf{O}\left[\mathbf{Q}_{\text{surv}}[:, \mathbf{u}_2], \mathbf{Q}_{\text{surv}}[:, \mathbf{v}_2]\right]\right)$$
 
@@ -245,7 +245,7 @@ $$\mathbf{F}_5 = \mathbf{P}_{\text{split}} + \beta \mathbf{O}_{\text{split}}, \q
 Filter $(q, s) \in \{0, \dots, M'-1\} \times \{0, 1, 2\}$ where $\mathbf{M}_{\text{valid}}[q, s] = \text{True}$:
 
 1. Retain splits within $\epsilon_4$ of the minimum team imbalance: $F_4(q, s) \le \min F_4 + \epsilon_4$.
-2. Among those, select $(q^*, s^*)$ minimizing redundancy $F_5(q, s)$ (breaking any remaining ties by lowest $F_4(q, s)$, then highest $f_1(q)$).
+2. Among those, select $(q^_, s^_)$ minimizing redundancy $F_5(q, s)$ (breaking any remaining ties by lowest $F_4(q, s)$, then highest $f_1(q)$).
 
 ---
 
@@ -260,8 +260,6 @@ To eliminate greedy starvation across $C$ courts ($4C \le K$):
 3. Select $C$ mutually disjoint quartets $(q^{(1)}, \dots, q^{(C)})$ that minimize the **worst-case court cost** (lexicographic $\min\max$), with secondary tie-breaking on the sum of court costs:
 
 $$\min_{\substack{q^{(1)}, \dots, q^{(C)} \in \mathbf{Q}_{\text{surv}} \\ \text{mask}(q^{(a)}) \cap \text{mask}(q^{(b)}) = \emptyset}} \left( \max_{c=1..C} J\left(q^{(c)}\right), \;\sum_{c=1..C} J\left(q^{(c)}\right) \right)$$
-
-
 
 ---
 
@@ -504,13 +502,13 @@ class VectorizedBadmintonMatcher:
 
 To validate parameter tuning ($\epsilon_1, \dots, \epsilon_4, \omega, \gamma$) across synthetic or historical session logs, compare `VectorizedBadmintonMatcher` against **Strict FIFO** and **Lowest-Games-First** baselines across these seven telemetry metrics:
 
-| Category | Telemetry Metric | Formula / Definition | Target Threshold |
-| --- | --- | --- | --- |
-| **Queue Fairness** | **Wait-Time Gini / Max Wait** | $\max_{i, r} w_i^{(r)}$ and standard deviation of wait times across completed rounds | Max wait $\le 1.25 \times \text{FIFO Max Wait}$ |
-| **Queue Integrity** | **Priority Bypass Rate** | Fraction of selections where a player waiting longer than $1.5 \times \text{median wait}$ is bypassed | $< 5\%$ of games |
-| **Participation Equity** | **Virtual Game Spread** | $\max_i g_i^{\text{virt}} - \min_i g_i^{\text{virt}}$ at session end (incorporating late arrivals) | $\le 1.0\text{ game}$ |
-| **Constraint Compliance** | **Consecutive Limit Violations** | Count of games where `relaxed_consecutive_rule == True` while $N_{\text{avail}} \ge 8$ | Exactly $0$ |
-| **Match Quality** | **Cohort Skill SD** | Mean of $\sqrt{f_3(q^*)}$ across all played games | $\ge 35\%$ reduction vs. FIFO |
-| **Match Competitiveness** | **Weak-Link Team Diff** | Mean of $F_4(q^*, s^*)$ across all played games | $\le 0.45$ rating points (raised from 0.40 in v1.2: the ε₀ cohort-overlap band trades ~8% wider average team gap for cross-wave mixing — product-owner decision, 100-seed sweep validated) |
-| **Social Mixing** | **Novel Cohort Rate** (v1.2) | Fraction of games whose quartet's γ-decayed 6-edge co-play sum $f_0(q^*) < 1.0$ | ≥ 65% (sweep: 78% at ε₀=2.0 vs 66% with the band off) |
-| **Social Mixing** | **Repeat Partnership Rate** | Fraction of games where a partnered pair has already played together in the same session | $< 10\%$ for $N \ge 12$ |
+| Category                  | Telemetry Metric                 | Formula / Definition                                                                                  | Target Threshold                                                                                                                                                                           |
+| ------------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Queue Fairness**        | **Wait-Time Gini / Max Wait**    | $\max_{i, r} w_i^{(r)}$ and standard deviation of wait times across completed rounds                  | Max wait $\le 1.25 \times \text{FIFO Max Wait}$                                                                                                                                            |
+| **Queue Integrity**       | **Priority Bypass Rate**         | Fraction of selections where a player waiting longer than $1.5 \times \text{median wait}$ is bypassed | $< 5\%$ of games                                                                                                                                                                           |
+| **Participation Equity**  | **Virtual Game Spread**          | $\max_i g_i^{\text{virt}} - \min_i g_i^{\text{virt}}$ at session end (incorporating late arrivals)    | $\le 1.0\text{ game}$                                                                                                                                                                      |
+| **Constraint Compliance** | **Consecutive Limit Violations** | Count of games where `relaxed_consecutive_rule == True` while $N_{\text{avail}} \ge 8$                | Exactly $0$                                                                                                                                                                                |
+| **Match Quality**         | **Cohort Skill SD**              | Mean of $\sqrt{f_3(q^*)}$ across all played games                                                     | $\ge 35\%$ reduction vs. FIFO                                                                                                                                                              |
+| **Match Competitiveness** | **Weak-Link Team Diff**          | Mean of $F_4(q^_, s^_)$ across all played games                                                       | $\le 0.45$ rating points (raised from 0.40 in v1.2: the ε₀ cohort-overlap band trades ~8% wider average team gap for cross-wave mixing — product-owner decision, 100-seed sweep validated) |
+| **Social Mixing**         | **Novel Cohort Rate** (v1.2)     | Fraction of games whose quartet's γ-decayed 6-edge co-play sum $f_0(q^*) < 1.0$                       | ≥ 65% (sweep: 78% at ε₀=2.0 vs 66% with the band off)                                                                                                                                      |
+| **Social Mixing**         | **Repeat Partnership Rate**      | Fraction of games where a partnered pair has already played together in the same session              | $< 10\%$ for $N \ge 12$                                                                                                                                                                    |

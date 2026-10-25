@@ -7,6 +7,7 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 ## E2E Tests
 
 ### 01 · Landing — no active session
+
 - [x] 1.1 Page loads — `🏸 QueueC` heading visible
 - [x] 1.2 "No active session" badge in header
 - [x] 1.3 "Start New Session" CTA button visible
@@ -15,6 +16,7 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 - [x] 1.6 Page title / tab shows expected app name
 
 ### 02 · Create session modal
+
 - [x] 2.1 Click "+ Session" — modal opens with default field values pre-filled
 - [x] 2.2 Default session name is "Evening Session"
 - [x] 2.3 Default start/end times are pre-filled
@@ -29,6 +31,7 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 - [x] 2.12 Confirm dialog shows replace warning when a session is active
 
 ### 03 · Session lifecycle
+
 - [x] 3.1 Setup screen appears after session creation
 - [x] 3.2 "Not started" badge visible in header
 - [x] 3.3 Start button disabled with 0 players checked in
@@ -41,6 +44,7 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 - [x] 3.10 Session name persists in header during live view
 
 ### 04 · Player check-in (setup screen)
+
 - [x] 4.1 Player pool loads — all 20 fixture players appear as chips
 - [x] 4.2 Each chip shows player name and skill badge
 - [x] 4.3 Select one player + Check In — chip moves to queue list
@@ -54,6 +58,7 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 - [x] 4.11 Remove from queue (×) — player returns to pool
 
 ### 05 · Courts — setup screen
+
 - [x] 5.1 Default courts — 2 courts listed matching court_count
 - [x] 5.2 Court labels are "Court 1", "Court 2"
 - [x] 5.3 Add court — "+ Add Court" creates "Court 3"
@@ -67,6 +72,7 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 - [x] 5.11 Hour options span the session window (blank + 18:00–21:00 default)
 
 ### 06 · Queue grid — selection
+
 - [x] 6.1 Click player — selected; badge shows position number (1)
 - [x] 6.2 Select 2 — "2 selected → Singles" shown in queue header
 - [x] 6.3 Select 4 — "4 selected → Doubles" shown
@@ -76,6 +82,7 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 - [x] 6.7 Selection badges show correct sequential numbers (1, 2, 3, 4)
 
 ### 07 · Starting a match
+
 - [x] 7.1 "Start Match" button disabled on court when no players selected
 - [x] 7.2 Court hints "Select 2 or 4 players" when nothing selected
 - [x] 7.3 Court hints "Drop players here" when ≥2 selected
@@ -94,6 +101,7 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 - [x] 7.16 Two courts can each have a match running simultaneously
 
 ### 08 · Ending a match
+
 - [x] 8.1 "End Match" button opens score modal
 - [x] 8.2 Modal title shows correct court label
 - [x] 8.3 Score inputs default to 0
@@ -109,6 +117,7 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 - [x] 8.13 Tie score — no leaderboard win recorded for either side
 
 ### 09 · Queue management — reorder & resting
+
 - [x] 9.1 Drag player A before player B — new order reflected in grid
 - [x] 9.2 SSE push (1s tick) does not reset manual reorder
 - [x] 9.3 Newly checked-in player appended to end of existing order
@@ -123,6 +132,7 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 - [x] 9.12 Tray shows placeholder text "Drop a player here…" when empty
 
 ### 10 · Smart / Manual mode
+
 - [x] 10.1 Smart mode button active by default
 - [x] 10.2 Smart mode auto-populates selection on load (≥4 waiting players)
 - [x] 10.3 Smart mode re-suggests after a match ends and queue changes
@@ -131,6 +141,7 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 - [x] 10.6 Switch back to Smart — selection auto-populated again
 
 ### 11 · Live check-in (during active session)
+
 - [x] 11.1 "+ Check In" button visible in queue header
 - [x] 11.2 Panel shows only players not currently in session
 - [x] 11.3 Checking in appends player to queue end
@@ -138,6 +149,7 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 - [x] 11.5 Player just checked in does not appear in panel again
 
 ### 12 · Live court controls
+
 - [x] 12.1 "Open" checkbox visible on each live court card
 - [x] 12.2 Uncheck "Open" — court card hidden from live view
 - [x] 12.3 Re-check "Open" — court card reappears
@@ -148,6 +160,7 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 - [x] 12.8 Multiple courts: matches on two courts independent
 
 ### 13 · Stats sidebar
+
 - [x] 13.1 Player count tile matches number checked in
 - [x] 13.2 Match count tile starts at 0
 - [x] 13.3 Match count increments by 1 after each match ends
@@ -163,6 +176,7 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 - [x] 13.13 Added player persists across page reload
 
 ### 14 · Player card details
+
 - [x] 14.1 Player card shows name, skill badge, wait timer, minutes played
 - [x] 14.2 Wait timer increments each second for waiting players
 - [x] 14.3 Playing players absent from queue grid (not visible)
@@ -170,6 +184,7 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 - [x] 14.5 After returning from a match, "X min played" reflects match duration
 
 ### 15 · Header
+
 - [x] 15.1 Session name shown in header during active session
 - [x] 15.2 Scheduled time range (start–end) shown in header
 - [x] 15.3 Elapsed timer badge (●) visible after session starts
@@ -177,12 +192,14 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 - [x] 15.5 "+ Session" button always visible in header
 
 ### 16 · Accessibility & keyboard
+
 - [x] 16.1 Create session form submits on Enter
 - [x] 16.2 End match form submits on Enter
 - [x] 16.3 All modal close buttons reachable by Tab
 - [x] 16.4 Score inputs navigable by Tab (Team 1 → Team 2)
 
 ### 17 · Responsiveness & layout
+
 - [x] 17.1 1-court session — single court card fills the courts band
 - [x] 17.2 2-court session — 2 columns in courts band
 - [x] 17.3 5-court session — 3-column grid in courts band
@@ -190,6 +207,7 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 - [x] 17.5 Queue grid scrollable when many players waiting
 
 ### 18 · Error states & edge cases
+
 - [x] 18.1 Page reload mid-session — session, queue, and matches restored via SSE
 - [x] 18.2 Server restart — SSE reconnects and state resumes
 - [x] 18.3 Starting match on disabled court not possible (no court card shown)
@@ -198,15 +216,16 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 - [x] 18.6 End session with active match — session ends; match state preserved in DB
 
 ### 19 · Queue master — real session scenarios
-- [x] QM.1  Late player joins mid-match — check in via live panel, immediately visible in queue
-- [x] QM.2  Player has to leave — set status 'left' via API; queue shrinks
-- [x] QM.3  Smart mode with playing players — suggestion skips players already on court
-- [x] QM.4  Queue master manually overrides smart suggestion — switches to Manual, picks different 4
-- [x] QM.5  Court disabled while match running — match persists; court hidden; re-enable restores court with match
-- [x] QM.6  End session with active match — session ends; header shows no active session
-- [x] QM.7  Queue surge: 2 matches end simultaneously — all 8 players return to queue
-- [x] QM.8  Reorder queue — drag player A above player B; order survives next SSE tick (1.5s wait)
-- [x] QM.9  Full session cycle — create → check in 8 → start → run match → end match → end session → create new session
+
+- [x] QM.1 Late player joins mid-match — check in via live panel, immediately visible in queue
+- [x] QM.2 Player has to leave — set status 'left' via API; queue shrinks
+- [x] QM.3 Smart mode with playing players — suggestion skips players already on court
+- [x] QM.4 Queue master manually overrides smart suggestion — switches to Manual, picks different 4
+- [x] QM.5 Court disabled while match running — match persists; court hidden; re-enable restores court with match
+- [x] QM.6 End session with active match — session ends; header shows no active session
+- [x] QM.7 Queue surge: 2 matches end simultaneously — all 8 players return to queue
+- [x] QM.8 Reorder queue — drag player A above player B; order survives next SSE tick (1.5s wait)
+- [x] QM.9 Full session cycle — create → check in 8 → start → run match → end match → end session → create new session
 - [x] QM.10 Player benched then returned mid-match — returns to end of queue, not front
 
 ---
@@ -214,6 +233,7 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 ## Unit Tests
 
 ### dnd.valid.test.js
+
 - [x] U1.1 `valid('court', waiting player)` → true
 - [x] U1.2 `valid('court', playing player)` → false
 - [x] U1.3 `valid('court', resting player)` → false
@@ -227,12 +247,14 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 - [x] U1.11 `valid(zone, null)` → false for all zones
 
 ### api.error.test.js
+
 - [x] U2.1 Non-ok 404 response throws `Error` with method + path + status
 - [x] U2.2 Non-ok 500 response throws `Error`
 - [x] U2.3 201 response (ok) resolves to parsed JSON
 - [x] U2.4 200 response resolves to parsed JSON
 
 ### timer.test.js (computeTimers logic)
+
 - [x] U3.1 Waiting player: wait = serverTime − checked_in_at − total_seconds_played
 - [x] U3.2 Playing player: not in waitSeconds map
 - [x] U3.3 Active match: play = serverTime − started_at
@@ -243,28 +265,28 @@ Track E2E and unit test implementation here. Check off each scenario as its test
 
 ## Coverage Summary
 
-| Area | Scenarios | Done |
-|------|-----------|------|
-| Landing | 6 | 6 |
-| Create session modal | 12 | 12 |
-| Session lifecycle | 10 | 10 |
-| Check-in (setup) | 11 | 11 |
-| Courts (setup) | 11 | 11 |
-| Queue selection | 7 | 7 |
-| Match start | 16 | 16 |
-| Match end | 13 | 13 |
-| Queue reorder & resting | 12 | 12 |
-| Smart / Manual mode | 6 | 6 |
-| Live check-in | 5 | 5 |
-| Live court controls | 8 | 8 |
-| Stats sidebar | 13 | 13 |
-| Player card details | 5 | 5 |
-| Header | 5 | 5 |
-| Accessibility & keyboard | 4 | 4 |
-| Responsiveness & layout | 5 | 5 |
-| Error states & edge cases | 6 | 6 |
-| Queue master scenarios | 10 | 10 |
-| Unit: dnd.valid | 11 | 11 |
-| Unit: api.error | 4 | 4 |
-| Unit: timer | 5 | 5 |
-| **Total** | **190** | **190** |
+| Area                      | Scenarios | Done    |
+| ------------------------- | --------- | ------- |
+| Landing                   | 6         | 6       |
+| Create session modal      | 12        | 12      |
+| Session lifecycle         | 10        | 10      |
+| Check-in (setup)          | 11        | 11      |
+| Courts (setup)            | 11        | 11      |
+| Queue selection           | 7         | 7       |
+| Match start               | 16        | 16      |
+| Match end                 | 13        | 13      |
+| Queue reorder & resting   | 12        | 12      |
+| Smart / Manual mode       | 6         | 6       |
+| Live check-in             | 5         | 5       |
+| Live court controls       | 8         | 8       |
+| Stats sidebar             | 13        | 13      |
+| Player card details       | 5         | 5       |
+| Header                    | 5         | 5       |
+| Accessibility & keyboard  | 4         | 4       |
+| Responsiveness & layout   | 5         | 5       |
+| Error states & edge cases | 6         | 6       |
+| Queue master scenarios    | 10        | 10      |
+| Unit: dnd.valid           | 11        | 11      |
+| Unit: api.error           | 4         | 4       |
+| Unit: timer               | 5         | 5       |
+| **Total**                 | **190**   | **190** |

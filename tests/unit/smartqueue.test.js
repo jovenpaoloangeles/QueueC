@@ -2,18 +2,25 @@
 import assert from "node:assert/strict";
 import { planBatch } from "../../server/logic/smartQueue.js";
 
-const T0 = 1_800_000_000, GAME = 720;
+const T0 = 1_800_000_000,
+  GAME = 720;
 
 // U5.1 — wave crossover: 16 players / 2 courts must mix the first-8 and
 // last-8 waves instead of alternating them forever (0% mixed = regression).
 {
   const players = Array.from({ length: 16 }, (_, i) => ({
-    id: i + 1, status: "waiting", skill_level: "intermediate",
-    checked_in_at: T0, last_played_at: null, total_seconds_played: 0, games_played: 0,
+    id: i + 1,
+    status: "waiting",
+    skill_level: "intermediate",
+    checked_in_at: T0,
+    last_played_at: null,
+    total_seconds_played: 0,
+    games_played: 0,
   }));
   const history = [];
   const wave = new Map();
-  let mixed = 0, total = 0;
+  let mixed = 0,
+    total = 0;
   for (let r = 0; r < 12; r++) {
     const now = T0 + r * GAME;
     const plan = planBatch({ waiting: players, history, courtCount: 2, now });
@@ -43,18 +50,28 @@ const T0 = 1_800_000_000, GAME = 720;
 {
   const restNow = T0 + 40 * 720;
   const restPlayers = Array.from({ length: 5 }, (_, i) => ({
-    id: i + 1, status: "waiting", skill_level: "intermediate",
-    checked_in_at: T0, last_played_at: null, total_seconds_played: 0, games_played: 0,
+    id: i + 1,
+    status: "waiting",
+    skill_level: "intermediate",
+    checked_in_at: T0,
+    last_played_at: null,
+    total_seconds_played: 0,
+    games_played: 0,
   }));
   const restHistory = [
     { team1: [1, 2], team2: [3, 4], started_at: T0, ended_at: T0 + 300 },
     { team1: [5, 90], team2: [91, 92], started_at: T0 + 400, ended_at: T0 + 700 },
   ];
   const restedPlan = planBatch({
-    waiting: restPlayers, history: restHistory, courtCount: 1, now: restNow,
+    waiting: restPlayers,
+    history: restHistory,
+    courtCount: 1,
+    now: restNow,
     cfg: { restGames: 1 },
   });
-  const restedIds = restedPlan.matches[0] ? [...restedPlan.matches[0].team1, ...restedPlan.matches[0].team2] : [];
+  const restedIds = restedPlan.matches[0]
+    ? [...restedPlan.matches[0].team1, ...restedPlan.matches[0].team2]
+    : [];
   assert.ok(!restedIds.includes(5), `rest_games=1 must bench P5 (played last round), got [${restedIds}]`);
   assert.equal(restedPlan.matches.length, 1, "P1–4 are rested enough and must field");
 
@@ -62,7 +79,10 @@ const T0 = 1_800_000_000, GAME = 720;
   // entry, rest_games=1 → 0 eligible → relax still fields a game.
   const relaxHistory = [{ team1: [1, 2], team2: [3, 4], started_at: T0, ended_at: T0 + 300 }];
   const relaxPlan = planBatch({
-    waiting: restPlayers.slice(0, 4), history: relaxHistory, courtCount: 1, now: restNow,
+    waiting: restPlayers.slice(0, 4),
+    history: relaxHistory,
+    courtCount: 1,
+    now: restNow,
     cfg: { restGames: 1 },
   });
   assert.ok(relaxPlan.matches.length === 1, "relax must field a game when only 4 are available");
@@ -76,21 +96,39 @@ const T0 = 1_800_000_000, GAME = 720;
 {
   const lockNow = T0 + 20 * 1000;
   const lockPlayers = Array.from({ length: 18 }, (_, i) => ({
-    id: i + 1, status: "waiting", skill_level: "intermediate",
-    checked_in_at: T0 + i * 1000, last_played_at: null,
-    total_seconds_played: 0, games_played: 0,
+    id: i + 1,
+    status: "waiting",
+    skill_level: "intermediate",
+    checked_in_at: T0 + i * 1000,
+    last_played_at: null,
+    total_seconds_played: 0,
+    games_played: 0,
   })); // ids 17,18 checked in last → smallest wait → outside the top-16 window
   const lockPlan = planBatch({
-    waiting: lockPlayers, history: [], courtCount: 3, now: lockNow,
+    waiting: lockPlayers,
+    history: [],
+    courtCount: 3,
+    now: lockNow,
     locked: [17, 18],
   });
-  assert.equal(lockPlan.matches.length, 1, `locked plans exactly one quartet, got ${lockPlan.matches.length}`);
+  assert.equal(
+    lockPlan.matches.length,
+    1,
+    `locked plans exactly one quartet, got ${lockPlan.matches.length}`,
+  );
   const lockIds = [...lockPlan.matches[0].team1, ...lockPlan.matches[0].team2];
-  assert.ok(lockIds.includes(17) && lockIds.includes(18), `locked ids must be in the quartet, got [${lockIds}]`);
+  assert.ok(
+    lockIds.includes(17) && lockIds.includes(18),
+    `locked ids must be in the quartet, got [${lockIds}]`,
+  );
 
   // U5.5 — locked + impossible containment → no matches, no crash.
   const impossible = planBatch({
-    waiting: lockPlayers.slice(0, 3), history: [], courtCount: 1, now: lockNow, locked: [17, 18],
+    waiting: lockPlayers.slice(0, 3),
+    history: [],
+    courtCount: 1,
+    now: lockNow,
+    locked: [17, 18],
   });
   assert.deepEqual(impossible.matches, []);
 }

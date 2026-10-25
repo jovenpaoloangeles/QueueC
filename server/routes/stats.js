@@ -161,7 +161,9 @@ router.get("/sessions/:id/stats", (c) => {
 // monthly attendance % (a session counts toward a month iff the player
 // existed when it was scheduled). Export reuses this builder.
 export function getCareer(playerId) {
-  const player = db.prepare("SELECT id, name, skill_level, created_at FROM players WHERE id = ?").get(playerId);
+  const player = db
+    .prepare("SELECT id, name, skill_level, created_at FROM players WHERE id = ?")
+    .get(playerId);
   if (!player) return null;
 
   const rows = db
@@ -206,7 +208,13 @@ export function getCareer(playerId) {
       )
       .get(mateEntry);
     if (!mate || mate.player_id === player.id) continue;
-    const cur = partners.get(mate.player_id) ?? { player_id: mate.player_id, name: mate.name, games: 0, wins: 0, losses: 0 };
+    const cur = partners.get(mate.player_id) ?? {
+      player_id: mate.player_id,
+      name: mate.name,
+      games: 0,
+      wins: 0,
+      losses: 0,
+    };
     cur.games += 1;
     if (won(r)) cur.wins += 1;
     else cur.losses += 1;

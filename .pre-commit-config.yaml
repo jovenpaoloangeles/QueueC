@@ -9,7 +9,7 @@ repos:
     hooks:
       - id: biome-check
         name: biome check (lint + format)
-        entry: bunx @biomejs/biome check --write
+        entry: bunx biome check --write
         language: system
         types_or: [javascript, jsx, json, css]
         exclude: ^client/src/index\.css$

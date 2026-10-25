@@ -9,20 +9,20 @@ import {
   startMatch,
   startSlateOnCourt,
 } from "./api.js";
-import CourtsRow from "./components/CourtsRow.jsx";
-import HistoryPage from "./components/HistoryPage.jsx";
-import SessionDetailPage from "./components/SessionDetailPage.jsx";
 import CareerPage from "./components/CareerPage.jsx";
+import CourtsRow from "./components/CourtsRow.jsx";
 import EndMatchModal from "./components/EndMatchModal.jsx";
 import Header from "./components/Header.jsx";
+import HistoryPage from "./components/HistoryPage.jsx";
 import OnDeckStrip from "./components/OnDeckStrip.jsx";
 import QueueGrid from "./components/QueueGrid.jsx";
+import SessionDetailPage from "./components/SessionDetailPage.jsx";
 import SetupScreen from "./components/SetupScreen.jsx";
 import ShortcutCheatsheet from "./components/ShortcutCheatsheet.jsx";
 import StartMatchConfirmDialog from "./components/StartMatchConfirmDialog.jsx";
 import StatsSidebar from "./components/StatsSidebar.jsx";
-import { useSSE } from "./hooks/useSSE.js";
 import useHashRoute from "./hooks/useHashRoute.js";
+import { useSSE } from "./hooks/useSSE.js";
 import { useTimers } from "./hooks/useTimers.js";
 import { EMPTY_DRAFT } from "./lib/dnd.js";
 import { fmtDur, freeCourts, idleNudgeSec, nudgeKind } from "./lib/utils.js";
@@ -146,8 +146,7 @@ function LiveView() {
         "success",
         r.slate_ids?.length
           ? {
-              undo: () =>
-                Promise.allSettled(r.slate_ids.map((id) => cancelSlate(id))).catch(() => {}),
+              undo: () => Promise.allSettled(r.slate_ids.map((id) => cancelSlate(id))).catch(() => {}),
             }
           : undefined,
       );
@@ -260,11 +259,11 @@ function LiveView() {
         setSelection(saved.selection ?? []);
       }
     } catch {} // corrupted blob = no restore
-  }, [session?.id]);
+  }, [session?.id, session]);
   useEffect(() => {
     if (!session || session.ended_at != null) return;
     sessionStorage.setItem(`queuec.drafts.${session.id}`, JSON.stringify({ drafts, selection }));
-  }, [session?.id, session?.ended_at, drafts, selection]);
+  }, [session?.id, session?.ended_at, drafts, selection, session]);
   // session ended or gone (SSE sends null after an end) → nothing left to
   // restore; hadSessionRef keeps the pre-SSE "no session yet" frame from wiping
   const hadSessionRef = useRef(false);
@@ -283,7 +282,7 @@ function LiveView() {
         if (k.startsWith("queuec.drafts.")) sessionStorage.removeItem(k);
       }
     }
-  }, [session?.id, session?.ended_at]);
+  }, [session?.id, session?.ended_at, session]);
 
   // Every entry id currently sitting in any court's draft OR in the OnDeck
   // strip's slate edit draft — excluded from the header waiting count so
@@ -466,11 +465,15 @@ function LiveView() {
           format: slate.format,
           team1: [
             { name: slate.team1_p1_name, skill_level: slate.team1_p1_skill },
-            ...(slate.team1_p2_name ? [{ name: slate.team1_p2_name, skill_level: slate.team1_p2_skill }] : []),
+            ...(slate.team1_p2_name
+              ? [{ name: slate.team1_p2_name, skill_level: slate.team1_p2_skill }]
+              : []),
           ],
           team2: [
             { name: slate.team2_p1_name, skill_level: slate.team2_p1_skill },
-            ...(slate.team2_p2_name ? [{ name: slate.team2_p2_name, skill_level: slate.team2_p2_skill }] : []),
+            ...(slate.team2_p2_name
+              ? [{ name: slate.team2_p2_name, skill_level: slate.team2_p2_skill }]
+              : []),
           ],
         },
       ],
@@ -494,7 +497,11 @@ function LiveView() {
   const keyHandlerRef = useRef(() => {});
   keyHandlerRef.current = (e) => {
     const t = e.target;
-    if (t instanceof HTMLElement && (["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName) || t.isContentEditable)) return;
+    if (
+      t instanceof HTMLElement &&
+      (["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName) || t.isContentEditable)
+    )
+      return;
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (pending || cheatsheetOpen || endTarget) return; // a dialog owns the keyboard
     if (e.key === "c") {

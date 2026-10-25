@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { abortMatch, addAttendance, getPlayers, getSessionDetail, removeEntry } from "@/api";
-import downloadExport from "@/lib/download";
 import { useToast } from "@/components/Toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import downloadExport from "@/lib/download";
 import CorrectMatchDialog from "./CorrectMatchDialog.jsx";
 import HistoryShell from "./HistoryShell.jsx";
 
@@ -66,6 +66,7 @@ export default function SessionDetailPage({ id }) {
     }
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: liveTick is a 10s refetch trigger, not a value the effect reads
   useEffect(() => {
     let cancelled = false;
     getSessionDetail(id)
@@ -109,9 +110,7 @@ export default function SessionDetailPage({ id }) {
     );
 
   const { session, leaderboard, games, attendance, shuttles } = detail;
-  const availablePlayers = players.filter(
-    (p) => !attendance.some((a) => a.player_id === p.id),
-  );
+  const availablePlayers = players.filter((p) => !attendance.some((a) => a.player_id === p.id));
 
   return (
     <HistoryShell title={session.name}>
@@ -125,16 +124,29 @@ export default function SessionDetailPage({ id }) {
 
         {/* exports */}
         <div className="flex gap-2">
-          <Button size="sm" variant="secondary" data-testid="export-csv" onClick={() => downloadExport(`/sessions/${id}/export`)}>
+          <Button
+            size="sm"
+            variant="secondary"
+            data-testid="export-csv"
+            onClick={() => downloadExport(`/sessions/${id}/export`)}
+          >
             Export CSV
           </Button>
-          <Button size="sm" variant="secondary" data-testid="export-json" onClick={() => downloadExport(`/sessions/${id}/export?format=json`)}>
+          <Button
+            size="sm"
+            variant="secondary"
+            data-testid="export-json"
+            onClick={() => downloadExport(`/sessions/${id}/export?format=json`)}
+          >
             Export JSON
           </Button>
         </div>
 
         {/* final leaderboard — sidebar table idiom */}
-        <section className="rounded-lg border border-border bg-card shadow-card" aria-label="Final leaderboard">
+        <section
+          className="rounded-lg border border-border bg-card shadow-card"
+          aria-label="Final leaderboard"
+        >
           <h2 className="border-b border-border px-4 py-2.5 text-[12.5px] font-semibold uppercase tracking-wider text-muted-foreground">
             Leaderboard
           </h2>
@@ -149,9 +161,16 @@ export default function SessionDetailPage({ id }) {
             </thead>
             <tbody>
               {leaderboard.map((r) => (
-                <tr key={r.player_id} data-testid="detail-lb-row" className="border-b border-border last:border-0">
+                <tr
+                  key={r.player_id}
+                  data-testid="detail-lb-row"
+                  className="border-b border-border last:border-0"
+                >
                   <td className="px-4 py-2">
-                    <a href={`#/players/${r.player_id}`} className="font-medium text-foreground hover:text-primary">
+                    <a
+                      href={`#/players/${r.player_id}`}
+                      className="font-medium text-foreground hover:text-primary"
+                    >
                       {r.name}
                     </a>
                   </td>
@@ -207,7 +226,9 @@ export default function SessionDetailPage({ id }) {
                     {g.team1_score}–{g.team2_score}
                   </td>
                   <td className="px-2 py-2 font-mono tabular-nums text-muted-foreground">{g.new_shuttles}</td>
-                  <td className="px-2 py-2 font-mono tabular-nums text-muted-foreground">{g.rating ?? "—"}</td>
+                  <td className="px-2 py-2 font-mono tabular-nums text-muted-foreground">
+                    {g.rating ?? "—"}
+                  </td>
                   <td className="px-2 py-2 text-right">
                     {g.state === "active" && g.ended_at != null && (
                       <span className="inline-flex gap-1">
@@ -244,9 +265,15 @@ export default function SessionDetailPage({ id }) {
         </section>
 
         {/* shuttle totals */}
-        <section className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-3 text-sm shadow-card" aria-label="Shuttle totals">
+        <section
+          className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-3 text-sm shadow-card"
+          aria-label="Shuttle totals"
+        >
           <span className="text-muted-foreground">
-            Shuttles <b className="font-mono font-bold text-foreground" data-testid="detail-shuttles">{shuttles.total}</b>
+            Shuttles{" "}
+            <b className="font-mono font-bold text-foreground" data-testid="detail-shuttles">
+              {shuttles.total}
+            </b>
           </span>
           <span className="text-[12.5px] text-muted-foreground">
             ({shuttles.new} new + {shuttles.extra} extra)
@@ -260,8 +287,15 @@ export default function SessionDetailPage({ id }) {
           </h2>
           <ul className="divide-y divide-border">
             {attendance.map((a) => (
-              <li key={a.entry_id} data-testid="detail-attendance-row" className="flex items-center justify-between px-4 py-2 text-sm">
-                <a href={`#/players/${a.player_id}`} className="font-medium text-foreground hover:text-primary">
+              <li
+                key={a.entry_id}
+                data-testid="detail-attendance-row"
+                className="flex items-center justify-between px-4 py-2 text-sm"
+              >
+                <a
+                  href={`#/players/${a.player_id}`}
+                  className="font-medium text-foreground hover:text-primary"
+                >
                   {a.name}
                   <span className="ml-2 text-[12.5px] text-muted-foreground">{a.status}</span>
                 </a>
@@ -290,7 +324,7 @@ export default function SessionDetailPage({ id }) {
               {availablePlayers.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
-</option>
+                </option>
               ))}
             </select>
             <Button
@@ -357,10 +391,7 @@ export default function SessionDetailPage({ id }) {
               <Button variant="ghost" onClick={() => setDeleteMatchTarget(null)}>
                 Cancel
               </Button>
-              <Button
-                variant="destructive"
-                onClick={() => handleDeleteMatch()}
-              >
+              <Button variant="destructive" onClick={() => handleDeleteMatch()}>
                 Delete
               </Button>
             </DialogFooter>

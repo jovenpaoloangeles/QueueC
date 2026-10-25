@@ -49,6 +49,7 @@ export function ToastProvider({ children }) {
           {state.message}
           {state.undo && (
             <button
+              type="button"
               data-testid="toast-undo"
               className="rounded-full bg-foreground/10 px-2.5 py-1 text-[11px] font-bold text-foreground hover:bg-foreground/20"
               onClick={async () => {

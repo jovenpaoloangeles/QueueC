@@ -12,21 +12,14 @@ import {
 } from "@/components/ui/dialog";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // v1.3 correction dialog: edit an ended match's scores, shuttles, rating and
 // lineups. Player selects are populated from the session's attendance (queue
 // entries — the same ids the API's slot fields take).
 export default function CorrectMatchDialog({ match, attendance, onDone, onClose }) {
-  const slots = match.format === "singles"
-    ? ["team1_p1", "team2_p1"]
-    : ["team1_p1", "team1_p2", "team2_p1", "team2_p2"];
+  const slots =
+    match.format === "singles" ? ["team1_p1", "team2_p1"] : ["team1_p1", "team1_p2", "team2_p1", "team2_p2"];
   const slotLabel = {
     team1_p1: "Team 1 · P1",
     team1_p2: "Team 1 · P2",
@@ -44,7 +37,12 @@ export default function CorrectMatchDialog({ match, attendance, onDone, onClose 
   const [shuttles, setShuttles] = useState(match.new_shuttles ?? 1);
   const [rating, setRating] = useState(match.rating ?? 5);
   const [players, setPlayers] = useState(() =>
-    Object.fromEntries(slots.map((s, i) => [s, seatEntry(s.startsWith("team1") ? 1 : 2, s === "team1_p2" || s === "team2_p2" ? 1 : 0)])),
+    Object.fromEntries(
+      slots.map((s, i) => [
+        s,
+        seatEntry(s.startsWith("team1") ? 1 : 2, s === "team1_p2" || s === "team2_p2" ? 1 : 0),
+      ]),
+    ),
   );
   const [loading, setLoading] = useState(false);
   const toast = useToast();
@@ -89,7 +87,10 @@ export default function CorrectMatchDialog({ match, attendance, onDone, onClose 
         <form onSubmit={submit} className="flex flex-col gap-4">
           <div className="flex items-end gap-3 justify-center">
             <Field className="w-auto flex-col items-center gap-1">
-              <FieldLabel htmlFor="correct-team1" className="text-2xs uppercase tracking-wider text-muted-foreground">
+              <FieldLabel
+                htmlFor="correct-team1"
+                className="text-2xs uppercase tracking-wider text-muted-foreground"
+              >
                 Team 1 · {match.team1.map((p) => p.name).join(" & ")}
               </FieldLabel>
               <Input
@@ -104,7 +105,10 @@ export default function CorrectMatchDialog({ match, attendance, onDone, onClose 
             </Field>
             <span className="pb-3 text-muted-foreground/40">–</span>
             <Field className="w-auto flex-col items-center gap-1">
-              <FieldLabel htmlFor="correct-team2" className="text-2xs uppercase tracking-wider text-muted-foreground">
+              <FieldLabel
+                htmlFor="correct-team2"
+                className="text-2xs uppercase tracking-wider text-muted-foreground"
+              >
                 Team 2 · {match.team2.map((p) => p.name).join(" & ")}
               </FieldLabel>
               <Input
@@ -120,7 +124,10 @@ export default function CorrectMatchDialog({ match, attendance, onDone, onClose 
           </div>
           <div className="flex gap-3">
             <Field className="flex-1">
-              <FieldLabel htmlFor="correct-shuttles" className="text-2xs uppercase tracking-wider text-muted-foreground">
+              <FieldLabel
+                htmlFor="correct-shuttles"
+                className="text-2xs uppercase tracking-wider text-muted-foreground"
+              >
                 New shuttles
               </FieldLabel>
               <Input
@@ -133,7 +140,10 @@ export default function CorrectMatchDialog({ match, attendance, onDone, onClose 
               />
             </Field>
             <Field className="flex-1">
-              <FieldLabel htmlFor="correct-rating" className="text-2xs uppercase tracking-wider text-muted-foreground">
+              <FieldLabel
+                htmlFor="correct-rating"
+                className="text-2xs uppercase tracking-wider text-muted-foreground"
+              >
                 Rating (1–5)
               </FieldLabel>
               <Input

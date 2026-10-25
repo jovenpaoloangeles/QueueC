@@ -296,7 +296,10 @@ router.patch("/:id/correct", async (c) => {
       return c.json({ error: `${name} must be a non-negative integer` }, 400);
     }
   }
-  if (b.rating !== undefined && (typeof b.rating !== "number" || !Number.isFinite(b.rating) || b.rating < 1 || b.rating > 5)) {
+  if (
+    b.rating !== undefined &&
+    (typeof b.rating !== "number" || !Number.isFinite(b.rating) || b.rating < 1 || b.rating > 5)
+  ) {
     return c.json({ error: "rating must be between 1 and 5" }, 400);
   }
 
@@ -359,10 +362,18 @@ router.patch("/:id/correct", async (c) => {
       to.team2_p2,
       id,
     );
-    const affected = new Set([
-      match.team1_p1, match.team1_p2, match.team2_p1, match.team2_p2,
-      to.team1_p1, to.team1_p2, to.team2_p1, to.team2_p2,
-    ].filter(Boolean));
+    const affected = new Set(
+      [
+        match.team1_p1,
+        match.team1_p2,
+        match.team2_p1,
+        match.team2_p2,
+        to.team1_p1,
+        to.team1_p2,
+        to.team2_p1,
+        to.team2_p2,
+      ].filter(Boolean),
+    );
     recomputeEntries([...affected]);
   })();
 

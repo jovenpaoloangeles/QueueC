@@ -1,5 +1,5 @@
 // Run with: bun server/logic/smartQueue.test.js (pure engine — no server needed)
-import { suggestPlayers, planBatch, consecutiveCounts } from "./smartQueue.js";
+import { consecutiveCounts, planBatch, suggestPlayers } from "./smartQueue.js";
 
 const now = Math.floor(Date.now() / 1000);
 
@@ -89,11 +89,46 @@ console.assert(
 // Fairness: 3-game player 20 yields — participation-fairness band keeps only
 // 0-game quartets even though his raw wait is longest
 const fairnessEntries = [
-  { id: 20, status: "waiting", skill_level: "intermediate", checked_in_at: now - 400, total_seconds_played: 0, games_played: 3 },
-  { id: 21, status: "waiting", skill_level: "intermediate", checked_in_at: now - 350, total_seconds_played: 0, games_played: 0 },
-  { id: 22, status: "waiting", skill_level: "intermediate", checked_in_at: now - 340, total_seconds_played: 0, games_played: 0 },
-  { id: 23, status: "waiting", skill_level: "intermediate", checked_in_at: now - 330, total_seconds_played: 0, games_played: 0 },
-  { id: 24, status: "waiting", skill_level: "intermediate", checked_in_at: now - 320, total_seconds_played: 0, games_played: 0 },
+  {
+    id: 20,
+    status: "waiting",
+    skill_level: "intermediate",
+    checked_in_at: now - 400,
+    total_seconds_played: 0,
+    games_played: 3,
+  },
+  {
+    id: 21,
+    status: "waiting",
+    skill_level: "intermediate",
+    checked_in_at: now - 350,
+    total_seconds_played: 0,
+    games_played: 0,
+  },
+  {
+    id: 22,
+    status: "waiting",
+    skill_level: "intermediate",
+    checked_in_at: now - 340,
+    total_seconds_played: 0,
+    games_played: 0,
+  },
+  {
+    id: 23,
+    status: "waiting",
+    skill_level: "intermediate",
+    checked_in_at: now - 330,
+    total_seconds_played: 0,
+    games_played: 0,
+  },
+  {
+    id: 24,
+    status: "waiting",
+    skill_level: "intermediate",
+    checked_in_at: now - 320,
+    total_seconds_played: 0,
+    games_played: 0,
+  },
 ];
 const fairRes = suggestPlayers(fairnessEntries, "doubles");
 console.assert(
@@ -104,10 +139,39 @@ console.assert(
 // Rest no longer pauses wait (R7): a vestigial rested_seconds field is ignored,
 // so the earlier check-in wins on raw wait
 const restEntries = [
-  { id: 30, status: "waiting", skill_level: "intermediate", checked_in_at: now - 500, total_seconds_played: 0, games_played: 0 },
-  { id: 31, status: "waiting", skill_level: "intermediate", checked_in_at: now - 600, total_seconds_played: 0, games_played: 0, rested_seconds: 300 },
-  { id: 32, status: "waiting", skill_level: "intermediate", checked_in_at: now - 400, total_seconds_played: 0, games_played: 0 },
-  { id: 33, status: "waiting", skill_level: "intermediate", checked_in_at: now - 300, total_seconds_played: 0, games_played: 0 },
+  {
+    id: 30,
+    status: "waiting",
+    skill_level: "intermediate",
+    checked_in_at: now - 500,
+    total_seconds_played: 0,
+    games_played: 0,
+  },
+  {
+    id: 31,
+    status: "waiting",
+    skill_level: "intermediate",
+    checked_in_at: now - 600,
+    total_seconds_played: 0,
+    games_played: 0,
+    rested_seconds: 300,
+  },
+  {
+    id: 32,
+    status: "waiting",
+    skill_level: "intermediate",
+    checked_in_at: now - 400,
+    total_seconds_played: 0,
+    games_played: 0,
+  },
+  {
+    id: 33,
+    status: "waiting",
+    skill_level: "intermediate",
+    checked_in_at: now - 300,
+    total_seconds_played: 0,
+    games_played: 0,
+  },
 ];
 const restRes = suggestPlayers(restEntries, "singles");
 console.assert(
@@ -127,8 +191,7 @@ const mk = (id, waitMin, skill = "intermediate", extra = {}) => ({
   ...extra,
 });
 const rosters = (m) => [m.team1, m.team2];
-const partners = (m, a, b) =>
-  rosters(m).some((t) => t.includes(a) && t.includes(b));
+const partners = (m, a, b) => rosters(m).some((t) => t.includes(a) && t.includes(b));
 
 // Consecutive-game rest limit: players 1,2,5,6 played the last 2 games
 // straight → ineligible; the quartet comes from the fresh 3,4,7,8
@@ -137,10 +200,7 @@ const consecHist = [
   { team1: [1, 2], team2: [5, 6] },
   { team1: [1, 2], team2: [5, 6] },
 ];
-console.assert(
-  consecutiveCounts(consecHist).get(1) === 2,
-  "trailing streak should count 2",
-);
+console.assert(consecutiveCounts(consecHist).get(1) === 2, "trailing streak should count 2");
 const consecRes = planBatch({ waiting: consecPool, history: consecHist, now });
 const consecIds = consecRes.matches.flatMap((m) => [...m.team1, ...m.team2]);
 console.assert(
@@ -207,10 +267,7 @@ console.assert(new Set(allIds).size === 8, "multi-court quartets must be disjoin
 const banPool = [mk(1, 10, "professional"), mk(2, 9, "newbie"), mk(3, 8), mk(4, 7)];
 const banRes = planBatch({ waiting: banPool, bans: [[1, 2]], now });
 const bMatch = banRes.matches[0];
-console.assert(
-  !partners(bMatch, 1, 2),
-  `banned pair must not partner, got ${JSON.stringify(bMatch)}`,
-);
+console.assert(!partners(bMatch, 1, 2), `banned pair must not partner, got ${JSON.stringify(bMatch)}`);
 
 // Multi-court timestamped consecutiveCounts:
 // Court 1 finishes at t=200 (players 1,2,3,4 with 2 straight games);

@@ -7,7 +7,7 @@
 // with the reference dataviz palette; density series keep a fixed hue order.
 // Aqua sits below 3:1 on the light surface — relief via the report's tables.
 
-import { readFileSync, mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 const cells = JSON.parse(readFileSync(new URL("../../docs/sweep-cells.json", import.meta.url)));
 
@@ -121,7 +121,11 @@ function figMaxWait() {
     348,
     "Longest wait of the session — FIFO vs This Algorithm",
     "Max wait (min), mean over session lengths and skill mixes. Left panel FIFO, right panel This Algorithm.",
-    legend(70, 74, DENSITIES.map((d) => [d, DENSITY_COLORS[d]])) + body,
+    legend(
+      70,
+      74,
+      DENSITIES.map((d) => [d, DENSITY_COLORS[d]]),
+    ) + body,
   );
 }
 
@@ -146,8 +150,10 @@ function figSdRatio() {
   for (const c of COURTS) {
     body += `<text x="${x(c)}" y="${bottom + 18}" text-anchor="middle" font-family='${FONT}' font-size="11" fill="${INK.muted}">${c} court${c > 1 ? "s" : ""}</text>`;
     DENSITIES.forEach((d, di) => {
-      const ratio = agg({ courts: c, density: d }, DE, "mean_cohort_sd") / agg({ courts: c, density: d }, "FIFO", "mean_cohort_sd");
-      const bx = x(c) - ((DENSITIES.length * bw + (DENSITIES.length - 1) * 2) / 2) + di * (bw + 2);
+      const ratio =
+        agg({ courts: c, density: d }, DE, "mean_cohort_sd") /
+        agg({ courts: c, density: d }, "FIFO", "mean_cohort_sd");
+      const bx = x(c) - (DENSITIES.length * bw + (DENSITIES.length - 1) * 2) / 2 + di * (bw + 2);
       const by = s.y(Math.min(ratio, maxV));
       const bh = bottom - by;
       body += `<path d="M${bx},${bottom} L${bx},${by + 4} Q${bx},${by} ${bx + 4},${by} L${bx + bw - 4},${by} Q${bx + bw},${by} ${bx + bw},${by + 4} L${bx + bw},${bottom} Z" fill="${DENSITY_COLORS[d]}"/>`;
@@ -158,7 +164,11 @@ function figSdRatio() {
     372,
     "Cohort skill spread vs FIFO (1.0 = same as FIFO)",
     "Mean cohort skill SD, This Algorithm relative to FIFO — lower is more evenly matched. Grouped by crowd density.",
-    legend(70, 76, DENSITIES.map((d) => [d, DENSITY_COLORS[d]])) + body,
+    legend(
+      70,
+      76,
+      DENSITIES.map((d) => [d, DENSITY_COLORS[d]]),
+    ) + body,
   );
 }
 
