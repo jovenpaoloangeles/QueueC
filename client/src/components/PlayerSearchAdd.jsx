@@ -47,10 +47,12 @@ export default function PlayerSearchAdd({
   const [searchQuery, setSearchQuery] = useState("");
   const [newPlayerSkill, setNewPlayerSkill] = useState("intermediate");
   const [registering, setRegistering] = useState(false);
-  // multi mode: chips toggle into a pending batch, one button confirms them all
+  // multi mode: chips toggle into a pending batch; the "Check in (n)" button
+  // routes the batch through the same confirm dialog as single adds
   const [picked, setPicked] = useState(new Set());
-  // pending confirm: { playerId } for an existing registrant, or
-  // { name, skill } for register-new (player not created until confirmed)
+  // pending confirm: { playerId } for an existing registrant, { name, skill }
+  // for register-new (player not created until confirmed), or
+  // { batch: [{ playerId, name }, ...] } for a multi-select check-in
   const [pending, setPending] = useState(null);
   const toast = useToast();
 
@@ -107,10 +109,21 @@ export default function PlayerSearchAdd({
     onCheckedIn?.(players.find((p) => p.id === playerId) ?? created, entryId);
   }
 
-  // multi mode batch: sequential check-ins (409 duplicates skipped), one toast
-  // for the whole batch with an undo that removes every entry created here.
+  // multi mode batch: the "Check in (n)" button routes through the confirm
+  // dialog like every other live check-in; execution is sequential (409
+  // duplicates skipped), one toast for the whole batch with an undo that
+  // removes every entry created here.
   async function doBulkCheckIn() {
     if (!picked.size) return;
+    if (requireConfirm) {
+      const names = [...picked].map((playerId) => ({
+        playerId,
+        name: players.find((p) => p.id === playerId)?.name,
+      }));
+      // a single pick behaves exactly like the one-click confirm gate
+      setPending(names.length === 1 ? { playerId: names[0].playerId, name: names[0].name } : { batch: names });
+      return;
+    }
     setRegistering(true);
     const entryIds = [];
     let failed = 0;
@@ -144,6 +157,30 @@ export default function PlayerSearchAdd({
     if (!pending) return;
     setRegistering(true);
     try {
+      if (pending.batch) {
+        const entryIds = [];
+        let failed = 0;
+        for (const { playerId } of pending.batch) {
+          try {
+            const { entry } = await checkinPlayer(session.id, playerId);
+            entryIds.push(entry.id);
+          } catch {
+            failed++;
+          }
+        }
+        setPicked(new Set());
+        setSearchQuery("");
+        toast(
+          failed
+            ? `Checked in ${entryIds.length} players — ${failed} skipped (already active)`
+            : `Checked in ${entryIds.length} players`,
+          entryIds.length ? "success" : "info",
+          entryIds.length
+            ? { undo: () => Promise.allSettled(entryIds.map((id) => removeEntry(id))) }
+            : undefined,
+        );
+        return;
+      }
       let playerId = pending.playerId;
       let created = null;
       if (!playerId) {
@@ -309,8 +346,16 @@ export default function PlayerSearchAdd({
       >
         <DialogContent className="sm:max-w-xs" data-testid="checkin-confirm-dialog">
           <DialogHeader>
-            <DialogTitle>Add {pending?.name} to the pool?</DialogTitle>
-            <DialogDescription>They will join the session queue as waiting.</DialogDescription>
+            <DialogTitle>
+              {pending?.batch?.length > 1
+                ? `Add ${pending.batch.length} players to the pool?`
+                : `Add ${pending?.batch?.[0]?.name ?? pending?.name} to the pool?`}
+            </DialogTitle>
+            <DialogDescription>
+              {pending?.batch?.length > 1
+                ? pending.batch.map((b) => b.name).join(", ")
+                : "They will join the session queue as waiting."}
+            </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button
@@ -319,7 +364,11 @@ export default function PlayerSearchAdd({
               size="sm"
               className="rounded-full"
               data-testid="checkin-confirm-cancel"
-              onClick={() => setPending(null)}
+              onClick={() => {
+                // cancel deselects any pending batch picks so a retry restarts clean
+                setPicked(new Set());
+                setPending(null);
+              }}
             >
               Cancel
             </Button>

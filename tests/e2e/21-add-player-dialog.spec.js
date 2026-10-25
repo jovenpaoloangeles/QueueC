@@ -45,6 +45,7 @@ test("21.2 check in existing player via search row", async ({ page }) => {
   await page.getByTestId("checkin-toggle").click();
   await page.getByTestId("checkin-search").fill("Newbie A1");
   await page.getByTestId("combobox-matches").getByRole("button", { name: "Newbie A1" }).click();
+  await page.getByTestId("bulk-checkin-btn").click();
   await page.getByTestId("checkin-confirm-add").click();
 
   await expect(page.getByTestId("toast")).toContainText("Checked in:");
@@ -58,6 +59,7 @@ test("21.5 check-in asks for confirmation; Cancel adds nothing", async ({ page }
   await page.getByTestId("checkin-toggle").click();
   await page.getByTestId("checkin-search").fill("Newbie A1");
   await page.getByTestId("combobox-matches").getByRole("button", { name: "Newbie A1" }).click();
+  await page.getByTestId("bulk-checkin-btn").click();
 
   // nothing added until confirmed
   const dialog = page.getByTestId("checkin-confirm-dialog");
@@ -69,6 +71,7 @@ test("21.5 check-in asks for confirmation; Cancel adds nothing", async ({ page }
 
   // confirm path really adds
   await page.getByTestId("combobox-matches").getByRole("button", { name: "Newbie A1" }).click();
+  await page.getByTestId("bulk-checkin-btn").click();
   await page.getByTestId("checkin-confirm-add").click();
   await expect(page.getByTestId("toast")).toContainText("Checked in:");
   await expect(page.locator("[data-entry-id]")).toHaveCount(beforeCount + 1);

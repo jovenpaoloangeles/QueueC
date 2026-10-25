@@ -91,6 +91,7 @@ test("9.3 newly checked-in player slots into alphabetical position", async ({ pa
   await page.getByTestId("checkin-toggle").click();
   await page.getByTestId("checkin-search").fill("Beginner B1");
   await page.getByTestId("combobox-matches").getByRole("button", { name: "Beginner B1" }).click();
+  await page.getByTestId("bulk-checkin-btn").click();
   await page.getByTestId("checkin-confirm-add").click();
   // SSE ticks every 1s and the resync lands on the next tick — poll, don't sleep
   await expect.poll(async () => (await getQueueNames(page))[0], { timeout: 4000 }).toBe("Beginner B1");

@@ -30,6 +30,7 @@ test("11.3 checking in slots into alphabetical position", async ({ page }) => {
   await page.getByTestId("checkin-toggle").click();
   await page.getByTestId("checkin-search").fill("Expert E1");
   await page.getByTestId("combobox-matches").getByRole("button", { name: "Expert E1" }).click();
+  await page.getByTestId("bulk-checkin-btn").click();
   await page.getByTestId("checkin-confirm-add").click();
   await expect(page.locator("[data-entry-id]").first().locator(".text-base.font-medium")).toHaveText(
     "Expert E1",
@@ -41,6 +42,7 @@ test("11.4 search clears after check-in, panel stays open for multi-add", async 
   const search = page.getByTestId("checkin-search");
   await search.fill("Expert E1");
   await page.getByTestId("combobox-matches").getByRole("button", { name: "Expert E1" }).click();
+  await page.getByTestId("bulk-checkin-btn").click();
   await page.getByTestId("checkin-confirm-add").click();
   await expect(page.locator("[data-entry-id]")).toHaveCount(5);
   // panel stays open, query cleared, matches gone (player is now in the queue)
@@ -53,6 +55,7 @@ test("11.5 checked-in player absent from matches", async ({ page }) => {
   await page.getByTestId("checkin-toggle").click();
   await page.getByTestId("checkin-search").fill("Expert");
   await page.getByTestId("combobox-matches").getByRole("button", { name: "Expert E1" }).click();
+  await page.getByTestId("bulk-checkin-btn").click();
   await page.getByTestId("checkin-confirm-add").click();
   await expect(page.locator("[data-entry-id]")).toHaveCount(5);
   // re-open (panel stays open) and search again — E1 is now in-session

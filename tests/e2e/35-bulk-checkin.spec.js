@@ -20,6 +20,8 @@ test("35.1 multi-select checks in both players, undo removes both", async ({ pag
   await expect(chips.nth(1)).toHaveAttribute("aria-pressed", "true");
 
   await page.getByTestId("bulk-checkin-btn").click();
+  await expect(page.getByTestId("checkin-confirm-dialog")).toContainText("Add 2 players to the pool?");
+  await page.getByTestId("checkin-confirm-add").click();
   await expect(page.getByTestId("toast")).toContainText("Checked in 2 players");
   await expect
     .poll(async () => (await liveState(page)).queue.filter((e) => e.status === "waiting").length, {
