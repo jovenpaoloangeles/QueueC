@@ -121,7 +121,9 @@ export default function PlayerSearchAdd({
         name: players.find((p) => p.id === playerId)?.name,
       }));
       // a single pick behaves exactly like the one-click confirm gate
-      setPending(names.length === 1 ? { playerId: names[0].playerId, name: names[0].name } : { batch: names });
+      setPending(
+        names.length === 1 ? { playerId: names[0].playerId, name: names[0].name } : { batch: names },
+      );
       return;
     }
     setRegistering(true);
