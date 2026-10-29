@@ -48,6 +48,26 @@ Ordered by impact. Found on a seeded demo at 1440 / 1024 / 768 / 390 px.
 - [ ] **Long career tables** — partners/head-to-head list every 1-game pairing; show the top ~8 by games with a "show all" toggle.
 - [ ] **Check-in of a pruned player 500s** — `POST /sessions/:id/checkin` with a player deleted by the end-of-session pool reset returns 500 instead of 404 (stale tab after a session ends).
 
+### Unexpected behavior (scripted QM-night probe, 2026-10-29)
+
+- [ ] **Ending a session strands live games** — End Session with matches on court leaves them `active` with no `ended_at` forever (ghost rows in the history games log; attendance frozen as "playing"). The confirm dialog doesn't mention them. Warn "N games still on court" and offer *record scores first* / *discard them*.
+- [ ] **Ties and blank scores are accepted** — `PATCH /matches/:id/end` takes 21–21 and null–null. Badminton has no ties, and the stats disagree on them: the leaderboard counts a tie as neither W nor L, the career page counts it as a **loss** (`losses = games − wins`). Reject equal scores (and require both scores) at end/correct time; align the career math either way.
+- [ ] **Paused sessions half-freeze** — while paused, ending a match is refused (409) but starting one is allowed, so a game can begin on a frozen clock. Either both are allowed or neither.
+- [ ] **Status endpoint takes anything** — `PATCH /queue/:id/status` marks an on-court player `left` (200) and doesn't whitelist values (an unknown status hits the CHECK constraint as a 500). Validate against the allowed transitions.
+- [ ] **A second unended session can be created over a live one** — `POST /sessions` succeeds while one is live; `/sessions/active` keeps returning the old one and the new one is orphaned (it would also block the end-of-session pool reset). 409 unless the UI's New Session path ended the current one first.
+
+## v1.6 — Queue-master quality of life
+
+Each item comes from walking through a real club night as the QM.
+
+- [ ] **Cost split / who paid** — *Scenario: 9:55 pm, everyone's packing up and asking "magkano?"* The app counts shuttles but has no money anywhere. Session setup takes court fee + per-shuttle price; the session page shows each player's share (equal split, or court split + shuttles by games played) with a tap-to-mark-paid list. Biggest gap vs. what the QM does by hand today.
+- [ ] **Gone-home action** — *Scenario: a player who played five games leaves at 9 pm.* The UI can only Rest them (Remove is blocked once they've played), so they sit in the Rest tab, still count in the Players tile and wait stats, and look available. Add **Left** (status `left`, hidden from the queue, kept in attendance) and **Back** to revive them (re-check-in currently 409s "already checked in").
+- [ ] **Mid-match substitution** — *Scenario: someone rolls an ankle at 15–12.* The only option is aborting the game, losing its score and shuttle. Add *Substitute* on a live court: pick a waiting player to take the seat; the injured player goes to Rest.
+- [ ] **Undo / fix the last result from the live screen** — *Scenario: QM taps the wrong winner in "Who won?".* Check-ins and starts get an Undo toast, ending a match doesn't; fixing it means History → session → Edit. Add Undo on the end-match toast (reopen the match) and a "last results" strip with Edit.
+- [ ] **Last-call warning before court expiry** — *Scenario: 15 minutes of rental left, QM starts a 31-point game that can't finish.* Expiry is only signalled after the fact. Flag courts in their final N minutes (session setting, default 20) and say so in the start-match confirm.
+- [ ] **Late-arrival ETA in check-in** — *Scenario: a latecomer asks "when do I play?".* On-deck cards show an ETA, but a freshly checked-in player has none. Show "≈ next game in ~25 min" on the check-in toast and queue card (from queue position × median game length).
+- [ ] **Session-start checklist from last week** — *Scenario: same 16 regulars every Thursday.* Setup starts from an empty selection. Add "Select last session's players" in the pool (one click, then deselect the absent).
+
 ## v2.0 — Court config
 
 - [ ] **Editable court config mid-session** — add/remove a court when rental reality changes, with reflow of staged slates.
