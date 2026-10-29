@@ -132,6 +132,8 @@ router.post("/sessions/:id/automatch", async (c) => {
   }
 
   if (dryRun) return c.json({ plan: computePlan(locked) });
+  // slating is fine on a frozen clock; starting a match isn't
+  if (!slateOnly && s.paused_at != null) return c.json({ error: "Session is paused" }, 409);
 
   let plan = computePlan(locked);
   if (locked.length && givenPlan) {

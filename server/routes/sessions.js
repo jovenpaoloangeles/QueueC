@@ -181,6 +181,12 @@ router.patch("/:id/end", (c) => {
   // End + reset atomically: a reset throw rolls ended_at back too, so a failed
   // end can't strand a dead session with an un-reset pool (d495f6f's harm).
   db.transaction(() => {
+    // games still on court / on deck never finished: drop them so history
+    // has no score-less rows (the end dialog warns before this)
+    db.prepare("DELETE FROM matches WHERE session_id = ? AND ended_at IS NULL").run(id);
+    db.prepare(
+      "UPDATE queue_entries SET status = 'left', status_updated_at = ? WHERE session_id = ? AND status IN ('playing', 'staged')",
+    ).run(now, id);
     db.prepare("UPDATE sessions SET ended_at = ? WHERE id = ?").run(now, id);
     // Reset the pool only when this is the last unended session — ending one
     // session must not wipe other live sessions' registrants, queue entries

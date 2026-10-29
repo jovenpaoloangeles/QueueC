@@ -311,7 +311,7 @@ export function getCareer(playerId) {
   const totals = {
     games,
     wins,
-    losses: games - wins,
+    losses: rows.filter((r) => r.team1_score !== r.team2_score && !won(r)).length,
     win_rate: games > 0 ? Math.round((wins / games) * 100) : 0,
     point_diff: rows.reduce(
       (sum, r) => sum + (r.side === 1 ? r.team1_score - r.team2_score : r.team2_score - r.team1_score),
@@ -337,7 +337,7 @@ export function getCareer(playerId) {
     };
     cur.games += 1;
     if (won(r)) cur.wins += 1;
-    else cur.losses += 1;
+    else if (r.team1_score !== r.team2_score) cur.losses += 1;
     map.set(p.player_id, cur);
   };
   const partners = new Map();

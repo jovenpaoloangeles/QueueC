@@ -137,6 +137,7 @@ router.post("/matches/:id/start", async (c) => {
   if (!m) return c.json({ error: "Match not found" }, 404);
   const s = db.prepare("SELECT * FROM sessions WHERE id = ?").get(m.session_id);
   if (!s || s.started_at == null) return c.json({ error: "Session not started" }, 409);
+  if (s.paused_at != null) return c.json({ error: "Session is paused" }, 409);
   if (m.state !== "slated" || m.ended_at != null) {
     return c.json({ error: "Match is not on deck" }, 409);
   }

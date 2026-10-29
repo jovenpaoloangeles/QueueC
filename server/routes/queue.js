@@ -40,6 +40,10 @@ export function normalizeOrder(order, allowed) {
 // Check-in body, shared by the live check-in route and the v1.3 attendance
 // endpoint (which delegates to it for live sessions).
 export function checkinPlayer(sessionId, playerId, when = Math.floor(Date.now() / 1000)) {
+  // a stale tab can hold a player the end-of-session pool reset deleted
+  if (!db.prepare("SELECT id FROM players WHERE id = ?").get(playerId)) {
+    return { error: "Player not found", status: 404 };
+  }
   const existing = db
     .prepare("SELECT id FROM queue_entries WHERE session_id = ? AND player_id = ?")
     .get(sessionId, playerId);
@@ -171,6 +175,13 @@ router.patch("/queue/:entryId/status", async (c) => {
   const { status } = await c.req.json().catch(() => ({}));
   const cur = db.prepare("SELECT * FROM queue_entries WHERE id = ?").get(entryId);
   if (!cur) return c.json({ error: "Entry not found" }, 404);
+  // playing/staged are owned by the match and slate routes
+  if (!["waiting", "resting", "left"].includes(status)) {
+    return c.json({ error: "status must be waiting, resting or left" }, 400);
+  }
+  if (status === "left" && (cur.status === "playing" || cur.status === "staged")) {
+    return c.json({ error: "Player is on court or on deck" }, 409);
+  }
   if (status === "resting" && cur.status === "playing") {
     return c.json({ error: "Cannot rest a player who is on court" }, 409);
   }

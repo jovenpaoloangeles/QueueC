@@ -41,6 +41,7 @@ router.post("/", async (c) => {
   const session = db.prepare("SELECT * FROM sessions WHERE id = ?").get(session_id);
   if (!session) return c.json({ error: "Session not found" }, 404);
   if (session.started_at == null) return c.json({ error: "Session not started" }, 400);
+  if (session.paused_at != null) return c.json({ error: "Session is paused" }, 409);
   const now = Math.floor(Date.now() / 1000);
 
   const court = db
@@ -130,10 +131,12 @@ router.patch("/:id/end", async (c) => {
     ["team1_score", team1_score],
     ["team2_score", team2_score],
   ]) {
-    if (v !== undefined && v !== null && (typeof v !== "number" || !Number.isInteger(v) || v < 0 || v > 99)) {
+    if (typeof v !== "number" || !Number.isInteger(v) || v < 0 || v > 99) {
       return c.json({ error: `${name} must be an integer between 0 and 99` }, 400);
     }
   }
+  // badminton has no draws — a tie is always a typo
+  if (team1_score === team2_score) return c.json({ error: "Scores can't be tied" }, 400);
   for (const [name, v] of [
     ["new_shuttles", new_shuttles],
     ["used_shuttles", used_shuttles],
@@ -289,6 +292,9 @@ router.patch("/:id/correct", async (c) => {
     if (v !== undefined && (typeof v !== "number" || !Number.isInteger(v) || v < 0 || v > 99)) {
       return c.json({ error: `${name} must be an integer between 0 and 99` }, 400);
     }
+  }
+  if ((b.team1_score ?? match.team1_score) === (b.team2_score ?? match.team2_score)) {
+    return c.json({ error: "Scores can't be tied" }, 400);
   }
   for (const name of ["new_shuttles", "used_shuttles"]) {
     const v = b[name];
