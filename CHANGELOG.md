@@ -4,7 +4,7 @@ Notable user-facing changes. Format follows Keep a Changelog; versions follow
 semver once there is a public API surface to break (the Docker image tag is
 the version that matters for self-hosters).
 
-## [Unreleased] — v1.7 matchmaking review
+## [1.7.0] — 2026-10-29
 
 Smart Match changes from the 2026-10-29 algorithm review (details and
 measurements: docs/algorithm.md §8, docs/simulation-sweep-report.md).
