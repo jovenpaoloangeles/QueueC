@@ -27,7 +27,9 @@ test("16.2 end match form submits on Enter", async ({ page }) => {
   await expect(page.getByRole("button", { name: "End Match" })).toHaveCount(1);
   await page.getByRole("button", { name: "End Match" }).first().click();
   await page.getByTestId("confirm-end-end").click(); // pass the confirm gate → finalization form
-  await page.keyboard.press("Enter");
+  await page.getByLabel("Team 1").fill("21"); // v1.5: scores required
+  await page.getByLabel("Team 2").fill("15");
+  await page.getByLabel("Team 2").press("Enter");
   await expect(page.getByRole("dialog")).not.toBeVisible();
 });
 

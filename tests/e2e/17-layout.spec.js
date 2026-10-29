@@ -43,7 +43,8 @@ test("17.4 stats sidebar scrollable when content is long", async ({ page }) => {
   await fullSetup(page);
   await startDoubles(page);
   await endMatch(page, "Court"); // leaderboard rows make the sidebar taller
-  await page.setViewportSize({ width: 1000, height: 320 });
+  // ≥ lg: the sidebar sits beside the courts with its own scroll (below lg it stacks under them)
+  await page.setViewportSize({ width: 1100, height: 320 });
   await page.waitForTimeout(300);
   const aside = page.locator("aside");
   const { scrollHeight, clientHeight } = await aside.evaluate((el) => ({

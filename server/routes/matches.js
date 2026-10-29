@@ -293,7 +293,10 @@ router.patch("/:id/correct", async (c) => {
       return c.json({ error: `${name} must be an integer between 0 and 99` }, 400);
     }
   }
-  if ((b.team1_score ?? match.team1_score) === (b.team2_score ?? match.team2_score)) {
+  // only when the score is being corrected: a pre-v1.5 tied row must still
+  // take a rating/shuttle/lineup fix
+  const scoreSent = b.team1_score !== undefined || b.team2_score !== undefined;
+  if (scoreSent && (b.team1_score ?? match.team1_score) === (b.team2_score ?? match.team2_score)) {
     return c.json({ error: "Scores can't be tied" }, 400);
   }
   for (const name of ["new_shuttles", "used_shuttles"]) {

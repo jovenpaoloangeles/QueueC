@@ -62,11 +62,13 @@ test("18.5 all players playing — queue empty, Rest tab (0)", async ({ page }) 
   await expect(page.getByTestId("queue-tab-rest")).toContainText("(0)");
 });
 
-test("18.6 end session with active match — match preserved in DB", async ({ page, server }) => {
+// v1.5: the confirm warns, and the unfinished game is discarded (no score-less history rows)
+test("18.6 end session with active match — warned, then discarded", async ({ page, server }) => {
   await fullSetup(page, { courts: 1 });
   await startDoubles(page);
   const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json();
   await page.getByRole("button", { name: "End Session" }).click();
+  await expect(page.getByTestId("end-session-unfinished")).toContainText("1 game still on court");
   await page.getByTestId("end-session-confirm").click(); // pass the confirm gate
   await expect(page.locator("text=No active session")).toBeVisible();
   const rows = execSync(
@@ -74,7 +76,7 @@ test("18.6 end session with active match — match preserved in DB", async ({ pa
   )
     .toString()
     .trim();
-  expect(rows).toBe("1");
+  expect(rows).toBe("0");
 });
 
 test("18.7 End Session requires confirmation — cancel keeps session live", async ({ page }) => {
