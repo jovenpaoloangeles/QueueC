@@ -4,7 +4,7 @@ Notable user-facing changes. Format follows Keep a Changelog; versions follow
 semver once there is a public API surface to break (the Docker image tag is
 the version that matters for self-hosters).
 
-## [1.5.0] — 2026-10-29
+## [1.4.2] — 2026-10-29
 
 Stats improvements (roadmap v1.4).
 
