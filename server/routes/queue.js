@@ -49,7 +49,8 @@ export function checkinPlayer(sessionId, playerId, when = Math.floor(Date.now() 
     .get(sessionId, playerId);
   // v1.6: a player who went home and came back rejoins on their old entry
   // (history and games intact); wait keeps accruing like rest does
-  if (existing?.status === "left") {
+  const ended = db.prepare("SELECT ended_at FROM sessions WHERE id = ?").get(sessionId)?.ended_at != null;
+  if (existing?.status === "left" && !ended) {
     db.prepare("UPDATE queue_entries SET status = 'waiting', status_updated_at = ? WHERE id = ?").run(
       when,
       existing.id,

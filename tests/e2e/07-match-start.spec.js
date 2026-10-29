@@ -62,7 +62,7 @@ test("7.7 court shows format badge after match starts", async ({ page }) => {
 test("7.8 court shows elapsed timer from 0:00", async ({ page }) => {
   for (let i = 0; i < 4; i++) await page.locator("[data-entry-id]").nth(i).click();
   await clickStartMatch(page);
-  await expect(page.locator("text=/0:0[012]/").first()).toBeVisible();
+  await expect(page.getByTestId("court-elapsed")).toHaveText(/0:0[012]/);
 });
 
 test("7.9 match timer increments", async ({ page }) => {

@@ -279,6 +279,9 @@ router.patch("/:id/substitute", async (c) => {
     .get(c.req.param("id"));
   if (!match) return c.json({ error: "Live match not found" }, 404);
   const { out_entry, in_entry } = await c.req.json().catch(() => ({}));
+  if (!Number.isInteger(out_entry) || !Number.isInteger(in_entry)) {
+    return c.json({ error: "out_entry and in_entry must be queue-entry ids" }, 400);
+  }
   const seat = ["team1_p1", "team1_p2", "team2_p1", "team2_p2"].find((k) => match[k] === out_entry);
   if (!seat) return c.json({ error: "out_entry is not in this match" }, 400);
   const sub = db

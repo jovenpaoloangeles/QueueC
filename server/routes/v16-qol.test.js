@@ -50,6 +50,7 @@ async function main() {
   ).match;
   const sub = (body) => api(`/api/matches/${m.id}/substitute`, "PATCH", body);
   assert.equal((await sub({ out_entry: e[4], in_entry: e[0] })).status, 400, "out not in match");
+  assert.equal((await sub({ out_entry: e[0] })).status, 400, "missing in_entry");
   assert.equal((await sub({ out_entry: e[0], in_entry: e[1] })).status, 409, "sub must be waiting");
   const ok = await sub({ out_entry: e[0], in_entry: e[4] });
   assert.equal(ok.status, 200);
@@ -104,7 +105,10 @@ async function main() {
   assert.equal(pay.collected, 200);
   assert.equal(pay.rows.find((r) => r.entry_id === e[1]).paid, true);
 
+  await api(`/api/queue/${e[3]}/status`, "PATCH", { status: "left" });
   await api(`/api/sessions/${sid}/end`, "PATCH");
+  // a stale tab can't revive a left player into an ended session
+  assert.equal((await api(`/api/sessions/${sid}/checkin`, "POST", { player_id: pids[3] })).status, 409);
   console.log("v16-qol.test.js: all assertions passed");
 }
 

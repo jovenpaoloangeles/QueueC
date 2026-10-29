@@ -9,8 +9,10 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("6.1 click player — selected, badge shows 1", async ({ page }) => {
-  await page.locator("[data-entry-id]").first().click();
-  await expect(page.locator("text=1").first()).toBeVisible();
+  const card = page.locator("[data-entry-id]").first();
+  await card.click();
+  // scoped to the card: a bare text=1 also hits the (hidden <2xl) header time range
+  await expect(card.locator("text=1").first()).toBeVisible();
 });
 
 test("6.2 2 selected → Singles label", async ({ page }) => {
