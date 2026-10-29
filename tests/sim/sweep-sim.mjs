@@ -26,7 +26,9 @@ const EPS_OVERRIDE = process.env.EPS_OVERRIDE
       process.env.EPS_OVERRIDE.split(",").map(Number),
     )
   : null;
-const taCfg = (p) => (p === TA ? (EPS_OVERRIDE ?? {}) : {});
+// This Algorithm runs as production does since v1.7: learned ratings from
+// (simulated) scores feed the matcher instead of the static roster tiers.
+const taCfg = (p) => (p === TA ? { useRatings: true, ...(EPS_OVERRIDE ?? {}) } : {});
 
 const COURTS = [1, 2, 3, 4];
 const SESSION_MINS = [120, 180, 240];
@@ -67,6 +69,13 @@ const FIELDS = [
   "latecomer_consec_bursts",
   "bypass_rate_pct",
   "virt_game_spread",
+  // v1.7 review metrics (true_* use the latent skill the tiers only approximate)
+  "true_cohort_sd",
+  "true_team_diff",
+  "pair_coverage_pct",
+  "cross_cohort_pct",
+  "wide_range_pct",
+  "small_tier_pure_pct",
 ];
 
 const tStart = performance.now();
@@ -286,6 +295,29 @@ for (const courts of COURTS) {
   }
 }
 
+// v1.7 review metrics: true skill, mixing, disparity
+say(``);
+say(`### Game quality on true skill, and mixing (v1.7 review metrics)`);
+say(``);
+say(
+  `The roster tiers are noisy labels: the simulator gives each player a latent skill = tier + mis-rating (sd 0.7) + nightly form (sd 0.3), and scores follow that latent skill. This Algorithm learns ratings from those scores (\`server/logic/ratings.js\`), so its **tier**-based SD/team-diff numbers above deliberately drift from the labels; the columns below measure what players actually feel. Ratings start cold each simulated session — across sessions they improve true team balance further (≈ 21–25% from the second session, see \`docs/algorithm.md\`).`,
+);
+say(``);
+say(
+  `| C | Density | True team diff TA / FIFO | True cohort SD TA / FIFO | Games > 2 tiers wide TA / FIFO % | Pair coverage TA / FIFO % | Cross-cohort games TA / FIFO % | Small-tier pure TA / FIFO % |`,
+);
+say(`|---|---|---|---|---|---|---|---|`);
+for (const courts of COURTS) {
+  for (const [density] of DENSITIES) {
+    const cs = cells.filter((c) => c.courts === courts && c.density === density);
+    if (!cs.length) continue;
+    const m = (p, f, d = 2) => mean(cs.map((c) => c[p][f])).toFixed(d);
+    say(
+      `| ${courts} | ${density} | ${m(TA, "true_team_diff")} / ${m("FIFO", "true_team_diff")} | ${m(TA, "true_cohort_sd")} / ${m("FIFO", "true_cohort_sd")} | ${m(TA, "wide_range_pct", 0)} / ${m("FIFO", "wide_range_pct", 0)} | ${m(TA, "pair_coverage_pct", 0)} / ${m("FIFO", "pair_coverage_pct", 0)} | ${m(TA, "cross_cohort_pct", 0)} / ${m("FIFO", "cross_cohort_pct", 0)} | ${m(TA, "small_tier_pure_pct", 0)} / ${m("FIFO", "small_tier_pure_pct", 0)} |`,
+    );
+  }
+}
+
 say(``);
 say(`## Plots`);
 say(``);
@@ -331,7 +363,7 @@ const allIn = (cs) => cs.filter((c) => c.gatesPassed === 4).length;
 const pct = (n, d) => `${n}/${d} (${Math.round((100 * n) / Math.max(1, d))}%)`;
 say(``);
 say(
-  `1. **Consistent direction, every cell.** This Algorithm cuts cohort skill SD below FIFO in all ${total} cells (ratios ${Math.min(...sdRatios).toFixed(2)}–${Math.max(...sdRatios).toFixed(2)}), holds max wait within 1.25× FIFO everywhere (${g.maxWait}/${total}, average penalty ${(mean(waitRatios) * 100 - 100).toFixed(0)}%), and keeps recent repeat partnerships ≤ ${Math.max(...c2p.map((c) => c[TA].repeat_recent_pct)).toFixed(1)}% whenever there are ≥2 courts (vs up to ${Math.max(...c1.map((c) => c[TA].repeat_recent_pct)).toFixed(0)}% in the 1-court corner where quartets are nearly forced). The fairness/variance trade-off is stable across every court count, session length, crowd density, and skill mix tested.`,
+  `1. **Consistent direction.** This Algorithm cuts tier-cohort SD below FIFO in ${cells.filter((c) => c[TA].mean_cohort_sd < c.FIFO.mean_cohort_sd).length}/${total} cells (ratios ${Math.min(...sdRatios).toFixed(2)}–${Math.max(...sdRatios).toFixed(2)}), holds max wait within 1.25× FIFO in ${g.maxWait}/${total} cells (average penalty ${(mean(waitRatios) * 100 - 100).toFixed(0)}%), and keeps recent repeat partnerships ≤ ${Math.max(...c2p.map((c) => c[TA].repeat_recent_pct)).toFixed(1)}% whenever there are ≥2 courts (vs up to ${Math.max(...c1.map((c) => c[TA].repeat_recent_pct)).toFixed(0)}% in the 1-court corner where quartets are nearly forced). The fairness/variance trade-off is stable across every court count, session length, crowd density, and skill mix tested.`,
 );
 say(
   `2. **The naive-fairness trap scales with courts.** Lowest Raw Games' latecomer consecutive-game bursts are lowest on a single court but grow once 3+ courts rotate quickly (up to ${lrgMaxBursts} per session at the worst cell) — raw game counts without the virtual-game offset let each latecomer monopolize courts until they hit the rest limit. This Algorithm's bursts stay far lower everywhere.`,
@@ -356,10 +388,10 @@ say(``);
 say(`**Findings.** Three results hold in every scenario tested:`);
 say(``);
 say(
-  `1. *The trade is cheap.* Average and 95th-percentile waits are essentially unchanged versus FIFO; only the single worst wait of the session grows, by about 5% on average (e.g., ~19 vs ~18 minutes in a busy session), and never beyond 1.25× FIFO in any of the 144 scenarios. The club buys better games for everyone at the price of a few extra minutes for its unluckiest waiter that evening.`,
+  `1. *The trade is cheap.* Average and 95th-percentile waits stay close to FIFO's; the single worst wait of the session grows by ${(mean(waitRatios) * 100 - 100).toFixed(0)}% on average and stays within 1.25× FIFO in ${g.maxWait} of the ${total} scenarios. The club buys better games for everyone at the price of a few extra minutes for its unluckiest waiter that evening.`,
 );
 say(
-  `2. *Better games, consistently.* Skill spread within each group is 4–57% lower than FIFO (average ~35%), team-vs-team imbalance drops to roughly a third of FIFO's, and recent repeat partnerships fall to under 10% of games whenever at least two courts are running (a large fraction of games under FIFO). Court-time equality is preserved: playtime spread is comparable to FIFO's.`,
+  `2. *Better games, consistently.* On true skill, team-vs-team imbalance is ${(100 - (100 * avg("true_team_diff")) / mean(cells.map((c) => c.FIFO.true_team_diff))).toFixed(0)}% lower than FIFO's and within-group spread ${(100 - (100 * avg("true_cohort_sd")) / mean(cells.map((c) => c.FIFO.true_cohort_sd))).toFixed(0)}% lower; games spanning more than 2 tiers fall to ${avg("wide_range_pct").toFixed(0)}% (FIFO ${mean(cells.map((c) => c.FIFO.wide_range_pct)).toFixed(0)}%), and recent repeat partnerships stay rare whenever at least two courts are running. Court-time equality is preserved: playtime spread is comparable to FIFO's.`,
 );
 say(
   `3. *Naive fairness backfires.* "Fewest games played" looks fair but, without the virtual-game correction for late arrivals, it lets each newcomer chain games back-to-back until the rest limit catches them — the effect compounds with court count (double-digit monopolized slots per session at 3–4 courts). This Algorithm's latecomer bursts stay several times lower everywhere.`,
@@ -370,7 +402,7 @@ say(
 );
 say(``);
 say(
-  `**Limitations.** Player skill is modeled as static 1–7 tiers with no updating from results, game durations follow plausible parametric assumptions rather than measured club data, and no-show/no-rally effects are out of scope. The conclusions therefore concern the *relative* comparison between policies under identical conditions, which the paired design supports strongly; absolute minute-level numbers should be read as indicative.`,
+  `**Limitations.** Latent skill and the score model are parametric assumptions (tier ± 0.7 mis-rating, ± 0.3 nightly form, margin ∝ team-rating gap), ratings start cold in every simulated session, game durations follow plausible parametric assumptions rather than measured club data, and no-show/no-rally effects are out of scope. The conclusions therefore concern the *relative* comparison between policies under identical conditions, which the paired design supports strongly; absolute minute-level numbers should be read as indicative.`,
 );
 say(``);
 say(

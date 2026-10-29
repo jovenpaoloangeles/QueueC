@@ -25,6 +25,9 @@
 > re-runs with ε₀ = ∞ (same fallback shape as the anchor relax) so courts
 > never idle on the new band.
 
+> **v1.7 — review fixes** (2026-10-29 critique; measured with
+> `bun tests/sim/algo-eval.mjs` and the sweep report). See §8.
+
 ---
 
 # Smart Badminton Queueing Algorithm
@@ -512,3 +515,131 @@ To validate parameter tuning ($\epsilon_1, \dots, \epsilon_4, \omega, \gamma$) a
 | **Match Competitiveness** | **Weak-Link Team Diff**          | Mean of $F_4(q^_, s^_)$ across all played games                                                       | $\le 0.45$ rating points (raised from 0.40 in v1.2: the ε₀ cohort-overlap band trades ~8% wider average team gap for cross-wave mixing — product-owner decision, 100-seed sweep validated) |
 | **Social Mixing**         | **Novel Cohort Rate** (v1.2)     | Fraction of games whose quartet's γ-decayed 6-edge co-play sum $f_0(q^*) < 1.0$                       | ≥ 65% (sweep: 78% at ε₀=2.0 vs 66% with the band off)                                                                                                                                      |
 | **Social Mixing**         | **Repeat Partnership Rate**      | Fraction of games where a partnered pair has already played together in the same session              | $< 10\%$ for $N \ge 12$                                                                                                                                                                    |
+
+---
+
+## 8. v1.7 Review Fixes (shipped)
+
+All parameters live in `MATCH_CONFIG` (`server/logic/smartQueue.js`) and
+`RATING_CONFIG` (`server/logic/ratings.js`). Before/after numbers below are
+from `tests/sim/algo-eval.mjs` (C = 2–3, normal/peak density, 180 min, all four
+skill profiles, 20 seeds) unless noted.
+
+### 8.1 Joint wait band — no idle courts
+
+The ε₁ band is measured against the single best quartet, so when fewer than
+4·need players hold the long waits every survivor contains them and fewer than
+`need` disjoint quartets remain (2 courts freeing together: one court idled in
+4 of 12 rounds). The selection now climbs a ladder — ε₀ = ∞, then the per-quartet
+ε₁ band lifted, then ε₂ — and when ε₁ is lifted the chosen **set** must keep
+
+$$\sum_{q \in \text{set}} f_1(q) \;\ge\; W^**{4\cdot need} - need\cdot\max\!\big(\epsilon*{\min},\ \epsilon_r W^*_{4\cdot need}/need\big)$$
+
+where $W^*_{4\cdot need}$ is the sum of the top $4\cdot need$ waits — the longest
+waiters still go first. Regression: `tests/unit/smartqueue.test.js` U6.1.
+
+### 8.2 Game quality — range cap + quality cost
+
+Variance alone scores two lopsided pairs that "balance out" ({5,3} vs {5,3})
+as ideal. Two changes:
+
+- **Range cap** (before the wait band): $\max_q s - \min_q s \le 2$ — unless the
+  quartet holds a **due** outlier: someone in the top $4\cdot need$ waits (whose
+  turn it is under FIFO) or who has waited ≥ `overdueMin` (12 min). Softer
+  relief (narrowest quartet only, or +1 tier) was measured and rejected: the
+  wait band then benched the outlier again (max wait ×1.25–1.38 FIFO on the
+  1–2-court normal-density cells vs ×1.09–1.28 with the exemption). So the cap
+  shapes games only for players who can afford to wait.
+- **Quality cost** per split, ranking Stage B (after the variety bucket) and
+  added to the multi-court $J$:
+  $$C(q,\sigma) = a\,\max(0, \text{range}-1)^2 + b\big[(s_{1}-s_{2})^2 + (s_{3}-s_{4})^2\big] + c\,F_4^2,\quad a=1,\ b=0.5,\ c=1$$
+
+With the wait-safe exemption the cap rarely binds in realistic sessions
+(games > 2 tiers wide: 36% → 37% across the sweep); the quality cost still
+ranks splits and quartets among the players who are due.
+
+### 8.3 Cohort phase-lock — co-play-graph kick
+
+With roster ≈ 2× court capacity and similar game lengths, the players who start
+together finish together and are re-picked together (strict probe, 16 players,
+±1 min games: **0** cross-cohort games all night). Detection is structural: in
+the co-play graph of the last 8 games (edge = shared a court), the roster
+splits into ≥ 2 components of ≥ 4 players. (A time-gap test was tried first
+and drifts: a cohort's two courts wander apart over a night while the cohorts
+still never meet.) When locked and the normal plan wouldn't mix, one quartet is
+planned with members from ≥ 2 components and the rest normally. Strict probe:
+cross-cohort games 4.7 → 12.6 per session, pair coverage 67 → 82 of 120, no
+court time lost. The opening stagger (delay court 2 by half a game) was
+measured too (14 mixed games) but idles a court, so it is not shipped.
+Regression: U6.2.
+
+### 8.4 Uneven waits — multi-court anchor, rest credit
+
+- The hard anchor used to apply only when one quartet was planned; Smart Match
+  plans courts + slate slots jointly, so it was usually off. Now, for
+  need > 1, anchor quartets are banded among themselves (Stage A and the ε₄
+  team band) and the DFS prefers any set containing the anchor. U6.3.
+- Rest still runs the UI wait clock (R7), but the matcher credits only
+  `restCreditMin` (5 min) of each rest break as waiting (`rested_seconds`,
+  reset when the player next plays). A player back from a 20-min rest no longer
+  trips the anchor and jumps the queue. U6.4.
+
+### 8.5 Small-tier diversity debt
+
+Drift-plus-penalty virtual queue per player in a tier of < 8 members:
+$Z_i \leftarrow \max(0, Z_i + \mathbb{1}[\text{pure-tier game}] - \rho)$, ρ = 0.6;
+a mixed quartet within the range cap earns $f_3 \mathrel{-}= \kappa \sum_{i\in q} Z_i$
+(κ = 0.4) in Stage A **and** the same credit off the Stage B quality cost.
+"Adjacent" means the nearest occupied tier (a club's 6s may have no 5s). In
+practice the overlap band and partner variety already keep small tiers mixing
+(8–17% pure games in probes), so the debt is a guard that engages only when a
+small tier really does play mostly among itself. U6.5.
+
+### 8.6 Skill elasticity — learned ratings
+
+`server/logic/ratings.js` replays every finished game (derived data: score
+corrections and deleted matches can never leave it stale; nothing is stored):
+
+- $r_i = \mu_i + \delta_i$ on the tier scale; $\mu_0$ = roster tier,
+  $\sigma_0 = 0.75$; $\sigma^2 \mathrel{+}= \tau^2$ (τ = 0.3) between sessions;
+  tonight's form $\delta_i \sim N(0, 0.4^2)$ resets each session, $|\delta| \le 1$.
+- Observation: margin $m = (s_1-s_2)/(s_1+s_2) \sim N(k(T_1-T_2), \sigma_m^2)$,
+  $T$ = weak-link team rating, k = 0.15, σ_m = 0.12.
+- One diagonal Kalman step per game with $h_i = \pm k w_i$:
+  $S = \sum h_i^2(\sigma_i^2 + v_i) + \sigma_m^2$,
+  $\mu_i \mathrel{+}= \sigma_i^2 h_i e/S$, $\delta_i \mathrel{+}= v_i h_i e/S$.
+
+The matcher uses $r_i$ wherever it used the tier (variance, weak-link team
+rating, range, quality); discrete tiers still define small-tier membership.
+The career page shows μ ± σ. Simulated with latent skill (tier + 0.7·mis-rating
+- 0.3·form) and margin-driven scores: true team imbalance −11% within one cold
+  session, and **−21 to −25% from the second session on** when ratings carry over
+  (5 consecutive sessions, same roster). Uncertainty-aware balancing
+  (penalising Var(T)) was considered and left out: it mostly makes newcomers wait.
+
+### 8.7 Net effect — v1.6 vs v1.7, same simulator, all 144 sweep cells
+
+Ratings start cold in every simulated session (production carries them across
+sessions — see 8.6 for the 5-session study).
+
+| This Algorithm         | v1.6    | v1.7     | FIFO |
+| ---------------------- | ------- | -------- | ---- |
+| Max wait (min)         | 22.5    | 22.8     | 20.7 |
+| Max wait ≤ 1.25× FIFO  | 140/144 | 137/144  | —    |
+| p95 wait (min)         | 18.8    | 18.9     | 17.9 |
+| True team imbalance    | 0.78    | **0.72** | 1.36 |
+| True cohort SD         | 1.05    | 1.02     | 1.28 |
+| Games > 2 tiers wide   | 36%     | 37%      | 58%  |
+| Recent repeat partners | 11.3%   | 12.7%    | 44%  |
+| Cross-cohort games     | 66.6%   | 67.8%    | 51%  |
+| Small-tier pure games  | 7.3%    | 6.2%     | 1.0% |
+
+Reading it: in realistic sessions the gain is the learned rating (−8% true
+imbalance cold, −21 to −25% once ratings carry over); the range cap, kick and
+debt are guards for the failure modes the review described (strict phase-lock:
+0 → ~12 cross-cohort games; closed small tiers) and barely move averages; the
+joint wait band and multi-court anchor fix the production route (one Smart
+Match call plans courts + slate slots), which the simulator — it re-plans
+after a short plan — does not exercise. Costs: +1% max wait, 3 more cells over
+the 1.25× FIFO gate (v1.6 itself fails 4 — the committed report predated the
+v1.2 overlap band), +1.4 pt recent repeats.

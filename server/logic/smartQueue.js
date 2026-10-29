@@ -50,7 +50,7 @@ export const MATCH_CONFIG = {
   // a·max(0, range−1)² + b·Σ(teammate gap²) + c·(team diff)² — so two
   // lopsided pairs that "balance out" no longer score as an ideal game.
   maxRange: 2,
-  overdueMin: 12, // minutes — beyond this an outlier's range cap relaxes
+  overdueMin: 12, // minutes — beyond this (or in the top 4·need waits) an outlier's range cap is lifted
   qualRange: 1,
   qualGap: 0.5,
   qualTeam: 1,
@@ -534,24 +534,33 @@ function planCore({
         if (a !== anchorIdx && b !== anchorIdx && c !== anchorIdx && d !== anchorIdx) m[q] = 0;
       }
     }
-    // Range cap (before the wait band, so it can trade a short wait for a
-    // better game): a quartet may span at most maxRange tiers — except that
-    // an overdue player (waited ≥ overdueMin) may always play in the
-    // narrowest quartet available to them, so an outlier is skipped at most
-    // until overdue, never starved (the anchor then pulls them in).
+    // Range cap (before the wait band): a quartet may span at most maxRange
+    // tiers, unless it contains a "due" outlier — one whose turn it is (top
+    // 4·need waits) or who has waited ≥ overdueMin. So the cap shapes games
+    // for players who can afford to wait, and never benches anyone FIFO
+    // would have fielded (the max-wait ≤ 1.25× FIFO guarantee holds).
     {
       const minWith = new Float64Array(K).fill(Infinity);
       for (let q = 0; q < M; q++) {
         if (!m[q]) continue;
         for (const i of Q[q]) if (fR[q] < minWith[i]) minWith[i] = fR[q];
       }
+      // overdue = waited ≥ overdueMin OR among the top 4·need waits (whose
+      // turn it is under plain FIFO) — the cap never benches a due player
+      const dueWait = Math.min(
+        C.overdueMin,
+        [...w].sort((x, y) => y - x)[Math.min(K, 4 * need) - 1] ?? Infinity,
+      );
       const before = m.slice();
       let lo = Infinity;
       for (let q = 0; q < M; q++) {
         if (!m[q]) continue;
         if (fR[q] < lo) lo = fR[q];
         let cap = C.maxRange;
-        for (const i of Q[q]) if (w[i] >= C.overdueMin && minWith[i] > cap) cap = minWith[i];
+        // a due outlier is exempt outright: any softer relief (narrowest
+        // quartet only, or +1 tier) let the wait band bench them again —
+        // sweep: max wait ×1.25–1.38 FIFO vs ×1.09–1.28 exempt
+        for (const i of Q[q]) if (w[i] >= dueWait && minWith[i] > C.maxRange) cap = Infinity;
         if (fR[q] > cap + 1e-9) m[q] = 0;
       }
       // nothing fits (every quartet too wide, nobody overdue): narrowest wins

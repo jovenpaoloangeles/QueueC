@@ -4,6 +4,31 @@ Notable user-facing changes. Format follows Keep a Changelog; versions follow
 semver once there is a public API surface to break (the Docker image tag is
 the version that matters for self-hosters).
 
+## [Unreleased] — v1.7 matchmaking review
+
+Smart Match changes from the 2026-10-29 algorithm review (details and
+measurements: docs/algorithm.md §8, docs/simulation-sweep-report.md).
+
+### Changed
+
+- Smart Match learns skill from results: a rating per player (tier scale,
+  shown on the career page as μ ± σ) moves with point margins and carries a
+  per-session form offset; it replaces the fixed roster tier when balancing.
+- Wide-range games are capped at 2 tiers unless a long-waiting player has no
+  narrower option, and lopsided teammates ({5,3} vs {5,3}) score as worse games.
+- When two rotation groups stop meeting (16 players on 2 courts with similar
+  game lengths), Smart Match deliberately mixes them.
+- The longest waiter is protected when Smart Match fills several courts and
+  On Deck slots at once; only the first 5 minutes of a rest break count as
+  waiting for matching.
+- Small skill tiers that keep playing only among themselves are nudged to mix
+  with the nearest tier.
+
+### Fixed
+
+- Smart Match could plan fewer lineups than free courts / On Deck slots when
+  the longest waits were concentrated in a few players.
+
 ## [1.6.0] — 2026-10-29
 
 Queue-master quality of life (roadmap v1.6) on top of the v1.5 UX polish.

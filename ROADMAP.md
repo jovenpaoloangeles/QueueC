@@ -67,6 +67,15 @@ Each item comes from walking through a real club night as the QM.
 - [x] **Late-arrival ETA in check-in** — _Scenario: a latecomer asks "when do I play?"._ On-deck cards show an ETA, but a freshly checked-in player has none. Show "≈ next game in ~25 min" on the check-in toast and queue card (from queue position × median game length). _Shipped on the queue card of players with no games yet (assumes 20-minute games); not on the toast._
 - [x] **Session-start checklist from last week** — _Scenario: same 16 regulars every Thursday._ Setup starts from an empty selection. Add "Select last session's players" in the pool (one click, then deselect the absent).
 
+## v1.7 — Matchmaking review (2026-10-29 critique)
+
+- [x] **Joint wait band** — no court/slot left unplanned when long waits are concentrated.
+- [x] **Game quality** — range cap with overdue relief + quality cost (teammate gap, team diff).
+- [x] **Cohort phase-lock** — co-play-graph detection + one mixed quartet. _Opening stagger measured, not shipped (idles a court)._
+- [x] **Uneven waits** — anchor in multi-court plans; rest credited only 5 min for matching.
+- [x] **Small-tier diversity debt** — virtual-queue guard; dormant unless a small tier plays mostly pure.
+- [x] **Learned ratings** — margin-based Gaussian rating with per-session form, used by Smart Match, shown on the career page.
+
 ## v2.0 — Court config
 
 - [ ] **Editable court config mid-session** — add/remove a court when rental reality changes, with reflow of staged slates.
@@ -91,4 +100,4 @@ The queue master is the only operator of this app for now, so anything multi-ope
 - [ ] **Print/mobile-friendly deck view** — read-only layout of courts + on-deck for a phone taped to the wall.
 - [ ] **Player notes/tags** — per-player flag (lefty, needs-partner, injury) visible while drafting lineups.
 - [ ] **Shuttle low-stock warning** — set an opening shuttle count at session start; warn when remaining dips below a threshold.
-- [ ] **Skill rating progression** — optional ELO-style rating that drifts from match results (per docs/algorithm.md skill model), with a per-player sparkline on the career page; Smart Match can then consume the drifting rating instead of a static roster skill.
+- [ ] **Skill rating progression** — _rating itself shipped in v1.7 (Smart Match uses it, career shows μ ± σ)_; still open: a per-player sparkline of the rating over time on the career page.
