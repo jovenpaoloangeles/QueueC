@@ -70,7 +70,10 @@ for (const c of CASES) {
     const r = runSession(scen, "EPSILON_LEX", process.env.CFG ? JSON.parse(process.env.CFG) : {});
     for (const f of F) acc[f].push(r[f]);
   }
-  for (const f of F) c.key ? (special[c.key][f] = mean(acc[f])) : totals[f].push(mean(acc[f]));
+  for (const f of F) {
+    if (c.key) special[c.key][f] = mean(acc[f]);
+    else totals[f].push(mean(acc[f]));
+  }
 }
 const fmt = (o) =>
   F.map((f) => `${f}=${o[f].toFixed(f === "mean_cohort_sd" || f === "mean_team_diff" ? 2 : 1)}`).join("  ");

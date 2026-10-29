@@ -177,7 +177,10 @@ const T0 = 1_800_000_000,
   const { cohortLocked } = await import("../../server/logic/smartQueue.js");
   const nightOf = (cfg) => {
     let s = 1;
-    const rnd = () => (s = (s * 1664525 + 1013904223) >>> 0) / 2 ** 32;
+    const rnd = () => {
+      s = (s * 1664525 + 1013904223) >>> 0;
+      return s / 2 ** 32;
+    };
     const P = Array.from({ length: 16 }, (_, i) => ({
       id: i + 1,
       status: "waiting",
