@@ -155,7 +155,7 @@ export default function CareerPage({ id }) {
         {/* all-time totals strip */}
         <section
           data-testid="career-totals"
-          className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border shadow-card sm:grid-cols-5"
+          className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border shadow-card sm:grid-cols-6"
           aria-label="Career totals"
         >
           {[
@@ -164,6 +164,10 @@ export default function CareerPage({ id }) {
             ["Win %", `${totals.win_rate}%`],
             ["Pt Diff", totals.point_diff > 0 ? `+${totals.point_diff}` : totals.point_diff],
             ["Hours", fmtHours(totals.seconds_played)],
+            // learned skill (tier scale 1–7) — appears once a scored game exists
+            ...(career.rating
+              ? [["Rating", `${career.rating.mu.toFixed(1)} ±${career.rating.sigma.toFixed(1)}`]]
+              : []),
           ].map(([label, value]) => (
             <div key={label} className="bg-card px-4 py-3">
               <div className="text-[12.5px] uppercase tracking-wider text-muted-foreground">{label}</div>

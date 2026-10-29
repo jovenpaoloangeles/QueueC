@@ -38,6 +38,8 @@ CASES.push({
 });
 
 const F = [
+  "true_team_diff",
+  "true_cohort_sd",
   "total_games",
   "p95_wait_mins",
   "max_wait_mins",
@@ -75,8 +77,7 @@ for (const c of CASES) {
     else totals[f].push(mean(acc[f]));
   }
 }
-const fmt = (o) =>
-  F.map((f) => `${f}=${o[f].toFixed(f === "mean_cohort_sd" || f === "mean_team_diff" ? 2 : 1)}`).join("  ");
+const fmt = (o) => F.map((f) => `${f}=${o[f].toFixed(/sd|diff/.test(f) ? 2 : 1)}`).join("  ");
 console.log("grid mean :", fmt(Object.fromEntries(F.map((f) => [f, mean(totals[f])]))));
 console.log("16p/2c    :", fmt(special.lock));
 console.log("16p tight :", fmt(special.tight));

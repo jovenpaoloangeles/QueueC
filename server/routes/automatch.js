@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import db from "../db.js";
+import { loadRatings } from "../logic/ratings.js";
 import { planBatch, suggestPlayers } from "../logic/smartQueue.js";
 import { broadcast } from "./sse.js";
 
@@ -64,7 +65,9 @@ router.post("/sessions/:id/automatch", async (c) => {
   // One ε-lexicographic batch over courts + slate slots (§5): quartets are
   // picked jointly, not greedily court-by-court.
   function computePlan(locked = []) {
-    const waiting = getWaiting();
+    // v1.7: learned ratings (μ + tonight's form) replace static tiers in the matcher
+    const ratings = loadRatings(db, Number(id));
+    const waiting = getWaiting().map((e) => ({ ...e, rating: ratings.get(e.player_id)?.rating }));
     const history = db
       .prepare(
         "SELECT team1_p1, team1_p2, team2_p1, team2_p2, started_at, ended_at FROM matches WHERE session_id = ? AND ended_at IS NOT NULL ORDER BY started_at, id",

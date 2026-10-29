@@ -19,6 +19,7 @@
 //
 // Run: bun tests/sim/benchmark-sim.mjs   (or `bun run test:sim` from tests/)
 
+import { computeRatings } from "../../server/logic/ratings.js";
 import { consecutiveCounts, MATCH_CONFIG, planBatch } from "../../server/logic/smartQueue.js";
 
 // ---------- RNG (mulberry32 + Box-Muller) ----------
@@ -123,12 +124,22 @@ export function generateScenario(
     }
   }
 
+  // v1.7 latent skill for the rating study, from a SEPARATE stream so every
+  // pre-existing draw (and so every committed report number) is unchanged:
+  // true = roster tier + mis-rating (sd 0.7) + tonight's form (sd 0.3).
+  const rng2 = mulberry32(seed ^ 0x5bd1e995);
+  const normal2 = makeNormals(rng2);
+  const trueSkill = skillTiers.map((t) => clamp(t + 0.7 * normal2() + 0.3 * normal2(), 0.5, 7.5));
+  const scoreNoise = Array.from({ length: 600 }, () => normal2());
+
   return {
     nPlayers,
     nLate,
     nCourts,
     sessionMins,
     skillTiers,
+    trueSkill,
+    scoreNoise,
     arrivals,
     durations,
     lags,
@@ -241,7 +252,20 @@ export function runSession(scenario, policy, cfg = {}) {
     restDraws = [],
     departures = [],
     realistic = true,
+    trueSkill = skillTiers,
+    scoreNoise = [],
+    priorHistory = [], // earlier sessions (ratings carry-over study), session_id < 1000
   } = scenario;
+  // sim-only switch: feed learned ratings (from simulated scores) to the matcher
+  const { useRatings = false, ...engineCfg } = cfg;
+  cfg = engineCfg;
+  const trueTeam = (a, b) => {
+    const lo = Math.min(trueSkill[a], trueSkill[b]);
+    const hi = Math.max(trueSkill[a], trueSkill[b]);
+    return 0.65 * lo + 0.35 * hi;
+  };
+  const trueTeamDiffs = [];
+  const trueCohortSds = [];
   const N = scenario.nPlayers;
   const SESSION_MINS = scenario.sessionMins;
   const MAX_CONSEC = MATCH_CONFIG.maxConsecutive;
@@ -361,11 +385,21 @@ export function runSession(scenario, policy, cfg = {}) {
           events.push([t + draw.restMins, 0, seq++, { kind: "rest_end", player: p }]);
         }
       }
+      // score model: margin m = (s₁−s₂)/(s₁+s₂) ~ 0.15·ΔT_true + 0.12·noise, to 31
+      const margin = clamp(
+        0.15 * (trueTeam(quartet[0], quartet[1]) - trueTeam(quartet[2], quartet[3])) +
+          0.12 * (scoreNoise[history.length % Math.max(1, scoreNoise.length)] ?? 0),
+        -0.95,
+        0.95,
+      );
+      const loser = Math.min(29, Math.round((31 * (1 - Math.abs(margin))) / (1 + Math.abs(margin))));
       history.push({
         team1: [quartet[0], quartet[1]],
         team2: [quartet[2], quartet[3]],
         started_at: Math.round(startedAt * 60),
         ended_at: Math.round(t * 60),
+        team1_score: margin >= 0 ? 31 : loser,
+        team2_score: margin >= 0 ? loser : 31,
       });
       freeCourts.push(court);
       if (t <= SESSION_MINS) events.push([t, 3, seq++, null]);
@@ -453,7 +487,15 @@ export function runSession(scenario, policy, cfg = {}) {
           // When multiple courts are open simultaneously and realistic batching is on,
           // dispatch up to freeCourts.length courts in one joint batch.
           const batchCount = realistic ? Math.min(freeCourts.length, Math.floor(avail.length / 4)) : 1;
+          const ratings = useRatings
+            ? computeRatings(
+                [...priorHistory, ...history.map((m) => ({ ...m, session_id: 1000 }))],
+                (i) => TIERS[skillTiers[i] - 1],
+                1000,
+              )
+            : null;
           const entries = avail.map((i) => ({
+            rating: ratings?.get(i)?.rating,
             id: i,
             status: "waiting",
             skill_level: TIERS[skillTiers[i] - 1],
@@ -515,6 +557,12 @@ export function runSession(scenario, policy, cfg = {}) {
           );
           cohortSds.push(cSd);
           teamDiffs.push(tDiff);
+          {
+            const ts = quartet.map((p) => trueSkill[p]);
+            const tm = mean(ts);
+            trueCohortSds.push(Math.sqrt(mean(ts.map((v) => (v - tm) ** 2))));
+            trueTeamDiffs.push(Math.abs(trueTeam(quartet[0], quartet[1]) - trueTeam(quartet[2], quartet[3])));
+          }
           if (cSd <= 1.0 && tDiff <= 0.5) competitiveGames++;
 
           const gapOf = (pair) => gameCounter - (lastPairGame.get(pair) ?? -Infinity);
@@ -616,6 +664,9 @@ export function runSession(scenario, policy, cfg = {}) {
     wide_range_pct: (100 * wideRangeGames) / nGames,
     small_tier_pure_pct: smallTierGames ? (100 * smallTierPure) / smallTierGames : 0,
     idle_court_mins: idleCourtMins,
+    history,
+    true_team_diff: mean(trueTeamDiffs),
+    true_cohort_sd: mean(trueCohortSds),
     solve_time_us: mean(solveUs),
   };
 }

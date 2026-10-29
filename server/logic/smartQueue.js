@@ -15,7 +15,7 @@ export const SKILL_WEIGHT_MAP = {
   professional: 700,
 };
 
-const SKILL_MAP = {
+export const SKILL_MAP = {
   newbie: 1,
   beginner: 2,
   lower_intermediate: 3,
@@ -71,8 +71,10 @@ export const MATCH_CONFIG = {
   diversityKappa: 0.4,
 };
 
+// v1.7: a learned rating (server/logic/ratings.js, attached by the route)
+// replaces the static roster tier when present
 function skillValue(entry) {
-  return SKILL_MAP[entry.skill_level] ?? 4;
+  return entry.rating ?? SKILL_MAP[entry.skill_level] ?? 4;
 }
 
 // v1.7: rest beyond restCreditMin stops counting as waiting for matching —

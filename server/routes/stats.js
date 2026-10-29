@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import db from "../db.js";
+import { loadRatings } from "../logic/ratings.js";
 import { broadcast } from "./sse.js";
 
 const router = new Hono();
@@ -427,8 +428,13 @@ export function getCareer(playerId) {
     pct: m.total > 0 ? Math.round((m.attended / m.total) * 100) : 0,
   }));
 
+  const r = loadRatings(db).get(player.id);
   return {
     player,
+    // v1.7 learned skill on the tier scale (1 newbie … 7 professional)
+    rating: r
+      ? { mu: Math.round(r.mu * 100) / 100, sigma: Math.round(r.sigma * 100) / 100, games: r.games }
+      : null,
     totals,
     partners: ranked(partners),
     opponents: ranked(opponents),
