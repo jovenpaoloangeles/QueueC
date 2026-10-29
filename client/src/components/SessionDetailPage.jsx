@@ -11,6 +11,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import downloadExport from "@/lib/download";
+import { buildRecap } from "@/lib/recap";
+import { fmtClock } from "@/lib/utils";
 import CorrectMatchDialog from "./CorrectMatchDialog.jsx";
 import HistoryShell from "./HistoryShell.jsx";
 
@@ -31,6 +33,7 @@ export default function SessionDetailPage({ id }) {
   const [deleteMatchTarget, setDeleteMatchTarget] = useState(null);
   const [addPlayerId, setAddPlayerId] = useState(null);
   const [players, setPlayers] = useState([]);
+  const [recap, setRecap] = useState(null);
   const toast = useToast();
 
   const refetch = () => setLiveTick((n) => n + 1);
@@ -109,7 +112,12 @@ export default function SessionDetailPage({ id }) {
       </HistoryShell>
     );
 
-  const { session, leaderboard, games, attendance, shuttles } = detail;
+  const { session, leaderboard, games, attendance, shuttles, fairness, highlights } = detail;
+  const highlightRows = [
+    ...highlights.win_streaks.map((h) => [h.player_id, h.name, `🔥 ${h.streak} wins in a row`]),
+    ...highlights.milestones.map((h) => [h.player_id, h.name, `🎉 career game #${h.game}`]),
+    ...highlights.attendance_streaks.map((h) => [h.player_id, h.name, `📅 ${h.streak} sessions in a row`]),
+  ];
   const availablePlayers = players.filter((p) => !attendance.some((a) => a.player_id === p.id));
 
   return (
@@ -139,6 +147,14 @@ export default function SessionDetailPage({ id }) {
             onClick={() => downloadExport(`/sessions/${id}/export?format=json`)}
           >
             Export JSON
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            data-testid="share-recap"
+            onClick={() => setRecap(buildRecap(detail))}
+          >
+            Share recap
           </Button>
         </div>
 
@@ -193,6 +209,71 @@ export default function SessionDetailPage({ id }) {
               )}
             </tbody>
           </table>
+        </section>
+
+        {/* v1.4 highlights: streaks and milestones */}
+        {highlightRows.length > 0 && (
+          <section className="rounded-lg border border-border bg-card shadow-card" aria-label="Highlights">
+            <h2 className="border-b border-border px-4 py-2.5 text-[12.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Highlights
+            </h2>
+            <ul className="divide-y divide-border">
+              {highlightRows.map(([pid, name, text]) => (
+                <li
+                  key={`${pid}-${text}`}
+                  data-testid="detail-highlight"
+                  className="flex items-center justify-between px-4 py-2 text-sm"
+                >
+                  <a href={`#/players/${pid}`} className="font-medium text-foreground hover:text-primary">
+                    {name}
+                  </a>
+                  <span className="text-muted-foreground">{text}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {/* v1.4 fairness: court-time distribution and net wait */}
+        <section className="rounded-lg border border-border bg-card shadow-card" aria-label="Fairness">
+          <h2 className="border-b border-border px-4 py-2.5 text-[12.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Fairness
+          </h2>
+          <div
+            data-testid="detail-fairness"
+            className="grid grid-cols-2 divide-x divide-border sm:grid-cols-4"
+          >
+            {[
+              ["Fewest games", fairness.games.min],
+              ["Median games", fairness.games.median],
+              ["Most games", fairness.games.max],
+              ["Avg wait", fmtClock(fairness.avg_wait_seconds)],
+            ].map(([label, value]) => (
+              <div key={label} className="px-4 py-3">
+                <div className="text-[12.5px] uppercase tracking-wider text-muted-foreground">{label}</div>
+                <div className="font-mono text-lg font-bold tabular-nums">{value}</div>
+              </div>
+            ))}
+          </div>
+          {fairness.most_bumped.length > 0 && (
+            <div className="border-t border-border px-4 py-2.5 text-sm">
+              <span className="text-[12.5px] text-muted-foreground">Longest waits: </span>
+              {fairness.most_bumped.map((p, i) => (
+                <span key={p.player_id} data-testid="detail-bumped">
+                  {i > 0 && ", "}
+                  <a
+                    href={`#/players/${p.player_id}`}
+                    className="font-medium text-foreground hover:text-primary"
+                  >
+                    {p.name}
+                  </a>{" "}
+                  <span className="font-mono tabular-nums text-muted-foreground">
+                    {fmtClock(p.longest_wait_seconds)}
+                  </span>
+                </span>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* games log */}
@@ -373,6 +454,45 @@ export default function SessionDetailPage({ id }) {
                 }}
               >
                 Remove
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+      {recap != null && (
+        <Dialog open onOpenChange={(open) => !open && setRecap(null)}>
+          <DialogContent className="sm:max-w-sm shadow-lift">
+            <DialogHeader>
+              <DialogTitle>Session recap</DialogTitle>
+              <DialogDescription>Paste it into the group chat.</DialogDescription>
+            </DialogHeader>
+            <textarea
+              readOnly
+              data-testid="recap-text"
+              aria-label="Recap text"
+              value={recap}
+              rows={recap.split("\n").length}
+              onFocus={(e) => e.target.select()}
+              className="w-full resize-none rounded-md border border-border bg-card p-2 font-mono text-[13px]"
+            />
+            <DialogFooter>
+              {navigator.share && (
+                <Button variant="ghost" onClick={() => navigator.share({ text: recap }).catch(() => {})}>
+                  Share…
+                </Button>
+              )}
+              <Button
+                data-testid="recap-copy"
+                onClick={() =>
+                  // clipboard needs a secure context; plain-http LAN installs select-and-copy by hand
+                  navigator.clipboard
+                    ?.writeText(recap)
+                    .then(() => toast("Recap copied", "success"))
+                    .catch(() => toast("Copy failed — select the text and copy it", "error")) ??
+                  toast("Select the text and copy it", "error")
+                }
+              >
+                Copy
               </Button>
             </DialogFooter>
           </DialogContent>

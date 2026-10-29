@@ -103,10 +103,13 @@ router.get("/players/:id/career/export", (c) => {
     ["games", "wins", "losses", "win_rate", "point_diff", "seconds_played"],
     [[t.games, t.wins, t.losses, t.win_rate, t.point_diff, t.seconds_played]],
   );
-  const partners = csvTable(
-    ["name", "games", "wins", "losses"],
-    career.partners.map((p) => [p.name, p.games, p.wins, p.losses]),
-  );
+  const record = (list) =>
+    csvTable(
+      ["name", "games", "wins", "losses", "win_rate"],
+      list.map((p) => [p.name, p.games, p.wins, p.losses, p.win_rate]),
+    );
+  const partners = record(career.partners);
+  const opponents = record(career.opponents);
   const attendance = csvTable(
     ["session", "date", "games_played"],
     career.attendance.sessions.map((s) => [s.name, iso(s.date), s.games_played]),
@@ -117,7 +120,7 @@ router.get("/players/:id/career/export", (c) => {
   );
 
   return c.body(
-    `# Totals\n${totals}\n# Partners\n${partners}\n# Attendance\n${attendance}\n# Months\n${months}`,
+    `# Totals\n${totals}\n# Partners\n${partners}\n# Opponents\n${opponents}\n# Attendance\n${attendance}\n# Months\n${months}`,
     200,
     {
       "Content-Type": "text/csv; charset=utf-8",

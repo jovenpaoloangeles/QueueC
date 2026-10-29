@@ -49,6 +49,7 @@ export const updateMatchTeams = (id, teams) => req("PATCH", `/matches/${id}/team
 export const setQueueOrder = (sessionId, order) =>
   req("PATCH", "/queue/order", { session_id: sessionId, order });
 export const getPlayerHistory = (playerId) => req("GET", `/players/${playerId}/history`);
+export const getLeaderboard = (since) => req("GET", `/leaderboard?since=${since}`);
 export const getPlayerCareer = (playerId) => req("GET", `/players/${playerId}/career`);
 export const addCourt = (sessionId, label, duration_minutes = null) =>
   req("POST", `/sessions/${sessionId}/courts`, { label, duration_minutes });

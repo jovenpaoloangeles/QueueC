@@ -28,11 +28,11 @@ Status legend: no checkbox = not started. Check off as shipped; delete rejected 
 
 ## v1.4 — Stats improvements
 
-- [ ] **Partner synergy & head-to-head** — best/worst partner pairings (win % together) and per-opponent records; the games log already has the data, this is just the query + view.
-- [ ] **Fairness report** — per-session court-time distribution: min/median/max games played, who got bumped most, avg net-wait; closes the loop on the queue's fairness promise.
-- [ ] **Leaderboard time windows** — leaderboard switchable between this session / this month / all-time.
-- [ ] **Streaks & milestones** — win streaks, attendance streaks, "100th game" callouts in the session summary; cheap to compute once history exists.
-- [ ] **Session summary share card** — generated PNG/text recap for the group chat (winner, MVP, games played, photo optional — Reclub's "Moments" minus the feed).
+- [x] **Partner synergy & head-to-head** — best/worst partner pairings (win % together) and per-opponent records; the games log already has the data, this is just the query + view.
+- [x] **Fairness report** — per-session court-time distribution: min/median/max games played, who got bumped most, avg net-wait; closes the loop on the queue's fairness promise.
+- [x] **Leaderboard time windows** — leaderboard switchable between this session / this month / all-time.
+- [x] **Streaks & milestones** — win streaks, attendance streaks, "100th game" callouts in the session summary; cheap to compute once history exists.
+- [x] **Session summary share card** — text recap shipped (PNG/photo card not built); generated PNG/text recap for the group chat (winner, MVP, games played, photo optional — Reclub's "Moments" minus the feed).
 
 ## v2.0 — Multi-club & access
 

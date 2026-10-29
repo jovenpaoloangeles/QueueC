@@ -12,6 +12,78 @@ const fmtMonth = (month) =>
 const fmtDate = (ts) =>
   ts ? new Date(ts * 1000).toLocaleDateString([], { month: "short", day: "numeric" }) : "—";
 
+// v1.4 synergy: best/worst need a few games to mean anything
+const MIN_GAMES = 3;
+
+function RecordTable({ title, rows, testid, empty, best, worst }) {
+  const ranked = rows
+    .filter((r) => r.games >= MIN_GAMES)
+    .sort((a, b) => b.win_rate - a.win_rate || b.games - a.games);
+  const callouts =
+    ranked.length > 1
+      ? [
+          [best, ranked[0]],
+          [worst, ranked[ranked.length - 1]],
+        ]
+      : [];
+  return (
+    <section className="rounded-lg border border-border bg-card shadow-card" aria-label={title}>
+      <h2 className="border-b border-border px-4 py-2.5 text-[12.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {title}
+      </h2>
+      {callouts.length > 0 && (
+        <div className="flex flex-wrap gap-x-6 gap-y-1 border-b border-border px-4 py-2 text-sm">
+          {callouts.map(([label, r]) => (
+            <span key={label} data-testid={`${testid}-callout`}>
+              <span className="text-[12.5px] text-muted-foreground">{label}: </span>
+              <a href={`#/players/${r.player_id}`} className="font-medium text-foreground hover:text-primary">
+                {r.name}
+              </a>{" "}
+              <span className="font-mono tabular-nums text-muted-foreground">{r.win_rate}%</span>
+            </span>
+          ))}
+        </div>
+      )}
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-border text-left text-[12.5px] text-muted-foreground">
+            <th className="px-4 py-2 font-medium">Player</th>
+            <th className="px-2 py-2 font-medium">Games</th>
+            <th className="px-2 py-2 font-medium">W/L</th>
+            <th className="px-2 py-2 font-medium">Win %</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((p) => (
+            <tr key={p.player_id} data-testid={testid} className="border-b border-border last:border-0">
+              <td className="px-4 py-2">
+                <a
+                  href={`#/players/${p.player_id}`}
+                  className="font-medium text-foreground hover:text-primary"
+                >
+                  {p.name}
+                </a>
+              </td>
+              <td className="px-2 py-2 font-mono tabular-nums">{p.games}</td>
+              <td className="px-2 py-2 font-mono tabular-nums text-muted-foreground">
+                {p.wins}/{p.losses}
+              </td>
+              <td className="px-2 py-2 font-mono tabular-nums text-muted-foreground">{p.win_rate}%</td>
+            </tr>
+          ))}
+          {rows.length === 0 && (
+            <tr>
+              <td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">
+                {empty}
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </section>
+  );
+}
+
 export default function CareerPage({ id }) {
   const [career, setCareer] = useState(null);
   const [error, setError] = useState(null);
@@ -41,7 +113,7 @@ export default function CareerPage({ id }) {
       </HistoryShell>
     );
 
-  const { player, totals, partners, attendance } = career;
+  const { player, totals, partners, opponents, attendance } = career;
 
   return (
     <HistoryShell title={player.name} back="#/history">
@@ -86,50 +158,22 @@ export default function CareerPage({ id }) {
           ))}
         </section>
 
-        {/* doubles partners */}
-        <section className="rounded-lg border border-border bg-card shadow-card" aria-label="Partners">
-          <h2 className="border-b border-border px-4 py-2.5 text-[12.5px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Partners
-          </h2>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border text-left text-[12.5px] text-muted-foreground">
-                <th className="px-4 py-2 font-medium">Player</th>
-                <th className="px-2 py-2 font-medium">Games</th>
-                <th className="px-2 py-2 font-medium">W/L</th>
-              </tr>
-            </thead>
-            <tbody>
-              {partners.map((p) => (
-                <tr
-                  key={p.player_id}
-                  data-testid="career-partner-row"
-                  className="border-b border-border last:border-0"
-                >
-                  <td className="px-4 py-2">
-                    <a
-                      href={`#/players/${p.player_id}`}
-                      className="font-medium text-foreground hover:text-primary"
-                    >
-                      {p.name}
-                    </a>
-                  </td>
-                  <td className="px-2 py-2 font-mono tabular-nums">{p.games}</td>
-                  <td className="px-2 py-2 font-mono tabular-nums text-muted-foreground">
-                    {p.wins}/{p.losses}
-                  </td>
-                </tr>
-              ))}
-              {partners.length === 0 && (
-                <tr>
-                  <td colSpan={3} className="px-4 py-6 text-center text-muted-foreground">
-                    No doubles games yet.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </section>
+        <RecordTable
+          title="Partners"
+          rows={partners}
+          testid="career-partner-row"
+          empty="No doubles games yet."
+          best="Best partner"
+          worst="Worst partner"
+        />
+        <RecordTable
+          title="Head-to-head"
+          rows={opponents}
+          testid="career-opponent-row"
+          empty="No games yet."
+          best="Easiest opponent"
+          worst="Toughest opponent"
+        />
 
         <div className="grid gap-4 sm:grid-cols-2">
           {/* per-session attendance */}

@@ -1,13 +1,38 @@
-import { updateShuttles } from "@/api";
+import { useEffect, useState } from "react";
+import { getLeaderboard, updateShuttles } from "@/api";
 import { Button } from "@/components/ui/button";
 import { cn, fmtClock } from "@/lib/utils";
 import { useToast } from "./Toast.jsx";
+
+// v1.4 leaderboard windows: session comes with stats; month/all-time fetch
+// GET /leaderboard?since= (local month start / 0), refetched on every stats push.
+const WINDOWS = [
+  { id: "session", label: "Session" },
+  { id: "month", label: "Month" },
+  { id: "all", label: "All-time" },
+];
+const monthStart = () => {
+  const d = new Date();
+  return Math.floor(new Date(d.getFullYear(), d.getMonth(), 1).getTime() / 1000);
+};
 
 // redesign-draft sidebar: stats card (3-up mono figures + shuttle row) above the
 // leaderboard card. Value/label order and paddings mirror .stat/.shuttle-row/.lb.
 export default function StatsSidebar({ stats, session }) {
   const toast = useToast();
-  const board = stats?.leaderboard ?? [];
+  const [win, setWin] = useState("session");
+  const [windowBoard, setWindowBoard] = useState(null);
+  useEffect(() => {
+    if (win === "session" || !stats) return;
+    let cancelled = false;
+    getLeaderboard(win === "month" ? monthStart() : 0)
+      .then((d) => !cancelled && setWindowBoard(d.leaderboard))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [win, stats]);
+  const board = (win === "session" ? stats?.leaderboard : windowBoard) ?? [];
   const addShuttle = async () => {
     try {
       await updateShuttles(session.id, 1);
@@ -58,9 +83,31 @@ export default function StatsSidebar({ stats, session }) {
       </section>
 
       <section className="rounded-lg border border-border bg-card shadow-card" aria-label="Leaderboard">
-        <h2 className="px-[18px] pb-1.5 pt-3.5 text-[15px] font-bold tracking-tight text-foreground">
-          Leaderboard
-        </h2>
+        <div className="flex items-center justify-between gap-2 px-[18px] pb-1.5 pt-3.5">
+          <h2 className="text-[15px] font-bold tracking-tight text-foreground">Leaderboard</h2>
+          <div className="flex items-center rounded-[9px] bg-secondary p-0.5">
+            {WINDOWS.map((w) => (
+              <button
+                key={w.id}
+                type="button"
+                data-testid={`leaderboard-window-${w.id}`}
+                aria-pressed={win === w.id}
+                onClick={() => {
+                  setWindowBoard(null);
+                  setWin(w.id);
+                }}
+                className={cn(
+                  "rounded-[7px] px-2 py-1 text-[11px] transition-colors duration-150",
+                  win === w.id
+                    ? "bg-card font-semibold text-foreground shadow-sm"
+                    : "font-medium text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {w.label}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="px-2 pb-3">
           {board.length === 0 ? (
             <div data-testid="leaderboard-empty" className="px-2 pb-1 text-xs text-muted-foreground">
@@ -124,7 +171,7 @@ export default function StatsSidebar({ stats, session }) {
                           </span>
                         </td>
                         <td className="py-1.5 pr-1 text-right font-mono text-xs font-semibold tabular-nums text-foreground/80">
-                          {p.games}
+                          {p.played}
                         </td>
                         <td className="py-1.5 pr-1 text-right font-mono text-xs font-semibold tabular-nums text-foreground/80">{`${p.wins}/${p.losses}`}</td>
                         <td className="py-1.5 pr-1 text-right font-mono text-xs font-semibold tabular-nums text-foreground/80">{`${Math.round(p.win_rate ?? 0)}%`}</td>

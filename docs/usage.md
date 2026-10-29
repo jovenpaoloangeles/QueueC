@@ -98,7 +98,9 @@ singles match instead of fielding nothing.
 ## Stats sidebar
 
 Players / Matches / Avg-wait figures, shuttles used, and the live leaderboard
-(rank, games, W/L, win %, point differential).
+(rank, games, W/L, win %, point differential). The **Session / Month /
+All-time** switch above the leaderboard widens it to every game started this
+calendar month or ever.
 
 ## Ending the session
 
@@ -113,6 +115,18 @@ totals. Click one for the full record: final leaderboard, games log, shuttle
 totals and attendance. While a session is still live its page refreshes every
 10 seconds.
 
+Each session page also shows:
+
+- **Highlights** — win streaks of 3+ within the session, players on a 3+
+  session attendance streak, and career milestones (10th, 25th, 50th and every
+  100th game) reached that day.
+- **Fairness** — fewest / median / most games played, average net wait (time
+  between a player's games, from check-in or session start), and the three
+  longest single waits. Resting counts as waiting, so a long rest can top the
+  list.
+- **Share recap** — a plain-text summary (top player, most games, highlights)
+  to copy or share into the group chat.
+
 ### Fixing mistakes
 
 Ended games keep **Edit** / **Delete** buttons on the session page — scores,
@@ -124,8 +138,10 @@ played) or missed players added after the fact.
 ### Player careers
 
 Click any player's name on a session page for their career: all-time games,
-W/L, win %, point differential, hours on court, doubles partners, sessions
-attended and attendance % per month.
+W/L, win %, point differential, hours on court, doubles partners and
+head-to-head records against every opponent (each with win %; best/worst
+partner and easiest/toughest opponent once there are 3+ games together),
+sessions attended and attendance % per month.
 
 ### Export
 

@@ -4,7 +4,9 @@ import { broadcast } from "./sse.js";
 
 const router = new Hono();
 
-export function computeLeaderboard(sessionId) {
+// v1.4: one query for every leaderboard — `where` scopes the matches
+// (this session, or games started since a timestamp for month/all-time).
+function leaderboard(where, ...params) {
   const rows = db
     .prepare(`
     SELECT p.id AS player_id, p.name,
@@ -22,10 +24,10 @@ export function computeLeaderboard(sessionId) {
     JOIN players p ON p.id = qe.player_id
     JOIN matches m ON m.session_id = qe.session_id
       AND (m.team1_p1=qe.id OR m.team1_p2=qe.id OR m.team2_p1=qe.id OR m.team2_p2=qe.id)
-    WHERE qe.session_id = ? AND m.ended_at IS NOT NULL AND m.state = 'active'
+    WHERE ${where} AND m.ended_at IS NOT NULL AND m.state = 'active'
     GROUP BY p.id
   `)
-    .all(sessionId);
+    .all(...params);
 
   return rows
     .map((r) => {
@@ -52,6 +54,111 @@ export function computeLeaderboard(sessionId) {
         b.wins - a.wins ||
         a.name.localeCompare(b.name),
     );
+}
+
+export const computeLeaderboard = (sessionId) => leaderboard("qe.session_id = ?", sessionId);
+
+// v1.4 fairness: net wait = gaps between a player's games (check-in or
+// session start → first game, each game end → next game start). Only closed
+// gaps count; a never-called player shows up as games=0 instead.
+// ponytail: resting time counts as waiting (rest isn't recorded), add rest
+// spans if a rester skews "most bumped".
+function computeFairness(session, games, attendance) {
+  const done = games.filter((g) => g.state === "active" && g.ended_at != null);
+  const players = attendance.map((a) => {
+    let prev = Math.max(a.checked_in_at, session.started_at ?? a.checked_in_at);
+    const gaps = [];
+    for (const g of done) {
+      if (![...g.team1, ...g.team2].some((p) => p.entry_id === a.entry_id)) continue;
+      gaps.push(Math.max(0, g.started_at - prev));
+      prev = g.ended_at;
+    }
+    return { player_id: a.player_id, name: a.name, games: gaps.length, gaps };
+  });
+  const counts = players.map((p) => p.games).sort((a, b) => a - b);
+  const n = counts.length;
+  const allGaps = players.flatMap((p) => p.gaps);
+  return {
+    games: {
+      min: n ? counts[0] : 0,
+      median: n ? (counts[(n - 1) >> 1] + counts[n >> 1]) / 2 : 0,
+      max: n ? counts[n - 1] : 0,
+    },
+    avg_wait_seconds: allGaps.length ? Math.round(allGaps.reduce((a, b) => a + b, 0) / allGaps.length) : 0,
+    most_bumped: players
+      .filter((p) => p.gaps.length)
+      .map((p) => ({
+        player_id: p.player_id,
+        name: p.name,
+        games: p.games,
+        longest_wait_seconds: Math.max(...p.gaps),
+      }))
+      .sort((a, b) => b.longest_wait_seconds - a.longest_wait_seconds)
+      .slice(0, 3),
+  };
+}
+
+// v1.4 highlights: in-session win streaks (>=3), consecutive-session
+// attendance streaks (>=3) and career-game milestones reached this session.
+const isMilestone = (n) => n === 10 || n === 25 || n === 50 || n % 100 === 0;
+function computeHighlights(session, attendance) {
+  const rows = db
+    .prepare(`
+    SELECT m.session_id, qe.player_id,
+      CASE WHEN qe.id IN (m.team1_p1, m.team1_p2) THEN m.team1_score > m.team2_score
+           ELSE m.team2_score > m.team1_score END AS won
+    FROM matches m JOIN queue_entries qe ON qe.id IN (m.team1_p1, m.team1_p2, m.team2_p1, m.team2_p2)
+    WHERE m.state = 'active' AND m.ended_at IS NOT NULL
+      AND qe.player_id IN (SELECT player_id FROM queue_entries WHERE session_id = ?)
+    ORDER BY m.started_at, m.id
+  `)
+    .all(session.id);
+  const byPlayer = new Map();
+  for (const r of rows) byPlayer.set(r.player_id, [...(byPlayer.get(r.player_id) ?? []), r]);
+
+  // sessions up to and including this one, oldest first
+  const order = db
+    .prepare(
+      `SELECT id FROM sessions WHERE (ended_at IS NOT NULL OR id = ?)
+         AND (scheduled_start < ? OR (scheduled_start = ? AND id <= ?))
+       ORDER BY scheduled_start, id`,
+    )
+    .all(session.id, session.scheduled_start, session.scheduled_start, session.id)
+    .map((s) => s.id);
+  const attendedBy = new Map();
+  for (const r of db.prepare("SELECT DISTINCT session_id, player_id FROM queue_entries").all()) {
+    attendedBy.set(r.player_id, (attendedBy.get(r.player_id) ?? new Set()).add(r.session_id));
+  }
+
+  const win_streaks = [];
+  const attendance_streaks = [];
+  const milestones = [];
+  const seen = new Set();
+  for (const a of attendance) {
+    if (seen.has(a.player_id)) continue;
+    seen.add(a.player_id);
+    const career = byPlayer.get(a.player_id) ?? [];
+    let run = 0;
+    let best = 0;
+    career.forEach((r, i) => {
+      if (r.session_id !== session.id) return;
+      run = r.won ? run + 1 : 0;
+      best = Math.max(best, run);
+      if (isMilestone(i + 1)) milestones.push({ player_id: a.player_id, name: a.name, game: i + 1 });
+    });
+    if (best >= 3) win_streaks.push({ player_id: a.player_id, name: a.name, streak: best });
+
+    const went = attendedBy.get(a.player_id) ?? new Set();
+    let streak = 0;
+    for (let i = order.length - 1; i >= 0 && went.has(order[i]); i--) streak++;
+    if (streak >= 3) attendance_streaks.push({ player_id: a.player_id, name: a.name, streak });
+  }
+  const desc = (a, b) => b.streak - a.streak || a.name.localeCompare(b.name);
+  return {
+    win_streaks: win_streaks.sort(desc),
+    attendance_streaks: attendance_streaks.sort(desc),
+    milestones: milestones.sort((a, b) => b.game - a.game || a.name.localeCompare(b.name)),
+  };
 }
 
 // v1.3 session detail: everything the history page renders, read straight
@@ -108,8 +215,24 @@ export function getSessionDetail(sessionId) {
   shuttles.extra = session.shuttles_extra ?? 0;
   shuttles.total = shuttles.new + shuttles.extra;
 
-  return { session, leaderboard: computeLeaderboard(sessionId), games, attendance, shuttles };
+  return {
+    session,
+    leaderboard: computeLeaderboard(sessionId),
+    games,
+    attendance,
+    shuttles,
+    fairness: computeFairness(session, games, attendance),
+    highlights: computeHighlights(session, attendance),
+  };
 }
+
+// v1.4 leaderboard windows: games started at/after `since` (unix seconds;
+// the client sends its local month start, or 0 for all-time).
+router.get("/leaderboard", (c) => {
+  const since = Number(c.req.query("since") ?? 0);
+  if (!Number.isFinite(since)) return c.json({ error: "since must be a unix timestamp" }, 400);
+  return c.json({ leaderboard: leaderboard("m.started_at >= ?", since) });
+});
 
 router.get("/sessions/:id/detail", (c) => {
   const detail = getSessionDetail(c.req.param("id"));
@@ -197,20 +320,17 @@ export function getCareer(playerId) {
     seconds_played: rows.reduce((sum, r) => sum + (r.ended_at - r.started_at), 0),
   };
 
-  // doubles teammates only: the other entry on the player's side
-  const partners = new Map();
-  for (const r of rows) {
-    const mateEntry = r.mate_entry;
-    if (mateEntry == null) continue;
-    const mate = db
-      .prepare(
-        "SELECT qe.player_id, p.name FROM queue_entries qe JOIN players p ON p.id = qe.player_id WHERE qe.id = ?",
-      )
-      .get(mateEntry);
-    if (!mate || mate.player_id === player.id) continue;
-    const cur = partners.get(mate.player_id) ?? {
-      player_id: mate.player_id,
-      name: mate.name,
+  // doubles teammates (the other entry on the player's side) and opponents
+  // (every entry on the other side), each with the combined record
+  const who = db.prepare(
+    "SELECT qe.player_id, p.name FROM queue_entries qe JOIN players p ON p.id = qe.player_id WHERE qe.id = ?",
+  );
+  const tally = (map, entry, r) => {
+    const p = entry == null ? null : who.get(entry);
+    if (!p || p.player_id === player.id) return;
+    const cur = map.get(p.player_id) ?? {
+      player_id: p.player_id,
+      name: p.name,
       games: 0,
       wins: 0,
       losses: 0,
@@ -218,8 +338,19 @@ export function getCareer(playerId) {
     cur.games += 1;
     if (won(r)) cur.wins += 1;
     else cur.losses += 1;
-    partners.set(mate.player_id, cur);
+    map.set(p.player_id, cur);
+  };
+  const partners = new Map();
+  const opponents = new Map();
+  for (const r of rows) {
+    tally(partners, r.mate_entry, r);
+    for (const e of r.side === 1 ? [r.team2_p1, r.team2_p2] : [r.team1_p1, r.team1_p2])
+      tally(opponents, e, r);
   }
+  const ranked = (map) =>
+    [...map.values()]
+      .map((p) => ({ ...p, win_rate: Math.round((p.wins / p.games) * 100) }))
+      .sort((a, b) => b.games - a.games || a.name.localeCompare(b.name));
 
   const sessions = db
     .prepare(`
@@ -255,7 +386,8 @@ export function getCareer(playerId) {
   return {
     player,
     totals,
-    partners: [...partners.values()].sort((a, b) => b.games - a.games || a.name.localeCompare(b.name)),
+    partners: ranked(partners),
+    opponents: ranked(opponents),
     attendance: { sessions, months },
   };
 }

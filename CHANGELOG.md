@@ -4,6 +4,28 @@ Notable user-facing changes. Format follows Keep a Changelog; versions follow
 semver once there is a public API surface to break (the Docker image tag is
 the version that matters for self-hosters).
 
+## [1.5.0] — 2026-10-29
+
+Stats improvements (roadmap v1.4).
+
+### Added
+
+- Leaderboard time windows: the sidebar leaderboard switches between this
+  session, this month and all-time (`GET /api/leaderboard?since=`).
+- Partner synergy & head-to-head: the career page shows win % with every
+  partner, a head-to-head table against every opponent, and best/worst
+  callouts (3+ games). Career CSV gains an Opponents section.
+- Fairness report on the session page: fewest/median/most games, average net
+  wait between games, and the three longest single waits.
+- Streaks & milestones on the session page: in-session win streaks (3+),
+  consecutive-session attendance streaks (3+), 10th/25th/50th/every-100th
+  career game.
+- Share recap: a copyable plain-text session summary for the group chat.
+
+### Fixed
+
+- The sidebar leaderboard's GP column was always blank.
+
 ## [1.4.1] — 2026-10-23
 
 End-match flow polish and history navigation fixes.
