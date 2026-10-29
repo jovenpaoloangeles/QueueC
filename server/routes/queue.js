@@ -202,13 +202,16 @@ router.patch("/queue/:entryId/status", async (c) => {
     return c.json({ error: "Player must finish the match first" }, 409);
   }
   const now = Math.floor(Date.now() / 1000);
-  // Rest does not pause wait accrual (reversed in R7): wait keeps running,
-  // played time alone is subtracted on match end.
-  db.prepare("UPDATE queue_entries SET status = ?, status_updated_at = ? WHERE id = ?").run(
-    status,
-    now,
-    entryId,
-  );
+  // Rest does not pause the UI wait clock (R7). v1.7 records rest spans so
+  // the matcher can stop crediting long rests as waiting.
+  const resting = status === "resting" && cur.status !== "resting";
+  const waking = cur.status === "resting" && status !== "resting";
+  db.prepare(
+    `UPDATE queue_entries SET status = ?, status_updated_at = ?,
+       rest_started_at = CASE WHEN ? THEN ? WHEN ? THEN NULL ELSE rest_started_at END,
+       rested_seconds = rested_seconds + CASE WHEN ? AND rest_started_at IS NOT NULL THEN ? - rest_started_at ELSE 0 END
+     WHERE id = ?`,
+  ).run(status, now, resting ? 1 : 0, now, waking ? 1 : 0, waking ? 1 : 0, now, entryId);
   const entry = db.prepare("SELECT * FROM queue_entries WHERE id = ?").get(entryId);
   broadcast();
   return c.json({ entry });

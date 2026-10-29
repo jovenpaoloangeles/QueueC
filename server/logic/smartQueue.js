@@ -60,15 +60,23 @@ export const MATCH_CONFIG = {
   lambdaVariety: 1,
   maxBatchNodes: 20000, // DFS cap for multi-court disjoint selection
   mixKick: true, // phase-lock kick (cohortLocked) — see planBatch
+  restCreditMin: 5, // minutes of a rest break still counted as waiting
 };
 
 function skillValue(entry) {
   return SKILL_MAP[entry.skill_level] ?? 4;
 }
 
-function waitMinutes(entry, now) {
-  if (entry.last_played_at != null) return (now - entry.last_played_at) / 60;
-  return (now - entry.checked_in_at - (entry.total_seconds_played ?? 0)) / 60;
+// v1.7: rest beyond restCreditMin stops counting as waiting for matching —
+// otherwise a player back from a 20-min rest trips the anchor and jumps the
+// queue. (The UI wait clock still includes rest, per R7.)
+function waitMinutes(entry, now, restCreditMin = MATCH_CONFIG.restCreditMin) {
+  const raw =
+    entry.last_played_at != null
+      ? (now - entry.last_played_at) / 60
+      : (now - entry.checked_in_at - (entry.total_seconds_played ?? 0)) / 60;
+  const restedMin = (entry.rested_seconds ?? 0) / 60;
+  return raw - Math.max(0, restedMin - restCreditMin);
 }
 
 function virtGames(entry) {
@@ -346,13 +354,13 @@ function planCore({
   // walked off a court so they don't jump ahead of waiting bench players.
   const minBenchWait = C.minBenchWait ?? 0.5;
   if (minBenchWait > 0 && C.epsWaitMin > 0) {
-    const benchRested = eligible.filter((e) => waitMinutes(e, now) > minBenchWait);
+    const benchRested = eligible.filter((e) => waitMinutes(e, now, C.restCreditMin) > minBenchWait);
     if (benchRested.length >= Math.max(8, 4 * courtCount + 4))
       eligible = eligible.filter((e) => lockedSet.has(e.id) || benchRested.includes(e));
   }
 
   // Candidate window: π = wait − α·g_virt, top K with boundary-tie expansion.
-  const waitMap = new Map(eligible.map((e) => [e.id, waitMinutes(e, now)]));
+  const waitMap = new Map(eligible.map((e) => [e.id, waitMinutes(e, now, C.restCreditMin)]));
   const prio = new Map(eligible.map((e) => [e.id, waitMap.get(e.id) - C.alpha * virtGames(e)]));
   const sorted = [...eligible].sort(
     (a, b) => prio.get(b.id) - prio.get(a.id) || waitMap.get(b.id) - waitMap.get(a.id),
@@ -484,7 +492,7 @@ function planCore({
     if (mixedQ) {
       for (let q = 0; q < M; q++) if (m[q] && !mixedQ[q]) m[q] = 0;
     }
-    if (requireAnchor && need === 1) {
+    if (requireAnchor) {
       for (let q = 0; q < M; q++) {
         const [a, b, c, d] = Q[q];
         if (a !== anchorIdx && b !== anchorIdx && c !== anchorIdx && d !== anchorIdx) m[q] = 0;
@@ -582,7 +590,13 @@ function planCore({
   // this batch rather than silently idling courts (same spirit as the anchor
   // fallback inside).
   const select = (epsOv, requireAnchor, wide = {}) => {
-    let mask = cascade(requireAnchor, epsOv, wide);
+    let mask = cascade(requireAnchor && need === 1, epsOv, wide);
+    if (requireAnchor && need > 1) {
+      // multi-court: the bands judge anchor quartets among themselves (as the
+      // single-court path does) and add them to the normal survivors
+      const withAnchor = cascade(true, epsOv, wide);
+      for (let q = 0; q < M; q++) if (withAnchor[q]) mask[q] = 1;
+    }
     let splits = collectSplits(mask);
     if (!splits.length && C.anchorTopWaiter && C.epsWaitMin > 0) {
       // Fallback if hard-ban pairs ruled out every quartet containing anchorIdx.
@@ -592,9 +606,15 @@ function planCore({
     if (!splits.length) return null;
 
     // ε₄ team-balance band across all (quartet, split) pairs (§4 step 4).
-    let f4Min = Infinity;
-    for (const sv of splits) if (sv.f4 < f4Min) f4Min = sv.f4;
-    const band = splits.filter((sv) => sv.f4 <= f4Min + C.epsTeamDiff);
+    // With a multi-court anchor, anchor quartets are banded among themselves
+    // — an outlier's splits are never as balanced as everyone else's.
+    const hasAnchorQ = (sv) => requireAnchor && need > 1 && Q[sv.q].includes(anchorIdx);
+    const f4Min = [Infinity, Infinity];
+    for (const sv of splits) {
+      const k = hasAnchorQ(sv) ? 1 : 0;
+      if (sv.f4 < f4Min[k]) f4Min[k] = sv.f4;
+    }
+    const band = splits.filter((sv) => sv.f4 <= f4Min[hasAnchorQ(sv) ? 1 : 0] + C.epsTeamDiff);
 
     let cands;
     if (need === 1) {
@@ -631,6 +651,10 @@ function planCore({
     // Pick `need` bitmask-disjoint quartets minimising (max J, sum J).
     // ponytail: exhaustive DFS under maxBatchNodes, falls back to greedy when the
     // survivor set explodes — swap in an ILP/heuristic if C courts > ~6 matters.
+    // v1.7: the anchor applies to multi-court plans too (Smart Match plans
+    // courts + slate slots jointly, so need > 1 is the common case) — a set
+    // containing the anchor beats any set without it.
+    const anchorBit = requireAnchor && need > 1 ? 1 << anchorIdx : 0;
     let nodes = 0;
     let bestSet = null;
     const bt = (start, chosen, used) => {
@@ -638,8 +662,14 @@ function planCore({
         if (chosen.reduce((t, x) => t + x.f1, 0) < jointFloor) return;
         const maxJ = Math.max(...chosen.map((x) => x.J));
         const sumJ = chosen.reduce((t, x) => t + x.J, 0);
-        if (!bestSet || maxJ < bestSet.maxJ || (maxJ === bestSet.maxJ && sumJ < bestSet.sumJ)) {
-          bestSet = { set: [...chosen], maxJ, sumJ };
+        const anchored = anchorBit === 0 || (used & anchorBit) !== 0;
+        if (
+          !bestSet ||
+          (anchored && !bestSet.anchored) ||
+          (anchored === bestSet.anchored &&
+            (maxJ < bestSet.maxJ || (maxJ === bestSet.maxJ && sumJ < bestSet.sumJ)))
+        ) {
+          bestSet = { set: [...chosen], maxJ, sumJ, anchored };
         }
         return;
       }

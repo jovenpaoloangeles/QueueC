@@ -67,7 +67,8 @@ db.exec(`
     sort_order INTEGER NOT NULL DEFAULT 0,
     games_played INTEGER NOT NULL DEFAULT 0,
     status_updated_at INTEGER,
-    -- vestigial since R7: rest no longer pauses wait accrual; columns unused
+    -- rest spans since the last game: the matcher credits only the first few
+    -- minutes of rest as waiting (v1.7); the UI wait clock still runs (R7)
     rested_seconds INTEGER NOT NULL DEFAULT 0,
     rest_started_at INTEGER
   );
@@ -326,6 +327,14 @@ const virtCols = new Set(
     .all()
     .map((c) => c.name),
 );
+// v1.7: rest spans feed the matcher's wait credit (older DBs rebuilt by the
+// 'staged' migration above lost these once-vestigial columns)
+if (!virtCols.has("rested_seconds")) {
+  db.exec("ALTER TABLE queue_entries ADD COLUMN rested_seconds INTEGER NOT NULL DEFAULT 0");
+}
+if (!virtCols.has("rest_started_at")) {
+  db.exec("ALTER TABLE queue_entries ADD COLUMN rest_started_at INTEGER");
+}
 if (!virtCols.has("paid")) {
   db.exec("ALTER TABLE queue_entries ADD COLUMN paid INTEGER NOT NULL DEFAULT 0");
 }

@@ -234,4 +234,55 @@ const T0 = 1_800_000_000,
   assert.ok(on.games >= off.games, `kick must not idle courts (${on.games} vs ${off.games} games)`);
 }
 
+// U6.3 — anchor in multi-court plans: the longest waiter (here a newbie the
+// skill terms would rather bench) must make one of the quartets even when
+// several are planned at once — Smart Match plans courts + slate slots jointly.
+{
+  const now = T0 + 3600;
+  const players = Array.from({ length: 9 }, (_, i) => ({
+    id: i + 1,
+    status: "waiting",
+    skill_level: i === 0 ? "newbie" : "upper_intermediate",
+    checked_in_at: T0,
+    last_played_at: i === 0 ? now - 25 * 60 : now - 10 * 60,
+    total_seconds_played: 0,
+    games_played: 2,
+  }));
+  const plan = planBatch({ waiting: players, history: [], courtCount: 2, now });
+  const ids = plan.matches.flatMap((m) => [...m.team1, ...m.team2]);
+  assert.equal(plan.matches.length, 2);
+  assert.ok(ids.includes(1), `the 25-min waiter must play, got [${ids}]`);
+}
+
+// U6.4 — rest credit: only restCreditMin (5) minutes of a rest break count as
+// waiting. P1 "waited" 30 min of which 25 were a rest; P2–P5 truly waited
+// 12 min. One court: P1 (5 min credited) must not take P2–P5's game.
+{
+  const now = T0 + 7200;
+  const players = Array.from({ length: 5 }, (_, i) => ({
+    id: i + 1,
+    status: "waiting",
+    skill_level: "intermediate",
+    checked_in_at: T0,
+    last_played_at: i === 0 ? now - 30 * 60 : now - 12 * 60,
+    rested_seconds: i === 0 ? 25 * 60 : 0,
+    total_seconds_played: 0,
+    games_played: 3,
+  }));
+  const plan = planBatch({ waiting: players, history: [], courtCount: 1, now });
+  const ids = [...plan.matches[0].team1, ...plan.matches[0].team2].sort();
+  assert.deepEqual(ids, [2, 3, 4, 5], `a long rest is not a long wait, got [${ids}]`);
+  const noCredit = planBatch({
+    waiting: players,
+    history: [],
+    courtCount: 1,
+    now,
+    cfg: { restCreditMin: Infinity },
+  });
+  assert.ok(
+    [...noCredit.matches[0].team1, ...noCredit.matches[0].team2].includes(1),
+    "precondition: with rest fully credited P1 would jump the queue",
+  );
+}
+
 console.log("smartqueue.test.js: all assertions passed");

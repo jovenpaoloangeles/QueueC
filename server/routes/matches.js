@@ -175,7 +175,9 @@ router.patch("/:id/end", async (c) => {
           last_played_at = ?,
           status_updated_at = ?,
           total_seconds_played = total_seconds_played + ?,
-          games_played = games_played + 1
+          games_played = games_played + 1,
+          rested_seconds = 0,
+          rest_started_at = NULL
       WHERE id = ?
     `);
     for (const entryId of playerEntryIds) updateEntry.run(now, now, duration, entryId);
@@ -293,8 +295,8 @@ router.patch("/:id/substitute", async (c) => {
   db.transaction(() => {
     db.prepare(`UPDATE matches SET ${seat} = ? WHERE id = ?`).run(in_entry, match.id);
     db.prepare(
-      "UPDATE queue_entries SET status = 'resting', status_updated_at = ?, total_seconds_played = total_seconds_played + ? WHERE id = ?",
-    ).run(now, Math.max(0, now - match.started_at), out_entry);
+      "UPDATE queue_entries SET status = 'resting', status_updated_at = ?, rest_started_at = ?, total_seconds_played = total_seconds_played + ? WHERE id = ?",
+    ).run(now, now, Math.max(0, now - match.started_at), out_entry);
     db.prepare("UPDATE queue_entries SET status = 'playing', status_updated_at = ? WHERE id = ?").run(
       now,
       in_entry,
