@@ -61,6 +61,14 @@ export const MATCH_CONFIG = {
   maxBatchNodes: 20000, // DFS cap for multi-court disjoint selection
   mixKick: true, // phase-lock kick (cohortLocked) — see planBatch
   restCreditMin: 5, // minutes of a rest break still counted as waiting
+  // v1.7 small-tier diversity debt (drift-plus-penalty virtual queue): a
+  // player in a tier of < smallTier members accrues Z ← max(0, Z + pure − ρ)
+  // per game; mixed quartets within maxRange earn f₃ −= κ·ΣZ, so a small
+  // cohort (e.g. the club's 4 advanced players) periodically mixes with the
+  // nearest occupied tier.
+  smallTier: 8,
+  diversityRho: 0.6,
+  diversityKappa: 0.4,
 };
 
 function skillValue(entry) {
@@ -318,6 +326,7 @@ function planCore({
   bans = [],
   cfg = {},
   locked = [],
+  skillOf = null, // optional Map id → skill_level for everyone in history
 }) {
   const C = { ...MATCH_CONFIG, ...cfg };
   const lockedSet = new Set(locked);
@@ -388,6 +397,24 @@ function planCore({
   const g = Float64Array.from(window, virtGames);
   const s = Float64Array.from(window, skillValue);
   const { P, O } = buildPO(history, idIdx, n);
+
+  // Diversity debt Z per window player (see MATCH_CONFIG.smallTier).
+  const tierOf = new Map(waiting.map((e) => [e.id, SKILL_MAP[e.skill_level] ?? 4]));
+  if (skillOf) for (const [id, lvl] of skillOf) tierOf.set(id, SKILL_MAP[lvl] ?? 4);
+  const tierSize = new Map();
+  for (const t of tierOf.values()) tierSize.set(t, (tierSize.get(t) ?? 0) + 1);
+  const debt = new Map();
+  for (const m of history) {
+    const r = rosterOf(m);
+    const tiers = r.map((id) => tierOf.get(id));
+    if (r.length < 4 || tiers.some((t) => t == null)) continue;
+    const pure = tiers.every((t) => t === tiers[0]) ? 1 : 0;
+    for (const id of r) {
+      if ((tierSize.get(tierOf.get(id)) ?? 0) >= C.smallTier) continue;
+      debt.set(id, Math.max(0, (debt.get(id) ?? 0) + pure - C.diversityRho));
+    }
+  }
+  const Z = Float64Array.from(ids, (id) => debt.get(id) ?? 0);
   const S = buildS(history, idIdx, n);
 
   const banSet = new Set();
@@ -430,6 +457,7 @@ function planCore({
   const f2 = new Float64Array(M);
   const f3 = new Float64Array(M);
   const fR = new Float64Array(M); // tier range max − min
+  const credit = new Float64Array(M); // diversity-debt credit (Stage A f₃ and Stage B quality)
   const mixedQ = C._mixComp
     ? Q.map((q) =>
         spansCohorts(
@@ -448,6 +476,12 @@ function planCore({
     const mean = (s[a] + s[b] + s[c] + s[d]) / 4;
     f3[q] = ((s[a] - mean) ** 2 + (s[b] - mean) ** 2 + (s[c] - mean) ** 2 + (s[d] - mean) ** 2) / 4;
     fR[q] = Math.max(s[a], s[b], s[c], s[d]) - Math.min(s[a], s[b], s[c], s[d]);
+    // diversity credit for a mixed quartet inside the range cap — "adjacent"
+    // means the nearest occupied tier (a club's 6s may have no 5s to mix with)
+    const tq = [a, b, c, d].map((i) => tierOf.get(ids[i]));
+    const span = Math.max(...tq) - Math.min(...tq);
+    credit[q] = span > 0 && span <= C.maxRange ? C.diversityKappa * (Z[a] + Z[b] + Z[c] + Z[d]) : 0;
+    f3[q] -= credit[q];
   }
 
   // Identify the longest-waiting player within the virtual-game fairness band
@@ -568,7 +602,8 @@ function planCore({
         const qual =
           C.qualRange * Math.max(0, fR[q] - 1) ** 2 +
           C.qualGap * ((s[a] - s[b]) ** 2 + (s[c] - s[d]) ** 2) +
-          C.qualTeam * f4 ** 2;
+          C.qualTeam * f4 ** 2 -
+          credit[q];
         const partner = P[a * K + b] + P[c * K + d];
         const opp = all6O[q] - (O[a * K + b] + O[c * K + d]);
         out.push({

@@ -88,9 +88,19 @@ router.post("/sessions/:id/automatch", async (c) => {
     const slate = [];
     let relaxed = false;
     if (waiting.length >= 4 && courtCount > 0) {
+      // every session entry's tier (history includes players now on court)
+      const skillOf = new Map(
+        db
+          .prepare(
+            "SELECT qe.id, p.skill_level FROM queue_entries qe JOIN players p ON p.id = qe.player_id WHERE qe.session_id = ?",
+          )
+          .all(id)
+          .map((r) => [r.id, r.skill_level]),
+      );
       const plan = planBatch({
         waiting,
         history,
+        skillOf,
         courtCount,
         now,
         cfg: { maxConsecutive: s.max_consecutive, restGames: s.rest_games },

@@ -296,6 +296,7 @@ export function runSession(scenario, policy, cfg = {}) {
   const tierSize = new Map();
   for (let i = 0; i < N; i++) tierSize.set(skillTiers[i], (tierSize.get(skillTiers[i]) ?? 0) + 1);
   const SMALL_TIER = 8;
+  const skillOf = new Map(skillTiers.map((t, i) => [i, TIERS[t - 1]]));
 
   while (events.size) {
     const [t, evType, , payload] = events.pop();
@@ -464,6 +465,7 @@ export function runSession(scenario, policy, cfg = {}) {
           const res = planBatch({
             waiting: entries,
             history,
+            skillOf,
             courtCount: Math.max(1, batchCount),
             now: nowSec,
             cfg: policy === "STRICT_LEX" ? LEX_ZERO : cfg,

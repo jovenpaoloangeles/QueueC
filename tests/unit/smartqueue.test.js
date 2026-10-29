@@ -285,4 +285,44 @@ const T0 = 1_800_000_000,
   );
 }
 
+// U6.5 — diversity debt: a small tier (4 advanced) that has played only
+// among itself owes debt, so the next plan mixes it with the nearest tier.
+// The overlap band is switched off here to isolate the debt — in production
+// (and partner variety, γ=0) already mix most of the time; the debt is the
+// guard for when they cannot.
+{
+  const now = T0 + 7200;
+  const players = Array.from({ length: 8 }, (_, i) => ({
+    id: i + 1,
+    status: "waiting",
+    skill_level: i < 4 ? "expert" : "upper_intermediate",
+    checked_in_at: T0,
+    last_played_at: now - 10 * 60,
+    total_seconds_played: 0,
+    games_played: 6,
+  }));
+  const history = Array.from({ length: 6 }, (_, r) => ({
+    team1: r % 2 ? [1, 3] : [1, 2],
+    team2: r % 2 ? [2, 4] : [3, 4],
+    started_at: T0 + r * 900,
+    ended_at: T0 + r * 900 + 840,
+  }));
+  const plan = (cfg) =>
+    planBatch({
+      waiting: players,
+      history,
+      courtCount: 1,
+      now,
+      cfg: { epsOverlap: Infinity, gammaDecay: 0, mixKick: false, ...cfg },
+    });
+  const tiersOf = (p) =>
+    new Set([...p.matches[0].team1, ...p.matches[0].team2].map((id) => (id <= 4 ? "adv" : "up")));
+  assert.equal(
+    tiersOf(plan({ diversityKappa: 0 })).size,
+    1,
+    "precondition: without debt every plan is single-tier",
+  );
+  assert.equal(tiersOf(plan({})).size, 2, "debt: the advanced must mix with the nearest tier");
+}
+
 console.log("smartqueue.test.js: all assertions passed");
