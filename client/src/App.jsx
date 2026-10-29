@@ -107,13 +107,14 @@ function LiveView() {
   // first slate is poured into the On Deck builder for review — the builder IS
   // the review surface, so no confirm dialog and nothing is slated here.
   // Returns the 4 entry ids to fill (or null after toasting why not).
-  async function handleSmartFill(locked = []) {
+  async function handleSmartFill(locked = [], exclude = []) {
     if (!session) return null;
     try {
       const { plan } = await autoMatch(session.id, {
         dry_run: true,
         slate_only: true,
         ...(locked.length ? { locked } : {}),
+        ...(exclude.length ? { excluded: exclude } : {}),
       });
       const ids = plan?.slate?.[0]
         ? [plan.slate[0].team1[0], plan.slate[0].team1[1], plan.slate[0].team2[0], plan.slate[0].team2[1]]
@@ -122,7 +123,9 @@ function LiveView() {
         toast(
           locked.length
             ? "Nothing to add — no fair quartet around your picks"
-            : "Nothing to add — need 4 waiting players",
+            : exclude.length
+              ? "Nothing to add — no other fair quartet available"
+              : "Nothing to add — need 4 waiting players",
           "info",
         );
         return null;

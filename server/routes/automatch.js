@@ -33,6 +33,19 @@ router.post("/sessions/:id/automatch", async (c) => {
     if (!slateOnly) return c.json({ error: "locked requires slate_only" }, 400);
     locked = body.locked;
   }
+  // excluded: entry ids the plan must not pick (On Deck "repick" re-click)
+  let excluded = [];
+  if (Array.isArray(body?.excluded)) {
+    if (
+      body.excluded.length > 3 ||
+      body.excluded.some((x) => !Number.isInteger(x)) ||
+      new Set(body.excluded).size !== body.excluded.length
+    ) {
+      return c.json({ error: "excluded must be unique queue-entry ids (0–3 of them)" }, 400);
+    }
+    if (!slateOnly) return c.json({ error: "excluded requires slate_only" }, 400);
+    excluded = body.excluded;
+  }
 
   const freeCourts = () =>
     db
@@ -64,10 +77,13 @@ router.post("/sessions/:id/automatch", async (c) => {
   // Pure planner: same rules for dry-run and the real run (no writes).
   // One ε-lexicographic batch over courts + slate slots (§5): quartets are
   // picked jointly, not greedily court-by-court.
-  function computePlan(locked = []) {
+  function computePlan(locked = [], excluded = []) {
     // v1.7: learned ratings (μ + tonight's form) replace static tiers in the matcher
     const ratings = loadRatings(db, Number(id));
-    const waiting = getWaiting().map((e) => ({ ...e, rating: ratings.get(e.player_id)?.rating }));
+    const skip = new Set(excluded);
+    const waiting = getWaiting()
+      .filter((e) => !skip.has(e.id))
+      .map((e) => ({ ...e, rating: ratings.get(e.player_id)?.rating }));
     const history = db
       .prepare(
         "SELECT team1_p1, team1_p2, team2_p1, team2_p2, started_at, ended_at FROM matches WHERE session_id = ? AND ended_at IS NOT NULL ORDER BY started_at, id",
@@ -144,7 +160,7 @@ router.post("/sessions/:id/automatch", async (c) => {
     }
   }
 
-  if (dryRun) return c.json({ plan: computePlan(locked) });
+  if (dryRun) return c.json({ plan: computePlan(locked, excluded) });
   // slating is fine on a frozen clock; starting a match isn't
   if (!slateOnly && s.paused_at != null) return c.json({ error: "Session is paused" }, 409);
 

@@ -64,10 +64,17 @@ test("42.1 Smart add keeps drafted players in their slots", async ({ page }) => 
   expect((await liveState(page)).slatedMatches).toHaveLength(0);
 });
 
-test("42.2 Smart add is disabled once all four slots are filled", async ({ page }) => {
+test("42.2 Smart add re-picks when clicked on a full draft", async ({ page }) => {
   await expandDeck(page);
   await openBuilder(page);
   for (let i = 0; i < 4; i++)
     await syntheticDrag(page, "[data-entry-id]", `[data-testid="ondeck-new-slot-${i}"]`, { fromIndex: 0 });
-  await expect(page.getByTestId("ondeck-smart-add")).toBeDisabled();
+  const old = [];
+  for (let i = 0; i < 4; i++) old.push(await page.getByTestId(`ondeck-new-slot-${i}`).textContent());
+  await page.getByTestId("ondeck-smart-add").click();
+  // a fresh quartet: 4 distinct players, none of the previously drafted ones
+  const filled = [];
+  for (let i = 0; i < 4; i++) filled.push(await page.getByTestId(`ondeck-new-slot-${i}`).textContent());
+  expect(new Set(filled).size).toBe(4);
+  for (const name of old) expect(filled).not.toContain(name);
 });

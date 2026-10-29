@@ -4,6 +4,14 @@ Notable user-facing changes. Format follows Keep a Changelog; versions follow
 semver once there is a public API surface to break (the Docker image tag is
 the version that matters for self-hosters).
 
+## [Unreleased]
+
+### Changed
+
+- Smart Add can be re-clicked while the lineup builder is full: it re-picks a
+  fresh quartet around the rest of the queue instead of greying out. The
+  automatch dry-run accepts `excluded` entry ids alongside `locked`.
+
 ## [1.7.0] — 2026-10-29
 
 Smart Match changes from the 2026-10-29 algorithm review (details and

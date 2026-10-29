@@ -92,6 +92,30 @@ async function main() {
   );
   assert.equal(dry.plan.slate.length, 1, "locked plans exactly one quartet");
 
+  // `excluded` (repick): validation edges + plan avoidance — before the
+  // committed run so all 6 players are still waiting
+  const noSlateEx = await api(`/api/sessions/${session.id}/automatch`, "POST", { excluded: [ids[0]] });
+  assert.equal(noSlateEx.status, 400, "excluded without slate_only must 400");
+
+  const dupEx = await api(`/api/sessions/${session.id}/automatch`, "POST", {
+    slate_only: true,
+    excluded: [ids[0], ids[0]],
+  });
+  assert.equal(dupEx.status, 400, "duplicate excluded ids must 400");
+
+  const dryEx = await api(`/api/sessions/${session.id}/automatch`, "POST", {
+    dry_run: true,
+    slate_only: true,
+    excluded: [ids[0], ids[1]],
+  });
+  assert.equal(dryEx.status, 200, "valid excluded dry-run must 200");
+  const quartetEx = [...(dryEx.plan.slate[0]?.team1 ?? []), ...(dryEx.plan.slate[0]?.team2 ?? [])];
+  assert.equal(quartetEx.length, 4, "excluded plan still fills a quartet");
+  assert.ok(
+    !quartetEx.includes(ids[0]) && !quartetEx.includes(ids[1]),
+    `excluded ids absent from plan, got [${quartetEx}]`,
+  );
+
   // Committed (non-dry) run slates them
   const run = await api(`/api/sessions/${session.id}/automatch`, "POST", {
     slate_only: true,
