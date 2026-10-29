@@ -14,7 +14,7 @@ One screen, no modals:
   Courts can **open later**: set each court's "opens after" offset and its
   rental clock starts then, not at session start.
 - **Player pool** — alphabetical, letter-grouped, with search-and-add,
-  select-all, and a skill-tier filter. Click to select, double-click (or ✎) to
+  select-all, **Last session's players**, and a skill-tier filter. Click to select, double-click (or ✎) to
   edit name/skill inline.
 - **Check-in order** — alphabetical (default) or arrival order, chosen per
   session at creation.
@@ -39,6 +39,10 @@ player's wait clock restarts after each match).
   including the 4th-slot drop, which auto-starts.
 - A live court shows only the running match: teams, elapsed timer. Rearrange
   teams by dragging chips between sides or swap whole teams.
+- **Sub** on a live court swaps a waiting player into the game (injury); the
+  player coming off goes to Rest.
+- In a court's last 20 minutes of rental an idle court shows **Last call**,
+  and the start confirm says how much time is left.
 - When a court's rental runs out it shows **Extend Court (+1hr)?**. Idle, it
   pulses EXPIRED and leaves the available pool; mid-match, the game keeps
   running under a **Last Game** badge. Extending adds an hour from
@@ -71,12 +75,16 @@ longest-running game, `?` cheatsheet (ignored while typing in a field).
 
 All / Wait / Rest tabs. Rest and wake via buttons or drag-and-drop both ways.
 Cards can be removed entirely (check-in undo) via the card's Remove action —
-with a confirmation, and never for someone on court or slated. Check-ins and
+with a confirmation, and never for someone on court or slated. Once a player
+has played, the card offers **Went home** instead: they leave the queue but
+stay in attendance (Undo from the toast, or check them in again when they come
+back). A newcomer's card shows a rough "next game ≈ Nm" estimate. Check-ins and
 match starts show an Undo toast for a few seconds.
 
 ### Ending a match
 
-Confirm → record scores (both required, no ties), shuttles used (pre-filled at **1 per game**) and an
+Confirm → record scores (both required, no ties; the "Result saved" toast's
+**Fix** opens the session page to correct it), shuttles used (pre-filled at **1 per game**) and an
 optional 1–5 rating. Finished players return to the queue with their wait clock
 reset; the next slate promotes onto the freed court.
 
@@ -120,6 +128,10 @@ totals and attendance. While a session is still live its page refreshes every
 
 Each session page also shows:
 
+- **Payments** — court fee (session total) and per-shuttle price, split either
+  everything evenly or court evenly + each game's shuttles among its players;
+  tick **Paid** as people pay. Reach it mid-session from the header's
+  **Payments** link.
 - **Highlights** — one line per type: win streaks of 3+ within the session,
   players on a 3+ session attendance streak, and career milestones (25th, 50th
   and every 100th game) reached that day.

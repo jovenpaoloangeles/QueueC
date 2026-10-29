@@ -14,9 +14,10 @@ export function ToastProvider({ children }) {
   const [state, setState] = useState(null);
   const timerRef = useRef(null);
 
-  const toast = useCallback((message, type = "info", { undo } = {}) => {
+  // `undo` is the toast's one action; `label` renames it (default "Undo")
+  const toast = useCallback((message, type = "info", { undo, label } = {}) => {
     if (timerRef.current) clearTimeout(timerRef.current);
-    setState({ message, type, undo });
+    setState({ message, type, undo, label });
     timerRef.current = setTimeout(() => {
       setState(null);
       timerRef.current = null;
@@ -63,7 +64,7 @@ export function ToastProvider({ children }) {
                 if (ok !== false) toast("Undone", "info");
               }}
             >
-              Undo
+              {state.label ?? "Undo"}
             </button>
           )}
         </div>

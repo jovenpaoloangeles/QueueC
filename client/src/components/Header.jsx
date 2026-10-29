@@ -86,7 +86,7 @@ export default function Header({
             <SessionNameBlock name={session.name} />
             <span
               data-testid="header-time-range"
-              className="text-[12.5px] uppercase tracking-wider text-muted-foreground"
+              className="hidden text-[12.5px] uppercase tracking-wider text-muted-foreground 2xl:inline"
             >
               {fmtTime(session.scheduled_start)}–{fmtTime(session.scheduled_end)}
             </span>
@@ -193,6 +193,17 @@ export default function Header({
         >
           ☾
         </Button>
+        {session && session.started_at != null && (
+          <Button asChild size="sm" variant="ghost" className="rounded-full">
+            <a
+              data-testid="nav-payments"
+              href={`#/history/${session.id}`}
+              title="Session page: fees and who paid"
+            >
+              Payments
+            </a>
+          </Button>
+        )}
         <Button asChild size="sm" variant="ghost" className="rounded-full">
           <a data-testid="nav-history" href="#/history">
             History

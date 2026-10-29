@@ -4,10 +4,32 @@ Notable user-facing changes. Format follows Keep a Changelog; versions follow
 semver once there is a public API surface to break (the Docker image tag is
 the version that matters for self-hosters).
 
-## [Unreleased] — v1.5 UX polish
+## [1.6.0] — 2026-10-29
 
-### Changed
+Queue-master quality of life (roadmap v1.6) on top of the v1.5 UX polish.
 
+### Added
+
+- Payments: on the session page (header **Payments** link while live) enter
+  the court fee and per-shuttle price, pick _everything evenly_ or _court
+  evenly, shuttles by games played_, and tick who paid — shares round to whole
+  pesos with a collected / total line.
+- **Went home** on a queue card for players who've already played: off the
+  queue, kept in attendance, Undo-able; checking them in again brings them
+  back on the same entry.
+- **Sub** on a live court: a waiting player takes a seat mid-game (injury);
+  the player coming off rests and keeps the court time so far.
+- After ending a match, the "Result saved" toast has **Fix**, which opens the
+  session page where every game can be edited.
+- Last call: idle courts in their final 20 minutes show "Last call · Nm left",
+  and the start-match confirm warns how much rental is left.
+- Newcomers' queue cards show a rough "next game ≈ Nm" estimate.
+- Setup: **Last session's players** adds the previous session's attendees to
+  the selection.
+
+### Changed (v1.5 UX polish)
+
+- The session time range in the header only shows from 1536 px wide.
 - The live screen fits tablets and phones: the header wraps instead of pushing
   Smart Match / History / Pause / End Session off-screen, status chips show
   from 1280 px, the sidebar stacks under the courts below 1024 px and courts go

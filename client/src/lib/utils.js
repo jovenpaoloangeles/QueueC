@@ -146,3 +146,13 @@ export function nudgeKind(courts, activeMatches, slateCount, waitingCount, now) 
   if (waitingCount >= 4) return { kind: "waiting" };
   return null;
 }
+
+/** v1.6 last call: minutes of rental left when a court is inside its final
+ *  20 minutes (too short for a 31-point game), else null.
+ *  ponytail: fixed 20 min, make it a session setting if clubs play to 21. */
+export const LAST_CALL_SECS = 20 * 60;
+export function lastCallMins(court, now) {
+  if (court?.expires_at == null) return null;
+  const left = court.expires_at - now;
+  return left > 0 && left < LAST_CALL_SECS ? Math.ceil(left / 60) : null;
+}

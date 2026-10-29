@@ -4,10 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { drag, rearrange, useDragSource, valid } from "@/lib/dnd";
-import { cn, fmtClock, fmtWall, shortSkill, TIER_CLASS } from "@/lib/utils";
+import { cn, fmtClock, fmtWall, lastCallMins, shortSkill, TIER_CLASS } from "@/lib/utils";
 import { extendCourt, updateMatchTeams } from "../api.js";
 import ConfirmEndDialog from "./ConfirmEndDialog.jsx";
 import EndMatchModal from "./EndMatchModal.jsx";
+import SubstituteDialog from "./SubstituteDialog.jsx";
 
 function playerName(queue, entryId) {
   return queue.find((e) => e.id === entryId)?.name ?? "?";
@@ -219,6 +220,7 @@ export default function CourtCard({
 }) {
   const [showEnd, setShowEnd] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showSub, setShowSub] = useState(false);
   const [over, setOver] = useState(false);
   const toast = useToast();
   const isActive = !!match;
@@ -301,6 +303,14 @@ export default function CourtCard({
             >
               ⏳ Last Game
             </Badge>
+          )}
+          {!isActive && lastCallMins(court, now) != null && (
+            <span
+              data-testid="last-call-badge"
+              className="text-[11px] font-bold uppercase tracking-wide text-amber"
+            >
+              Last call · {lastCallMins(court, now)}m left
+            </span>
           )}
           {isExpired && !isActive && (
             <span
@@ -395,6 +405,15 @@ export default function CourtCard({
                 Extend Court (+1hr)?
               </Button>
             )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="rounded-full"
+              data-testid="btn-substitute"
+              onClick={() => setShowSub(true)}
+            >
+              Sub
+            </Button>
             <Button variant="outline" size="sm" className="rounded-full" onClick={() => setShowConfirm(true)}>
               End match
             </Button>
@@ -520,6 +539,14 @@ export default function CourtCard({
           teamNames={teamNames}
           winner={showEnd === "team1" || showEnd === "team2" ? showEnd : null}
           onClose={() => setShowEnd(false)}
+        />
+      )}
+      {showSub && match && (
+        <SubstituteDialog
+          match={match}
+          queue={queue}
+          draftedIds={draftedIds}
+          onClose={() => setShowSub(false)}
         />
       )}
     </Card>

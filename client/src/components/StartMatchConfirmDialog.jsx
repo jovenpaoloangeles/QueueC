@@ -41,6 +41,11 @@ function Row({ m, testid }) {
         <span className="text-muted-foreground">vs</span>
         <Side team={m.team2} />
       </div>
+      {m.lastCall != null && (
+        <div data-testid="start-confirm-last-call" className="text-[11px] font-semibold text-amber">
+          ⏳ Only {m.lastCall} min of rental left on this court
+        </div>
+      )}
       <div className="flex gap-2 text-[11px] text-muted-foreground">
         <span>{m.format === "singles" ? "Singles" : "Doubles"}</span>
         {hint && (

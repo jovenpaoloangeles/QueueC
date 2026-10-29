@@ -56,6 +56,14 @@ export default function EndMatchModal({ match, courtLabel, teamNames, winner, on
         rating: toInt(rating, 5),
       });
       onClose();
+      // v1.6: wrong winner tapped? the session page has Edit on every game
+      toast("Result saved", "success", {
+        label: "Fix",
+        undo: () => {
+          window.location.hash = `#/history/${match.session_id}`;
+          return false; // navigation, not an undo — no "Undone" toast
+        },
+      });
     } catch (err) {
       toast(err?.data?.error ?? "Could not end match", "error");
       setLoading(false);

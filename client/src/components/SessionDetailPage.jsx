@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
-import { abortMatch, addAttendance, getPlayers, getSessionDetail, removeEntry } from "@/api";
+import {
+  abortMatch,
+  addAttendance,
+  getPlayers,
+  getSessionDetail,
+  removeEntry,
+  setFees,
+  setPaid,
+} from "@/api";
 import { useToast } from "@/components/Toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import downloadExport from "@/lib/download";
 import { buildRecap, highlightGroups } from "@/lib/recap";
-import { fmtClock } from "@/lib/utils";
+import { cn, fmtClock } from "@/lib/utils";
 import CorrectMatchDialog from "./CorrectMatchDialog.jsx";
 import HistoryShell from "./HistoryShell.jsx";
 
@@ -21,6 +29,99 @@ import HistoryShell from "./HistoryShell.jsx";
 // refetch on a 10s interval so a just-ended match shows up without a reload.
 const fmtTime = (ts) =>
   ts ? new Date(ts * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—";
+
+const peso = (n) => `₱${n.toLocaleString()}`;
+
+// v1.6 payments: fee inputs save on blur (uncontrolled, so the live 10s
+// refetch never clobbers a half-typed number); paid toggles save immediately.
+function PaymentsSection({ sessionId, payments, onChange }) {
+  const toast = useToast();
+  const save = (body) =>
+    setFees(sessionId, body)
+      .then(onChange)
+      .catch((err) => toast(err?.data?.error ?? "Could not save fees", "error"));
+  const amount = (field) => (e) => {
+    const v = Math.max(0, Math.round(Number(e.target.value) || 0));
+    if (v !== payments[field]) save({ [field]: v });
+  };
+  return (
+    <section className="rounded-lg border border-border bg-card shadow-card" aria-label="Payments">
+      <h2 className="border-b border-border px-4 py-2.5 text-[12.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+        Payments
+      </h2>
+      <div className="flex flex-wrap items-end gap-3 border-b border-border px-4 py-3 text-sm">
+        <label className="flex flex-col gap-1 text-[12.5px] text-muted-foreground">
+          Court fee (total)
+          <input
+            type="number"
+            min="0"
+            inputMode="numeric"
+            data-testid="fee-court"
+            defaultValue={payments.court_fee || ""}
+            placeholder="0"
+            onBlur={amount("court_fee")}
+            className="h-8 w-28 rounded-md border border-border bg-card px-2 font-mono text-sm text-foreground"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-[12.5px] text-muted-foreground">
+          Per shuttle
+          <input
+            type="number"
+            min="0"
+            inputMode="numeric"
+            data-testid="fee-shuttle"
+            defaultValue={payments.shuttle_price || ""}
+            placeholder="0"
+            onBlur={amount("shuttle_price")}
+            className="h-8 w-24 rounded-md border border-border bg-card px-2 font-mono text-sm text-foreground"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-[12.5px] text-muted-foreground">
+          Split
+          <select
+            data-testid="fee-split"
+            value={payments.split}
+            onChange={(e) => save({ fee_split: e.target.value })}
+            className="h-8 rounded-md border border-border bg-card px-2 text-sm text-foreground"
+          >
+            <option value="equal">Everything evenly</option>
+            <option value="per_game">Court evenly, shuttles by games played</option>
+          </select>
+        </label>
+        <span data-testid="fee-collected" className="ml-auto self-center font-mono text-sm tabular-nums">
+          {peso(payments.collected)} / {peso(payments.total)} collected
+        </span>
+      </div>
+      <ul className="divide-y divide-border">
+        {payments.rows.map((r) => (
+          <li
+            key={r.entry_id}
+            data-testid="payment-row"
+            className="flex items-center gap-3 px-4 py-2 text-sm"
+          >
+            <span className={cn("flex-1 font-medium", r.paid && "text-muted-foreground line-through")}>
+              {r.name}
+            </span>
+            <span className="font-mono tabular-nums">{peso(r.share)}</span>
+            <label className="flex items-center gap-1.5 text-[12.5px] text-muted-foreground">
+              <input
+                type="checkbox"
+                data-testid="payment-paid"
+                checked={r.paid}
+                onChange={(e) =>
+                  setPaid(r.entry_id, e.target.checked)
+                    .then(onChange)
+                    .catch(() => toast("Could not update", "error"))
+                }
+              />
+              Paid
+            </label>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
 
 export default function SessionDetailPage({ id }) {
   const [detail, setDetail] = useState(null);
@@ -112,7 +213,7 @@ export default function SessionDetailPage({ id }) {
       </HistoryShell>
     );
 
-  const { session, leaderboard, games, attendance, shuttles, fairness, highlights } = detail;
+  const { session, leaderboard, games, attendance, shuttles, fairness, highlights, payments } = detail;
   const groups = highlightGroups(highlights);
   const gamesBy = new Map(leaderboard.map((r) => [r.player_id, r.played]));
   const availablePlayers = players.filter((p) => !attendance.some((a) => a.player_id === p.id));
@@ -154,6 +255,8 @@ export default function SessionDetailPage({ id }) {
             Share recap
           </Button>
         </div>
+
+        <PaymentsSection sessionId={id} payments={payments} onChange={refetch} />
 
         {/* final leaderboard — sidebar table idiom */}
         <section

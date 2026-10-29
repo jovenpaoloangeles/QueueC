@@ -7,6 +7,7 @@ const WAIT_HIGH_PRIORITY_THRESHOLD_SECS = 15 * 60; // overdue threshold — unch
 const WAIT_WARM_SECS = 6 * 60; // cosmetic mid tier for the wait strip; overdue logic untouched
 
 export default function PlayerCard({
+  etaSecs,
   entry,
   waitSecs,
   selectionIndex,
@@ -16,6 +17,7 @@ export default function PlayerCard({
   onDropOn,
   onToggleRest,
   onRemove,
+  onGoneHome,
 }) {
   const dragProps = useDragSource(() => ({ kind: "player", entryId: entry.id, status: entry.status }));
   const [over, setOver] = useState(false);
@@ -161,7 +163,22 @@ export default function PlayerCard({
             {isResting ? "Wake" : "Rest"}
           </Button>
         )}
-        {(isWaiting || isResting) && onRemove && (
+        {/* v1.6: once they've played, Remove (check-in undo) is refused — they go home instead */}
+        {(isWaiting || isResting) && gamesPlayed > 0 && onGoneHome && (
+          <Button
+            variant="ghost"
+            size="xs"
+            className="h-6 rounded-full px-2.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+            data-testid="gone-home"
+            onClick={(e) => {
+              e.stopPropagation();
+              onGoneHome(entry);
+            }}
+          >
+            Went home
+          </Button>
+        )}
+        {(isWaiting || isResting) && gamesPlayed === 0 && onRemove && (
           <Button
             variant="ghost"
             size="xs"
@@ -190,6 +207,12 @@ export default function PlayerCard({
               [{gamesPlayed}]
             </span>
           </span>
+          {/* v1.6: a newcomer's first question is "when do I play?" */}
+          {isWaiting && gamesPlayed === 0 && etaSecs != null && (
+            <span data-testid="card-eta" className="truncate">
+              {etaSecs < 60 ? "next game: now" : `next game ≈ ${Math.round(etaSecs / 60)}m`}
+            </span>
+          )}
           {/* the scheduler's fairness score stays internal; 0m played is noise */}
           {(entry.total_seconds_played ?? 0) >= 60 && (
             <span className="truncate">{fmtMins(entry.total_seconds_played)} played</span>

@@ -25,7 +25,8 @@ import useHashRoute from "./hooks/useHashRoute.js";
 import { useSSE } from "./hooks/useSSE.js";
 import { useTimers } from "./hooks/useTimers.js";
 import { EMPTY_DRAFT } from "./lib/dnd.js";
-import { fmtDur, freeCourts, idleNudgeSec, nudgeKind } from "./lib/utils.js";
+import { nextFreeCourt, waitEtas } from "./lib/eta.js";
+import { fmtDur, freeCourts, idleNudgeSec, lastCallMins, nudgeKind } from "./lib/utils.js";
 
 function LiveView() {
   const [sseData, setSseData] = useState({
@@ -313,6 +314,7 @@ function LiveView() {
       matches: [
         {
           courtLabel: court?.label ?? `Court ${courtNumber}`,
+          lastCall: lastCallMins(court, Math.floor(Date.now() / 1000)),
           format: validIds.length === 2 ? "singles" : "doubles",
           team1: resolveTeam(team1),
           team2: resolveTeam(team2),
@@ -424,6 +426,20 @@ function LiveView() {
     sseData.session?.paused_at,
   );
 
+  // v1.6 "when do I play?": ETA per waiting player, longest wait first.
+  // Courts in use count as usable (they free up); only those still in rental.
+  const nowSec = sseData.serverTime ?? Math.floor(Date.now() / 1000);
+  const etas = waitEtas({
+    waitingIds: (sseData.queue ?? [])
+      .filter((e) => e.status === "waiting")
+      .sort((a, b) => (waitSeconds.get(b.id) ?? 0) - (waitSeconds.get(a.id) ?? 0))
+      .map((e) => e.id),
+    slates: slatedMatches.length,
+    usableCourts: freeCourts(courts, [], nowSec).length,
+    freeNow: freeCourts(courts, activeMatches, nowSec).length > 0,
+    nextFreeSecs: nextFreeCourt(courts, activeMatches, nowSec)?.secs,
+  });
+
   // Idle-court nudge: how long the nudge condition has held without a break.
   // useTimers re-renders App every second, so no extra ticker; hidden while
   // paused (ruled cosmetic — a paused session is already "nudged" everywhere).
@@ -462,6 +478,7 @@ function LiveView() {
       matches: [
         {
           courtLabel: free[0].label ?? `Court ${free[0].id}`,
+          lastCall: lastCallMins(free[0], Math.floor(Date.now() / 1000)),
           format: slate.format,
           team1: [
             { name: slate.team1_p1_name, skill_level: slate.team1_p1_skill },
@@ -607,6 +624,7 @@ function LiveView() {
               session={session}
               queue={queue}
               waitSeconds={waitSeconds}
+              etas={etas}
               playSeconds={playSeconds}
               selection={selection}
               draftedIds={draftedIds}

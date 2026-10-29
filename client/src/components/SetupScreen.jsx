@@ -6,7 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn, fmtSessionName, SKILL_TIERS, titleCaseSkill } from "@/lib/utils";
-import { checkinPlayer, createSession, endSession, getPlayers, startSession, updatePlayer } from "../api.js";
+import {
+  checkinPlayer,
+  createSession,
+  endSession,
+  getPlayers,
+  getSessionDetail,
+  getSessions,
+  startSession,
+  updatePlayer,
+} from "../api.js";
 import PlayerSearchAdd, { SkillChip } from "./PlayerSearchAdd.jsx";
 
 const MAX_COURTS = 16;
@@ -277,6 +286,21 @@ export default function SetupScreen({ draft }) {
     if (ids.length === 0) return;
     const all = ids.every((id) => picked.includes(id));
     setPicked((prev) => (all ? prev.filter((id) => !ids.includes(id)) : [...new Set([...prev, ...ids])]));
+  }
+
+  // v1.6: same regulars every week — add the last ended session's attendees
+  // (still in the pool) to the selection; deselect the absent by hand
+  async function selectLastSession() {
+    try {
+      const last = (await getSessions()).sessions[0];
+      if (!last) return toast("No past session yet", "info");
+      const { attendance } = await getSessionDetail(last.id);
+      const ids = attendance.map((a) => a.player_id).filter((id) => players.some((p) => p.id === id));
+      setPicked((prev) => [...new Set([...prev, ...ids])]);
+      toast(`Selected ${ids.length} from ${last.name}`, "success");
+    } catch {
+      toast("Could not load the last session", "error");
+    }
   }
 
   const groups = useMemo(() => {
@@ -603,6 +627,15 @@ export default function SetupScreen({ draft }) {
                     onClick={toggleSelectAll}
                   >
                     Select all
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="xs"
+                    className="mr-auto rounded-full"
+                    data-testid="select-last-session"
+                    onClick={selectLastSession}
+                  >
+                    Last session's players
                   </Button>
                   <select
                     aria-label="Filter tier"

@@ -18,6 +18,8 @@ test("15.1 session name in header (no parens → single line)", async ({ page })
 });
 
 test("15.2 scheduled time range shown", async ({ page }) => {
+  // v1.6: the range only shows from 2xl — below that the header needs the room
+  await page.setViewportSize({ width: 1536, height: 800 });
   await createSession(page, { name: "Header Test", startTime: "19:00", hours: 2 });
   await checkinPlayers(page, ["Inter C1", "Inter C2"]);
   await startSession(page);

@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { drag, valid } from "@/lib/dnd";
+import { nextFreeCourt } from "@/lib/eta";
 import { balanceHint, cn, fmtClock, freeCourts, shortSkill, TIER_CLASS } from "@/lib/utils";
 import { abortMatch, cancelSlate, moveSlate, slateMatch, startSlateOnCourt, updateSlate } from "../api.js";
 
@@ -152,9 +153,6 @@ function SlateMatrix({ draft, draftedIds, nameById, onDropSlot, onClearSlot, slo
   );
 }
 
-/** Rough typical game length — only used for the approximate "next free court" ETA. */
-const TYPICAL_GAME_SEC = 20 * 60;
-
 function sideOf(row, side) {
   const p = side === 1 ? ["team1_p1", "team1_p2"] : ["team2_p1", "team2_p2"];
   return p
@@ -187,18 +185,6 @@ function SidePlayers({ players }) {
 }
 
 /** Approximate time until the soonest active match is likely to finish → { label, secs } | null. */
-function nextFreeCourt(courts, activeMatches, now) {
-  let best = null;
-  for (const m of activeMatches ?? []) {
-    if (m?.court_number == null || !m.started_at) continue;
-    const secs = Math.max(0, TYPICAL_GAME_SEC - (now - m.started_at));
-    if (!best || secs < best.secs) {
-      const c = (courts ?? []).find((x) => x.id === m.court_number);
-      best = { secs, label: c?.label ?? `Court ${m.court_number}` };
-    }
-  }
-  return best;
-}
 
 /** Free courts, same rule as the server (automatch.js): enabled, not expired,
  *  active window open, and no live match sitting on the court. */

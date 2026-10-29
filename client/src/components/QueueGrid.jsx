@@ -26,6 +26,7 @@ const TABS = [
 ];
 
 export default function QueueGrid({
+  etas,
   session,
   queue,
   waitSeconds,
@@ -112,6 +113,17 @@ export default function QueueGrid({
     setEntryStatus(entry.id, next)
       .then(() => {
         if (next === "resting") onSelectionChange(selection.filter((s) => s !== entry.id));
+      })
+      .catch((err) => toast(err?.data?.error ?? "Could not update", "error"));
+  }
+
+  // v1.6 gone home: off the queue (status left), kept in attendance; Undo puts
+  // them back as they were, and checking them in again later revives them too
+  function goneHome(entry) {
+    setEntryStatus(entry.id, "left")
+      .then(() => {
+        onSelectionChange(selection.filter((s) => s !== entry.id));
+        toast(`${entry.name} went home`, "info", { undo: () => setEntryStatus(entry.id, entry.status) });
       })
       .catch((err) => toast(err?.data?.error ?? "Could not update", "error"));
   }
@@ -336,6 +348,7 @@ export default function QueueGrid({
             key={entry.id}
             entry={entry}
             waitSecs={waitSeconds.get(entry.id) ?? 0}
+            etaSecs={etas?.get(entry.id)}
             playSecs={playSeconds?.get(entry.id) ?? 0}
             isNext={nextIds.has(entry.id)}
             selectionIndex={selection.indexOf(entry.id)}
@@ -350,6 +363,7 @@ export default function QueueGrid({
             onDropOn={handleDropOnPlayer}
             onToggleRest={toggleRest}
             onRemove={setPendingRemove}
+            onGoneHome={goneHome}
           />
         ))}
       </div>
