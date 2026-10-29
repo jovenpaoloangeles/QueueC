@@ -45,8 +45,17 @@ export function checkinPlayer(sessionId, playerId, when = Math.floor(Date.now() 
     return { error: "Player not found", status: 404 };
   }
   const existing = db
-    .prepare("SELECT id FROM queue_entries WHERE session_id = ? AND player_id = ?")
+    .prepare("SELECT id, status FROM queue_entries WHERE session_id = ? AND player_id = ?")
     .get(sessionId, playerId);
+  // v1.6: a player who went home and came back rejoins on their old entry
+  // (history and games intact); wait keeps accruing like rest does
+  if (existing?.status === "left") {
+    db.prepare("UPDATE queue_entries SET status = 'waiting', status_updated_at = ? WHERE id = ?").run(
+      when,
+      existing.id,
+    );
+    return { entry: db.prepare("SELECT * FROM queue_entries WHERE id = ?").get(existing.id), status: 200 };
+  }
   if (existing) return { error: "Player already checked in", status: 409 };
 
   const existingOrders = db
@@ -202,6 +211,18 @@ router.patch("/queue/:entryId/status", async (c) => {
   const entry = db.prepare("SELECT * FROM queue_entries WHERE id = ?").get(entryId);
   broadcast();
   return c.json({ entry });
+});
+
+// v1.6 payments: mark an attendee paid / unpaid
+router.patch("/queue/:entryId/paid", async (c) => {
+  const { paid } = await c.req.json().catch(() => ({}));
+  if (typeof paid !== "boolean") return c.json({ error: "paid must be true or false" }, 400);
+  const res = db
+    .prepare("UPDATE queue_entries SET paid = ? WHERE id = ?")
+    .run(paid ? 1 : 0, c.req.param("entryId"));
+  if (res.changes === 0) return c.json({ error: "Entry not found" }, 404);
+  broadcast();
+  return c.json({ ok: true });
 });
 
 router.patch("/queue/order", async (c) => {

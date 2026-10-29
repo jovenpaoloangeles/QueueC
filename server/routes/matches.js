@@ -270,6 +270,37 @@ export function recomputeEntries(entryIds) {
   }
 }
 
+// v1.6 mid-match substitution (injury): a waiting player takes a seat in a
+// live match; the player coming off rests and keeps the court time so far.
+// The finished game is credited to whoever holds the seat at the end.
+router.patch("/:id/substitute", async (c) => {
+  const match = db
+    .prepare("SELECT * FROM matches WHERE id = ? AND state = 'active' AND ended_at IS NULL")
+    .get(c.req.param("id"));
+  if (!match) return c.json({ error: "Live match not found" }, 404);
+  const { out_entry, in_entry } = await c.req.json().catch(() => ({}));
+  const seat = ["team1_p1", "team1_p2", "team2_p1", "team2_p2"].find((k) => match[k] === out_entry);
+  if (!seat) return c.json({ error: "out_entry is not in this match" }, 400);
+  const sub = db
+    .prepare("SELECT * FROM queue_entries WHERE id = ? AND session_id = ?")
+    .get(in_entry, match.session_id);
+  if (!sub || sub.status !== "waiting")
+    return c.json({ error: "Substitute must be waiting in this session" }, 409);
+  const now = Math.floor(Date.now() / 1000);
+  db.transaction(() => {
+    db.prepare(`UPDATE matches SET ${seat} = ? WHERE id = ?`).run(in_entry, match.id);
+    db.prepare(
+      "UPDATE queue_entries SET status = 'resting', status_updated_at = ?, total_seconds_played = total_seconds_played + ? WHERE id = ?",
+    ).run(now, Math.max(0, now - match.started_at), out_entry);
+    db.prepare("UPDATE queue_entries SET status = 'playing', status_updated_at = ? WHERE id = ?").run(
+      now,
+      in_entry,
+    );
+  })();
+  broadcast();
+  return c.json({ match: db.prepare("SELECT * FROM matches WHERE id = ?").get(match.id) });
+});
+
 // Correct an ended match: scores, shuttles, rating, and the lineup itself.
 // The recompute (not arithmetic) updates the affected entries' stats, so a
 // player swap leaves both the removed and the added entry exact.

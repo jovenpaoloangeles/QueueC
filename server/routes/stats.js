@@ -98,6 +98,42 @@ function computeFairness(session, games, attendance) {
   };
 }
 
+// v1.6 payments: each attendee's share, rounded to whole pesos. 'equal'
+// splits court fee + all shuttles evenly; 'per_game' splits the court fee
+// (and session-level extra shuttles) evenly, and each finished game's
+// shuttles among the players in it.
+function computePayments(session, games, attendance, shuttles) {
+  const n = attendance.length;
+  const price = session.shuttle_price ?? 0;
+  const fee = session.court_fee ?? 0;
+  const perGame = session.fee_split === "per_game";
+  const done = games.filter((g) => g.state === "active" && g.ended_at != null);
+  const rows = attendance.map((a) => {
+    let share = n ? (perGame ? fee + shuttles.extra * price : fee + shuttles.total * price) / n : 0;
+    if (perGame) {
+      for (const g of done) {
+        const seats = [...g.team1, ...g.team2];
+        if (seats.some((p) => p.entry_id === a.entry_id)) share += (g.new_shuttles * price) / seats.length;
+      }
+    }
+    return {
+      entry_id: a.entry_id,
+      player_id: a.player_id,
+      name: a.name,
+      share: Math.round(share),
+      paid: !!a.paid,
+    };
+  });
+  return {
+    court_fee: fee,
+    shuttle_price: price,
+    split: session.fee_split ?? "equal",
+    rows,
+    total: rows.reduce((s, r) => s + r.share, 0),
+    collected: rows.filter((r) => r.paid).reduce((s, r) => s + r.share, 0),
+  };
+}
+
 // v1.4 highlights: in-session win streaks (>=3), consecutive-session
 // attendance streaks (>=3) and career-game milestones (25th, 50th, every 100th) reached this session.
 const isMilestone = (n) => n === 25 || n === 50 || n % 100 === 0;
@@ -201,7 +237,7 @@ export function getSessionDetail(sessionId) {
 
   const attendance = db
     .prepare(
-      `SELECT qe.id AS entry_id, qe.player_id, p.name, qe.checked_in_at, qe.status
+      `SELECT qe.id AS entry_id, qe.player_id, p.name, qe.checked_in_at, qe.status, qe.paid
        FROM queue_entries qe JOIN players p ON p.id = qe.player_id
        WHERE qe.session_id = ? ORDER BY qe.sort_order, qe.id`,
     )
@@ -222,6 +258,7 @@ export function getSessionDetail(sessionId) {
     attendance,
     shuttles,
     fairness: computeFairness(session, games, attendance),
+    payments: computePayments(session, games, attendance, shuttles),
     highlights: computeHighlights(session, attendance),
   };
 }

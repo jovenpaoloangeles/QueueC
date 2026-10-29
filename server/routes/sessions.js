@@ -175,6 +175,33 @@ router.patch("/:id/resume", (c) => {
   return c.json({ session: db.prepare("SELECT * FROM sessions WHERE id = ?").get(id) });
 });
 
+// v1.6 payments: whole-peso court fee (session total) and per-shuttle price;
+// split 'equal' = everything shared evenly, 'per_game' = court fee evenly +
+// each game's shuttles among the players in it
+router.patch("/:id/fees", async (c) => {
+  const id = c.req.param("id");
+  if (!db.prepare("SELECT id FROM sessions WHERE id = ?").get(id)) {
+    return c.json({ error: "Session not found" }, 404);
+  }
+  const { court_fee, shuttle_price, fee_split } = await c.req.json().catch(() => ({}));
+  for (const [name, v] of [
+    ["court_fee", court_fee],
+    ["shuttle_price", shuttle_price],
+  ]) {
+    if (v !== undefined && (!Number.isInteger(v) || v < 0 || v > 1_000_000)) {
+      return c.json({ error: `${name} must be a whole amount ≥ 0` }, 400);
+    }
+  }
+  if (fee_split !== undefined && !["equal", "per_game"].includes(fee_split)) {
+    return c.json({ error: "fee_split must be 'equal' or 'per_game'" }, 400);
+  }
+  db.prepare(
+    "UPDATE sessions SET court_fee = COALESCE(?, court_fee), shuttle_price = COALESCE(?, shuttle_price), fee_split = COALESCE(?, fee_split) WHERE id = ?",
+  ).run(court_fee ?? null, shuttle_price ?? null, fee_split ?? null, id);
+  broadcast();
+  return c.json({ session: db.prepare("SELECT * FROM sessions WHERE id = ?").get(id) });
+});
+
 router.patch("/:id/end", (c) => {
   const id = c.req.param("id");
   const now = Math.floor(Date.now() / 1000);

@@ -308,6 +308,12 @@ if (!sessionCols.has("shuttles_extra")) {
 if (!sessionCols.has("paused_at")) {
   db.exec("ALTER TABLE sessions ADD COLUMN paused_at INTEGER");
 }
+// v1.6 payments: court fee + per-shuttle price, split mode, who paid
+if (!sessionCols.has("court_fee")) {
+  db.exec("ALTER TABLE sessions ADD COLUMN court_fee INTEGER NOT NULL DEFAULT 0");
+  db.exec("ALTER TABLE sessions ADD COLUMN shuttle_price INTEGER NOT NULL DEFAULT 0");
+  db.exec("ALTER TABLE sessions ADD COLUMN fee_split TEXT NOT NULL DEFAULT 'equal'");
+}
 if (!sessionCols.has("checkin_order")) {
   db.exec("ALTER TABLE sessions ADD COLUMN checkin_order TEXT NOT NULL DEFAULT 'alphabetical'");
 }
@@ -320,6 +326,9 @@ const virtCols = new Set(
     .all()
     .map((c) => c.name),
 );
+if (!virtCols.has("paid")) {
+  db.exec("ALTER TABLE queue_entries ADD COLUMN paid INTEGER NOT NULL DEFAULT 0");
+}
 if (!virtCols.has("virt_offset")) {
   db.exec("ALTER TABLE queue_entries ADD COLUMN virt_offset REAL NOT NULL DEFAULT 0");
 }
