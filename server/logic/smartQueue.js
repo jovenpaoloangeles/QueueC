@@ -45,10 +45,21 @@ export const MATCH_CONFIG = {
   epsSkillVar: 0.45, // ε₃ (skill² on the 1–7 scale) — sweep-tuned; feasible band 0.3–0.9
   epsOverlap: 2.0, // ε₀ (cohort overlap, band FIRST in Stage A) — tuned on the 40-seed sweep; Task 2 widens the Pareto
   epsTeamDiff: 0.35, // ε₄
+  // v1.7 game quality (review 2026-10-29): a quartet's tier range is capped
+  // (relaxed to the narrowest available when nothing fits), and splits pay
+  // a·max(0, range−1)² + b·Σ(teammate gap²) + c·(team diff)² — so two
+  // lopsided pairs that "balance out" no longer score as an ideal game.
+  maxRange: 2,
+  overdueMin: 12, // minutes — beyond this an outlier's range cap relaxes
+  qualRange: 1,
+  qualGap: 0.5,
+  qualTeam: 1,
+  lambdaQuality: 1,
   lambdaSkillVar: 1, // J(q) = λ₃f₃ + λ₄minF₄ + λ₅minF₅ (§5, weights unassigned)
   lambdaTeamDiff: 1,
   lambdaVariety: 1,
   maxBatchNodes: 20000, // DFS cap for multi-court disjoint selection
+  mixKick: true, // phase-lock kick (cohortLocked) — see planBatch
 };
 
 function skillValue(entry) {
@@ -223,7 +234,75 @@ const EDGE_U = [0, 0, 0, 1, 1, 2],
  * @param {object} [p.cfg]  per-call overrides merged over MATCH_CONFIG
  * @returns {{ matches: Array<{team1:number[],team2:number[],metrics:object}>, relaxed: boolean }}
  */
-export function planBatch({
+// v1.7 cohort phase-lock (review 2026-10-29): with roster ≈ 2× court
+// capacity and similar game lengths, the players who start together finish
+// together, wait together, and are picked together again — rotation cohorts
+// that never meet. Structural test: in the co-play graph of the last
+// LOCK_GAMES games (edge = shared a court), the roster splits into ≥ 2
+// components of ≥ 4 players. (A time-gap test drifts: a cohort's two courts
+// wander apart over a night while the cohorts still never meet.)
+const LOCK_GAMES = 8;
+
+/** Co-play components over the last LOCK_GAMES games: Map id → component. */
+export function coplayComponents(history) {
+  const parent = new Map();
+  const find = (x) => {
+    while (parent.get(x) !== x) {
+      parent.set(x, parent.get(parent.get(x)));
+      x = parent.get(x);
+    }
+    return x;
+  };
+  for (const m of history.slice(-LOCK_GAMES)) {
+    const r = rosterOf(m);
+    for (const id of r) if (!parent.has(id)) parent.set(id, id);
+    for (const id of r.slice(1)) parent.set(find(id), find(r[0]));
+  }
+  return new Map([...parent.keys()].map((id) => [id, find(id)]));
+}
+
+/** True when the recent co-play graph has ≥ 2 components of ≥ 4 players. */
+export function cohortLocked(history) {
+  if (history.length < LOCK_GAMES) return false;
+  const sizes = new Map();
+  for (const c of coplayComponents(history).values()) sizes.set(c, (sizes.get(c) ?? 0) + 1);
+  return [...sizes.values()].filter((n) => n >= 4).length >= 2;
+}
+
+// a quartet mixes cohorts when its members span ≥ 2 components (players
+// absent from the recent window — newcomers — are neutral)
+const spansCohorts = (ids, comp) => new Set(ids.map((id) => comp.get(id)).filter((c) => c != null)).size >= 2;
+
+/**
+ * Phase-lock kick around the core planner: when cohorts are locked and the
+ * normal plan wouldn't mix them, field one cohort-mixed quartet (its fresh
+ * member may play back-to-back, which the consecutive rule allows) and plan
+ * the remaining courts normally. Mixing re-links the co-play graph; a re-lock
+ * triggers another kick.
+ */
+export function planBatch(args) {
+  const res = planCore(args);
+  const C = { ...MATCH_CONFIG, ...(args.cfg ?? {}) };
+  const history = args.history ?? [];
+  if (!C.mixKick || args.locked?.length || !res.matches.length || !cohortLocked(history)) return res;
+  const comp = coplayComponents(history);
+  if (res.matches.some((m) => spansCohorts([...m.team1, ...m.team2], comp))) return res;
+  const kick = planCore({ ...args, courtCount: 1, cfg: { ...(args.cfg ?? {}), _mixComp: comp } });
+  if (!kick.matches.length) return res;
+  const used = new Set([...kick.matches[0].team1, ...kick.matches[0].team2]);
+  const courtCount = args.courtCount ?? 1;
+  const rest =
+    courtCount > 1
+      ? planCore({
+          ...args,
+          waiting: args.waiting.filter((e) => !used.has(e.id)),
+          courtCount: courtCount - 1,
+        })
+      : { matches: [], relaxed: false };
+  return { matches: [...kick.matches, ...rest.matches], relaxed: kick.relaxed || rest.relaxed };
+}
+
+function planCore({
   waiting,
   history = [],
   courtCount = 1,
@@ -342,6 +421,15 @@ export function planBatch({
   const f1 = new Float64Array(M);
   const f2 = new Float64Array(M);
   const f3 = new Float64Array(M);
+  const fR = new Float64Array(M); // tier range max − min
+  const mixedQ = C._mixComp
+    ? Q.map((q) =>
+        spansCohorts(
+          q.map((i) => ids[i]),
+          C._mixComp,
+        ),
+      )
+    : null;
   for (let q = 0; q < M; q++) {
     const [a, b, c, d] = Q[q];
     let overlap = 0;
@@ -351,6 +439,7 @@ export function planBatch({
     f2[q] = g[a] + g[b] + g[c] + g[d];
     const mean = (s[a] + s[b] + s[c] + s[d]) / 4;
     f3[q] = ((s[a] - mean) ** 2 + (s[b] - mean) ** 2 + (s[c] - mean) ** 2 + (s[d] - mean) ** 2) / 4;
+    fR[q] = Math.max(s[a], s[b], s[c], s[d]) - Math.min(s[a], s[b], s[c], s[d]);
   }
 
   // Identify the longest-waiting player within the virtual-game fairness band
@@ -384,10 +473,16 @@ export function planBatch({
       (wFourth > 0 && anchorWait >= (C.anchorWaitRatio ?? MATCH_CONFIG.anchorWaitRatio) * wFourth) ||
       (g[anchorIdx] === gMinWin && gMaxWin - gMinWin >= 2));
 
-  const cascade = (requireAnchor, epsOv = C.epsOverlap) => {
+  // `wide` lifts bands for the multi-court ladder (see `select` callers):
+  // bands are measured against the single best quartet, so a band that keeps
+  // only quartets sharing the top waiters can leave < `need` disjoint ones.
+  const cascade = (requireAnchor, epsOv = C.epsOverlap, wide = {}) => {
     const m = new Uint8Array(M).fill(1);
     if (containMask) {
       for (let q = 0; q < M; q++) if (!containMask[q]) m[q] = 0;
+    }
+    if (mixedQ) {
+      for (let q = 0; q < M; q++) if (m[q] && !mixedQ[q]) m[q] = 0;
     }
     if (requireAnchor && need === 1) {
       for (let q = 0; q < M; q++) {
@@ -395,6 +490,30 @@ export function planBatch({
         if (a !== anchorIdx && b !== anchorIdx && c !== anchorIdx && d !== anchorIdx) m[q] = 0;
       }
     }
+    // Range cap (before the wait band, so it can trade a short wait for a
+    // better game): a quartet may span at most maxRange tiers — except that
+    // an overdue player (waited ≥ overdueMin) may always play in the
+    // narrowest quartet available to them, so an outlier is skipped at most
+    // until overdue, never starved (the anchor then pulls them in).
+    {
+      const minWith = new Float64Array(K).fill(Infinity);
+      for (let q = 0; q < M; q++) {
+        if (!m[q]) continue;
+        for (const i of Q[q]) if (fR[q] < minWith[i]) minWith[i] = fR[q];
+      }
+      const before = m.slice();
+      let lo = Infinity;
+      for (let q = 0; q < M; q++) {
+        if (!m[q]) continue;
+        if (fR[q] < lo) lo = fR[q];
+        let cap = C.maxRange;
+        for (const i of Q[q]) if (w[i] >= C.overdueMin && minWith[i] > cap) cap = minWith[i];
+        if (fR[q] > cap + 1e-9) m[q] = 0;
+      }
+      // nothing fits (every quartet too wide, nobody overdue): narrowest wins
+      if (!m.some(Boolean)) for (let q = 0; q < M; q++) if (before[q] && fR[q] <= lo + 1e-9) m[q] = 1;
+    }
+
     // Overlap band FIRST: a later band cannot resurrect quartets an earlier
     // band killed, so cohort mixing must gate before the wait-sum band —
     // otherwise wave-mixing quartets (lower wait sum) are eliminated forever.
@@ -404,12 +523,13 @@ export function planBatch({
 
     let f1Max = -Infinity;
     for (let q = 0; q < M; q++) if (m[q] && f1[q] > f1Max) f1Max = f1[q];
-    const epsW = Math.max(C.epsWaitMin, C.epsWaitRatio * f1Max);
+    const epsW = wide.wait ? Infinity : Math.max(C.epsWaitMin, C.epsWaitRatio * f1Max);
     for (let q = 0; q < M; q++) if (m[q] && f1[q] < f1Max - epsW) m[q] = 0;
 
     let f2Min = Infinity;
     for (let q = 0; q < M; q++) if (m[q] && f2[q] < f2Min) f2Min = f2[q];
-    for (let q = 0; q < M; q++) if (m[q] && f2[q] > f2Min + C.epsVirtGames) m[q] = 0;
+    const epsG = wide.virt ? Infinity : C.epsVirtGames;
+    for (let q = 0; q < M; q++) if (m[q] && f2[q] > f2Min + epsG) m[q] = 0;
 
     let f3Min = Infinity;
     for (let q = 0; q < M; q++) if (m[q] && f3[q] < f3Min) f3Min = f3[q];
@@ -437,12 +557,17 @@ export function planBatch({
           d = locals[V2[sp]];
         if (banSet.has(a * K + b) || banSet.has(c * K + d)) continue;
         const f4 = Math.abs(R[a * K + b] - R[c * K + d]);
+        const qual =
+          C.qualRange * Math.max(0, fR[q] - 1) ** 2 +
+          C.qualGap * ((s[a] - s[b]) ** 2 + (s[c] - s[d]) ** 2) +
+          C.qualTeam * f4 ** 2;
         const partner = P[a * K + b] + P[c * K + d];
         const opp = all6O[q] - (O[a * K + b] + O[c * K + d]);
         out.push({
           q,
           split: sp,
           f4,
+          qual,
           f5: partner + C.betaOpponent * opp,
           f1: f1[q],
           f3: f3[q],
@@ -456,12 +581,12 @@ export function planBatch({
   // if a tight cohort band can't cover `need` disjoint quartets, widen it for
   // this batch rather than silently idling courts (same spirit as the anchor
   // fallback inside).
-  const select = (epsOv, requireAnchor) => {
-    let mask = cascade(requireAnchor, epsOv);
+  const select = (epsOv, requireAnchor, wide = {}) => {
+    let mask = cascade(requireAnchor, epsOv, wide);
     let splits = collectSplits(mask);
     if (!splits.length && C.anchorTopWaiter && C.epsWaitMin > 0) {
       // Fallback if hard-ban pairs ruled out every quartet containing anchorIdx.
-      mask = cascade(false, epsOv);
+      mask = cascade(false, epsOv, wide);
       splits = collectSplits(mask);
     }
     if (!splits.length) return null;
@@ -473,20 +598,34 @@ export function planBatch({
 
     let cands;
     if (need === 1) {
-      // Single court: lexicographic min F5 (bucketed to ignore ancient decay dust) → min F4 → min F3 → max wait sum (§4).
+      // Single court: lexicographic min F5 (bucketed to ignore ancient decay dust) → min quality cost → min F3 → max wait sum (§4).
       cands = [...band].sort(
         (a, b) =>
-          (Math.abs(a.f5 - b.f5) > 0.12 ? a.f5 - b.f5 : 0) || a.f4 - b.f4 || a.f3 - b.f3 || b.f1 - a.f1,
+          (Math.abs(a.f5 - b.f5) > 0.12 ? a.f5 - b.f5 : 0) || a.qual - b.qual || a.f3 - b.f3 || b.f1 - a.f1,
       );
     } else {
       // Multi court: J(q) = λ₃f₃ + λ₄minF₄ + λ₅minF₅ per quartet (§5).
       const perQuartet = new Map();
       for (const sv of band) {
-        const J = C.lambdaSkillVar * sv.f3 + C.lambdaTeamDiff * sv.f4 + C.lambdaVariety * sv.f5;
+        const J =
+          C.lambdaSkillVar * sv.f3 +
+          C.lambdaTeamDiff * sv.f4 +
+          C.lambdaQuality * sv.qual +
+          C.lambdaVariety * sv.f5;
         const prev = perQuartet.get(sv.q);
         if (!prev || J < prev.J) perQuartet.set(sv.q, { ...sv, J });
       }
       cands = [...perQuartet.values()].sort((a, b) => a.J - b.J);
+    }
+
+    // Joint wait band (ladder step "wait"): the per-quartet band is lifted, so
+    // hold the chosen SET to within ε₁ per court of the best achievable total
+    // wait (the top 4·need waits) — the longest waiters still go first.
+    let jointFloor = -Infinity;
+    if (wide.wait && !wide.virt) {
+      const top = [...w].sort((a, b) => b - a).slice(0, 4 * need);
+      const best = top.reduce((t, x) => t + x, 0);
+      jointFloor = best - need * Math.max(C.epsWaitMin, (C.epsWaitRatio * best) / need);
     }
 
     // Pick `need` bitmask-disjoint quartets minimising (max J, sum J).
@@ -496,6 +635,7 @@ export function planBatch({
     let bestSet = null;
     const bt = (start, chosen, used) => {
       if (chosen.length === need) {
+        if (chosen.reduce((t, x) => t + x.f1, 0) < jointFloor) return;
         const maxJ = Math.max(...chosen.map((x) => x.J));
         const sumJ = chosen.reduce((t, x) => t + x.J, 0);
         if (!bestSet || maxJ < bestSet.maxJ || (maxJ === bestSet.maxJ && sumJ < bestSet.sumJ)) {
@@ -533,10 +673,20 @@ export function planBatch({
     return bestSet;
   };
 
-  let bestSet = select(C.epsOverlap, shouldAnchor);
-  if (bestSet && bestSet.set.length < need) {
-    // Tight overlap band couldn't cover all courts — widen it for this batch.
-    bestSet = select(Infinity, shouldAnchor);
+  // Ladder: a band that can't cover every court is widened for this batch
+  // rather than idling a court — overlap first (cheapest to give up), then
+  // the wait band, then the games band. Wait/games priority still orders the
+  // survivors through J and the window's π slice.
+  let bestSet = null;
+  for (const [epsOv, wide] of [
+    [C.epsOverlap, {}],
+    [Infinity, {}],
+    [Infinity, { wait: true }],
+    [Infinity, { wait: true, virt: true }],
+  ]) {
+    const got = select(epsOv, shouldAnchor, wide);
+    if (got && (!bestSet || got.set.length > bestSet.set.length)) bestSet = got;
+    if (bestSet && bestSet.set.length >= need) break;
   }
   if (!bestSet) return { matches: [], relaxed: didRelax };
 

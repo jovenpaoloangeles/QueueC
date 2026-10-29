@@ -133,4 +133,102 @@ const T0 = 1_800_000_000,
   assert.deepEqual(impossible.matches, []);
 }
 
+// U6.1 — joint wait band: courts finishing together must both be filled. The
+// ε₁ wait band is measured against the single best quartet, so when < 8 players
+// hold the long waits every survivor shares them and only one disjoint quartet
+// was left (review 2026-10-29: 4 of 12 rounds idled a court).
+{
+  const players = Array.from({ length: 16 }, (_, i) => ({
+    id: i + 1,
+    status: "waiting",
+    skill_level: "intermediate",
+    checked_in_at: T0,
+    last_played_at: null,
+    total_seconds_played: 0,
+    games_played: 0,
+  }));
+  const history = [];
+  let now = T0;
+  const short = [];
+  for (let round = 0; round < 12; round++) {
+    const waiting = players.filter((p) => p.status === "waiting");
+    const plan = planBatch({ waiting, history, courtCount: 2, now });
+    if (plan.matches.length < 2) short.push(round);
+    for (const m of plan.matches) {
+      const q = [...m.team1, ...m.team2];
+      history.push({ team1: m.team1, team2: m.team2, started_at: now, ended_at: now + 840 });
+      for (const id of q) {
+        const p = players[id - 1];
+        p.games_played++;
+        p.last_played_at = now + 840;
+        p.total_seconds_played += 840;
+      }
+    }
+    now += 840;
+  }
+  assert.deepEqual(short, [], `every synchronized round must fill both courts; short rounds: ${short}`);
+}
+
+// U6.2 — phase-lock kick. 16 equal players on 2 courts with near-identical
+// game lengths (14 min ± 1, seeded) lock into two rotation cohorts that never
+// meet — 0 cohort-mixed games all night without the kick (review probe,
+// 2026-10-29). With it, the cohorts cross repeatedly and both courts stay full.
+{
+  const { cohortLocked } = await import("../../server/logic/smartQueue.js");
+  const nightOf = (cfg) => {
+    let s = 1;
+    const rnd = () => (s = (s * 1664525 + 1013904223) >>> 0) / 2 ** 32;
+    const P = Array.from({ length: 16 }, (_, i) => ({
+      id: i + 1,
+      status: "waiting",
+      skill_level: "intermediate",
+      checked_in_at: T0,
+      last_played_at: null,
+      total_seconds_played: 0,
+      games_played: 0,
+    }));
+    const live = [];
+    const history = [];
+    let now = T0;
+    while (now < T0 + 180 * 60) {
+      live.sort((a, b) => a.ends - b.ends);
+      while (live.length && live[0].ends <= now) {
+        const g = live.shift();
+        for (const id of [...g.team1, ...g.team2]) {
+          Object.assign(P[id - 1], { status: "waiting", last_played_at: g.ends });
+          P[id - 1].games_played++;
+        }
+        history.push({ team1: g.team1, team2: g.team2, started_at: g.started_at, ended_at: g.ends });
+      }
+      const free = 2 - live.length;
+      if (free > 0) {
+        const plan = planBatch({
+          waiting: P.filter((p) => p.status === "waiting"),
+          history,
+          courtCount: free,
+          now,
+          cfg,
+        });
+        for (const m of plan.matches.slice(0, free)) {
+          for (const id of [...m.team1, ...m.team2]) P[id - 1].status = "playing";
+          live.push({ ...m, started_at: now, ends: now + Math.round((14 + (rnd() * 2 - 1)) * 60) });
+        }
+      }
+      now = live.length ? Math.min(...live.map((g) => g.ends)) : now + 30;
+    }
+    const first = new Set(history.slice(0, 2).flatMap((m) => [...m.team1, ...m.team2]));
+    const crossed = history.filter((m) => {
+      const a = [...m.team1, ...m.team2].filter((id) => first.has(id)).length;
+      return a > 0 && a < 4;
+    }).length;
+    return { crossed, games: history.length, history };
+  };
+  const off = nightOf({ mixKick: false });
+  assert.equal(off.crossed, 0, "precondition: without the kick the cohorts never meet");
+  assert.equal(cohortLocked(off.history), true, "the detector sees the lock");
+  const on = nightOf({});
+  assert.ok(on.crossed >= 8, `kick: cohorts must cross repeatedly, got ${on.crossed}`);
+  assert.ok(on.games >= off.games, `kick must not idle courts (${on.games} vs ${off.games} games)`);
+}
+
 console.log("smartqueue.test.js: all assertions passed");

@@ -285,6 +285,17 @@ export function runSession(scenario, policy, cfg = {}) {
   let consecViolations = 0;
   let latecomerBursts = 0;
   const lastPairGame = new Map();
+  // v1.7 algorithm-review metrics
+  const coplayPairs = new Set();
+  let crossCohortGames = 0;
+  let wideRangeGames = 0;
+  let smallTierGames = 0;
+  let smallTierPure = 0;
+  let idleCourtMins = 0;
+  const lastEndAt = new Array(N).fill(null); // minutes; null = never played
+  const tierSize = new Map();
+  for (let i = 0; i < N; i++) tierSize.set(skillTiers[i], (tierSize.get(skillTiers[i]) ?? 0) + 1);
+  const SMALL_TIER = 8;
 
   while (events.size) {
     const [t, evType, , payload] = events.pop();
@@ -292,6 +303,12 @@ export function runSession(scenario, policy, cfg = {}) {
 
     // Continuous wait integration for active waiting bench players
     const dt = t - tPrev;
+    if (dt > 0 && tPrev <= SESSION_MINS) {
+      // idle court-minutes: a court sat free while ≥4 players could have used it
+      let free = 0;
+      for (let i = 0; i < N; i++) if (checkedIn[i] && !departed[i] && !onCourt[i] && !resting[i]) free++;
+      idleCourtMins += Math.min(freeCourts.length, Math.floor(free / 4)) * Math.min(dt, SESSION_MINS - tPrev);
+    }
     if (dt > 0) {
       for (let i = 0; i < N; i++) {
         if (checkedIn[i] && !departed[i] && !onCourt[i] && !resting[i]) {
@@ -329,6 +346,7 @@ export function runSession(scenario, policy, cfg = {}) {
         onCourt[p] = false;
         wait[p] = 0;
         lastPlayedAt[p] = t;
+        lastEndAt[p] = t;
         playMins[p] += playDuration;
         if (t >= (departures[p] ?? Infinity)) {
           departed[p] = true;
@@ -516,6 +534,19 @@ export function runSession(scenario, policy, cfg = {}) {
           }
           if (f0 < 1.0) novelCohorts++;
 
+          // cohort mixing: players whose last games ended > 3 min apart come
+          // from different rotation cohorts (never-played players are neutral)
+          const ends = quartet.map((p) => lastEndAt[p]).filter((x) => x != null);
+          if (ends.length >= 2 && Math.max(...ends) - Math.min(...ends) > 3) crossCohortGames++;
+          if (Math.max(...qs) - Math.min(...qs) > 2) wideRangeGames++;
+          if (quartet.some((p) => tierSize.get(skillTiers[p]) < SMALL_TIER)) {
+            smallTierGames++;
+            if (qs.every((v) => v === qs[0])) smallTierPure++;
+          }
+          for (let a = 0; a < 4; a++)
+            for (let b = a + 1; b < 4; b++)
+              coplayPairs.add(Math.min(quartet[a], quartet[b]) * N + Math.max(quartet[a], quartet[b]));
+
           for (const p of quartet) {
             onCourt[p] = true;
             wait[p] = 0;
@@ -578,6 +609,11 @@ export function runSession(scenario, policy, cfg = {}) {
     repeat_partner_pct: (100 * repeatPartnerEvents) / nGames,
     repeat_recent_pct: (100 * recentRepeatEvents) / nGames,
     novel_cohorts_pct: (100 * novelCohorts) / nGames,
+    pair_coverage_pct: (100 * coplayPairs.size) / Math.max(1, (N * (N - 1)) / 2),
+    cross_cohort_pct: (100 * crossCohortGames) / nGames,
+    wide_range_pct: (100 * wideRangeGames) / nGames,
+    small_tier_pure_pct: smallTierGames ? (100 * smallTierPure) / smallTierGames : 0,
+    idle_court_mins: idleCourtMins,
     solve_time_us: mean(solveUs),
   };
 }
