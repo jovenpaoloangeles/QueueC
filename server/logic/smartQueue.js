@@ -731,6 +731,8 @@ function planCore({
       }
     };
     bt(0, [], 0);
+    // Greedy fallback: covers DFS budget overflow and yields a partial plan
+    // when no disjoint `need`-set exists (a partial plan beats none).
     if (!bestSet) {
       // Greedy fallback over J-sorted candidates.
       bestSet = { set: [], maxJ: 0, sumJ: 0 };
@@ -745,6 +747,11 @@ function planCore({
         bestSet.maxJ = Math.max(bestSet.maxJ, cand.J);
         bestSet.sumJ += cand.J;
       }
+      // a FULL greedy set must still meet the joint wait floor — otherwise
+      // return null so the ladder's next rung decides, instead of benching
+      // the longest waiters (review 2026-10-29)
+      if (bestSet.set.length === need && bestSet.set.reduce((t, x) => t + x.f1, 0) < jointFloor)
+        bestSet = null;
     }
     return bestSet;
   };
