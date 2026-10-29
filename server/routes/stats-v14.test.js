@@ -62,7 +62,7 @@ async function main() {
     return { sid: s.id, e };
   };
 
-  // S1, S2: one win each for A+B; S3: 8 straight wins (A's 10th career game)
+  // S1, S2: one win each for A+B; S3: 23 straight wins (A's 25th career game)
   for (const k of [1, 2]) {
     const { sid, e } = await session(k, ["A", "B", "C", "D"]);
     await play(sid, e, 21, 10);
@@ -70,33 +70,33 @@ async function main() {
   }
   await mk("E"); // created late: session end prunes never-played drop-ins
   const { sid, e } = await session(3, ["A", "B", "C", "D", "E"]);
-  for (let i = 0; i < 8; i++) await play(sid, e, 21, 15);
+  for (let i = 0; i < 23; i++) await play(sid, e, 21, 15);
 
   // read live: ending the session prunes never-played drop-ins (E)
   const d = await api(`/api/sessions/${sid}/detail`);
   assert.equal(d.status, 200);
-  assert.deepEqual(d.fairness.games, { min: 0, median: 8, max: 8 }, "E never played");
+  assert.deepEqual(d.fairness.games, { min: 0, median: 23, max: 23 }, "E never played");
   assert.equal(typeof d.fairness.avg_wait_seconds, "number");
   assert.ok(d.fairness.most_bumped.length <= 3);
   assert.ok(
-    d.fairness.most_bumped.every((p) => p.games === 8 && p.longest_wait_seconds >= 0),
+    d.fairness.most_bumped.every((p) => p.games === 23 && p.longest_wait_seconds >= 0),
     "never-played players have no closed gap",
   );
 
   const h = d.highlights;
   const byName = (list) => Object.fromEntries(list.map((x) => [x.name.replace(`${tag} `, ""), x]));
-  assert.equal(byName(h.win_streaks).A.streak, 8);
-  assert.equal(byName(h.win_streaks).B.streak, 8);
+  assert.equal(byName(h.win_streaks).A.streak, 23);
+  assert.equal(byName(h.win_streaks).B.streak, 23);
   assert.equal(byName(h.win_streaks).C, undefined, "losers have no streak");
   assert.equal(byName(h.attendance_streaks).A.streak, 3, "S1–S3 in a row");
   assert.equal(byName(h.attendance_streaks).E, undefined, "E only came once");
   assert.deepEqual(
     h.milestones.filter((m) => m.name.startsWith(tag)).map((m) => [m.name.replace(`${tag} `, ""), m.game]),
     [
-      ["A", 10],
-      ["B", 10],
-      ["C", 10],
-      ["D", 10],
+      ["A", 25],
+      ["B", 25],
+      ["C", 25],
+      ["D", 25],
     ],
   );
 
@@ -104,23 +104,28 @@ async function main() {
   const k = await api(`/api/players/${ids.A}/career`);
   assert.deepEqual(
     k.partners.map((p) => [p.player_id, p.games, p.win_rate]),
-    [[ids.B, 10, 100]],
+    [[ids.B, 25, 100]],
   );
   assert.deepEqual(
     k.opponents.map((p) => [p.player_id, p.games, p.wins, p.losses, p.win_rate]).sort((a, b) => a[0] - b[0]),
     [
-      [ids.C, 10, 10, 0, 100],
-      [ids.D, 10, 10, 0, 100],
+      [ids.C, 25, 25, 0, 100],
+      [ids.D, 25, 25, 0, 100],
     ],
   );
   const kc = await api(`/api/players/${ids.C}/career`);
-  assert.ok(kc.opponents.every((p) => p.win_rate === 0 && p.losses === 10));
+  assert.ok(kc.opponents.every((p) => p.win_rate === 0 && p.losses === 25));
 
   // leaderboard windows
   const all = await api("/api/leaderboard?since=0");
   assert.equal(all.status, 200);
   const a = all.leaderboard.find((r) => r.player_id === ids.A);
-  assert.deepEqual([a.played, a.wins, a.losses], [10, 10, 0], "all-time spans sessions");
+  assert.deepEqual([a.played, a.wins, a.losses], [25, 25, 0], "all-time spans sessions");
+  const firstShort = all.leaderboard.findIndex((r) => r.played < 3);
+  assert.ok(
+    firstShort === -1 || all.leaderboard.slice(firstShort).every((r) => r.played < 3),
+    "players under 3 games rank below everyone with 3+",
+  );
   const future = await api(`/api/leaderboard?since=${base * 2}`);
   assert.deepEqual(future.leaderboard, []);
   assert.equal((await api("/api/leaderboard?since=abc")).status, 400);

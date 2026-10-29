@@ -57,11 +57,11 @@ test("8.10 cancel keeps match running", async ({ page }) => {
   await expect(page.getByRole("button", { name: "End Match" })).toBeVisible(); // match still live
 });
 
-test("8.11 score 0–0 accepted", async ({ page }) => {
+test("8.11 blank scores can't be submitted (v1.5: scores required)", async ({ page }) => {
   await page.getByRole("button", { name: "End Match" }).first().click();
   await page.getByTestId("confirm-end-end").click(); // pass the confirm gate
-  await page.getByRole("button", { name: "Confirm" }).click();
-  await expect(page.locator("text=Select 2 or 4 players").first()).toBeVisible();
+  await expect(page.getByTestId("end-match-score-issue")).toHaveText("Enter both scores");
+  await expect(page.getByRole("button", { name: "Confirm" })).toBeDisabled();
 });
 
 // live-card sides are per-player chips: name + tier badge lines
@@ -102,10 +102,12 @@ test("8.12 team 1 win — winning players gain leaderboard wins", async ({ page 
   await expect(page.locator("text=1W")).toHaveCount(2); // both winners show 1W
 });
 
-test("8.13 tie score — no leaderboard wins recorded", async ({ page }) => {
-  await endMatch(page, "Court", { team1: 15, team2: 15 });
-  const side = page.getByRole("complementary");
-  // non-vacuous: the match was recorded before asserting no wins
-  await expect(side.locator("text=Matches").locator("..").locator('[class*="font-mono"]')).toHaveText("1");
-  await expect(side.getByText(/^[1-9]\d*W$/)).toHaveCount(0);
+test("8.13 tie score is refused — the match stays live (v1.5: no draws)", async ({ page }) => {
+  await page.getByRole("button", { name: "End Match" }).first().click();
+  await page.getByTestId("confirm-end-end").click();
+  await page.getByLabel("Team 1").fill("15");
+  await page.getByLabel("Team 2").fill("15");
+  await expect(page.getByRole("button", { name: "Confirm" })).toBeDisabled();
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await expect(page.getByRole("button", { name: "End Match" })).toBeVisible();
 });

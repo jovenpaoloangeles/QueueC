@@ -76,7 +76,7 @@ match starts show an Undo toast for a few seconds.
 
 ### Ending a match
 
-Confirm → record scores, shuttles used (pre-filled at **1 per game**) and an
+Confirm → record scores (both required, no ties), shuttles used (pre-filled at **1 per game**) and an
 optional 1–5 rating. Finished players return to the queue with their wait clock
 reset; the next slate promotes onto the freed court.
 
@@ -99,12 +99,15 @@ singles match instead of fielding nothing.
 
 Players / Matches / Avg-wait figures, shuttles used, and the live leaderboard
 (rank, games, W/L, win %, point differential). The **Session / Month /
-All-time** switch above the leaderboard widens it to every game started this
-calendar month or ever.
+All** switch above the leaderboard widens it to every game started this
+calendar month or ever; on the wider boards players with fewer than 3 games
+rank below everyone else.
 
 ## Ending the session
 
-**End Session** and **New Session** (both confirm first) close the session;
+**End Session** and **New Session** (both confirm first) close the session —
+the confirm warns if games are still on court or lineups on deck, and those
+are discarded (end the games first to keep their scores);
 history and the leaderboard persist in SQLite. Court expiry and timers stop
 with it.
 
@@ -117,9 +120,9 @@ totals and attendance. While a session is still live its page refreshes every
 
 Each session page also shows:
 
-- **Highlights** — win streaks of 3+ within the session, players on a 3+
-  session attendance streak, and career milestones (10th, 25th, 50th and every
-  100th game) reached that day.
+- **Highlights** — one line per type: win streaks of 3+ within the session,
+  players on a 3+ session attendance streak, and career milestones (25th, 50th
+  and every 100th game) reached that day.
 - **Fairness** — fewest / median / most games played, average net wait (time
   between a player's games, from check-in or session start), and the three
   longest single waits. Resting counts as waiting, so a long rest can top the

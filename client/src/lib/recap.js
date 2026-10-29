@@ -10,9 +10,22 @@ export function buildRecap({ session, leaderboard, games, attendance, shuttles, 
   if (top) lines.push(`🏆 Top: ${top.name} (${top.wins}-${top.losses}, ${top.win_rate}%)`);
   const busiest = [...leaderboard].sort((a, b) => b.played - a.played)[0];
   if (busiest) lines.push(`🎽 Most games: ${busiest.name} (${busiest.played})`);
-  for (const s of highlights?.win_streaks ?? []) lines.push(`🔥 ${s.name}: ${s.streak} wins in a row`);
-  for (const m of highlights?.milestones ?? []) lines.push(`🎉 ${m.name}: game #${m.game}`);
-  for (const s of highlights?.attendance_streaks ?? [])
-    lines.push(`📅 ${s.name}: ${s.streak} sessions in a row`);
+  // one line per highlight type, top 3 names — the full list lives on the page
+  for (const line of highlightLines(highlights, 3)) lines.push(line);
   return lines.join("\n");
 }
+
+// shared with the session page: [emoji label, "Name (n), …"] per non-empty type
+export function highlightGroups(highlights, limit = Infinity) {
+  const top = (list, fmt) => list.slice(0, limit).map(fmt).join(", ") + (list.length > limit ? ", …" : "");
+  return [
+    ["🔥 Win streaks", highlights?.win_streaks ?? [], (s) => `${s.name} (${s.streak})`],
+    ["🎉 Milestones", highlights?.milestones ?? [], (m) => `${m.name} (game #${m.game})`],
+    ["📅 Attendance streaks", highlights?.attendance_streaks ?? [], (s) => `${s.name} (${s.streak})`],
+  ]
+    .filter(([, list]) => list.length)
+    .map(([label, list, fmt]) => ({ label, list, text: top(list, fmt) }));
+}
+
+const highlightLines = (highlights, limit) =>
+  highlightGroups(highlights, limit).map((g) => `${g.label}: ${g.text}`);

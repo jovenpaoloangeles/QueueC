@@ -26,7 +26,6 @@ export default function PlayerCard({
   const isResting = entry.status === "resting";
   const wait = waitSecs ?? 0;
   const gamesPlayed = entry.games_played ?? 0;
-  const fairness = entry.fairness;
   const avgRating = entry.avg_rating;
   const starsOn = Math.max(0, Math.min(5, Math.round(Number(avgRating))));
 
@@ -191,17 +190,10 @@ export default function PlayerCard({
               [{gamesPlayed}]
             </span>
           </span>
-          <span data-testid="fairness" className="shrink-0">
-            fairness{" "}
-            {fairness != null ? (
-              <span className="font-semibold tabular-nums text-foreground">
-                {Number(fairness).toFixed(1)}
-              </span>
-            ) : (
-              <span className="text-muted-foreground/60">—</span>
-            )}
-          </span>
-          <span className="truncate">{fmtMins(entry.total_seconds_played ?? 0)} played</span>
+          {/* the scheduler's fairness score stays internal; 0m played is noise */}
+          {(entry.total_seconds_played ?? 0) >= 60 && (
+            <span className="truncate">{fmtMins(entry.total_seconds_played)} played</span>
+          )}
         </span>
         <span data-testid="avg-rating" className="flex shrink-0 items-center gap-1">
           <span aria-hidden="true" className="tracking-[0.1em] text-amber">

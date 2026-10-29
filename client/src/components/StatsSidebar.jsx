@@ -9,7 +9,7 @@ import { useToast } from "./Toast.jsx";
 const WINDOWS = [
   { id: "session", label: "Session" },
   { id: "month", label: "Month" },
-  { id: "all", label: "All-time" },
+  { id: "all", label: "All" },
 ];
 const monthStart = () => {
   const d = new Date();

@@ -64,7 +64,12 @@ export default function CourtsRow({
         <h2 className="text-base font-bold tracking-[-0.015em] text-foreground">Courts</h2>
         {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
       </div>
-      <div className={cn("grid gap-3", liveCourts.length <= 4 ? "grid-cols-2" : "grid-cols-3")}>
+      <div
+        className={cn(
+          "grid gap-3",
+          liveCourts.length <= 4 ? "sm:grid-cols-2" : "sm:grid-cols-2 xl:grid-cols-3",
+        )}
+      >
         {liveCourts.map((court) => {
           const draft = drafts[court.id] ?? EMPTY_DRAFT;
           const filled = draft.filter(Boolean);

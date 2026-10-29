@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import downloadExport from "@/lib/download";
-import { buildRecap } from "@/lib/recap";
+import { buildRecap, highlightGroups } from "@/lib/recap";
 import { fmtClock } from "@/lib/utils";
 import CorrectMatchDialog from "./CorrectMatchDialog.jsx";
 import HistoryShell from "./HistoryShell.jsx";
@@ -113,11 +113,8 @@ export default function SessionDetailPage({ id }) {
     );
 
   const { session, leaderboard, games, attendance, shuttles, fairness, highlights } = detail;
-  const highlightRows = [
-    ...highlights.win_streaks.map((h) => [h.player_id, h.name, `🔥 ${h.streak} wins in a row`]),
-    ...highlights.milestones.map((h) => [h.player_id, h.name, `🎉 career game #${h.game}`]),
-    ...highlights.attendance_streaks.map((h) => [h.player_id, h.name, `📅 ${h.streak} sessions in a row`]),
-  ];
+  const groups = highlightGroups(highlights);
+  const gamesBy = new Map(leaderboard.map((r) => [r.player_id, r.played]));
   const availablePlayers = players.filter((p) => !attendance.some((a) => a.player_id === p.id));
 
   return (
@@ -170,6 +167,7 @@ export default function SessionDetailPage({ id }) {
             <thead>
               <tr className="border-b border-border text-left text-[12.5px] text-muted-foreground">
                 <th className="px-4 py-2 font-medium">Player</th>
+                <th className="px-2 py-2 font-medium">GP</th>
                 <th className="px-2 py-2 font-medium">W/L</th>
                 <th className="px-2 py-2 font-medium">Win %</th>
                 <th className="px-2 py-2 font-medium">Pt Diff</th>
@@ -190,6 +188,7 @@ export default function SessionDetailPage({ id }) {
                       {r.name}
                     </a>
                   </td>
+                  <td className="px-2 py-2 font-mono tabular-nums text-muted-foreground">{r.played}</td>
                   <td className="px-2 py-2 font-mono font-bold tabular-nums">
                     {r.wins}/{r.losses}
                   </td>
@@ -202,7 +201,7 @@ export default function SessionDetailPage({ id }) {
               ))}
               {leaderboard.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">
+                  <td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">
                     No games played.
                   </td>
                 </tr>
@@ -211,23 +210,32 @@ export default function SessionDetailPage({ id }) {
           </table>
         </section>
 
-        {/* v1.4 highlights: streaks and milestones */}
-        {highlightRows.length > 0 && (
+        {/* v1.4 highlights: one row per type, names as links */}
+        {groups.length > 0 && (
           <section className="rounded-lg border border-border bg-card shadow-card" aria-label="Highlights">
             <h2 className="border-b border-border px-4 py-2.5 text-[12.5px] font-semibold uppercase tracking-wider text-muted-foreground">
               Highlights
             </h2>
             <ul className="divide-y divide-border">
-              {highlightRows.map(([pid, name, text]) => (
-                <li
-                  key={`${pid}-${text}`}
-                  data-testid="detail-highlight"
-                  className="flex items-center justify-between px-4 py-2 text-sm"
-                >
-                  <a href={`#/players/${pid}`} className="font-medium text-foreground hover:text-primary">
-                    {name}
-                  </a>
-                  <span className="text-muted-foreground">{text}</span>
+              {groups.map((g) => (
+                <li key={g.label} data-testid="detail-highlight" className="flex gap-3 px-4 py-2 text-sm">
+                  <span className="w-44 shrink-0 text-muted-foreground">{g.label}</span>
+                  <span>
+                    {g.list.map((h, i) => (
+                      <span key={h.player_id}>
+                        {i > 0 && ", "}
+                        <a
+                          href={`#/players/${h.player_id}`}
+                          className="font-medium text-foreground hover:text-primary"
+                        >
+                          {h.name}
+                        </a>{" "}
+                        <span className="font-mono tabular-nums text-muted-foreground">
+                          ({h.game ? `#${h.game}` : h.streak})
+                        </span>
+                      </span>
+                    ))}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -378,17 +386,24 @@ export default function SessionDetailPage({ id }) {
                   className="font-medium text-foreground hover:text-primary"
                 >
                   {a.name}
-                  <span className="ml-2 text-[12.5px] text-muted-foreground">{a.status}</span>
+                  <span className="ml-2 text-[12.5px] text-muted-foreground">
+                    {live
+                      ? a.status
+                      : `${gamesBy.get(a.player_id) ?? 0} game${gamesBy.get(a.player_id) === 1 ? "" : "s"}`}
+                  </span>
                 </a>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  data-testid="attendance-remove"
-                  className="text-destructive hover:bg-wash-red hover:text-destructive"
-                  onClick={() => setRemoveEntryId(a.entry_id)}
-                >
-                  Remove
-                </Button>
+                {/* the server refuses anyone with match history — fix the match instead */}
+                {!gamesBy.get(a.player_id) && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    data-testid="attendance-remove"
+                    className="text-destructive hover:bg-wash-red hover:text-destructive"
+                    onClick={() => setRemoveEntryId(a.entry_id)}
+                  >
+                    Remove
+                  </Button>
+                )}
               </li>
             ))}
           </ul>

@@ -4,6 +4,39 @@ Notable user-facing changes. Format follows Keep a Changelog; versions follow
 semver once there is a public API surface to break (the Docker image tag is
 the version that matters for self-hosters).
 
+## [Unreleased] — v1.5 UX polish
+
+### Changed
+
+- The live screen fits tablets and phones: the header wraps instead of pushing
+  Smart Match / History / Pause / End Session off-screen, status chips show
+  from 1280 px, the sidebar stacks under the courts below 1024 px and courts go
+  single-column on phones.
+- End Session warns when games are still on court or lineups on deck; ending
+  discards them instead of leaving score-less rows in history.
+- A match can't end blank or tied — the end-match form says why and keeps
+  Confirm disabled (the API rejects it too, for end and corrections).
+- Month / All-time leaderboards rank players with 3+ games first.
+- Session highlights group by type (one line each); milestones start at the
+  25th career game; the share recap lists at most 3 names per type.
+- Session page: GP column on the leaderboard; ended sessions list games played
+  per attendee instead of a stale queue status; Remove only shows for players
+  without games.
+- Career page: partners / head-to-head show the top 8 with "Show all".
+- Queue cards no longer show the scheduler's internal fairness score or
+  "0m played"; the leaderboard switch reads Session / Month / All.
+
+### Fixed
+
+- Starting a match (direct, from On Deck, or Smart Match) is refused while the
+  session is paused, matching match end.
+- Queue status changes only accept waiting / resting / left, and never mark an
+  on-court or on-deck player as left.
+- Checking in a player that no longer exists returns 404 instead of 500.
+- Career and partner/opponent records no longer count a tie as a loss.
+- Monthly attendance % counts sessions a player attended even when they predate
+  the player's record.
+
 ## [1.4.2] — 2026-10-29
 
 Stats improvements (roadmap v1.4).

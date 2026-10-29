@@ -99,8 +99,8 @@ function computeFairness(session, games, attendance) {
 }
 
 // v1.4 highlights: in-session win streaks (>=3), consecutive-session
-// attendance streaks (>=3) and career-game milestones reached this session.
-const isMilestone = (n) => n === 10 || n === 25 || n === 50 || n % 100 === 0;
+// attendance streaks (>=3) and career-game milestones (25th, 50th, every 100th) reached this session.
+const isMilestone = (n) => n === 25 || n === 50 || n % 100 === 0;
 function computeHighlights(session, attendance) {
   const rows = db
     .prepare(`
@@ -226,12 +226,17 @@ export function getSessionDetail(sessionId) {
   };
 }
 
+const MIN_RANKED = 3;
+
 // v1.4 leaderboard windows: games started at/after `since` (unix seconds;
 // the client sends its local month start, or 0 for all-time).
 router.get("/leaderboard", (c) => {
   const since = Number(c.req.query("since") ?? 0);
   if (!Number.isFinite(since)) return c.json({ error: "since must be a unix timestamp" }, 400);
-  return c.json({ leaderboard: leaderboard("m.started_at >= ?", since) });
+  // win %-first ranking lets a lone 1-0 top a month; rank players with a real
+  // sample first (stable sort keeps the usual order within each group)
+  const board = leaderboard("m.started_at >= ?", since);
+  return c.json({ leaderboard: board.sort((a, b) => (b.played >= MIN_RANKED) - (a.played >= MIN_RANKED)) });
 });
 
 router.get("/sessions/:id/detail", (c) => {
@@ -371,7 +376,9 @@ export function getCareer(playerId) {
   for (const s of db
     .prepare("SELECT id, scheduled_start FROM sessions WHERE ended_at IS NOT NULL ORDER BY scheduled_start")
     .all()) {
-    if (s.scheduled_start < player.created_at) continue;
+    // pre-dating the player only excuses sessions they missed — one they
+    // attended always counts (rosters imported after the club's first nights)
+    if (s.scheduled_start < player.created_at && !attended.has(s.id)) continue;
     const month = new Date(s.scheduled_start * 1000).toISOString().slice(0, 7);
     const cur = byMonth.get(month) ?? { month, attended: 0, total: 0 };
     cur.total += 1;

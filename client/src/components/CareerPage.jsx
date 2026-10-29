@@ -15,7 +15,11 @@ const fmtDate = (ts) =>
 // v1.4 synergy: best/worst need a few games to mean anything
 const MIN_GAMES = 3;
 
+const SHOWN = 8;
+
 function RecordTable({ title, rows, testid, empty, best, worst }) {
+  const [all, setAll] = useState(false);
+  const shown = all ? rows : rows.slice(0, SHOWN);
   const ranked = rows
     .filter((r) => r.games >= MIN_GAMES)
     .sort((a, b) => b.win_rate - a.win_rate || b.games - a.games);
@@ -54,7 +58,7 @@ function RecordTable({ title, rows, testid, empty, best, worst }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((p) => (
+          {shown.map((p) => (
             <tr key={p.player_id} data-testid={testid} className="border-b border-border last:border-0">
               <td className="px-4 py-2">
                 <a
@@ -80,6 +84,16 @@ function RecordTable({ title, rows, testid, empty, best, worst }) {
           )}
         </tbody>
       </table>
+      {rows.length > SHOWN && (
+        <button
+          type="button"
+          data-testid={`${testid}-toggle`}
+          onClick={() => setAll((a) => !a)}
+          className="w-full border-t border-border px-4 py-2 text-[12.5px] font-medium text-muted-foreground hover:text-foreground"
+        >
+          {all ? "Show fewer" : `Show all ${rows.length}`}
+        </button>
+      )}
     </section>
   );
 }

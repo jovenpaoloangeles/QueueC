@@ -36,13 +36,12 @@ test("45.1 score correction flips the rendered leaderboard", async ({ page }) =>
   await expect(rows.filter({ hasText: "Inter C1" })).toContainText("0/1");
 });
 
-test("45.2 removing a match-history entry surfaces the 409 message", async ({ page }) => {
+test("45.2 a match-history entry offers no Remove (server would 409)", async ({ page }) => {
   await seededEndedSession(page);
 
   const row = page.getByTestId("detail-attendance-row").filter({ hasText: "Inter C1" });
-  await row.getByTestId("attendance-remove").click();
-  await page.getByTestId("attendance-remove-confirm").click();
-  await expect(page.getByRole("status")).toContainText("match history");
+  await expect(row).toContainText("1 game");
+  await expect(row.getByTestId("attendance-remove")).toHaveCount(0);
 });
 
 test("45.3 add a missed player to attendance", async ({ page }) => {

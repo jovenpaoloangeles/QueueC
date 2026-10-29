@@ -10,12 +10,13 @@ test.beforeEach(async ({ page }) => {
   await fullSetup(page);
 });
 
-test("14.1 card shows name, skill badge, wait timer, minutes played", async ({ page }) => {
+// minutes played only renders once there is some (v1.5: "0m played" was noise) — 8.9 covers it
+test("14.1 card shows name, skill badge, wait timer", async ({ page }) => {
   const card = page.locator("[data-entry-id]").first();
   await expect(card.locator(".text-base.font-medium")).toBeVisible();
   await expect(card.locator('[data-testid="skill-badge"]')).toBeVisible(); // skill badge
   await expect(card.locator('[data-testid="status-timer-badge"]')).toBeVisible(); // status timer
-  await expect(card.locator("text=played")).toBeVisible();
+  await expect(card.locator("text=played")).toHaveCount(0);
 });
 
 test("14.2 wait timer increments each second", async ({ page }) => {

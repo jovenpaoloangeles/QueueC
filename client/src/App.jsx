@@ -570,7 +570,7 @@ function LiveView() {
       )}
       {(!session || session.started_at == null) && <SetupScreen draft={session} />}
       {session && session.started_at != null && (
-        <div className="flex flex-1 items-start">
+        <div className="flex flex-1 flex-col lg:flex-row lg:items-start">
           {/* one scrolling column: Courts → On Deck → Queue at natural height */}
           <main className="flex min-w-0 flex-1 flex-col gap-4 p-4">
             <CourtsRow
@@ -619,7 +619,7 @@ function LiveView() {
             />
           </main>
           {/* fixed stats sidebar: own scroll, never scrolls with the page */}
-          <aside className="sticky top-14 h-[calc(100vh-3.5rem)] w-72 shrink-0 overflow-y-auto border-l border-border bg-card">
+          <aside className="shrink-0 border-t border-border bg-card lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)] lg:w-72 lg:overflow-y-auto lg:border-l lg:border-t-0">
             <StatsSidebar stats={stats} session={session} />
           </aside>
         </div>

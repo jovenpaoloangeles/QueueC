@@ -15,7 +15,12 @@ const detail = {
   attendance: [{ player_id: 1 }, { player_id: 2 }, { player_id: 2 }],
   shuttles: { total: 4 },
   highlights: {
-    win_streaks: [{ name: "Ana", streak: 3 }],
+    win_streaks: [
+      { name: "Ana", streak: 5 },
+      { name: "Ben", streak: 4 },
+      { name: "Cy", streak: 3 },
+      { name: "Di", streak: 3 },
+    ],
     milestones: [{ name: "Ben", game: 100 }],
     attendance_streaks: [{ name: "Ana", streak: 5 }],
   },
@@ -28,9 +33,9 @@ assert.equal(
     "2 players · 1 games · 4 shuttles",
     "🏆 Top: Ana (3-0, 100%)",
     "🎽 Most games: Ben (5)",
-    "🔥 Ana: 3 wins in a row",
-    "🎉 Ben: game #100",
-    "📅 Ana: 5 sessions in a row",
+    "🔥 Win streaks: Ana (5), Ben (4), Cy (3), …",
+    "🎉 Milestones: Ben (game #100)",
+    "📅 Attendance streaks: Ana (5)",
   ].join("\n"),
 );
 assert.equal(

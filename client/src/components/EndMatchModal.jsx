@@ -36,9 +36,17 @@ export default function EndMatchModal({ match, courtLabel, teamNames, winner, on
     return Math.min(Math.max(n, 0), max);
   };
 
+  // both scores required and different — badminton has no draws (server agrees)
+  const scoreIssue =
+    scores.team1 === "" || scores.team2 === ""
+      ? "Enter both scores"
+      : toInt(scores.team1, 99) === toInt(scores.team2, 99)
+        ? "Scores can't be tied"
+        : null;
+
   async function submit(e) {
     e.preventDefault();
-    if (loading) return;
+    if (loading || scoreIssue) return;
     setLoading(true);
     try {
       await endMatch(match.id, {
@@ -184,7 +192,15 @@ export default function EndMatchModal({ match, courtLabel, teamNames, winner, on
             <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" size="sm" className="rounded-full" disabled={loading}>
+            {scoreIssue && (
+              <span
+                data-testid="end-match-score-issue"
+                className="mr-auto self-center text-xs text-muted-foreground"
+              >
+                {scoreIssue}
+              </span>
+            )}
+            <Button type="submit" size="sm" className="rounded-full" disabled={loading || !!scoreIssue}>
               {loading ? "..." : "Confirm"}
             </Button>
           </DialogFooter>

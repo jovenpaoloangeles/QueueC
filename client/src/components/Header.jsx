@@ -76,7 +76,7 @@ export default function Header({
   );
 
   return (
-    <div className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b border-border bg-card/70 px-5 backdrop-blur-xl backdrop-saturate-150">
+    <div className="sticky top-0 z-20 flex min-h-14 shrink-0 flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-border bg-card/70 px-5 py-2 backdrop-blur-xl backdrop-saturate-150">
       {/* brand — green app dot + wordmark; session name + date inline as a single line */}
       <div data-testid="brand" className="flex items-baseline gap-2 whitespace-nowrap">
         <span className="size-2.5 shrink-0 self-center rounded-[5px] bg-primary" aria-hidden="true" />
@@ -98,8 +98,9 @@ export default function Header({
         )}
       </div>
 
-      {/* live status chips — draft `.chips`, space-evenly, hidden under lg */}
-      <div aria-label="Session status" className="hidden flex-1 items-center justify-evenly px-2 lg:flex">
+      {/* live status chips — draft `.chips`, space-evenly; only from xl, where
+          they fit beside the actions (below that the actions would overflow) */}
+      <div aria-label="Session status" className="hidden flex-1 items-center justify-evenly px-2 xl:flex">
         <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[12.5px] text-muted-foreground">
           <ChipDot tone="bg-primary" />
           Courts{" "}
@@ -131,7 +132,8 @@ export default function Header({
             )}
           </b>
         </span>
-        <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[12.5px] text-muted-foreground">
+        {/* duplicate of the sidebar's Avg Wait tile — first to go when space is short */}
+        <span className="hidden items-center gap-1.5 whitespace-nowrap text-[12.5px] text-muted-foreground 2xl:inline-flex">
           <span className="h-3.5 w-px shrink-0 bg-border" aria-hidden="true" />
           Avg wait{" "}
           <b data-testid="hdr-avg" className="font-mono font-bold tabular-nums text-foreground">
@@ -141,7 +143,7 @@ export default function Header({
       </div>
 
       {/* quick actions + session controls */}
-      <div className="flex items-center gap-2">
+      <div className="ml-auto flex flex-wrap items-center gap-2">
         {session && session.started_at != null && (
           <span
             data-testid="session-timer"
@@ -230,6 +232,8 @@ export default function Header({
             </Button>
             <EndSessionConfirmDialog
               open={confirmEnd}
+              onCourt={sseData?.activeMatches?.length ?? 0}
+              onDeck={sseData?.slatedMatches?.length ?? 0}
               onOpenChange={setConfirmEnd}
               onConfirm={() => {
                 setConfirmEnd(false);
