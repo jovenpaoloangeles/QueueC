@@ -91,7 +91,7 @@ async function run() {
       "Expected double-booking backstop error",
     );
 
-    // PATCH /api/matches/:id/shuttles with { delta_new: 1, delta_used: -1 } -> 200, match.new_shuttles === 1, match.used_shuttles === 0 (clamped at 0)
+    // PATCH /api/matches/:id/shuttles with { delta_new: 1, delta_used: -1 } -> 200, match.new_shuttles === 2 (matches start at new_shuttles = 1), match.used_shuttles === 0 (clamped at 0)
     const shuttles1Res = await fetch(`${BASE}/matches/${match.id}/shuttles`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -99,10 +99,10 @@ async function run() {
     });
     assert.equal(shuttles1Res.status, 200, "Expected 200 on first PATCH shuttles");
     const { match: m1 } = await shuttles1Res.json();
-    assert.equal(m1.new_shuttles, 1, "Expected new_shuttles === 1");
+    assert.equal(m1.new_shuttles, 2, "Expected new_shuttles === 2 (starts at 1, +1 delta)");
     assert.equal(m1.used_shuttles, 0, "Expected used_shuttles === 0 (clamped at 0)");
 
-    // PATCH /api/matches/:id/shuttles with { delta_new: 1, delta_used: 2 } -> 200, match.new_shuttles === 2, match.used_shuttles === 2
+    // PATCH /api/matches/:id/shuttles with { delta_new: 1, delta_used: 2 } -> 200, match.new_shuttles === 3, match.used_shuttles === 2
     const shuttles2Res = await fetch(`${BASE}/matches/${match.id}/shuttles`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -110,7 +110,7 @@ async function run() {
     });
     assert.equal(shuttles2Res.status, 200, "Expected 200 on second PATCH shuttles");
     const { match: m2 } = await shuttles2Res.json();
-    assert.equal(m2.new_shuttles, 2, "Expected new_shuttles === 2");
+    assert.equal(m2.new_shuttles, 3, "Expected new_shuttles === 3");
     assert.equal(m2.used_shuttles, 2, "Expected used_shuttles === 2");
 
     // PATCH /api/courts/:court1Id/extend with { minutes: 60 } on timed Court 1 -> 200, court.expires_at increased by 3600
