@@ -131,6 +131,34 @@ if (!playersSql.includes("lower_intermediate")) {
   db.exec("UPDATE players SET skill_level = 'expert' WHERE skill_level = 'advanced'");
 }
 
+// ponytail: rebuild sessions to relax started_at — drafts have NULL until PATCH /start
+// runs before the conditional column ALTERs so anything it drops is re-added below
+const startedAt = db
+  .prepare("PRAGMA table_info(sessions)")
+  .all()
+  .find((c) => c.name === "started_at");
+if (startedAt?.notnull === 1) {
+  db.exec("PRAGMA foreign_keys = OFF");
+  db.transaction(() =>
+    db.exec(`
+    CREATE TABLE sessions_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      scheduled_start INTEGER NOT NULL,
+      scheduled_end INTEGER NOT NULL,
+      court_count INTEGER NOT NULL DEFAULT 2,
+      started_at INTEGER,
+      ended_at INTEGER
+    );
+    INSERT INTO sessions_new (id, name, scheduled_start, scheduled_end, court_count, started_at, ended_at)
+      SELECT id, name, scheduled_start, scheduled_end, court_count, started_at, ended_at FROM sessions;
+    DROP TABLE sessions;
+    ALTER TABLE sessions_new RENAME TO sessions;
+  `),
+  )();
+  db.exec("PRAGMA foreign_keys = ON");
+}
+
 // v1.2: per-session rotation settings (max_consecutive, rest_games)
 const sessionRotationCols = new Set(
   db
@@ -267,33 +295,6 @@ if (!courtCols.has("expires_at")) {
 }
 if (!courtCols.has("opens_after")) {
   db.exec("ALTER TABLE courts ADD COLUMN opens_after INTEGER");
-}
-
-// ponytail: rebuild sessions to relax started_at — drafts have NULL until PATCH /start
-const startedAt = db
-  .prepare("PRAGMA table_info(sessions)")
-  .all()
-  .find((c) => c.name === "started_at");
-if (startedAt?.notnull === 1) {
-  db.exec("PRAGMA foreign_keys = OFF");
-  db.transaction(() =>
-    db.exec(`
-    CREATE TABLE sessions_new (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      scheduled_start INTEGER NOT NULL,
-      scheduled_end INTEGER NOT NULL,
-      court_count INTEGER NOT NULL DEFAULT 2,
-      started_at INTEGER,
-      ended_at INTEGER
-    );
-    INSERT INTO sessions_new (id, name, scheduled_start, scheduled_end, court_count, started_at, ended_at)
-      SELECT id, name, scheduled_start, scheduled_end, court_count, started_at, ended_at FROM sessions;
-    DROP TABLE sessions;
-    ALTER TABLE sessions_new RENAME TO sessions;
-  `),
-  )();
-  db.exec("PRAGMA foreign_keys = ON");
 }
 
 // session-level manual shuttle count (+ New shuttle in the sidebar)
