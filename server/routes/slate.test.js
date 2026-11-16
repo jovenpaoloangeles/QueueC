@@ -512,16 +512,28 @@ async function run() {
       body: JSON.stringify({ expires_at: null }),
     });
 
-    // 409: one of the lineup's players is no longer staged (checked out / left)
+    // a staged entry cannot be moved out from under the slate: staged→left is
+    // rejected by the v1.5 whitelist, staged→waiting by the plan-001 guard, so
+    // the victim is still staged and the slate start succeeds
     const victim = ids4[4];
-    await fetch(`${BASE}/queue/${victim}/status`, {
+    const leftRes = await fetch(`${BASE}/queue/${victim}/status`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: "left" }),
     });
-    const staleRes = await post(sB.id, court3.id);
-    assert.equal(staleRes.status, 409, "Expected 409 when a lineup player is no longer staged");
-    assert.match((await staleRes.json()).error, /Lineup changed/);
+    assert.equal(leftRes.status, 409, "Expected 409 moving a staged entry to left");
+    assert.match((await leftRes.json()).error, /Player is on court or on deck/);
+    const waitRes = await fetch(`${BASE}/queue/${victim}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "waiting" }),
+    });
+    assert.equal(waitRes.status, 409, "Expected 409 moving a staged entry back to waiting");
+    assert.match((await waitRes.json()).error, /drafted into a slated match/);
+    const startOk = await post(sB.id, court3.id);
+    assert.equal(startOk.status, 200, "Expected the slate start to succeed (victim still staged)");
+    const { match: startedB } = await startOk.json();
+    assert.equal(startedB.state, "active", "started match state === active");
 
     // 409: match already active (sA was started above)
     const againRes = await post(sA.id, court3.id);
