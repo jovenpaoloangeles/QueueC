@@ -44,12 +44,15 @@ export function checkinPlayer(sessionId, playerId, when = Math.floor(Date.now() 
   if (!db.prepare("SELECT id FROM players WHERE id = ?").get(playerId)) {
     return { error: "Player not found", status: 404 };
   }
+  const session = db.prepare("SELECT ended_at FROM sessions WHERE id = ?").get(sessionId);
+  if (!session) return { error: "Session not found", status: 404 };
+  if (session.ended_at != null) return { error: "Session already ended", status: 409 };
   const existing = db
     .prepare("SELECT id, status FROM queue_entries WHERE session_id = ? AND player_id = ?")
     .get(sessionId, playerId);
   // v1.6: a player who went home and came back rejoins on their old entry
   // (history and games intact); wait keeps accruing like rest does
-  const ended = db.prepare("SELECT ended_at FROM sessions WHERE id = ?").get(sessionId)?.ended_at != null;
+  const ended = session.ended_at != null;
   if (existing?.status === "left" && !ended) {
     db.prepare("UPDATE queue_entries SET status = 'waiting', status_updated_at = ? WHERE id = ?").run(
       when,

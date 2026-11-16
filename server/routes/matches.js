@@ -42,6 +42,7 @@ router.post("/", async (c) => {
   if (!session) return c.json({ error: "Session not found" }, 404);
   if (session.started_at == null) return c.json({ error: "Session not started" }, 400);
   if (session.paused_at != null) return c.json({ error: "Session is paused" }, 409);
+  if (session.ended_at != null) return c.json({ error: "Session already ended" }, 409);
   const now = Math.floor(Date.now() / 1000);
 
   const court = db

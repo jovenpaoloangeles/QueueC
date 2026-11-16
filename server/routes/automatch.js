@@ -14,6 +14,7 @@ router.post("/sessions/:id/automatch", async (c) => {
   const s = db.prepare("SELECT * FROM sessions WHERE id = ?").get(id);
   if (!s) return c.json({ error: "Session not found" }, 404);
   if (s.started_at == null) return c.json({ error: "Session not started" }, 400);
+  if (s.ended_at != null) return c.json({ error: "Session already ended" }, 409);
 
   const now = Math.floor(Date.now() / 1000);
   const body = await c.req.json().catch(() => ({}));

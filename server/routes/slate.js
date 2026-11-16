@@ -9,6 +9,7 @@ router.post("/matches/slate", async (c) => {
   const s = db.prepare("SELECT * FROM sessions WHERE id = ?").get(b.session_id);
   if (!s) return c.json({ error: "Session not found" }, 404);
   if (s.started_at == null) return c.json({ error: "Session not started" }, 400);
+  if (s.ended_at != null) return c.json({ error: "Session already ended" }, 409);
   const ids = [b.team1_p1, b.team1_p2, b.team2_p1, b.team2_p2].filter(Boolean);
   if (ids.length !== 4) return c.json({ error: "A slate needs exactly 4 players (2v2)" }, 400);
   if (new Set(ids).size !== ids.length) return c.json({ error: "duplicate entry in team slots" }, 400);
@@ -138,6 +139,7 @@ router.post("/matches/:id/start", async (c) => {
   const s = db.prepare("SELECT * FROM sessions WHERE id = ?").get(m.session_id);
   if (!s || s.started_at == null) return c.json({ error: "Session not started" }, 409);
   if (s.paused_at != null) return c.json({ error: "Session is paused" }, 409);
+  if (s.ended_at != null) return c.json({ error: "Session already ended" }, 409);
   if (m.state !== "slated" || m.ended_at != null) {
     return c.json({ error: "Match is not on deck" }, 409);
   }
