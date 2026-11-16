@@ -5,7 +5,8 @@ import { cn, fmtClock } from "@/lib/utils";
 import { useToast } from "./Toast.jsx";
 
 // v1.4 leaderboard windows: session comes with stats; month/all-time fetch
-// GET /leaderboard?since= (local month start / 0), refetched on every stats push.
+// GET /leaderboard?since= (local month start / 0), refetched when the window
+// switches or a match lands (match_count bump), not on every 1s stats push.
 const WINDOWS = [
   { id: "session", label: "Session" },
   { id: "month", label: "Month" },
@@ -22,16 +23,22 @@ export default function StatsSidebar({ stats, session }) {
   const toast = useToast();
   const [win, setWin] = useState("session");
   const [windowBoard, setWindowBoard] = useState(null);
+  const [boardError, setBoardError] = useState(false);
+  const [retryNonce, setRetryNonce] = useState(0);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: retryNonce is a manual refetch trigger, not a value the effect reads
   useEffect(() => {
     if (win === "session" || !stats) return;
     let cancelled = false;
+    setBoardError(false);
     getLeaderboard(win === "month" ? monthStart() : 0)
       .then((d) => !cancelled && setWindowBoard(d.leaderboard))
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) setBoardError(true);
+      });
     return () => {
       cancelled = true;
     };
-  }, [win, stats]);
+  }, [win, stats?.match_count, retryNonce]);
   const board = (win === "session" ? stats?.leaderboard : windowBoard) ?? [];
   const addShuttle = async () => {
     try {
@@ -108,6 +115,18 @@ export default function StatsSidebar({ stats, session }) {
             ))}
           </div>
         </div>
+        {boardError && (
+          <div className="px-[18px] pb-1">
+            <button
+              type="button"
+              data-testid="board-error"
+              onClick={() => setRetryNonce((n) => n + 1)}
+              className="text-[11px] font-semibold text-destructive hover:underline"
+            >
+              Couldn't load — retry
+            </button>
+          </div>
+        )}
         <div className="px-2 pb-3">
           {board.length === 0 ? (
             <div data-testid="leaderboard-empty" className="px-2 pb-1 text-xs text-muted-foreground">
