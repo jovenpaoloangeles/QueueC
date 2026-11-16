@@ -7,7 +7,7 @@ that way are the ones that get merged.
 ## Getting set up
 
 ```bash
-bun install && bun install --cwd server && bun install --cwd client
+bun install && bun install --cwd server && bun install --cwd client && bun install --cwd tests
 bun run dev            # API on :3001, Vite client with reload
 ```
 

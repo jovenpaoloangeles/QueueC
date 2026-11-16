@@ -35,7 +35,7 @@ docker run -d --name queuec -p 3001:3001 -v "$PWD/data:/data" queuec
 ```
 
 Without Docker: install [Bun](https://bun.sh), then
-`bun install && bun install --cwd server && bun install --cwd client` and
+`bun install && bun install --cwd server && bun install --cwd client && bun install --cwd tests` and
 `bun run dev` (client on Vite's port, API on 3001).
 
 ## What it does
@@ -72,7 +72,7 @@ Without Docker: install [Bun](https://bun.sh), then
 ## Development
 
 ```bash
-bun run install:all        # root + server + client
+bun run install:all        # root + server + client + tests
 bun run dev                # client + API with reload
 
 cd tests && bun run test:server   # sub-second API regressions

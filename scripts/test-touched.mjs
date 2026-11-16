@@ -57,5 +57,6 @@ for (const f of changed) {
   }
 }
 
-if (touchedServer) console.error("# server/** changed: no e2e mapping — covered by `bun test server/`");
+if (touchedServer)
+  console.error("# server/** changed: no e2e mapping — covered by `bun run --cwd tests test:server`");
 for (const s of [...hits].sort()) console.log(s);
