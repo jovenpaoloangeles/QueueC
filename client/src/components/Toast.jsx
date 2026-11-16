@@ -61,8 +61,9 @@ export function ToastProvider({ children }) {
                   ok = await undo();
                 } catch {}
                 // an undo that handled its drop — returns false — don't clobber with an error toast
+                if (ok === false) return;
                 if (ok === true) toast("Undone", "info");
-                else if (ok !== false) toast("Could not undo — check and retry", "error");
+                else toast("Could not undo — check and retry", "error");
               }}
             >
               {state.label ?? "Undo"}
