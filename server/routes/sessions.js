@@ -56,7 +56,8 @@ router.post("/", async (c) => {
     ["scheduled_start", scheduled_start],
     ["scheduled_end", scheduled_end],
   ]) {
-    if (v !== undefined && !Number.isInteger(v)) {
+    // NOT NULL columns: missing binds NULL → 500, so a missing value is 400 too
+    if (!Number.isInteger(v)) {
       return c.json({ error: `${n} must be epoch seconds` }, 400);
     }
   }
