@@ -238,6 +238,7 @@ export default function CourtCard({
     if (!isActive) {
       setShowEnd(false);
       setShowConfirm(false);
+      setShowSub(false);
     }
   }, [isActive]);
 
