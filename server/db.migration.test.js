@@ -1,5 +1,5 @@
-import assert from "node:assert/strict";
 import { Database } from "bun:sqlite";
+import assert from "node:assert/strict";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -88,7 +88,10 @@ const expected = [
   "shuttle_price",
   "fee_split",
 ];
-const got = db.prepare("PRAGMA table_info(sessions)").all().map((c) => c.name);
+const got = db
+  .prepare("PRAGMA table_info(sessions)")
+  .all()
+  .map((c) => c.name);
 const missing = expected.filter((c) => !got.includes(c));
 assert.deepEqual(missing, [], `sessions missing columns after migration: ${missing.join(", ")}`);
 const extra = got.filter((c) => !expected.includes(c));
