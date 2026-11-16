@@ -125,6 +125,7 @@ Conventions: test files are plain assert scripts run via `bun <path>` (no bun-te
 - `client/src/hooks/useTimers.js`, `client/src/hooks/useTimers.test.js`
 - `server/routes/metrics.test.js`, `server/routes/stats.test.js` (expectation alignment only)
 - `server/routes/slate.test.js` (Step 5b: realign the one stale case)
+- `server/routes/sse.state.test.js` (Step 5c: one-line expectation alignment — same stale shuttles aggregate as Step 5, in a file the trial didn't run; amendment 2026-11-16)
 - `server/routes/courts.test.js`, `server/routes/matches.integration.test.js` (Step 1.2: swap the `??` precedence, nothing else)
 - `package.json` (root, `install:all`), `README.md`, `CONTRIBUTING.md`, `scripts/test-touched.mjs`, `docs/testing.md` (one line if needed)
 
@@ -144,7 +145,7 @@ Conventions: test files are plain assert scripts run via `bun <path>` (no bun-te
 
 In `tests/scripts/run-server-tests.js`:
 
-1. In the per-file spawn env (line ~72), add `BASE_URL: \`${BASE}/api\`` alongside `QC_TEST_BASE`.
+1. In the per-file spawn env (line ~72), add `BASE_URL: \`${BASE}/api\``alongside`QC_TEST_BASE`.
 2. In `server/routes/courts.test.js:3` and `server/routes/matches.integration.test.js:1`, swap the `??` precedence so `BASE_URL` wins over `QC_TEST_BASE` (see the corrected excerpt in Current state — with the runner's env these two would otherwise take the `/api`-less `QC_TEST_BASE` and 404 on every call). This is the only edit to those files.
 3. Append to the file list, after `"server/routes/v17-ratings.test.js"`, with a comment noting they were trial-verified 2026-11-16:
 
@@ -198,6 +199,12 @@ Rewrite the case (keep the file's helper style) to pin the real contract:
 The start route's "Lineup changed" re-verification (`slate.js:166-173`) stays as untested defense-in-depth: with both guards above, no route can move an entry out of `staged` except slate edit/cancel, so the branch is unreachable via the API. Leave it alone.
 
 **Verify**: `bun run --cwd tests test:server` → `slate.test.js` passes.
+
+### Step 5c: Align `sse.state.test.js` with the shipped shuttle aggregate shape
+
+**Amendment (2026-11-16, executor-found)**: the pre-phase run surfaces the same stale-aggregate drift Step 5 fixed in `stats.test.js`, in a fourth file the advisor's trial never executed: `server/routes/sse.state.test.js:135` asserts `state.stats.shuttles` as `{ new: 2, used: 1 }` while the shipped shape (built at `stats.js:247-253`) is `{ new, used, extra, total }` — actual `{ extra: 0, new: 2, total: 2, used: 1 }`. Update the expected object to the shipped shape (values from the live assertion context; same justification as Step 5 — do not change any request the test sends).
+
+**Verify**: `bun run --cwd tests test:server` → `sse.state.test.js` passes.
 
 ### Step 6: Extract `computeTimers` so the tests test the real code
 
