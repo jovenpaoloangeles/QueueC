@@ -86,7 +86,5 @@ test("13.10 leaderboard fetch failure shows a retry affordance; retry recovers",
   await page.unroute("**/api/leaderboard*");
   await page.getByTestId("board-error").click();
   await expect(page.getByTestId("board-error")).toHaveCount(0);
-  await expect(
-    page.getByTestId("leaderboard-table").or(page.getByTestId("leaderboard-empty")),
-  ).toBeVisible();
+  await expect(page.getByTestId("leaderboard-table").or(page.getByTestId("leaderboard-empty"))).toBeVisible();
 });

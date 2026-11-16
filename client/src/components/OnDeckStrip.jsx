@@ -389,7 +389,15 @@ export default function OnDeckStrip({
       toast(
         "Added to On Deck",
         "success",
-        slate ? { undo: () => cancelSlate(slate.id).then(() => true, () => false) } : undefined,
+        slate
+          ? {
+              undo: () =>
+                cancelSlate(slate.id).then(
+                  () => true,
+                  () => false,
+                ),
+            }
+          : undefined,
       );
       setNewDraft([null, null, null, null]);
     } catch (err) {

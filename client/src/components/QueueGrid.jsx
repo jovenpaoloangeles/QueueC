@@ -58,11 +58,11 @@ export default function QueueGrid({
     removeEntry(entryId)
       .then(() => true)
       .catch((err) => {
-      if (err?.status === 404) {
-        toast("Already removed — nothing to undo", "info");
-        return false; // handled its own failure — don't clobber with "Undone"
-      }
-    });
+        if (err?.status === 404) {
+          toast("Already removed — nothing to undo", "info");
+          return false; // handled its own failure — don't clobber with "Undone"
+        }
+      });
 
   // order survives SSE pushes (every 1s) so an optimistic drag doesn't snap
   // back — but when the id SET changes (check-in insert, removal) the server's
@@ -126,7 +126,11 @@ export default function QueueGrid({
       .then(() => {
         onSelectionChange(selection.filter((s) => s !== entry.id));
         toast(`${entry.name} went home`, "info", {
-          undo: () => setEntryStatus(entry.id, entry.status).then(() => true, () => false),
+          undo: () =>
+            setEntryStatus(entry.id, entry.status).then(
+              () => true,
+              () => false,
+            ),
         });
       })
       .catch((err) => toast(err?.data?.error ?? "Could not update", "error"));
