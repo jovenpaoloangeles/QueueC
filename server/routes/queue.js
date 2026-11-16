@@ -201,6 +201,9 @@ router.patch("/queue/:entryId/status", async (c) => {
   if (cur.status === "playing" && status === "waiting") {
     return c.json({ error: "Player must finish the match first" }, 409);
   }
+  if (cur.status === "staged" && status === "waiting") {
+    return c.json({ error: "Player is drafted into a slated match — cancel or edit the slate first" }, 409);
+  }
   const now = Math.floor(Date.now() / 1000);
   // Rest does not pause the UI wait clock (R7). v1.7 records rest spans so
   // the matcher can stop crediting long rests as waiting.
