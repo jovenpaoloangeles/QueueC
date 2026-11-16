@@ -7,8 +7,8 @@
 // Mapping:
 //   - a changed tests/e2e/*.spec.js  → itself
 //   - changed server/**              → nothing (server routes are covered by
-//     `bun test server/`; e2e specs exercise them through the UI, so there are
-//     no per-route e2e specs — don't expect any)
+//     `bun run --cwd tests test:server`; e2e specs exercise them through the UI,
+//     so there are no per-route e2e specs — don't expect any)
 //   - anything else                  → grep the spec sources for the changed
 //     path / basename; if that misses, split the basename into camelCase /
 //     hyphen words (>=4 chars) and take the specs containing all of them
