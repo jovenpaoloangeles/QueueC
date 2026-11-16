@@ -92,6 +92,9 @@ router.patch("/courts/:id/extend", async (c) => {
   if (!court) return c.json({ error: "Court not found" }, 404);
   if (court.expires_at == null) return c.json({ error: "Court has no rental timer" }, 400);
   const mins = Number(b.minutes ?? 60);
+  if (!Number.isInteger(mins) || mins < 1 || mins > 240) {
+    return c.json({ error: "minutes must be a whole number 1–240" }, 400);
+  }
   const now = Math.floor(Date.now() / 1000);
   db.prepare("UPDATE courts SET expires_at = MAX(expires_at, ?) + ? WHERE id = ?").run(now, mins * 60, id);
   broadcast();

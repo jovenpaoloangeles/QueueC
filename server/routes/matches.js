@@ -251,9 +251,12 @@ router.patch("/:id/shuttles", async (c) => {
     .prepare("SELECT * FROM matches WHERE id = ? AND state = 'active' AND ended_at IS NULL")
     .get(id);
   if (!m) return c.json({ error: "Active match not found" }, 404);
+  if (!Number.isInteger(b.delta_new ?? 0) || !Number.isInteger(b.delta_used ?? 0)) {
+    return c.json({ error: "delta_new and delta_used must be integers" }, 400);
+  }
   db.prepare(
     "UPDATE matches SET new_shuttles = MAX(0, new_shuttles + ?), used_shuttles = MAX(0, used_shuttles + ?) WHERE id = ?",
-  ).run(Number(b.delta_new ?? 0), Number(b.delta_used ?? 0), id);
+  ).run(b.delta_new ?? 0, b.delta_used ?? 0, id);
   broadcast();
   return c.json({ match: db.prepare("SELECT * FROM matches WHERE id = ?").get(id) });
 });
