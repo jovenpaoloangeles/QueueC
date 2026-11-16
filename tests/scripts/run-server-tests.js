@@ -23,6 +23,7 @@ let code = 0;
 // repo-root dev DB.
 for (const f of [
   "server/db.test.js",
+  "server/db.migration.test.js", // self-contained: builds its own fixture + dynamic-imports db.js (plan 005)
   "server/schema.test.js",
   "server/routes/sse.state.test.js",
   "server/routes/matches.test.js",
