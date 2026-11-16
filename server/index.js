@@ -2,7 +2,6 @@ import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Hono } from "hono";
-import { cors } from "hono/cors";
 import automatchRouter from "./routes/automatch.js";
 import courtsRouter from "./routes/courts.js";
 import exportRouter from "./routes/export.js";
@@ -15,7 +14,6 @@ import sseRouter, { broadcast } from "./routes/sse.js";
 import statsRouter from "./routes/stats.js";
 
 const app = new Hono();
-app.use("*", cors());
 
 app.route("/api/sessions", sessionsRouter);
 app.route("/api/players", playersRouter);
