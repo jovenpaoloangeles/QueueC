@@ -138,8 +138,8 @@ async function run() {
     assert.equal(stats.match_count, 3, "Expected match_count === 3");
     assert.deepEqual(
       stats.shuttles,
-      { new: 4, used: 3 },
-      "Expected shuttles to match total { new: 4, used: 3 }",
+      { new: 4, used: 3, extra: 0, total: 4 },
+      "Expected shuttles to match the shipped aggregate { new, used, extra, total }",
     );
 
     assert.equal(stats.leaderboard.length, 5, "Expected all 5 players who played in leaderboard");
