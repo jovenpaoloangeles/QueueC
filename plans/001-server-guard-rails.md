@@ -187,7 +187,7 @@ In `server/routes/queue.js` `PATCH /queue/:id/status`, directly under the `playi
   }
 ```
 
-This is the exact gap pinned by `server/routes/slate.test.js:523` ("Expected 409 when a lineup player is no longer staged").
+This is the exact gap pinned by `server/routes/slate.test.js:523` ("Expected 409 when a lineup player is no longer staged"). **Correction (2026-11-16, post-executor probe): that attribution was wrong** — line 523's scenario PATCHes a staged player to `left` (which the v1.5 guard already blocks with 409) and asserts on the slate *start*, so it never exercises `staged→waiting`. The pin is a stale expectation and is realigned by plan 002. This step's regression proof is the v15-guards case below, not slate.test.js.
 
 **Verify**: see Step 6 (slate suite).
 
@@ -236,7 +236,7 @@ Extend `server/routes/v15-guards.test.js` with a new describe-style block (follo
 
 Then confirm the previously-failing slate pin is green: `server/routes/slate.test.js:523` asserts the 409 from Step 2. That file is not yet registered in the runner (plan 002 wires it); verify it standalone by mimicking the runner: in one shell start a throwaway server (`DB_PATH=$(mktemp -u /tmp/qc.XXXX.db) PLAYERS_PATH=$PWD/tests/fixtures/players.json PORT=3991 NODE_ENV=test bun server/index.js &`), wait for `curl -sf http://localhost:3991/api/sessions/active`, then `BASE_URL=http://localhost:3991/api bun server/routes/slate.test.js`; kill the server and delete the temp DB after. **Expected: exit 0** (this exact run failed at line 523 on master before Step 2 — that failure turning green is the proof the fix works).
 
-**Verify**: `bun run --cwd tests test:server` → all pass including the new block.
+**Verify**: `bun run --cwd tests test:server` → all pass including the new block. (The standalone `slate.test.js` run in the original text of this step is withdrawn — see the Step 2 correction: its line-523 pin is stale and belongs to plan 002's alignment work.)
 
 ## Test plan
 
@@ -249,7 +249,7 @@ Then confirm the previously-failing slate pin is green: `server/routes/slate.tes
 Machine-checkable. ALL must hold:
 
 - [ ] `bun run --cwd tests test:server` exits 0 with the four new guard cases present in `v15-guards.test.js`
-- [ ] `bun server/routes/slate.test.js` (with throwaway server per Step 6) exits 0 — line ~523 assertion passes
+- [ ] the four new guard cases reject exactly as specified (occupancy 409, staged→waiting 409, unknown-session check-in 404, ended-session 409s)
 - [ ] `bunx playwright test 07-match-start.spec.js 28-on-deck.spec.js` (from `tests/`) passes
 - [ ] `grep -n "cors" server/index.js` returns no matches
 - [ ] `git status` shows changes only in the in-scope files
@@ -260,7 +260,7 @@ Machine-checkable. ALL must hold:
 Stop and report back (do not improvise) if:
 
 - The excerpts above don't match the live code (drift).
-- `v15-guards.test.js` or the slate standalone run still fails after Step 2 (means the staged→waiting path is reachable another way — report the response body you got).
+- `v15-guards.test.js` still fails after Step 2 (means the staged→waiting path is reachable another way — report the response body you got). *(The original slate.test.js STOP condition was withdrawn 2026-11-16: the executor's probe proved its line-523 pin asserts a stale pre-v1.5 contract — PATCH `staged→left` succeeding — not this plan's transition. Plan 002 realigns that file.)*
 - Any registered server test fails for a reason other than the new guards intentionally rejecting a request a test relied on (if a test relied on double-booking or ended-session writes, report which one — do not weaken the guard to make it pass).
 - Removing `cors()` breaks any e2e spec (would mean a cross-origin call exists that this plan missed).
 

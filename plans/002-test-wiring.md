@@ -37,6 +37,7 @@ Files and their roles:
 - `tests/unit/timer.test.js` — defines its **own inline copy** of the timer math instead of importing it.
 - `client/src/hooks/useTimers.js` / `useTimers.test.js` — the real hook holds the logic inline; the test file holds a second stale copy ("extracted from hook for testability" — but nothing was extracted).
 - `server/routes/metrics.test.js`, `server/routes/stats.test.js` — stale expectations vs shipped behavior (Steps 4–5).
+- `server/routes/slate.test.js` — one stale case, realigned in Step 5b.
 - `package.json` (root) `install:all`, `README.md:37-38,75`, `CONTRIBUTING.md:10,17` — install three workspaces, then tell you to run tests from `tests/`, whose deps were never installed.
 - `scripts/test-touched.mjs:60` — prints `covered by \`bun test server/\`` — the phantom command.
 
@@ -124,8 +125,7 @@ Conventions: test files are plain assert scripts run via `bun <path>` (no bun-te
 - `package.json` (root, `install:all`), `README.md`, `CONTRIBUTING.md`, `scripts/test-touched.mjs`, `docs/testing.md` (one line if needed)
 
 **Out of scope** (do NOT touch):
-- `server/routes/slate.test.js` — its line-523 failure is plan 001's fix, not a stale expectation. Do not "fix" it here.
-- Any production code except the `useTimers.js` export extraction (Step 6).
+- Any production code except the `useTimers.js` export extraction (Step 6). (Originally `slate.test.js` was out of scope pending plan 001; the Step 5b correction moved its stale case into scope.)
 - The e2e specs and `tests/fixtures.js`.
 
 ## Git workflow
@@ -150,7 +150,7 @@ In `tests/scripts/run-server-tests.js`:
   "server/routes/matches.integration.test.js",
   "server/routes/metrics.test.js",   // expectations aligned in this plan
   "server/routes/players-queue.test.js",
-  "server/routes/slate.test.js",     // needs plan 001's staged→waiting guard
+  "server/routes/slate.test.js",     // expectation aligned in this plan (Step 5b)
   "server/routes/stats.test.js",     // expectations aligned in this plan
 ```
 
@@ -179,6 +179,20 @@ Matches start with `new_shuttles = 1` (see excerpt). In the shuttles section of 
 Run the file once via the runner (or Step 6's throwaway-server procedure from plan 001) and read the actual failing object (advisor observed `{ extra: 0, new: 4, total: 4, used: 3 }` against an expected `{ new: 4, used: 3 }`). Cross-check the source — the shuttle aggregate query in `server/routes/stats.js` (the `GET /sessions/:id/stats` route; look for the `shuttles` object it returns) — then update the expected object(s) in `stats.test.js` to the shipped shape. If the source and the observed actual disagree, STOP.
 
 **Verify**: `bun run --cwd tests test:server` → `stats.test.js` passes.
+
+### Step 5b: Realign the stale "no longer staged" case in `slate.test.js`
+
+**Correction vs the original text of this plan (2026-11-16, post-executor probe)**: `slate.test.js:515-524` was listed as pinned-by-plan-001; that attribution was wrong. The case PATCHes a *staged* player to `status:"left"` with no assertion on the PATCH, then expects the slate start to 409 "Lineup changed". The v1.5 whitelist (`server/routes/queue.js`, "playing/staged are owned by the match and slate routes") deliberately rejects `staged→left` with 409 "Player is on court or on deck", so the victim stays staged, the start succeeds with 200, and the assertion at line ~523 fails. The file predates v1.5 and rotted while unregistered. The shipped contract is correct; the test is stale.
+
+Rewrite the case (keep the file's helper style) to pin the real contract:
+
+1. `PATCH /queue/:id/status {status:"left"}` on a staged entry → **409** `Player is on court or on deck` (v1.5 contract).
+2. `PATCH` with `{status:"waiting"}` on a staged entry → **409** (plan 001's guard; skip this assertion if 001 hasn't landed — check `grep -n "drafted into a slated match" server/routes/queue.js`).
+3. The slate start for that lineup then **succeeds** (2xx) — because the victim never left the slate; assert this so the whole flow is pinned.
+
+The start route's "Lineup changed" re-verification (`slate.js:166-173`) stays as untested defense-in-depth: with both guards above, no route can move an entry out of `staged` except slate edit/cancel, so the branch is unreachable via the API. Leave it alone.
+
+**Verify**: `bun run --cwd tests test:server` → `slate.test.js` passes.
 
 ### Step 6: Extract `computeTimers` so the tests test the real code
 
@@ -243,7 +257,7 @@ Stop and report back (do not improvise) if:
 - `alphabetical-insert`, `courts`, `matches.integration`, or `players-queue` fails when run against the shared runner server (the advisor trial had them green on a standalone server — a shared-server failure means an isolation assumption this plan can't see; report the assertion).
 - Aligning `metrics`/`stats` expectations requires changing anything other than asserted values/comments (e.g. the shipped behavior itself looks wrong — that's a bug report, not a test edit).
 - The `computeTimers` extraction changes any e2e behavior (`bunx playwright test 33-pause-session.spec.js` from `tests/` should settle it; if it fails, STOP).
-- `slate.test.js` fails on anything other than the line-523 assertion (which means plan 001 isn't merged yet — confirm with `grep -n "drafted into a slated match" server/routes/queue.js`; if the guard is there and slate still fails elsewhere, STOP).
+- `slate.test.js` fails on anything other than the ~line-523 case this plan realigns (Step 5b) — other failures mean an assumption this plan can't see; report the assertion.
 
 ## Maintenance notes
 
