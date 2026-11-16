@@ -132,7 +132,11 @@ try {
 
   // Stats check
   assert.equal(state.stats.match_count, 1, "Expected match_count to count only active matches");
-  assert.deepEqual(state.stats.shuttles, { new: 2, used: 1 }, "Expected shuttles stats");
+  assert.deepEqual(
+    state.stats.shuttles,
+    { new: 2, used: 1, extra: 0, total: 2 },
+    "Expected shuttles stats",
+  );
 
   // avg wait counts the full time since check-in (rest no longer excluded): ≈ 600
   assert.ok(
