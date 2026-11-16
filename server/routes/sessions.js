@@ -45,6 +45,21 @@ router.post("/", async (c) => {
     max_consecutive,
     rest_games,
   } = await c.req.json().catch(() => ({}));
+  if (typeof name !== "string" || !name.trim()) {
+    return c.json({ error: "Name is required" }, 400);
+  }
+  const count = Array.isArray(courts) && courts.length > 0 ? courts.length : (court_count ?? 2);
+  if (!Number.isInteger(count) || count < 1 || count > 16) {
+    return c.json({ error: "court_count must be an integer 1–16" }, 400);
+  }
+  for (const [n, v] of [
+    ["scheduled_start", scheduled_start],
+    ["scheduled_end", scheduled_end],
+  ]) {
+    if (v !== undefined && !Number.isInteger(v)) {
+      return c.json({ error: `${n} must be epoch seconds` }, 400);
+    }
+  }
   if (checkin_order != null && !["alphabetical", "arrival"].includes(checkin_order)) {
     return c.json({ error: "checkin_order must be 'alphabetical' or 'arrival'" }, 400);
   }
@@ -56,7 +71,6 @@ router.post("/", async (c) => {
   if (!Number.isInteger(restGames) || restGames < 0 || restGames > 3) {
     return c.json({ error: "rest_games must be an integer 0–3" }, 400);
   }
-  const count = Array.isArray(courts) && courts.length > 0 ? courts.length : (court_count ?? 2);
   const order = checkin_order ?? "alphabetical";
   const { lastInsertRowid } = db
     .prepare(
