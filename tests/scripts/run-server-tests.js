@@ -16,6 +16,40 @@ const rmDb = () =>
   });
 rmDb();
 
+let code = 0;
+
+// Pre-phase: db-backed suites that need no HTTP server. One fresh temp DB per
+// file — several of these import db.js directly and would otherwise open the
+// repo-root dev DB.
+for (const f of [
+  "server/db.test.js",
+  "server/schema.test.js",
+  "server/routes/sse.state.test.js",
+  "server/routes/matches.test.js",
+  "server/routes/queue.test.js",
+  // pure logic — no env needed, but sharing the loop is harmless
+  "server/logic/smartQueue.test.js",
+]) {
+  const fileDb = join(tmpdir(), `queuec-${f.replaceAll("/", "-")}-${process.pid}.db`);
+  const rmFileDb = () =>
+    ["", "-wal", "-shm"].forEach((s) => {
+      rmSync(fileDb + s, { force: true });
+    });
+  rmFileDb();
+  const r = Bun.spawnSync(["bun", join(root, f)], {
+    cwd: root,
+    env: {
+      ...process.env,
+      DB_PATH: fileDb,
+      PLAYERS_PATH: join(root, "tests/fixtures/players.json"),
+    },
+    stdout: "inherit",
+    stderr: "inherit",
+  });
+  rmFileDb();
+  if (r.exitCode !== 0) code = r.exitCode ?? 1;
+}
+
 const PORT = 3991;
 const server = spawn("bun", ["server/index.js"], {
   cwd: root,
@@ -43,7 +77,6 @@ for (;;) {
   await new Promise((r) => setTimeout(r, 100));
 }
 
-let code = 0;
 for (const f of [
   // first: run() asserts the pool equals the preset, so it needs a pristine server
   "server/routes/sessions.test.js",
