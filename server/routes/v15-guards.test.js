@@ -103,6 +103,78 @@ async function main() {
   );
   assert.ok(!d.attendance.some((a) => a.status === "playing" || a.status === "staged"));
 
+  // guard rails: court occupancy on direct starts, staged→waiting, unknown-session
+  // check-in, and ended sessions rejecting every write path (plan 001)
+  const gtag = `G1${Date.now().toString(36)}`;
+  const { session: gsession } = await api("/api/sessions", "POST", {
+    name: gtag,
+    scheduled_start: now,
+    scheduled_end: now + 3600,
+    court_count: 1,
+  });
+  const gid = gsession.id;
+  const ge = [];
+  const gp = [];
+  for (let i = 0; i < 8; i++) {
+    const p = (await api("/api/players", "POST", { name: `${gtag} ${i}`, skill_level: "intermediate" }))
+      .player;
+    gp.push(p.id);
+    ge.push((await api(`/api/sessions/${gid}/checkin`, "POST", { player_id: p.id })).entry.id);
+  }
+  await api(`/api/sessions/${gid}/start`, "PATCH");
+  const gcourts = (await api(`/api/sessions/${gid}/courts`)).courts;
+  const gstart = (ids) =>
+    api("/api/matches", "POST", {
+      session_id: gid,
+      court_number: gcourts[0].id,
+      team1_p1: ids[0],
+      team1_p2: ids[1],
+      team2_p1: ids[2],
+      team2_p2: ids[3],
+    });
+
+  // 1) a court with a live match refuses a second direct start
+  assert.equal((await gstart(ge.slice(0, 4))).status, 201, "first match occupies the court");
+  const gocc = await gstart(ge.slice(4, 8));
+  assert.equal(gocc.status, 409, "occupied court");
+  assert.equal(gocc.error, "Court is not free");
+
+  // 2) a staged entry cannot drop back to waiting behind the slate's back
+  const gslate = await api("/api/matches/slate", "POST", {
+    session_id: gid,
+    team1_p1: ge[4],
+    team1_p2: ge[5],
+    team2_p1: ge[6],
+    team2_p2: ge[7],
+  });
+  assert.equal(gslate.status, 201, JSON.stringify(gslate));
+  assert.equal(
+    (await api(`/api/queue/${ge[4]}/status`, "PATCH", { status: "waiting" })).status,
+    409,
+    "staged → waiting",
+  );
+
+  // 3) check-in names the session: unknown session is a 404, not an FK 500
+  assert.equal((await api(`/api/sessions/99999999/checkin`, "POST", { player_id: gp[0] })).status, 404);
+
+  // 4) an ended session rejects every write path
+  assert.equal((await api(`/api/sessions/${gid}/end`, "PATCH")).status, 200);
+  assert.equal((await gstart(ge.slice(0, 4))).status, 409, "match start");
+  assert.equal(
+    (
+      await api("/api/matches/slate", "POST", {
+        session_id: gid,
+        team1_p1: ge[0],
+        team1_p2: ge[1],
+        team2_p1: ge[2],
+        team2_p2: ge[3],
+      })
+    ).status,
+    409,
+    "slate",
+  );
+  assert.equal((await api(`/api/sessions/${gid}/automatch`, "POST", {})).status, 409, "automatch");
+
   console.log("v15-guards.test.js: all assertions passed");
 }
 
