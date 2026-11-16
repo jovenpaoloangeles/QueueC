@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 
-const BASE = process.env.QC_TEST_BASE ?? process.env.BASE_URL ?? "http://localhost:3991/api";
+const BASE = process.env.BASE_URL ?? process.env.QC_TEST_BASE ?? "http://localhost:3991/api";
 
 // create a throwaway session
 const s = await fetch(`${BASE}/sessions`, {

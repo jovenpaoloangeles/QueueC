@@ -66,10 +66,18 @@ for (const f of [
   "server/routes/v15-guards.test.js",
   "server/routes/v16-qol.test.js",
   "server/routes/v17-ratings.test.js",
+  // registered 2026-11-16: trial-verified against the shared server (see plans/002)
+  "server/routes/alphabetical-insert.test.js",
+  "server/routes/courts.test.js",
+  "server/routes/matches.integration.test.js",
+  "server/routes/metrics.test.js", // expectations aligned in this plan
+  "server/routes/players-queue.test.js",
+  "server/routes/slate.test.js", // expectation aligned in this plan (Step 5b)
+  "server/routes/stats.test.js", // expectations aligned in this plan
 ]) {
   const r = Bun.spawnSync(["bun", join(root, f)], {
     cwd: root,
-    env: { ...process.env, QC_TEST_BASE: BASE, PLAYERS_PATH: join(root, "tests/fixtures/players.json") },
+    env: { ...process.env, QC_TEST_BASE: BASE, BASE_URL: `${BASE}/api`, PLAYERS_PATH: join(root, "tests/fixtures/players.json") },
     stdout: "inherit",
     stderr: "inherit",
   });
