@@ -22,7 +22,7 @@
 
 ## Why this matters
 
-`server/db.js` runs its migrations in file order. The v1.2 block (line ~134) conditionally adds `max_consecutive` and `rest_games` to `sessions`. Later (line ~272), the `started_at` table-rebuild recreates `sessions` from a 7-column `sessions_new` — **without those two columns** — for any database where `started_at` is still `NOT NULL` (i.e. created before the drafts feature relaxed it, pre-first-release). Nothing re-adds them afterward (the v1.2 check already ran), so `POST /api/sessions`, which inserts both columns, 500s with `no such column` forever. Reachability is narrow — every v1.0+ DB has nullable `started_at`, so the rebuild never fires — but the repo-root dev database is itself a partially-migrated DB, and the trap silently re-arms every time a future column is added above the rebuild. The fix is to run the rebuild *before* the conditional ALTERs, so whatever it drops gets re-added by the checks that follow.
+`server/db.js` runs its migrations in file order. The v1.2 block (line ~134) conditionally adds `max_consecutive` and `rest_games` to `sessions`. Later (line ~272), the `started_at` table-rebuild recreates `sessions` from a 7-column `sessions_new` — **without those two columns** — for any database where `started_at` is still `NOT NULL` (i.e. created before the drafts feature relaxed it, pre-first-release). Nothing re-adds them afterward (the v1.2 check already ran), so `POST /api/sessions`, which inserts both columns, 500s with `no such column` forever. Reachability is narrow — every v1.0+ DB has nullable `started_at`, so the rebuild never fires — but the repo-root dev database is itself a partially-migrated DB, and the trap silently re-arms every time a future column is added above the rebuild. The fix is to run the rebuild _before_ the conditional ALTERs, so whatever it drops gets re-added by the checks that follow.
 
 (The sibling hazard — the `queue_entries` 'staged' rebuild dropping `paid`/`virt_offset`/`rested_seconds`/`rest_started_at` — is already handled: the block at db.js:324-343 re-adds all four, with a comment acknowledging the old data was vestigial. This plan's reorder makes that pattern universal.)
 
@@ -38,7 +38,10 @@ Excerpts (as of `c00e826`):
 ```js
 // v1.2: per-session rotation settings (max_consecutive, rest_games)
 const sessionRotationCols = new Set(
-  db.prepare("PRAGMA table_info(sessions)").all().map((c) => c.name),
+  db
+    .prepare("PRAGMA table_info(sessions)")
+    .all()
+    .map((c) => c.name),
 );
 if (!sessionRotationCols.has("max_consecutive")) {
   db.exec("ALTER TABLE sessions ADD COLUMN max_consecutive INTEGER NOT NULL DEFAULT 2");
@@ -48,7 +51,7 @@ if (!sessionRotationCols.has("rest_games")) {
 }
 ```
 
-`server/db.js:270-297` — the rebuild, further down the file. Its `sessions_new` carries only the seven original columns, so it drops whatever the v1.2 block just added (and would drop `checkin_order`/`court_fee`/etc. too, except those blocks sit *after* it and re-add conditionally — which is exactly why the v1.2 block must move below it):
+`server/db.js:270-297` — the rebuild, further down the file. Its `sessions_new` carries only the seven original columns, so it drops whatever the v1.2 block just added (and would drop `checkin_order`/`court_fee`/etc. too, except those blocks sit _after_ it and re-add conditionally — which is exactly why the v1.2 block must move below it):
 
 ```js
 const startedAt = db
@@ -92,11 +95,11 @@ Conventions: migrations are top-level `if` blocks executed at import time; condi
 
 ## Commands you will need
 
-| Purpose | Command | Expected on success |
-|-----------|--------------------------|---------------------|
-| Schema test standalone | `DB_PATH=$(mktemp -u /tmp/qc.XXXX.db) PLAYERS_PATH=$PWD/tests/fixtures/players.json bun server/schema.test.js` | exit 0, pass lines |
-| Full server tests | `bun run --cwd tests test:server` | exit 0 |
-| Fresh-DB sanity | `DB_PATH=$(mktemp -u /tmp/qc.XXXX.db) PLAYERS_PATH=$PWD/tests/fixtures/players.json bun server/db.test.js` | exit 0 |
+| Purpose                | Command                                                                                                        | Expected on success |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------- |
+| Schema test standalone | `DB_PATH=$(mktemp -u /tmp/qc.XXXX.db) PLAYERS_PATH=$PWD/tests/fixtures/players.json bun server/schema.test.js` | exit 0, pass lines  |
+| Full server tests      | `bun run --cwd tests test:server`                                                                              | exit 0              |
+| Fresh-DB sanity        | `DB_PATH=$(mktemp -u /tmp/qc.XXXX.db) PLAYERS_PATH=$PWD/tests/fixtures/players.json bun server/db.test.js`     | exit 0              |
 
 ## Scope
 
@@ -159,5 +162,5 @@ Stop and report back (do not improvise) if:
 ## Maintenance notes
 
 - Rule going forward (worth a comment near the moved block if not already implied): **table rebuilds go before conditional ALTERs, or must include every current column**. Any new `sessions` column added by a future version is automatically safe under this ordering.
-- The `queue_entries` rebuild still wipes `paid`/`virt_offset`/`rest_started_at`/`rested_seconds` *values* on pre-'staged' databases (columns re-added at defaults). That data is gone regardless of ordering — accepted per the existing comment; not this plan's problem.
+- The `queue_entries` rebuild still wipes `paid`/`virt_offset`/`rest_started_at`/`rested_seconds` _values_ on pre-'staged' databases (columns re-added at defaults). That data is gone regardless of ordering — accepted per the existing comment; not this plan's problem.
 - If the app ever ships a real migration framework (numbered migrations), this whole class disappears; until then the parity test is the guard.

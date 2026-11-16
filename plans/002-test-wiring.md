@@ -46,12 +46,12 @@ Key excerpts:
 `tests/scripts/run-server-tests.js:70-75` (the per-file spawn env — note it passes `QC_TEST_BASE` without `/api`):
 
 ```js
-  const r = Bun.spawnSync(["bun", join(root, f)], {
-    cwd: root,
-    env: { ...process.env, QC_TEST_BASE: BASE, PLAYERS_PATH: join(root, "tests/fixtures/players.json") },
-    stdout: "inherit",
-    stderr: "inherit",
-  });
+const r = Bun.spawnSync(["bun", join(root, f)], {
+  cwd: root,
+  env: { ...process.env, QC_TEST_BASE: BASE, PLAYERS_PATH: join(root, "tests/fixtures/players.json") },
+  stdout: "inherit",
+  stderr: "inherit",
+});
 ```
 
 The unregistered files read the base URL two different ways:
@@ -83,7 +83,7 @@ So the runner only needs to pass **both** env vars and all seven route files wor
 `metrics.test.js:100-102` still expects the pre-default value after a `+1` delta:
 
 ```js
-    assert.equal(m1.new_shuttles, 1, "Expected new_shuttles === 1");   // actual: 2 (started at 1, +1 delta)
+assert.equal(m1.new_shuttles, 1, "Expected new_shuttles === 1"); // actual: 2 (started at 1, +1 delta)
 ```
 
 `client/src/hooks/useTimers.js:38-49` — the inline logic to extract (the hook computes `now` above this, then builds the two Maps):
@@ -106,12 +106,12 @@ Conventions: test files are plain assert scripts run via `bun <path>` (no bun-te
 
 ## Commands you will need
 
-| Purpose | Command | Expected on success |
-|-----------|--------------------------|---------------------|
-| Server tests (now includes everything) | `bun run --cwd tests test:server` | exit 0 |
-| Unit tests | `bun run --cwd tests test:unit` | exit 0, prints each file's "all assertions passed ✓" |
-| Lint | `bunx biome check` | exit 0 |
-| Client unit sanity after extraction | `bun client/src/hooks/useTimers.test.js && bun tests/unit/timer.test.js` | both print pass lines |
+| Purpose                                | Command                                                                  | Expected on success                                  |
+| -------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------- |
+| Server tests (now includes everything) | `bun run --cwd tests test:server`                                        | exit 0                                               |
+| Unit tests                             | `bun run --cwd tests test:unit`                                          | exit 0, prints each file's "all assertions passed ✓" |
+| Lint                                   | `bunx biome check`                                                       | exit 0                                               |
+| Client unit sanity after extraction    | `bun client/src/hooks/useTimers.test.js && bun tests/unit/timer.test.js` | both print pass lines                                |
 
 ## Scope
 
@@ -140,7 +140,7 @@ Conventions: test files are plain assert scripts run via `bun <path>` (no bun-te
 
 In `tests/scripts/run-server-tests.js`:
 
-1. In the per-file spawn env (line ~72), add `BASE_URL: \`${BASE}/api\`` alongside `QC_TEST_BASE`.
+1. In the per-file spawn env (line ~72), add `BASE_URL: \`${BASE}/api\``alongside`QC_TEST_BASE`.
 2. Append to the file list, after `"server/routes/v17-ratings.test.js"`, with a comment noting they were trial-verified 2026-11-16:
 
 ```js
@@ -182,7 +182,7 @@ Run the file once via the runner (or Step 6's throwaway-server procedure from pl
 
 ### Step 5b: Realign the stale "no longer staged" case in `slate.test.js`
 
-**Correction vs the original text of this plan (2026-11-16, post-executor probe)**: `slate.test.js:515-524` was listed as pinned-by-plan-001; that attribution was wrong. The case PATCHes a *staged* player to `status:"left"` with no assertion on the PATCH, then expects the slate start to 409 "Lineup changed". The v1.5 whitelist (`server/routes/queue.js`, "playing/staged are owned by the match and slate routes") deliberately rejects `staged→left` with 409 "Player is on court or on deck", so the victim stays staged, the start succeeds with 200, and the assertion at line ~523 fails. The file predates v1.5 and rotted while unregistered. The shipped contract is correct; the test is stale.
+**Correction vs the original text of this plan (2026-11-16, post-executor probe)**: `slate.test.js:515-524` was listed as pinned-by-plan-001; that attribution was wrong. The case PATCHes a _staged_ player to `status:"left"` with no assertion on the PATCH, then expects the slate start to 409 "Lineup changed". The v1.5 whitelist (`server/routes/queue.js`, "playing/staged are owned by the match and slate routes") deliberately rejects `staged→left` with 409 "Player is on court or on deck", so the victim stays staged, the start succeeds with 200, and the assertion at line ~523 fails. The file predates v1.5 and rotted while unregistered. The shipped contract is correct; the test is stale.
 
 Rewrite the case (keep the file's helper style) to pin the real contract:
 
@@ -201,7 +201,9 @@ In `client/src/hooks/useTimers.js`: move the two Map loops (excerpt above) into 
 ```js
 export function computeTimers(now, queue, activeMatches) {
   const waitSeconds = new Map();
-  for (const e of queue ?? []) { if (e.status === "waiting") waitSeconds.set(e.id, netWait(now, e)); }
+  for (const e of queue ?? []) {
+    if (e.status === "waiting") waitSeconds.set(e.id, netWait(now, e));
+  }
   const playSeconds = new Map();
   for (const m of activeMatches ?? []) playSeconds.set(m.id, Math.max(0, now - m.started_at));
   return { waitSeconds, playSeconds };

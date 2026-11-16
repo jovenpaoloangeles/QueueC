@@ -22,7 +22,7 @@
 
 ## Why this matters
 
-Five endpoints trust their request bodies. Missing/typed-wrong fields turn into 500s (NOT NULL / CHECK constraint violations) instead of 400s — the v1.5 fix wave cleaned up check-in and match-end, but these drifted. Worse, two are *silent* corruption: `PATCH /courts/:id/extend` with a non-numeric `minutes` computes `MAX(expires_at, now) + NULL` → NULL, erasing the court's rental countdown mid-session with no error to anyone; the shuttles delta path NaNs into a NOT NULL violation. Session creation accepts `court_count: 100000` and seeds 100k court rows. Player create/update accepts any `skill_level` string until the CHECK constraint throws. The repo already has the right pattern (the v1.6 `fees` route) — this plan applies it five times.
+Five endpoints trust their request bodies. Missing/typed-wrong fields turn into 500s (NOT NULL / CHECK constraint violations) instead of 400s — the v1.5 fix wave cleaned up check-in and match-end, but these drifted. Worse, two are _silent_ corruption: `PATCH /courts/:id/extend` with a non-numeric `minutes` computes `MAX(expires_at, now) + NULL` → NULL, erasing the court's rental countdown mid-session with no error to anyone; the shuttles delta path NaNs into a NOT NULL violation. Session creation accepts `court_count: 100000` and seeds 100k court rows. Player create/update accepts any `skill_level` string until the CHECK constraint throws. The repo already has the right pattern (the v1.6 `fees` route) — this plan applies it five times.
 
 ## Current state
 
@@ -73,17 +73,17 @@ export function normalizeSkill(skill) {
 `server/routes/courts.js:94-97` — NaN erases the timer (`MAX(expires_at, ?) + ?` with `mins * 60 = NaN` → NULL):
 
 ```js
-  const mins = Number(b.minutes ?? 60);
-  const now = Math.floor(Date.now() / 1000);
-  db.prepare("UPDATE courts SET expires_at = MAX(expires_at, ?) + ? WHERE id = ?").run(now, mins * 60, id);
+const mins = Number(b.minutes ?? 60);
+const now = Math.floor(Date.now() / 1000);
+db.prepare("UPDATE courts SET expires_at = MAX(expires_at, ?) + ? WHERE id = ?").run(now, mins * 60, id);
 ```
 
 `server/routes/matches.js:246-250` — NaN → NULL → `new_shuttles NOT NULL` violation → 500:
 
 ```js
-  db.prepare(
-    "UPDATE matches SET new_shuttles = MAX(0, new_shuttles + ?), used_shuttles = MAX(0, used_shuttles + ?) WHERE id = ?",
-  ).run(Number(b.delta_new ?? 0), Number(b.delta_used ?? 0), id);
+db.prepare(
+  "UPDATE matches SET new_shuttles = MAX(0, new_shuttles + ?), used_shuttles = MAX(0, used_shuttles + ?) WHERE id = ?",
+).run(Number(b.delta_new ?? 0), Number(b.delta_used ?? 0), id);
 ```
 
 `server/routes/queue.js:138-152` — attendance stores `checked_in_at` raw (any string poisons the fairness gap math downstream in `stats.js`):
@@ -98,11 +98,11 @@ Conventions: 400 + `{ error: "<lowercase message>" }` from the handler before an
 
 ## Commands you will need
 
-| Purpose | Command | Expected on success |
-|-----------|--------------------------|---------------------|
-| Server tests | `bun run --cwd tests test:server` | exit 0 (incl. new validation suite) |
-| Lint | `bunx biome check` | exit 0 |
-| Touched e2e (session create + courts + shuttles flows) | `cd tests && bunx playwright test 02-session-setup.spec.js 05-courts-setup.spec.js 25-court-expiry.spec.js 32-shuttles.spec.js` | all pass |
+| Purpose                                                | Command                                                                                                                         | Expected on success                 |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| Server tests                                           | `bun run --cwd tests test:server`                                                                                               | exit 0 (incl. new validation suite) |
+| Lint                                                   | `bunx biome check`                                                                                                              | exit 0                              |
+| Touched e2e (session create + courts + shuttles flows) | `cd tests && bunx playwright test 02-session-setup.spec.js 05-courts-setup.spec.js 25-court-expiry.spec.js 32-shuttles.spec.js` | all pass                            |
 
 ## Scope
 
@@ -181,7 +181,7 @@ In `server/routes/players.js`:
   }
 ```
 
-  (then drop the `Number()` coercions in the `.run(...)` call — bind `b.delta_new ?? 0` directly; negatives remain allowed, the SQL clamps at 0.)
+(then drop the `Number()` coercions in the `.run(...)` call — bind `b.delta_new ?? 0` directly; negatives remain allowed, the SQL clamps at 0.)
 
 **Verify**: `bun run --cwd tests test:server` → pass (`shuttles.test.js` sends integer deltas; `metrics.test.js` too).
 
