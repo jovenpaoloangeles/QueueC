@@ -76,3 +76,20 @@ test("34.4 check-in undo after the entry is already removed says so", async ({ p
   await expect(page.getByTestId("toast")).toContainText("Already removed");
   await expect(page.getByTestId("toast")).not.toContainText("Undone");
 });
+
+test("34.5 match-start undo with a dead network says so and keeps the match", async ({ page }) => {
+  await fullSetup(page);
+  await startDoubles(page);
+  const match = (await liveState(page)).activeMatches[0];
+  await expect(page.getByTestId("toast-undo")).toBeVisible();
+  // the abort call dies on the wire — the toast must not claim "Undone"
+  await page.route("**/api/matches/*", (r) => r.abort());
+  await page.getByTestId("toast-undo").click();
+  await expect(page.getByTestId("toast")).toContainText("Could not undo");
+  await expect(page.getByTestId("toast")).not.toContainText("Undone");
+  await expect
+    .poll(async () => (await liveState(page)).activeMatches.filter((m) => m.id === match.id).length, {
+      timeout: 5000,
+    })
+    .toBe(1);
+});

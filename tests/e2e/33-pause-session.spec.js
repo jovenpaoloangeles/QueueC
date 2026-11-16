@@ -34,3 +34,21 @@ test("33.1 pause freezes the session timer, reload keeps it frozen, resume resta
   await expect(page.getByTestId("btn-pause")).toHaveText("Pause");
   await expect(pill).not.toHaveText(frozen1, { timeout: 4000 });
 });
+
+test("33.2 pause failure surfaces an error toast and the session keeps running", async ({ page }) => {
+  await fullSetup(page);
+  const pill = page.getByTestId("session-timer");
+  await expect(pill).toBeVisible();
+  const read = () => pill.innerText().then((t) => t.trim());
+
+  await page.route("**/api/sessions/*/pause", (r) => r.abort());
+  await page.getByTestId("btn-pause").click();
+  await expect(page.getByTestId("toast")).toContainText("Could not pause");
+  // the button never flipped — the QM still sees a running session, truthfully
+  await expect(page.getByTestId("btn-pause")).toHaveText("Pause");
+
+  // and it IS still running: the pill keeps ticking
+  const before = await read();
+  await page.waitForTimeout(1500);
+  await expect(pill).not.toHaveText(before, { timeout: 2000 });
+});

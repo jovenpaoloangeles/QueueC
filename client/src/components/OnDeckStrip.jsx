@@ -475,10 +475,9 @@ export default function OnDeckStrip({
           abortMatch(match.id)
             .then(() => true)
             .catch((err) => {
-              if (err?.status === 404 || err?.status === 409) {
-                toast("Already ended — nothing to undo", "info");
-              }
-              return false; // handled its own failure — don't clobber with "Undone"
+              if (err?.status !== 404 && err?.status !== 409) throw err; // Toast reports it
+              toast("Already ended — nothing to undo", "info");
+              return false; // handled its own failure — don't clobber with an error toast
             }),
       });
       setPendingStartId(null);

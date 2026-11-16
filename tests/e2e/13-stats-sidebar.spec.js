@@ -75,3 +75,18 @@ test("13.8 player with most wins ranks first", async ({ page }) => {
   const first = await page.getByTestId("leaderboard-name").first().innerText();
   expect(first).toMatch(/Inter C[12]/);
 });
+
+test("13.10 leaderboard fetch failure shows a retry affordance; retry recovers", async ({ page }) => {
+  await page.route("**/api/leaderboard*", (r) => r.abort());
+  // switching to a fetched window triggers GET /leaderboard — which dies
+  await page.getByTestId("leaderboard-window-all").click();
+  await expect(page.getByTestId("board-error")).toBeVisible();
+  // the failure must not masquerade as an empty board silently — the retry line
+  // is the only new thing here; the stale/empty body stays until retried
+  await page.unroute("**/api/leaderboard*");
+  await page.getByTestId("board-error").click();
+  await expect(page.getByTestId("board-error")).toHaveCount(0);
+  await expect(
+    page.getByTestId("leaderboard-table").or(page.getByTestId("leaderboard-empty")),
+  ).toBeVisible();
+});
