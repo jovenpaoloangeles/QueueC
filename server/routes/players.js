@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import db, { normalizeSkill } from "../db.js";
+import db, { normalizeSkill, SKILL_LEVELS } from "../db.js";
 import { broadcast } from "./sse.js";
 
 const router = new Hono();
@@ -30,6 +30,9 @@ router.post("/", async (c) => {
   const name = (body.name ?? "").trim();
   const skill_level = normalizeSkill(body.skill_level ?? "intermediate");
   if (!name) return c.json({ error: "Name is required" }, 400);
+  if (!SKILL_LEVELS.includes(skill_level)) {
+    return c.json({ error: `skill_level must be one of: ${SKILL_LEVELS.join(", ")}` }, 400);
+  }
 
   const existing = db.prepare("SELECT * FROM players WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))").get(name);
   if (existing) {
@@ -54,6 +57,9 @@ router.patch("/:id", async (c) => {
   const nextName = body.name !== undefined ? String(body.name).trim() : player.name;
   const nextSkill = body.skill_level !== undefined ? normalizeSkill(body.skill_level) : player.skill_level;
   if (!nextName) return c.json({ error: "Name is required" }, 400);
+  if (body.skill_level !== undefined && !SKILL_LEVELS.includes(nextSkill)) {
+    return c.json({ error: `skill_level must be one of: ${SKILL_LEVELS.join(", ")}` }, 400);
+  }
 
   const collision = db
     .prepare("SELECT * FROM players WHERE LOWER(TRIM(name)) = LOWER(TRIM(?)) AND id != ?")
