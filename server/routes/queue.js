@@ -135,6 +135,9 @@ router.post("/sessions/:id/attendance", async (c) => {
   if (!db.prepare("SELECT id FROM players WHERE id = ?").get(player_id)) {
     return c.json({ error: "Player not found" }, 404);
   }
+  if (checked_in_at !== undefined && !Number.isInteger(checked_in_at)) {
+    return c.json({ error: "checked_in_at must be epoch seconds" }, 400);
+  }
   if (db.prepare("SELECT id FROM queue_entries WHERE session_id = ? AND player_id = ?").get(id, player_id)) {
     return c.json({ error: "Player already checked in" }, 409);
   }
