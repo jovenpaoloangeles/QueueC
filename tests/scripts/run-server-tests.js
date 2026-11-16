@@ -108,6 +108,8 @@ for (const f of [
   "server/routes/players-queue.test.js",
   "server/routes/slate.test.js", // expectation aligned in this plan (Step 5b)
   "server/routes/stats.test.js", // expectations aligned in this plan
+  // registered 2026-11-16: plan 004 request-validation guards (one case per rule)
+  "server/routes/validation.test.js",
 ]) {
   const r = Bun.spawnSync(["bun", join(root, f)], {
     cwd: root,
