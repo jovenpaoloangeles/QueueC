@@ -110,7 +110,12 @@ for (const f of [
 ]) {
   const r = Bun.spawnSync(["bun", join(root, f)], {
     cwd: root,
-    env: { ...process.env, QC_TEST_BASE: BASE, BASE_URL: `${BASE}/api`, PLAYERS_PATH: join(root, "tests/fixtures/players.json") },
+    env: {
+      ...process.env,
+      QC_TEST_BASE: BASE,
+      BASE_URL: `${BASE}/api`,
+      PLAYERS_PATH: join(root, "tests/fixtures/players.json"),
+    },
     stdout: "inherit",
     stderr: "inherit",
   });

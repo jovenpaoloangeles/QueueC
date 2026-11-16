@@ -1,6 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import { netWait } from "@/lib/utils";
 
+export function computeTimers(now, queue, activeMatches) {
+  const waitSeconds = new Map();
+  for (const e of queue ?? []) {
+    if (e.status === "waiting") {
+      waitSeconds.set(e.id, netWait(now, e));
+    }
+  }
+  const playSeconds = new Map();
+  for (const m of activeMatches ?? []) {
+    playSeconds.set(m.id, Math.max(0, now - m.started_at));
+  }
+  return { waitSeconds, playSeconds };
+}
+
 export function useTimers(serverTime, queue, activeMatches, pausedAt) {
   const [, setTick] = useState(0);
   const offsetRef = useRef(0);
@@ -36,17 +50,5 @@ export function useTimers(serverTime, queue, activeMatches, pausedAt) {
   // countdown (waits, play time) holds for free.
   const now = pausedAt ?? Math.floor(Date.now() / 1000) + offsetRef.current;
 
-  const waitSeconds = new Map();
-  for (const e of queue ?? []) {
-    if (e.status === "waiting") {
-      waitSeconds.set(e.id, netWait(now, e));
-    }
-  }
-
-  const playSeconds = new Map();
-  for (const m of activeMatches ?? []) {
-    playSeconds.set(m.id, Math.max(0, now - m.started_at));
-  }
-
-  return { waitSeconds, playSeconds };
+  return computeTimers(now, queue, activeMatches);
 }

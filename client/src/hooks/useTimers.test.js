@@ -1,19 +1,7 @@
-// Simulate the timer computation logic (extracted from hook for testability)
-import { netWait } from "../lib/utils.js";
+// Tests the real extraction — the hook re-exports its timer math as computeTimers
 
-function computeTimers(serverTime, queue, activeMatches) {
-  const waitSeconds = new Map();
-  for (const e of queue ?? []) {
-    if (e.status === "waiting") {
-      waitSeconds.set(e.id, netWait(serverTime, e));
-    }
-  }
-  const playSeconds = new Map();
-  for (const m of activeMatches ?? []) {
-    playSeconds.set(m.id, Math.max(0, serverTime - m.started_at));
-  }
-  return { waitSeconds, playSeconds };
-}
+import { netWait } from "../lib/utils.js";
+import { computeTimers } from "./useTimers.js";
 
 const now = 1000;
 const queue = [

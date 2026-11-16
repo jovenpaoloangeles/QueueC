@@ -1,18 +1,5 @@
 import assert from "node:assert/strict";
-
-function computeTimers(serverTime, queue, activeMatches) {
-  const waitSeconds = new Map();
-  for (const e of queue ?? []) {
-    if (e.status === "waiting") {
-      waitSeconds.set(e.id, Math.max(0, serverTime - e.checked_in_at - e.total_seconds_played));
-    }
-  }
-  const playSeconds = new Map();
-  for (const m of activeMatches ?? []) {
-    playSeconds.set(m.id, Math.max(0, serverTime - m.started_at));
-  }
-  return { waitSeconds, playSeconds };
-}
+import { computeTimers } from "../../client/src/hooks/useTimers.js";
 
 const now = 1000;
 
