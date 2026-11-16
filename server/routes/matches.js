@@ -56,6 +56,13 @@ router.post("/", async (c) => {
       return c.json({ error: "Court has expired" }, 400);
     if (court.active_until != null && now >= court.active_until)
       return c.json({ error: "Court reservation has ended" }, 400);
+    // two tabs can't hold two live matches on one court (same query as slate start)
+    const occupied = db
+      .prepare(
+        "SELECT id FROM matches WHERE session_id = ? AND state = 'active' AND ended_at IS NULL AND court_number = ?",
+      )
+      .get(session_id, court.id);
+    if (occupied) return c.json({ error: "Court is not free" }, 409);
   }
 
   // Backstop against double-booking: every entry must belong to this session
