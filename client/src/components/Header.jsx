@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { toggleTheme } from "@/lib/theme";
 import { cn, fmtClock, fmtDur, netWait } from "@/lib/utils";
 import EndSessionConfirmDialog from "./EndSessionConfirmDialog.jsx";
+import { useToast } from "./Toast.jsx";
 
 const ChipDot = ({ tone }) => (
   <span className={cn("size-2 shrink-0 rounded-full", tone)} aria-hidden="true" />
@@ -33,6 +34,7 @@ export default function Header({
 }) {
   const [elapsed, setElapsed] = useState(0);
   const [confirmEnd, setConfirmEnd] = useState(false);
+  const toast = useToast();
   const paused = session?.paused_at != null;
 
   useEffect(() => {
@@ -45,7 +47,10 @@ export default function Header({
     return () => clearInterval(id);
   }, [session?.id, session?.started_at, session, paused]);
 
-  const togglePause = () => (paused ? resumeSession(session.id) : pauseSession(session.id)).catch(() => {});
+  const togglePause = () =>
+    (paused ? resumeSession(session.id) : pauseSession(session.id)).catch(() =>
+      toast(`Could not ${paused ? "resume" : "pause"} — check connection`, "error"),
+    );
 
   const fmtTime = (ts) =>
     ts ? new Date(ts * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—";
