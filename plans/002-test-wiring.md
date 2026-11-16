@@ -54,18 +54,20 @@ const r = Bun.spawnSync(["bun", join(root, f)], {
 });
 ```
 
-The unregistered files read the base URL two different ways:
+The unregistered files read the base URL in three shapes — and precedence matters:
 
 ```js
-// alphabetical-insert.test.js:5  — paths include /api itself
+// alphabetical-insert.test.js:5  — paths include /api itself; wants QC_TEST_BASE WITHOUT /api
 const BASE = process.env.QC_TEST_BASE ?? "http://localhost:3991";
-// courts.test.js:3, matches.integration.test.js:1 — expect the base WITH /api
-const BASE = process.env.QC_TEST_BASE ?? process.env.BASE_URL ?? "http://localhost:3991/api";
+// courts.test.js:3, matches.integration.test.js:1 — QC_TEST_BASE SHADOWS BASE_URL,
+// so with the runner's env they'd take the /api-less QC_TEST_BASE and 404. **Correction
+// (2026-11-16, executor-found): swap the precedence** so they take BASE_URL:
+const BASE = process.env.BASE_URL ?? process.env.QC_TEST_BASE ?? "http://localhost:3991/api";
 // metrics.test.js:5, players-queue.test.js:1, slate.test.js:5, stats.test.js:5
 const BASE = process.env.BASE_URL ?? "http://localhost:3991/api";
 ```
 
-So the runner only needs to pass **both** env vars and all seven route files work unmodified.
+So the runner passes **both** env vars (`QC_TEST_BASE` without `/api`, `BASE_URL` with `/api`) **and** the two files above get their `??` order swapped (a 2-line, test-only change in Step 1).
 
 `tests/package.json` `test:unit` (8 hardcoded paths; `useTimers.test.js` and `dnd.test.js` absent):
 
@@ -122,6 +124,8 @@ Conventions: test files are plain assert scripts run via `bun <path>` (no bun-te
 - `tests/unit/timer.test.js`
 - `client/src/hooks/useTimers.js`, `client/src/hooks/useTimers.test.js`
 - `server/routes/metrics.test.js`, `server/routes/stats.test.js` (expectation alignment only)
+- `server/routes/slate.test.js` (Step 5b: realign the one stale case)
+- `server/routes/courts.test.js`, `server/routes/matches.integration.test.js` (Step 1.2: swap the `??` precedence, nothing else)
 - `package.json` (root, `install:all`), `README.md`, `CONTRIBUTING.md`, `scripts/test-touched.mjs`, `docs/testing.md` (one line if needed)
 
 **Out of scope** (do NOT touch):
@@ -140,8 +144,9 @@ Conventions: test files are plain assert scripts run via `bun <path>` (no bun-te
 
 In `tests/scripts/run-server-tests.js`:
 
-1. In the per-file spawn env (line ~72), add `BASE_URL: \`${BASE}/api\``alongside`QC_TEST_BASE`.
-2. Append to the file list, after `"server/routes/v17-ratings.test.js"`, with a comment noting they were trial-verified 2026-11-16:
+1. In the per-file spawn env (line ~72), add `BASE_URL: \`${BASE}/api\`` alongside `QC_TEST_BASE`.
+2. In `server/routes/courts.test.js:3` and `server/routes/matches.integration.test.js:1`, swap the `??` precedence so `BASE_URL` wins over `QC_TEST_BASE` (see the corrected excerpt in Current state — with the runner's env these two would otherwise take the `/api`-less `QC_TEST_BASE` and 404 on every call). This is the only edit to those files.
+3. Append to the file list, after `"server/routes/v17-ratings.test.js"`, with a comment noting they were trial-verified 2026-11-16:
 
 ```js
   // registered 2026-11-16: trial-verified against the shared server (see plans/002)
@@ -154,7 +159,7 @@ In `tests/scripts/run-server-tests.js`:
   "server/routes/stats.test.js",     // expectations aligned in this plan
 ```
 
-**Verify**: `bun run --cwd tests test:server` → `alphabetical-insert`, `courts`, `matches.integration`, `players-queue` pass; `metrics` and `stats` fail on the assertions covered by Steps 4–5; `slate` fails only if plan 001 hasn't landed (its dependency). If any of the four expected-pass files fails, see STOP conditions.
+**Verify**: `bun run --cwd tests test:server` → `alphabetical-insert`, `courts`, `matches.integration`, `players-queue` pass; `metrics` and `stats` fail on the assertions covered by Steps 4–5; `slate` fails only on the ~line-523 stale case (realigned in Step 5b — plan 001's guards are on master already). If any of the four expected-pass files fails, see STOP conditions.
 
 ### Step 2: Run the five db-backed suites in their own phase
 
