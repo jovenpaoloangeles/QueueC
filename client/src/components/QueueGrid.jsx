@@ -55,7 +55,9 @@ export default function QueueGrid({
   // check-in undo: if the entry is already gone (another client checked them
   // out), say so instead of toasting a false "Undone" — OnDeckStrip convention
   const undoRemove = (entryId) =>
-    removeEntry(entryId).catch((err) => {
+    removeEntry(entryId)
+      .then(() => true)
+      .catch((err) => {
       if (err?.status === 404) {
         toast("Already removed — nothing to undo", "info");
         return false; // handled its own failure — don't clobber with "Undone"
@@ -123,7 +125,9 @@ export default function QueueGrid({
     setEntryStatus(entry.id, "left")
       .then(() => {
         onSelectionChange(selection.filter((s) => s !== entry.id));
-        toast(`${entry.name} went home`, "info", { undo: () => setEntryStatus(entry.id, entry.status) });
+        toast(`${entry.name} went home`, "info", {
+          undo: () => setEntryStatus(entry.id, entry.status).then(() => true, () => false),
+        });
       })
       .catch((err) => toast(err?.data?.error ?? "Could not update", "error"));
   }

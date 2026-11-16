@@ -150,7 +150,10 @@ function LiveView() {
         "success",
         r.slate_ids?.length
           ? {
-              undo: () => Promise.allSettled(r.slate_ids.map((id) => cancelSlate(id))).catch(() => {}),
+              undo: () =>
+                Promise.allSettled(r.slate_ids.map((id) => cancelSlate(id))).then((results) =>
+                  results.every((res) => res.status === "fulfilled"),
+                ),
             }
           : undefined,
       );
@@ -363,12 +366,14 @@ function LiveView() {
         match
           ? {
               undo: () =>
-                abortMatch(match.id).catch((err) => {
-                  if (err?.status === 404 || err?.status === 409) {
-                    toast("Already ended — nothing to undo", "info");
+                abortMatch(match.id)
+                  .then(() => true)
+                  .catch((err) => {
+                    if (err?.status === 404 || err?.status === 409) {
+                      toast("Already ended — nothing to undo", "info");
+                    }
                     return false; // handled its own failure — don't clobber with "Undone"
-                  }
-                }),
+                  }),
             }
           : undefined,
       );

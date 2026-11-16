@@ -386,7 +386,11 @@ export default function OnDeckStrip({
         team2_p1: newDraft[2],
         team2_p2: newDraft[3],
       });
-      toast("Added to On Deck", "success", slate ? { undo: () => cancelSlate(slate.id) } : undefined);
+      toast(
+        "Added to On Deck",
+        "success",
+        slate ? { undo: () => cancelSlate(slate.id).then(() => true, () => false) } : undefined,
+      );
       setNewDraft([null, null, null, null]);
     } catch (err) {
       toast(err?.data?.error ?? "Could not add to On Deck", "error"); // keep the builder
@@ -467,14 +471,15 @@ export default function OnDeckStrip({
       const t1 = [row.team1_p1_name, row.team1_p2_name].filter(Boolean).join(" & ");
       const t2 = [row.team2_p1_name, row.team2_p2_name].filter(Boolean).join(" & ");
       toast(`Lineup started on ${court.label} — ${t1} vs ${t2}`, "success", {
-        undo: () => {
-          abortMatch(match.id).catch((err) => {
-            if (err?.status === 404 || err?.status === 409) {
-              toast("Already ended — nothing to undo", "info");
+        undo: () =>
+          abortMatch(match.id)
+            .then(() => true)
+            .catch((err) => {
+              if (err?.status === 404 || err?.status === 409) {
+                toast("Already ended — nothing to undo", "info");
+              }
               return false; // handled its own failure — don't clobber with "Undone"
-            }
-          });
-        },
+            }),
       });
       setPendingStartId(null);
     } catch (err) {

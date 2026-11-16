@@ -146,7 +146,12 @@ export default function PlayerSearchAdd({
           : `Checked in ${entryIds.length} players`,
         entryIds.length ? "success" : "info",
         entryIds.length
-          ? { undo: () => Promise.allSettled(entryIds.map((id) => removeEntry(id))) }
+          ? {
+              undo: () =>
+                Promise.allSettled(entryIds.map((id) => removeEntry(id))).then((results) =>
+                  results.every((res) => res.status === "fulfilled" || res.reason?.status === 404),
+                ),
+            }
           : undefined,
       );
     } finally {
@@ -178,7 +183,12 @@ export default function PlayerSearchAdd({
             : `Checked in ${entryIds.length} players`,
           entryIds.length ? "success" : "info",
           entryIds.length
-            ? { undo: () => Promise.allSettled(entryIds.map((id) => removeEntry(id))) }
+            ? {
+                undo: () =>
+                  Promise.allSettled(entryIds.map((id) => removeEntry(id))).then((results) =>
+                    results.every((res) => res.status === "fulfilled" || res.reason?.status === 404),
+                  ),
+              }
             : undefined,
         );
         return;
