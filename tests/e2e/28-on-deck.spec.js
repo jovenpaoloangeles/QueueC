@@ -189,7 +189,7 @@ test("28.5 reorder: moving #2 up swaps the order", async ({ page }) => {
   expect(await cards.nth(1).innerText()).toContain(rowA.team1_p1_name);
 });
 
-test("28.6 ending the live match promotes slate #1; the rest renumbers; panel stays mounted", async ({
+test("28.6 ending the live match promotes slate #1 and the deck refills behind it; panel stays mounted", async ({
   page,
 }) => {
   await seedLiveMatch(page);
@@ -197,13 +197,16 @@ test("28.6 ending the live match promotes slate #1; the rest renumbers; panel st
   await seedSlate(page);
   const [first, second] = (await liveState(page)).slatedMatches.map((m) => m.id);
   await endMatch(page, "Court 1");
-  await expect.poll(async () => (await liveState(page)).slatedMatches.map((m) => m.id)).toEqual([second]);
+  // 16 players: 4 on court, 8 on deck, 4 waiting → after the promotion 8 are
+  // waiting (the four who just played + the four who were waiting) → 2 refills
+  await expect.poll(async () => (await liveState(page)).slatedMatches.map((m) => m.id)).toHaveLength(3);
   const st = await liveState(page);
   expect(st.activeMatches.map((m) => m.id)).toContain(first);
+  expect(st.slatedMatches[0].id).toBe(second); // the old #2 is up next; refills go behind it
   await expect(panel(page)).toBeVisible();
   await expect(page.getByTestId("on-deck-pos-1")).toBeVisible();
-  await expect(page.getByTestId("on-deck-pos-2")).toHaveCount(0);
-  await expect(page.getByTestId("on-deck-count")).toHaveText("1");
+  await expect(page.getByTestId("on-deck-pos-3")).toBeVisible();
+  await expect(page.getByTestId("on-deck-count")).toHaveText("3");
   await expect(page.getByTestId(`slate-row-${second}`)).toBeVisible();
 });
 
@@ -341,4 +344,28 @@ test("28.11 editing participants: removing a slated player returns them to the w
   // and the slate really plays the substitute
   const after = await liveState(page);
   expect(after.slatedMatches[0].team1_p1).not.toBe(removedId);
+});
+
+test("28.12 Rerun re-plans the deck with different pairings; Undo restores the old lineups", async ({
+  page,
+}) => {
+  await seedLiveMatch(page);
+  const a = await seedSlate(page);
+  const b = await seedSlate(page);
+  const sidesOf = (m) =>
+    [1, 2].map((s) => [m[`team${s}_p1_name`], m[`team${s}_p2_name`]].filter(Boolean).join(" & "));
+  const before = [a, b].map(sidesOf);
+
+  await page.getByTestId("ondeck-rerun").click();
+  // 12 players were free once the two lineups were released → the deck fills to its cap of 3
+  await expect(page.getByTestId("toast")).toContainText("Deck re-planned — 3 new lineups");
+  await expect(page.getByTestId("on-deck-count")).toHaveText("3");
+  const after = (await liveState(page)).slatedMatches.map(sidesOf);
+  expect(after).toHaveLength(3);
+  const oldSides = before.flat();
+  for (const sides of after) for (const side of sides) expect(oldSides).not.toContain(side);
+
+  await page.getByTestId("toast-undo").click();
+  await expect(page.getByTestId("toast")).toContainText("Undone");
+  expect((await liveState(page)).slatedMatches.map(sidesOf)).toEqual(before);
 });
