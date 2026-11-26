@@ -1,4 +1,4 @@
-// tests/e2e/27-start-confirm.spec.js — every start (manual + Smart Match) asks for confirmation first
+// tests/e2e/27-start-confirm.spec.js — manual starts and slate promotion ask for confirmation first
 import { expect, test } from "../fixtures.js";
 import { base, confirmStart, fullSetup, liveState, startDoubles, syntheticDrag } from "../helpers.js";
 
@@ -75,26 +75,20 @@ test("27.4 Start Singles asks for confirmation", async ({ page }) => {
   expect((await liveState(page)).activeMatches[0].format).toBe("singles");
 });
 
-test("27.5 Smart Match shows the proposed slates; Cancel changes nothing; Confirm slates to On Deck", async ({
+test("27.5 Smart Match needs no confirm dialog — and its Undo takes the whole click back", async ({
   page,
 }) => {
   await page.getByTestId("btn-smart-match").click();
-  await expect(dialog(page)).toBeVisible();
-  await expect(page.getByTestId("start-confirm-slate-row")).toHaveCount(2); // 8 waiting → 2 lineups
-  await expect(page.getByTestId("start-confirm-yes")).toHaveText("Add to On Deck");
-  await page.getByTestId("start-confirm-cancel").click();
-  await expect(dialog(page)).toHaveCount(0);
-  let st = await liveState(page);
+  await expect(page.getByTestId("start-confirm-dialog")).toHaveCount(0);
+  await expect(page.getByTestId("toast")).toContainText("2 started");
+  expect((await liveState(page)).activeMatches).toHaveLength(2);
+
+  await page.getByTestId("toast-undo").click();
+  await expect(page.getByTestId("toast")).toContainText("Undone");
+  const st = await liveState(page);
   expect(st.activeMatches).toHaveLength(0);
   expect(st.slatedMatches).toHaveLength(0);
   expect(st.queue.filter((q) => q.status === "waiting")).toHaveLength(8);
-
-  await page.getByTestId("btn-smart-match").click();
-  await confirmStart(page);
-  await expect(page.getByTestId("toast")).toContainText(/On Deck/);
-  st = await liveState(page);
-  expect(st.slatedMatches).toHaveLength(2);
-  expect(st.activeMatches).toHaveLength(0); // slate-first: courts stay free
 });
 
 test("27.6 live court shows no lineup matrix; slating goes through the On Deck builder", async ({ page }) => {

@@ -48,19 +48,15 @@ test("10.4 no Manual/Smart mode buttons exist in the queue header", async ({ pag
   await expect(page.getByTestId("checkin-toggle")).toHaveCount(1);
 });
 
-test("10.5 header Smart Match proposes slates only (no court start); Cancel changes nothing", async ({
+test("10.5 header Smart Match runs in one click — no dialog; the free courts start at once", async ({
   page,
 }) => {
   await page.getByTestId("btn-smart-match").click();
-  const dialog = page.getByTestId("start-confirm-dialog");
-  await expect(dialog).toBeVisible();
-  await expect(page.getByTestId("start-confirm-slate-row")).toHaveCount(2); // 8 waiting → 2 slated lineups
-  await expect(page.getByTestId("start-confirm-row")).toHaveCount(0); // no court-anchored match proposed
-  await page.getByTestId("start-confirm-cancel").click();
-  await expect(dialog).toHaveCount(0);
+  await expect(page.getByTestId("start-confirm-dialog")).toHaveCount(0);
+  await expect(page.getByTestId("toast")).toContainText("2 started");
   const st = await liveState(page);
-  expect(st.activeMatches).toHaveLength(0);
-  expect(st.slatedMatches).toHaveLength(0);
-  // queue untouched too — Smart Match no longer selects from the queue
+  expect(st.activeMatches).toHaveLength(2); // both free courts
+  expect(st.slatedMatches).toHaveLength(0); // 8 players — nobody left for On Deck
+  // queue untouched too — Smart Match never selects from the queue
   await expect(page.locator("text=selected →")).toHaveCount(0);
 });

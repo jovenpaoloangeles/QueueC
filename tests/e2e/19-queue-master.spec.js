@@ -63,7 +63,7 @@ test("QM.2 player removed via API — gone from queue", async ({ page }) => {
   await expect(page.locator("[data-entry-id]")).toHaveCount(entryIds.length - 1);
 });
 
-test("QM.3 smart mode skips players already on court", async ({ page }) => {
+test("QM.3 Smart Match uses only waiting players — never the four on court", async ({ page }) => {
   await fullSetup(page);
   const initialCount = await page.locator("[data-entry-id]").count();
 
@@ -71,18 +71,16 @@ test("QM.3 smart mode skips players already on court", async ({ page }) => {
 
   const waitingCount = await page.locator("[data-entry-id]").count();
   expect(waitingCount).toBe(initialCount - 4);
+  const liveId = (await liveState(page)).activeMatches[0].id;
 
-  // Header Smart Match can only match from waiting players — not the 4 on
-  // court: with one court now busy it slates the remaining 4 to On Deck,
-  // and cancel leaves the queue untouched
+  // one court busy, four waiting: Smart Match starts exactly those four on the
+  // free court and leaves the live match alone
   await page.getByTestId("btn-smart-match").click();
-  const dialog = page.getByTestId("start-confirm-dialog");
-  await expect(dialog).toBeVisible();
-  await expect(page.getByTestId("start-confirm-slate-row")).toHaveCount(1); // the 4 waiting players
-  await page.getByTestId("start-confirm-cancel").click();
-  await expect(dialog).toHaveCount(0);
-  await expect(page.locator("[data-entry-id]")).toHaveCount(waitingCount);
-  expect((await liveState(page)).slatedMatches).toHaveLength(0);
+  await expect(page.getByTestId("toast")).toContainText("1 started");
+  const st = await liveState(page);
+  expect(st.activeMatches).toHaveLength(2);
+  expect(st.activeMatches.map((m) => m.id)).toContain(liveId);
+  expect(st.slatedMatches).toHaveLength(0);
 });
 
 test("QM.4 queue master picks their own 4 — selection always manual", async ({ page }) => {

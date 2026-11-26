@@ -2,43 +2,41 @@
 
 import { execSync } from "node:child_process";
 import { expect, test } from "../fixtures.js";
-import {
-  base,
-  checkinPlayers,
-  clickStartMatch,
-  confirmStart,
-  createSession,
-  endMatch,
-  startSession,
-} from "../helpers.js";
+import { base, checkinPlayers, clickStartMatch, createSession, endMatch, startSession } from "../helpers.js";
 
 test.beforeEach(async ({ page }) => {
   const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json();
   if (session) await page.request.fetch(`${base()}/api/sessions/${session.id}/end`, { method: "PATCH" });
 });
 
-test("24.1 Smart Match with 4+ waiting slates to On Deck and toasts — nothing starts", async ({ page }) => {
+test("24.1 Smart Match in one click: fills the free court, the rest go to On Deck", async ({ page }) => {
   await createSession(page, { courts: 1 });
-  await checkinPlayers(page, ["Inter C1", "Inter C2", "Inter C3", "Inter C4", "Expert E1", "Expert E2"]);
+  await checkinPlayers(page, [
+    "Inter C1",
+    "Inter C2",
+    "Inter C3",
+    "Inter C4",
+    "Expert E1",
+    "Expert E2",
+    "Upper D1",
+    "Upper D2",
+  ]);
   await startSession(page);
-  await page.getByTestId("btn-smart-match").click();
-  await confirmStart(page);
+  await page.getByTestId("btn-smart-match").click(); // no confirm dialog
   const toast = page.getByTestId("toast");
-  await expect(toast).toBeVisible();
-  await expect(toast).toContainText(/On Deck/);
-  // slate-first: the free court stays free, the lineup waits in On Deck
+  await expect(toast).toContainText("1 started · 1 added to On Deck");
+  await expect(page.getByTestId("court-winner-1")).toHaveCount(1); // the free court is live
   await expect(page.getByTestId("on-deck-count")).toHaveText("1");
 });
 
-test("24.2 Smart Match with fewer than 4 waiting toasts a friendly message", async ({ page }) => {
+test("24.2 Smart Match with only 2 waiting starts a singles game on the free court", async ({ page }) => {
   await createSession(page, { courts: 1 });
   await checkinPlayers(page, ["Inter C1", "Inter C2"]);
   await startSession(page);
-  await page.getByTestId("btn-smart-match").click(); // a slate needs 4 — nothing to plan
-  const toast = page.getByTestId("toast");
-  await expect(toast).toBeVisible();
-  await expect(toast).toContainText(/Nothing to auto-match/);
+  await page.getByTestId("btn-smart-match").click();
+  await expect(page.getByTestId("toast")).toContainText("(singles)");
   await expect(page.getByTestId("start-confirm-dialog")).toHaveCount(0);
+  await expect(page.getByTestId("court-winner-1")).toHaveCount(1);
 });
 
 test("24.4 hdr-longest uses net wait — leader leaves when they start; wait restarts after a match", async ({

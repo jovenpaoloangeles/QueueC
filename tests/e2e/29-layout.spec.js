@@ -1,6 +1,5 @@
 // tests/e2e/29-layout.spec.js — the bento/divider system is gone: one scrolling
-// page, sticky sidebar, plain collapsible On Deck (nothing persisted), and
-// slate-first Smart Match.
+// page, sticky sidebar, plain collapsible On Deck (nothing persisted).
 import { expect, test } from "../fixtures.js";
 import { base, fullSetup, liveState } from "../helpers.js";
 
@@ -63,13 +62,11 @@ test("29.4 courts sit tight under the header at natural height", async ({ page }
   expect(cards.grid).toBeGreaterThanOrEqual(cards.card);
 });
 
-test("29.5 Smart Match slates only — nothing starts, lineups land in On Deck", async ({ page }) => {
+test("29.5 Smart Match starts the free courts in one click — nothing waits in a dialog", async ({ page }) => {
   await page.getByTestId("btn-smart-match").click();
-  await expect(page.getByTestId("start-confirm-dialog")).toBeVisible();
-  await page.getByTestId("start-confirm-yes").click();
-  await expect(page.getByTestId("toast")).toContainText(/On Deck/);
+  await expect(page.getByTestId("start-confirm-dialog")).toHaveCount(0);
+  await expect(page.getByTestId("toast")).toContainText("2 started");
   const st = await liveState(page);
-  expect(st.activeMatches).toHaveLength(0);
-  expect(st.slatedMatches).toHaveLength(2); // 8 waiting → 2 slated lineups
-  await expect(page.getByTestId("on-deck-count")).toHaveText("2");
+  expect(st.activeMatches).toHaveLength(2);
+  expect(st.slatedMatches).toHaveLength(0); // 8 players, 2 courts — nobody left for On Deck
 });
