@@ -125,11 +125,10 @@ export async function fullSetup(
 }
 
 export async function endMatch(page, _courtLabel, { team1 = 21, team2 = 15 } = {}) {
-  // Use 'End Match' button directly (avoids strict-mode issues with partial court label matches)
-  await page.getByRole("button", { name: "End Match" }).first().click();
-  // two-step flow: the confirm gate appears first, then the finalization form
-  const confirmEnd = page.getByTestId("confirm-end-end");
-  if (await confirmEnd.isVisible().catch(() => false)) await confirmEnd.click();
+  // Tap the winning side on the first live court — that opens the score form
+  // with the winner's score preset; both scores are then typed explicitly.
+  const winner = team1 >= team2 ? 1 : 2;
+  await page.getByTestId(`court-winner-${winner}`).first().click();
   await page.getByLabel("Team 1").fill(String(team1));
   await page.getByLabel("Team 2").fill(String(team2));
   await page.getByRole("button", { name: "Confirm" }).click();
@@ -195,12 +194,12 @@ export async function clickStartMatch(page) {
 }
 
 /** Click-select the first n queue cards, then Start Match (court 1).
- *  `expectEndMatch` = wait for an End Match button to appear (set false when
- *  the test starts a match on every court — no End Match left to wait for). */
+ *  `expectEndMatch` = wait for a winner button to appear (set false when
+ *  the test starts a match on every court — no winner button left to wait for). */
 export async function startDoubles(page, { expectEndMatch = true } = {}) {
   for (let i = 0; i < 4; i++) await page.locator("[data-entry-id]").nth(i).click();
   await clickStartMatch(page);
-  if (expectEndMatch) await expect(page.getByRole("button", { name: "End Match" })).toHaveCount(1);
+  if (expectEndMatch) await expect(page.getByTestId("court-winner-1")).toHaveCount(1);
 }
 
 /** API path of every queue entry id + status (one liveState round-trip). */
@@ -230,9 +229,9 @@ export async function expectCardsStatus(page, status) {
     });
 }
 
-/** Wait until any 'End Match' button exists — i.e. the started match landed. */
+/** Wait until any winner button exists — i.e. the started match landed. */
 export async function expectMatchLive(page) {
-  await expect(page.getByRole("button", { name: "End Match" }).first()).toBeVisible();
+  await expect(page.getByTestId("court-winner-1").first()).toBeVisible();
 }
 
 /** One snapshot of the SSE state payload ({session, queue, courts, ...}). */

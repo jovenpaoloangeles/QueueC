@@ -80,10 +80,10 @@ test("7.16 two courts run simultaneously", async ({ page }) => {
   // Session has 2 courts; start a match on each
   for (let i = 0; i < 4; i++) await page.locator("[data-entry-id]").nth(i).click();
   await clickStartMatch(page);
-  await expect(page.locator("text=End Match")).toHaveCount(1);
+  await expect(page.getByTestId("court-winner-1")).toHaveCount(1);
   for (let i = 0; i < 4; i++) await page.locator("[data-entry-id]").nth(i).click();
   await clickStartMatch(page);
-  await expect(page.locator("text=End Match")).toHaveCount(2);
+  await expect(page.getByTestId("court-winner-1")).toHaveCount(2);
 });
 
 // 7.10–7.13: drag-to-court arming. Court drop handler lives on the inactive
@@ -123,9 +123,9 @@ test("7.13 drag 4th player to armed court — asks to confirm, then starts", asy
   await syntheticDrag(page, "[data-entry-id]", '[data-drop^="court-"]', { fromIndex: 0, toIndex: -1 });
   // 4 players dropped → confirm dialog; nothing started yet
   await expect(page.getByTestId("start-confirm-dialog")).toBeVisible();
-  await expect(page.getByRole("button", { name: "End Match" })).toHaveCount(0);
+  await expect(page.getByTestId("court-winner-1")).toHaveCount(0);
   await confirmStart(page);
-  await expect(page.getByRole("button", { name: "End Match" })).toHaveCount(1);
+  await expect(page.getByTestId("court-winner-1")).toHaveCount(1);
   await expect(page.locator("[data-entry-id]")).toHaveCount(4);
 });
 

@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { drag, rearrange, useDragSource, valid } from "@/lib/dnd";
 import { cn, fmtClock, fmtWall, lastCallMins, shortSkill, TIER_CLASS } from "@/lib/utils";
 import { extendCourt, updateMatchTeams } from "../api.js";
-import ConfirmEndDialog from "./ConfirmEndDialog.jsx";
 import EndMatchModal from "./EndMatchModal.jsx";
 import SubstituteDialog from "./SubstituteDialog.jsx";
 
@@ -219,13 +218,12 @@ export default function CourtCard({
   onClearDraft,
 }) {
   const [showEnd, setShowEnd] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
   const [showSub, setShowSub] = useState(false);
   const [over, setOver] = useState(false);
   const toast = useToast();
   const isActive = !!match;
   const secs = isActive ? (playSeconds.get(match.id) ?? 0) : 0;
-  // player names for the end-flow dialogs (match rows carry entry ids only)
+  // player names for the winner buttons and the score form (match rows carry entry ids only)
   const nameOf = (id) => queue.find((e) => e.id === id)?.name;
   const joinTeam = (ids) => ids.filter(Boolean).map(nameOf).join(" & ");
   const teamNames = isActive
@@ -237,7 +235,6 @@ export default function CourtCard({
   useEffect(() => {
     if (!isActive) {
       setShowEnd(false);
-      setShowConfirm(false);
       setShowSub(false);
     }
   }, [isActive]);
@@ -370,6 +367,35 @@ export default function CourtCard({
               matchId={match.id}
               match={match}
             />
+            {/* one tap on the winning team opens the score form with that side
+                preset — nothing is written until the form is confirmed */}
+            <p
+              data-testid="court-who-won"
+              className="col-span-3 pt-1 text-center text-2xs uppercase tracking-wider text-muted-foreground"
+            >
+              Who won? Tap the team
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-auto! min-h-7 whitespace-normal! rounded-lg py-1 text-left leading-tight"
+              data-testid="court-winner-1"
+              aria-label={`${teamNames.team1} won`}
+              onClick={() => setShowEnd("team1")}
+            >
+              {teamNames.team1}
+            </Button>
+            <span aria-hidden="true" />
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-auto! min-h-7 whitespace-normal! rounded-lg py-1 text-left leading-tight"
+              data-testid="court-winner-2"
+              aria-label={`${teamNames.team2} won`}
+              onClick={() => setShowEnd("team2")}
+            >
+              {teamNames.team2}
+            </Button>
           </div>
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <p className="mr-auto min-w-0 text-xs text-muted-foreground">
@@ -414,9 +440,6 @@ export default function CourtCard({
               onClick={() => setShowSub(true)}
             >
               Sub
-            </Button>
-            <Button variant="outline" size="sm" className="rounded-full" onClick={() => setShowConfirm(true)}>
-              End match
             </Button>
           </div>
         </CardContent>
@@ -524,15 +547,6 @@ export default function CourtCard({
         </CardContent>
       )}
 
-      <ConfirmEndDialog
-        open={showConfirm}
-        onOpenChange={setShowConfirm}
-        teamNames={teamNames}
-        onConfirm={(winner) => {
-          setShowConfirm(false);
-          setShowEnd(winner ?? true);
-        }}
-      />
       {showEnd && match && (
         <EndMatchModal
           match={match}

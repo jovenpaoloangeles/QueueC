@@ -73,7 +73,7 @@ test("28.1 panel is always mounted: empty state, and still there after ending th
   await startDoubles(page);
   await expect(panel(page)).toBeVisible();
   await endMatch(page, "Court 1");
-  await expect(page.getByRole("button", { name: "End Match" })).toHaveCount(0);
+  await expect(page.getByTestId("court-winner-1")).toHaveCount(0);
   await expect(panel(page)).toBeVisible();
   await expect(page.getByTestId("on-deck-empty")).toBeVisible();
 });

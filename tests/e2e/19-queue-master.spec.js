@@ -110,7 +110,7 @@ test("QM.7 two matches end simultaneously — all 8 players return to queue", as
   await fullSetup(page, { courts: 2 });
   await startDoublesMatch(page);
   await startDoublesMatch(page);
-  await expect(page.getByRole("button", { name: "End Match" })).toHaveCount(2);
+  await expect(page.getByTestId("court-winner-1")).toHaveCount(2);
 
   // end both server-side (state covered by server/routes/two-match-end.test.js);
   // what's UI-specific here is that the grid re-renders all 8 cards

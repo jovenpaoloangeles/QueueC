@@ -14,27 +14,24 @@ test.beforeEach(async ({ page }) => {
   await expectMatchLive(page);
 });
 
-test("8.1 End Match button opens modal", async ({ page }) => {
-  await page.getByRole("button", { name: "End Match" }).first().click();
+test("8.1 tapping the winning team opens the score form", async ({ page }) => {
+  await page.getByTestId("court-winner-1").first().click();
   await expect(page.getByRole("dialog")).toBeVisible();
 });
 
 test("8.2 modal title shows court label", async ({ page }) => {
-  await page.getByRole("button", { name: "End Match" }).first().click();
-  await page.getByTestId("confirm-end-end").click(); // pass the confirm gate
+  await page.getByTestId("court-winner-1").first().click();
   await expect(page.getByRole("dialog").locator("text=Court")).toBeVisible();
 });
 
-test("8.3 score inputs start empty", async ({ page }) => {
-  await page.getByRole("button", { name: "End Match" }).first().click();
-  await page.getByTestId("confirm-end-end").click(); // pass the confirm gate
+test("8.3 the `e` shortcut opens the form with both scores empty", async ({ page }) => {
+  await page.keyboard.press("e");
   await expect(page.getByLabel("Team 1")).toHaveValue("");
   await expect(page.getByLabel("Team 2")).toHaveValue("");
 });
 
 test("8.4 score inputs accept 0–99", async ({ page }) => {
-  await page.getByRole("button", { name: "End Match" }).first().click();
-  await page.getByTestId("confirm-end-end").click(); // pass the confirm gate
+  await page.getByTestId("court-winner-1").first().click();
   await page.getByLabel("Team 1").fill("21");
   await expect(page.getByLabel("Team 1")).toHaveValue("21");
 });
@@ -50,16 +47,14 @@ test("8.7 court returns to idle state", async ({ page }) => {
 });
 
 test("8.10 cancel keeps match running", async ({ page }) => {
-  await page.getByRole("button", { name: "End Match" }).first().click();
-  await expect(page.getByTestId("confirm-end-end")).toBeVisible(); // confirm gate opened
+  await page.getByTestId("court-winner-1").first().click();
   await page.getByRole("button", { name: "Cancel" }).click();
-  await expect(page.getByRole("dialog")).not.toBeVisible(); // gate dismissed (unmounts)
-  await expect(page.getByRole("button", { name: "End Match" })).toBeVisible(); // match still live
+  await expect(page.getByRole("dialog")).not.toBeVisible(); // form dismissed (unmounts)
+  await expect(page.getByTestId("court-winner-1").first()).toBeVisible(); // match still live
 });
 
 test("8.11 blank scores can't be submitted (v1.5: scores required)", async ({ page }) => {
-  await page.getByRole("button", { name: "End Match" }).first().click();
-  await page.getByTestId("confirm-end-end").click(); // pass the confirm gate
+  await page.getByTestId("court-winner-1").first().click();
   await expect(page.getByTestId("end-match-score-issue")).toHaveText("Enter both scores");
   await expect(page.getByRole("button", { name: "Confirm" })).toBeDisabled();
 });
@@ -103,11 +98,10 @@ test("8.12 team 1 win — winning players gain leaderboard wins", async ({ page 
 });
 
 test("8.13 tie score is refused — the match stays live (v1.5: no draws)", async ({ page }) => {
-  await page.getByRole("button", { name: "End Match" }).first().click();
-  await page.getByTestId("confirm-end-end").click();
+  await page.getByTestId("court-winner-1").first().click();
   await page.getByLabel("Team 1").fill("15");
   await page.getByLabel("Team 2").fill("15");
   await expect(page.getByRole("button", { name: "Confirm" })).toBeDisabled();
   await page.getByRole("button", { name: "Cancel" }).click();
-  await expect(page.getByRole("button", { name: "End Match" })).toBeVisible();
+  await expect(page.getByTestId("court-winner-1").first()).toBeVisible();
 });

@@ -32,9 +32,9 @@ test("25.2 mid-match expiry: Last Game + extend, match never interrupted", async
   await expireCourt(page);
   await expect(page.getByTestId("expiring-last-game-badge")).toBeVisible();
   await expect(page.getByTestId("btn-extend-court")).toBeVisible();
-  await expect(page.getByRole("button", { name: "End Match" })).toBeVisible();
+  await expect(page.getByTestId("court-winner-1")).toBeVisible();
   await page.getByTestId("btn-extend-court").click();
   await expect(page.getByTestId("expiring-last-game-badge")).toHaveCount(0);
   await expect(page.getByTestId("btn-extend-court")).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "End Match" })).toBeVisible();
+  await expect(page.getByTestId("court-winner-1")).toBeVisible();
 });

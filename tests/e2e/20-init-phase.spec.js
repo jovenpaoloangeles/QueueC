@@ -115,7 +115,7 @@ test("20.9 expired court mid-match shows Last Game badge and persists until matc
   await page.locator("[data-entry-id]").nth(0).click();
   await page.locator("[data-entry-id]").nth(1).click();
   await clickStartMatch(page);
-  await expect(page.getByRole("button", { name: "End Match" })).toHaveCount(1);
+  await expect(page.getByTestId("court-winner-1")).toHaveCount(1);
 
   // expire the court mid-game
   const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json();
@@ -125,13 +125,12 @@ test("20.9 expired court mid-match shows Last Game badge and persists until matc
     data: { expires_at: Math.floor(Date.now() / 1000) - 10 },
   });
 
-  // graceful finish: court still visible with Last Game badge + End Match still available
+  // graceful finish: court still visible with Last Game badge + winner buttons still available
   await expect(page.locator('[data-testid="expiring-last-game-badge"]')).toBeVisible();
-  await expect(page.getByRole("button", { name: "End Match" })).toBeVisible();
+  await expect(page.getByTestId("court-winner-1")).toBeVisible();
 
   // end the match → expired court remains in view as the extend panel
-  await page.getByRole("button", { name: "End Match" }).first().click();
-  await page.getByTestId("confirm-end-end").click(); // pass the confirm gate
+  await page.getByTestId("court-winner-1").first().click();
   await page.getByLabel("Team 1").fill("21"); // v1.5: scores required
   await page.getByLabel("Team 2").fill("15");
   await page.getByRole("button", { name: "Confirm" }).click();
@@ -223,9 +222,8 @@ test("20.17 games played increments after a match ends", async ({ page }) => {
   await startSession(page);
   for (let i = 0; i < 4; i++) await page.locator("[data-entry-id]").nth(i).click();
   await clickStartMatch(page);
-  await expect(page.getByRole("button", { name: "End Match" })).toHaveCount(1);
-  await page.getByRole("button", { name: "End Match" }).first().click();
-  await page.getByTestId("confirm-end-end").click(); // pass the confirm gate
+  await expect(page.getByTestId("court-winner-1")).toHaveCount(1);
+  await page.getByTestId("court-winner-1").first().click();
   await page.getByLabel("Team 1").fill("21");
   await page.getByLabel("Team 2").fill("15");
   await page.getByRole("button", { name: "Confirm" }).click();

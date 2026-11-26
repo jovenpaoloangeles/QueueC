@@ -16,15 +16,12 @@ async function teamNames(page) {
   return { team1: join([m.team1_p1, m.team1_p2]), team2: join([m.team2_p1, m.team2_p2]) };
 }
 
-test("39.1 confirm gate and score modal show the team names", async ({ page }) => {
+test("39.1 the winner buttons and the score form show the team names", async ({ page }) => {
   await seedLiveMatch(page);
   const { team1, team2 } = await teamNames(page);
-  await page.getByRole("button", { name: "End Match" }).first().click();
-  const line = page.getByTestId("confirm-end-teams");
-  await expect(line).toBeVisible();
-  await expect(line).toContainText(team1);
-  await expect(line).toContainText(team2);
-  await page.getByTestId("confirm-end-end").click();
+  await expect(page.getByTestId("court-winner-1")).toHaveText(team1);
+  await expect(page.getByTestId("court-winner-2")).toHaveText(team2);
+  await page.getByTestId("court-winner-1").first().click();
   const modal = page.getByRole("dialog").last();
   await expect(modal).toBeVisible();
   const modalText = (await modal.innerText()).toLowerCase();
@@ -34,21 +31,11 @@ test("39.1 confirm gate and score modal show the team names", async ({ page }) =
   await page.getByRole("button", { name: "Cancel" }).click();
 });
 
-test("39.4 Who won? presets the winning side to 31", async ({ page }) => {
+test("39.4 tapping the winning team presets that side to 31", async ({ page }) => {
   await seedLiveMatch(page);
-  await page.getByRole("button", { name: "End Match" }).first().click();
-  await page.getByTestId("confirm-end-winner1").click();
+  await page.getByTestId("court-winner-1").first().click();
   await expect(page.getByLabel("Team 1 score")).toHaveValue("31"); // winner autocompleted
   await expect(page.getByLabel("Team 2 score")).toHaveValue(""); // loser still empty
-  await page.getByRole("button", { name: "Cancel" }).click();
-});
-
-test("39.3 Enter on the confirm gate advances to the score form", async ({ page }) => {
-  await seedLiveMatch(page);
-  await page.getByRole("button", { name: "End Match" }).first().click();
-  await expect(page.getByTestId("confirm-end-end")).toBeVisible();
-  await page.keyboard.press("Enter");
-  await expect(page.getByLabel("Team 1")).toBeVisible();
   await page.getByRole("button", { name: "Cancel" }).click();
 });
 

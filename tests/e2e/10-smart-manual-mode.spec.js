@@ -35,7 +35,7 @@ test("10.3 starting with a subset clears the selection when confirmed", async ({
   const yes = page.getByTestId("start-confirm-yes");
   await yes.waitFor({ state: "visible", timeout: 3000 });
   await yes.click();
-  await expect(page.getByRole("button", { name: "End Match" })).toHaveCount(1);
+  await expect(page.getByTestId("court-winner-1")).toHaveCount(1);
   // selection consumed by the start
   await expect(page.locator("text=selected →")).toHaveCount(0);
   await expect(page.locator('[class*="ring-2"][class*="ring-primary"]')).toHaveCount(0);

@@ -24,10 +24,10 @@ test('12.1 court cards have no "Open" checkbox', async ({ page }) => {
 test("12.8 two courts independent", async ({ page }) => {
   for (let i = 0; i < 4; i++) await page.locator("[data-entry-id]").nth(i).click();
   await clickStartMatch(page);
-  await expect(page.getByRole("button", { name: "End Match" })).toHaveCount(1);
+  await expect(page.getByTestId("court-winner-1")).toHaveCount(1);
   for (let i = 0; i < 4; i++) await page.locator("[data-entry-id]").nth(i).click();
   await clickStartMatch(page);
-  await expect(page.getByRole("button", { name: "End Match" })).toHaveCount(2);
+  await expect(page.getByTestId("court-winner-1")).toHaveCount(2);
 });
 
 // Team rearrange. TeamPlayer spans are the draggable player sources; the

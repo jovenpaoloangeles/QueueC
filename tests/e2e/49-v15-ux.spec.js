@@ -24,9 +24,7 @@ test("49.2 end-session dialog warns about a game still on court", async ({ page 
 test("49.3 end-match form refuses a tie", async ({ page }) => {
   await fullSetup(page);
   await seedLiveMatch(page);
-  await page.getByRole("button", { name: "End Match" }).first().click();
-  const confirmEnd = page.getByTestId("confirm-end-end");
-  if (await confirmEnd.isVisible().catch(() => false)) await confirmEnd.click();
+  await page.getByTestId("court-winner-1").first().click();
   await page.getByLabel("Team 1").fill("21");
   await page.getByLabel("Team 2").fill("21");
   await expect(page.getByTestId("end-match-score-issue")).toHaveText("Scores can't be tied");

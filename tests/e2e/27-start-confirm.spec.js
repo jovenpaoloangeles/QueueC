@@ -25,14 +25,14 @@ test("27.1 Start Match opens a dialog; Cancel keeps court idle + selection; Conf
 
   await page.getByTestId("start-confirm-cancel").click();
   await expect(dialog(page)).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "End Match" })).toHaveCount(0);
+  await expect(page.getByTestId("court-winner-1")).toHaveCount(0);
   await expect(page.getByText("4 selected")).toBeVisible(); // selection intact
   expect((await liveState(page)).activeMatches).toHaveLength(0);
 
   await page.getByRole("button", { name: "Start Match" }).first().click();
   await page.keyboard.press("Enter"); // Enter confirms
   await expect(dialog(page)).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "End Match" })).toHaveCount(1);
+  await expect(page.getByTestId("court-winner-1")).toHaveCount(1);
 });
 
 test("27.2 Esc cancels the dialog", async ({ page }) => {
@@ -58,7 +58,7 @@ test("27.3 filling the 4th slot on an idle court asks first; Cancel keeps the dr
 
   await page.getByRole("button", { name: "Start Match" }).first().click();
   await confirmStart(page);
-  await expect(page.getByRole("button", { name: "End Match" })).toHaveCount(1);
+  await expect(page.getByTestId("court-winner-1")).toHaveCount(1);
 });
 
 test("27.4 Start Singles asks for confirmation", async ({ page }) => {
@@ -71,7 +71,7 @@ test("27.4 Start Singles asks for confirmation", async ({ page }) => {
   await expect(dialog(page)).toContainText("Singles");
   expect((await liveState(page)).activeMatches).toHaveLength(0);
   await confirmStart(page);
-  await expect(page.getByRole("button", { name: "End Match" })).toHaveCount(1);
+  await expect(page.getByTestId("court-winner-1")).toHaveCount(1);
   expect((await liveState(page)).activeMatches[0].format).toBe("singles");
 });
 

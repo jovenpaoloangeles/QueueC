@@ -14,10 +14,9 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { endMatch } from "../api.js";
 
-/** Step 2 of the End Match flow: final score, shuttle usage and match rating. */
+/** The End Match score form: final score, shuttle usage and match rating. */
 export default function EndMatchModal({ match, courtLabel, teamNames, winner, onClose }) {
-  // scores start empty (not 0) so users type "31", never "031"; a winner picked
-  // in the confirm dialog presets the winning side to 31
+  // scores start empty (not 0) so users type "31", never "031"; a winner tapped on the court card presets the winning side
   const [scores, setScores] = useState({
     team1: winner === "team1" ? 31 : (match.team1_score ?? ""),
     team2: winner === "team2" ? 31 : (match.team2_score ?? ""),
@@ -90,7 +89,7 @@ export default function EndMatchModal({ match, courtLabel, teamNames, winner, on
                 <Input
                   id="end-match-team1"
                   aria-label="Team 1 score"
-                  autoFocus
+                  autoFocus={winner !== "team1"}
                   type="number"
                   min="0"
                   max="99"
@@ -110,6 +109,7 @@ export default function EndMatchModal({ match, courtLabel, teamNames, winner, on
                 <Input
                   id="end-match-team2"
                   aria-label="Team 2 score"
+                  autoFocus={winner === "team1"}
                   type="number"
                   min="0"
                   max="99"

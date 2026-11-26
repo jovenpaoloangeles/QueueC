@@ -24,9 +24,8 @@ test("16.2 end match form submits on Enter", async ({ page }) => {
   await fullSetup(page);
   for (let i = 0; i < 4; i++) await page.locator("[data-entry-id]").nth(i).click();
   await clickStartMatch(page);
-  await expect(page.getByRole("button", { name: "End Match" })).toHaveCount(1);
-  await page.getByRole("button", { name: "End Match" }).first().click();
-  await page.getByTestId("confirm-end-end").click(); // pass the confirm gate → finalization form
+  await expect(page.getByTestId("court-winner-1")).toHaveCount(1);
+  await page.getByTestId("court-winner-1").first().click();
   await page.getByLabel("Team 1").fill("21"); // v1.5: scores required
   await page.getByLabel("Team 2").fill("15");
   await page.getByLabel("Team 2").press("Enter");
@@ -51,11 +50,18 @@ test("16.4 score inputs Tab-navigable", async ({ page }) => {
   await fullSetup(page);
   for (let i = 0; i < 4; i++) await page.locator("[data-entry-id]").nth(i).click();
   await clickStartMatch(page);
-  await expect(page.getByRole("button", { name: "End Match" })).toHaveCount(1);
-  await page.getByRole("button", { name: "End Match" }).first().click();
-  await page.getByTestId("confirm-end-end").click(); // pass the confirm gate
+  await expect(page.getByTestId("court-winner-1")).toHaveCount(1);
+  await page.getByTestId("court-winner-1").first().click();
   await page.getByLabel("Team 1").focus();
   await page.keyboard.press("Tab");
   const focused = await page.evaluate(() => document.activeElement?.id);
   expect(focused).toBe("end-match-team2");
+});
+
+test("16.5 tapping the winning team puts the cursor in the loser's score field", async ({ page }) => {
+  await fullSetup(page);
+  for (let i = 0; i < 4; i++) await page.locator("[data-entry-id]").nth(i).click();
+  await clickStartMatch(page);
+  await page.getByTestId("court-winner-1").first().click(); // team 1 won → only team 2's score is left to type
+  expect(await page.evaluate(() => document.activeElement?.id)).toBe("end-match-team2");
 });
