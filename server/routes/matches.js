@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import db from "../db.js";
+import { refillDeck } from "./automatch.js";
 import { broadcast } from "./sse.js";
 
 const router = new Hono();
@@ -212,6 +213,9 @@ router.patch("/:id/end", async (c) => {
           "UPDATE queue_entries SET status = 'playing', status_updated_at = ? WHERE id = ?",
         );
         for (const eid of slatedEntryIds) toPlay.run(now, eid);
+        // the deck is now one lineup short — plan its replacement in the same
+        // transaction so clients see the promotion and the refill together
+        refillDeck(match.session_id, now);
       }
     }
   })();

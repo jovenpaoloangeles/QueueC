@@ -199,6 +199,121 @@ async function multiSlateTests() {
   }
 }
 
+// Deck auto-refill: when a match ends and the next lineup steps onto the court,
+// the deck is topped back up to SLATE_CAP from the waiting queue. ▶ Start now
+// and an empty deck deliberately do not refill.
+async function refillTests() {
+  const api = (path, method = "GET", body) =>
+    fetch(`${BASE}${path}`, {
+      method,
+      headers: body ? { "Content-Type": "application/json" } : {},
+      body: body ? JSON.stringify(body) : undefined,
+    }).then((r) => r.json().then((data) => ({ status: r.status, ...data })));
+  const ids4 = (m) => [m.team1_p1, m.team1_p2, m.team2_p1, m.team2_p2].filter(Boolean);
+  const num = (xs) => xs.slice().sort((a, b) => a - b);
+  const end = (id) => api(`/matches/${id}/end`, "PATCH", { team1_score: 21, team2_score: 15 });
+  const waitingCount = async () => (await snap()).queue.filter((q) => q.status === "waiting").length;
+  const startMatch = (sid, courtId, ids) =>
+    api("/matches", "POST", {
+      session_id: sid,
+      court_number: courtId,
+      team1_p1: ids[0],
+      team1_p2: ids[1] ?? null,
+      team2_p1: ids[2],
+      team2_p2: ids[3] ?? null,
+    });
+  const slate = (sid, ids) =>
+    api("/matches/slate", "POST", {
+      session_id: sid,
+      team1_p1: ids[0],
+      team1_p2: ids[1],
+      team2_p1: ids[2],
+      team2_p2: ids[3],
+    });
+
+  // A. 16 players, 1 court — the deck returns to the cap after every promotion
+  let session = await mkSession(16, 1, "RefillP");
+  try {
+    const w = (await snap()).queue.map((e) => e.id);
+    const { courts } = await api(`/sessions/${session.id}/courts`);
+    let st;
+    await startMatch(session.id, courts[0].id, w.slice(0, 4));
+    await slate(session.id, w.slice(4, 8));
+    await slate(session.id, w.slice(8, 12));
+    await slate(session.id, w.slice(12, 16));
+    st = await snap();
+    assert.equal(st.slatedMatches.length, 3, "setup: deck full");
+
+    await end(st.activeMatches[0].id);
+    st = await snap();
+    assert.deepEqual(ids4(st.activeMatches[0]), w.slice(4, 8), "the top lineup was promoted");
+    assert.equal(
+      st.slatedMatches.length,
+      3,
+      "deck back at the cap (one refill replaced the promoted lineup)",
+    );
+    assert.deepEqual(
+      num(st.slatedMatches.flatMap(ids4)),
+      num([...w.slice(8, 16), ...w.slice(0, 4)]),
+      "the refill staged exactly the four players who just finished",
+    );
+    assert.equal(await waitingCount(), 0, "nobody left waiting");
+  } finally {
+    await api(`/sessions/${session.id}/end`, "PATCH");
+  }
+
+  // B. 8 players, 1 court — the four returners are re-planned as the next lineup
+  session = await mkSession(8, 1, "RefillB");
+  try {
+    const w = (await snap()).queue.map((e) => e.id);
+    const { courts } = await api(`/sessions/${session.id}/courts`);
+    await startMatch(session.id, courts[0].id, w.slice(0, 4));
+    await slate(session.id, w.slice(4, 8));
+    let st = await snap();
+    await end(st.activeMatches[0].id);
+    st = await snap();
+    assert.deepEqual(ids4(st.activeMatches[0]), w.slice(4, 8), "the deck lineup was promoted");
+    assert.equal(st.slatedMatches.length, 1, "deck refilled from the four returners");
+    assert.deepEqual(num(ids4(st.slatedMatches[0])), num(w.slice(0, 4)), "…made of exactly those four");
+  } finally {
+    await api(`/sessions/${session.id}/end`, "PATCH");
+  }
+
+  // C. ▶ Start now does not refill — the deck is left as the QM arranged it
+  session = await mkSession(12, 1, "RefillC");
+  try {
+    const w = (await snap()).queue.map((e) => e.id);
+    const { courts } = await api(`/sessions/${session.id}/courts`);
+    const { slate: s1 } = await slate(session.id, w.slice(0, 4));
+    const started = await api(`/matches/${s1.id}/start`, "POST", { court_id: courts[0].id });
+    assert.equal(started.status, 200, "setup: lineup started by hand");
+    assert.equal(
+      (await snap()).slatedMatches.length,
+      0,
+      "manual start left the deck alone (8 still waiting)",
+    );
+  } finally {
+    await api(`/sessions/${session.id}/end`, "PATCH");
+  }
+
+  // D. Fewer than 4 waiting after a promotion → nothing to refill with
+  session = await mkSession(7, 1, "RefillD");
+  try {
+    const w = (await snap()).queue.map((e) => e.id);
+    const { courts } = await api(`/sessions/${session.id}/courts`);
+    await startMatch(session.id, courts[0].id, [w[0], null, w[1], null]); // singles: 2 on court
+    await slate(session.id, w.slice(2, 6)); // 4 on deck
+    let st = await snap();
+    await end(st.activeMatches[0].id);
+    st = await snap();
+    assert.equal(st.activeMatches[0].format, "doubles", "the deck lineup was promoted");
+    assert.equal(st.slatedMatches.length, 0, "3 waiting is not a lineup — nothing refilled");
+    assert.equal(await waitingCount(), 3);
+  } finally {
+    await api(`/sessions/${session.id}/end`, "PATCH");
+  }
+}
+
 async function run() {
   // End any stray unended session first
   const active = await fetch(`${BASE}/sessions/active`).then((r) => r.json());
@@ -208,6 +323,7 @@ async function run() {
 
   await planTests();
   await multiSlateTests();
+  await refillTests();
 
   // 1) Create a session with 3 courts, check in 14 waiting players, start session, and disable Court 3
   const session = (

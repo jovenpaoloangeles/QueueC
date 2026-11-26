@@ -143,6 +143,19 @@ function insertSlates(id, slate, now) {
   return slateIds;
 }
 
+/** Top the deck back up to SLATE_CAP after a lineup left it through an
+ *  auto-promotion. Call inside the promotion's transaction, before broadcast.
+ *  Fewer than 4 waiting players (or a full deck) → nothing to add.
+ *  ✕ Cancel and ▶ Start now deliberately do not call this: a lineup the queue
+ *  master removed or sent out by hand must not be re-planned behind their back.
+ *  ponytail: always on — add a per-session setting if a queue master who
+ *  builds lineups by hand needs the old behaviour. */
+export function refillDeck(sessionId, now = Math.floor(Date.now() / 1000)) {
+  const s = db.prepare("SELECT * FROM sessions WHERE id = ?").get(sessionId);
+  if (!s || s.ended_at != null) return [];
+  const plan = computePlanFor(sessionId, s, now, { slateOnly: true });
+  return insertSlates(sessionId, plan.slate, now);
+}
 const router = new Hono();
 
 router.post("/sessions/:id/automatch", async (c) => {

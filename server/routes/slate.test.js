@@ -371,7 +371,7 @@ async function run() {
     const dataLine = chunk.split("\n").find((l) => l.startsWith("data: "));
     const state = JSON.parse(dataLine.slice(6));
 
-    assert.equal(state.slatedMatches.length, 0, "Expected no slated matches remaining");
+    assert.equal(state.slatedMatches.length, 1, "deck refilled with the four players who just finished");
     const promoted = state.activeMatches.find((m) => m.id === nextSlate.id);
     assert.ok(promoted, "Expected slated match to be promoted to activeMatches");
     assert.equal(promoted.state, "active", "Expected promoted match state === active");
@@ -437,6 +437,9 @@ async function run() {
       ).entry;
       ids4.push(e.id);
     }
+    // step 8's auto-promotion refilled the deck; clear it so the reorder checks
+    // below start from an empty deck (✕ Cancel does not refill)
+    for (const left of await sl()) await fetch(`${BASE}/matches/${left.id}/slate`, { method: "DELETE" });
     const sA = await mk(ids4.slice(0, 4));
     const sB = await mk(ids4.slice(4));
     assert.ok(sB.slate_seq > sA.slate_seq, "second slate gets a later seq");
