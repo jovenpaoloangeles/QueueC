@@ -14,14 +14,16 @@ export function ToastProvider({ children }) {
   const [state, setState] = useState(null);
   const timerRef = useRef(null);
 
-  // `undo` is the toast's one action; `label` renames it (default "Undo")
-  const toast = useCallback((message, type = "info", { undo, label } = {}) => {
+  // `undo` is the toast's one action; `label` renames it (default "Undo");
+  // `duration` (ms) overrides the 3.5 s lifetime for actions that need a
+  // longer undo window
+  const toast = useCallback((message, type = "info", { undo, label, duration = 3500 } = {}) => {
     if (timerRef.current) clearTimeout(timerRef.current);
     setState({ message, type, undo, label });
     timerRef.current = setTimeout(() => {
       setState(null);
       timerRef.current = null;
-    }, 3500);
+    }, duration);
   }, []);
 
   const dismiss = useCallback(() => {

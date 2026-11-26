@@ -59,16 +59,15 @@ function Row({ m, testid }) {
 }
 
 /**
- * Confirm gate before any match starts. Parent owns `open`.
- * matches: [{courtLabel, team1:[{name,skill_level}], team2:[...], format}]; slate: same shape (no courtLabel).
+ * Confirm gate before a manual start or a slate promotion goes live. Parent
+ * owns `open`. Smart Match is the one start path without it — one click, Undo
+ * on the toast.
+ * matches: [{courtLabel, team1:[{name,skill_level}], team2:[...], format}].
  */
 export default function StartMatchConfirmDialog({
   open,
   onOpenChange,
-  title,
-  confirmText,
   matches = [],
-  slate = [],
   onConfirm,
   busy = false,
 }) {
@@ -88,7 +87,7 @@ export default function StartMatchConfirmDialog({
       >
         <DialogHeader>
           <DialogTitle>
-            {title ?? (n > 1 ? "Start these matches?" : n === 1 ? "Start this match?" : "Slate next lineup?")}
+            {n > 1 ? "Start these matches?" : n === 1 ? "Start this match?" : "Slate next lineup?"}
           </DialogTitle>
           <DialogDescription>Review the lineup before it goes live.</DialogDescription>
         </DialogHeader>
@@ -98,16 +97,6 @@ export default function StartMatchConfirmDialog({
               <Row key={i} m={m} testid="start-confirm-row" />
             ))}
           </ul>
-        )}
-        {slate.length > 0 && (
-          <div className="flex flex-col gap-1.5" data-testid="start-confirm-slate">
-            <p className="text-xs font-semibold text-muted-foreground">Next on deck</p>
-            <ul className="flex flex-col gap-1.5">
-              {slate.map((m, i) => (
-                <Row key={i} m={m} testid="start-confirm-slate-row" />
-              ))}
-            </ul>
-          </div>
         )}
         <DialogFooter>
           <Button
@@ -129,7 +118,7 @@ export default function StartMatchConfirmDialog({
             disabled={busy}
             onClick={onConfirm}
           >
-            {confirmText ?? confirmLabel}
+            {confirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -169,7 +169,7 @@ export default function Header({
           size="sm"
           variant="secondary"
           data-testid="btn-smart-match"
-          title="Line up the next matches in On Deck"
+          title="Fill the free courts and line up the next matches on On Deck"
           disabled={!session || session.started_at == null}
           className="rounded-full"
           onClick={() => onSmartMatch?.()}

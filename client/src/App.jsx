@@ -57,13 +57,14 @@ function LiveView() {
   const { session, queue, activeMatches, slatedMatches = [], courts, stats } = sseData;
   const toast = useToast();
   // Pending start awaiting confirmation:
-  //  { kind:'manual', courtId, sel, source, matches } | { kind:'smart', plan, matches, slate }
+  //  { kind:'manual', courtId, sel, source, matches } | { kind:'promote', slateId, courtId, matches }
   const [pending, setPending] = useState(null);
   const [checkinOpen, setCheckinOpen] = useState(false);
   const [cheatsheetOpen, setCheatsheetOpen] = useState(false);
   // keyboard `e` target: {match, courtLabel} for the App-level EndMatchModal
   const [endTarget, setEndTarget] = useState(null);
   const [pendingBusy, setPendingBusy] = useState(false);
+  const [smartBusy, setSmartBusy] = useState(false);
 
   const resolveTeam = (ids) =>
     ids.map((id) => {
@@ -71,35 +72,52 @@ function LiveView() {
       return { name: e?.name ?? "?", skill_level: e?.skill_level };
     });
 
-  // header "✨ Smart Match": slate-only, never auto-start. Ask the server for a
-  // dry-run plan, preview it in the confirm dialog, then commit it to On Deck —
-  // the QM reviews/edits there and sends lineups to a court manually.
+  // header "✨ Smart Match": one click. Free courts get their lineups at once
+  // and the rest land on On Deck (topping it up to the deck cap) — there is
+  // no preview dialog: the result is on screen and the toast's Undo takes
+  // the whole click back. While the session is paused only the deck part
+  // runs (slating is fine on a frozen clock; starting a match isn't).
   async function handleSmartMatch() {
-    if (!session) return;
+    if (!session || smartBusy) return;
+    setSmartBusy(true);
     try {
-      const { plan } = await autoMatch(session.id, { dry_run: true, slate_only: true });
+      const opts = session.paused_at != null ? { slate_only: true } : {};
+      const { plan } = await autoMatch(session.id, { dry_run: true, ...opts });
       if (!plan || (!plan.matches.length && !plan.slate.length)) {
         toast("Nothing to auto-match", "info");
         return;
       }
-      setPending({
-        kind: "smart",
-        plan,
-        matches: plan.matches.map((m) => ({
-          courtLabel:
-            m.court_label ?? courts.find((c) => c.id === m.court_id)?.label ?? `Court ${m.court_id}`,
-          format: m.format,
-          team1: resolveTeam(m.team1),
-          team2: resolveTeam(m.team2),
-        })),
-        slate: plan.slate.map((m) => ({
-          format: m.format,
-          team1: resolveTeam(m.team1),
-          team2: resolveTeam(m.team2),
-        })),
+      const r = await autoMatch(session.id, { ...opts, plan });
+      const what = [
+        r.started ? `${r.started} started${plan.matches[0]?.format === "singles" ? " (singles)" : ""}` : "",
+        r.slated_count ? `${r.slated_count} added to On Deck` : "",
+      ]
+        .filter(Boolean)
+        .join(" · ");
+      toast(what, "success", {
+        // this click can put players on a court — leave the Undo on screen
+        // longer than a normal toast
+        duration: r.started ? 15000 : 3500,
+        undo: () =>
+          Promise.all([
+            // a match that already ended (404/409) or a lineup that already
+            // left the deck (404) has nothing left to take back
+            ...(r.match_ids ?? []).map((id) =>
+              abortMatch(id).catch((err) => {
+                if (err?.status !== 404 && err?.status !== 409) throw err;
+              }),
+            ),
+            ...(r.slate_ids ?? []).map((id) =>
+              cancelSlate(id).catch((err) => {
+                if (err?.status !== 404) throw err;
+              }),
+            ),
+          ]).then(() => true),
       });
     } catch (err) {
       toast(err?.data?.error ?? (err?.status ? err.message : "Auto-match failed"), "error");
+    } finally {
+      setSmartBusy(false);
     }
   }
 
@@ -137,37 +155,8 @@ function LiveView() {
     }
   }
 
-  // Smart Match commit: always the slate-only path — every lineup lands in
-  // On Deck for review; nothing starts on a court until the QM sends it.
-  async function confirmSmartMatch(plan) {
-    setPendingBusy(true);
-    try {
-      const r = await autoMatch(session.id, { plan, slate_only: true });
-      toast(
-        r.slated_count > 1
-          ? `Added ${r.slated_count} lineups to On Deck for review`
-          : "Added to On Deck for review",
-        "success",
-        r.slate_ids?.length
-          ? {
-              undo: () =>
-                Promise.allSettled(r.slate_ids.map((id) => cancelSlate(id))).then((results) =>
-                  results.every((res) => res.status === "fulfilled"),
-                ),
-            }
-          : undefined,
-      );
-    } catch (err) {
-      toast(err?.data?.error ?? (err?.status ? err.message : "Auto-match failed"), "error");
-    } finally {
-      setPendingBusy(false);
-      setPending(null);
-    }
-  }
-
   async function confirmPending() {
     if (!pending || pendingBusy) return;
-    if (pending.kind === "smart") return confirmSmartMatch(pending.plan);
     if (pending.kind === "promote") {
       setPendingBusy(true);
       try {
@@ -326,7 +315,6 @@ function LiveView() {
           team2: resolveTeam(team2),
         },
       ],
-      slate: [],
     });
     return true;
   }
@@ -501,7 +489,6 @@ function LiveView() {
           ],
         },
       ],
-      slate: [],
     });
   }
 
@@ -665,9 +652,6 @@ function LiveView() {
             if (!open && !pendingBusy) setPending(null);
           }}
           matches={pending.matches}
-          slate={pending.slate}
-          title={pending.kind === "smart" ? "Add these lineups to On Deck?" : undefined}
-          confirmText={pending.kind === "smart" ? "Add to On Deck" : undefined}
           busy={pendingBusy}
           onConfirm={confirmPending}
         />
