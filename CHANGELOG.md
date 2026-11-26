@@ -10,7 +10,9 @@ the version that matters for self-hosters).
 
 - Smart Add can be re-clicked while the lineup builder is full: it re-picks a
   fresh quartet around the rest of the queue instead of greying out. The
-  automatch dry-run accepts `excluded` entry ids alongside `locked`.
+  automatch dry-run accepts `excluded` entry ids alongside `locked`. (The first
+  cut of this capped `excluded` at 3 while the re-click sends all four drafted
+  players, so the re-click only produced an error toast.)
 - Ending a game is one tap: the live court shows a winner button under each team instead of an End match button plus a confirm dialog. The score form opens with the winner's score preset to the session's **Points per game** (new setup select: 11 / 15 / 21 / 31, default 31) and the cursor in the loser's field.
 - **Smart Match is one click.** It fills every free court and tops up On Deck (up to 3 lineups); the preview dialog is gone. The success toast's **Undo** takes the whole click back and stays for 15 s when games were started. With 2–3 players waiting it still falls back to a singles game, now without asking.
 
