@@ -1,6 +1,6 @@
 // 41 — rotation settings on the setup screen land in the session row
 import { expect, test } from "../fixtures.js";
-import { base, clickStartMatch, poolRow, startSession } from "../helpers.js";
+import { base, checkinPlayers, clickStartMatch, poolRow, startSession } from "../helpers.js";
 
 test.beforeEach(async ({ page }) => {
   const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json();
@@ -39,7 +39,9 @@ test("41.3 points per game persists and presets the winner's score in the end-ma
 }) => {
   await page.goto("/");
   await page.getByTestId("setup-points").selectOption("21");
-  for (const name of ["Inter C4", "Inter C2", "Inter C3", "Inter C1"]) await poolRow(page, name).click();
+  // checkinPlayers waits for each row's debounced toggle — four raw clicks in a
+  // row could reach Start Session before the last toggles landed (2 of 4 checked in)
+  await checkinPlayers(page, ["Inter C4", "Inter C2", "Inter C3", "Inter C1"]);
   await startSession(page);
   for (let i = 0; i < 4; i++) await page.locator("[data-entry-id]").nth(i).click();
   await clickStartMatch(page);
