@@ -156,6 +156,8 @@ export function refillDeck(sessionId, now = Math.floor(Date.now() / 1000)) {
   const plan = computePlanFor(sessionId, s, now, { slateOnly: true });
   return insertSlates(sessionId, plan.slate, now);
 }
+class NoPlan extends Error {}
+
 const router = new Hono();
 
 router.post("/sessions/:id/automatch", async (c) => {
@@ -195,6 +197,57 @@ router.post("/sessions/:id/automatch", async (c) => {
     }
     if (!slateOnly) return c.json({ error: "excluded requires slate_only" }, 400);
     excluded = body.excluded;
+  }
+
+  // "↻ Rerun deck": release every deck lineup and re-plan the deck so that
+  // none of the old pairings survives. One transaction — when nothing else can
+  // be planned, the old lineups stay exactly as they were.
+  if (body?.rerun_deck === true) {
+    if (dryRun || givenPlan || locked.length || excluded.length) {
+      return c.json({ error: "rerun_deck cannot be combined with dry_run, plan, locked or excluded" }, 400);
+    }
+    let out;
+    try {
+      db.transaction(() => {
+        const old = db
+          .prepare(
+            "SELECT * FROM matches WHERE session_id = ? AND state = 'slated' AND ended_at IS NULL ORDER BY slate_seq, id",
+          )
+          .all(id);
+        // status only — sort_order is the queue master's manual order and a
+        // rerun is not a cancellation
+        const release = db.prepare(
+          "UPDATE queue_entries SET status = 'waiting', status_updated_at = ? WHERE id = ?",
+        );
+        for (const m of old) {
+          for (const eid of [m.team1_p1, m.team1_p2, m.team2_p1, m.team2_p2].filter(Boolean)) {
+            release.run(now, eid);
+          }
+        }
+        db.prepare("DELETE FROM matches WHERE session_id = ? AND state = 'slated' AND ended_at IS NULL").run(
+          id,
+        );
+        // the matcher treats these as hard no-partner pairs for this one plan
+        const bans = old
+          .flatMap((m) => [
+            [m.team1_p1, m.team1_p2],
+            [m.team2_p1, m.team2_p2],
+          ])
+          .filter(([a, b]) => a != null && b != null);
+        const plan = computePlanFor(id, s, now, { slateOnly: true, bans });
+        if (!plan.slate.length) throw new NoPlan();
+        out = {
+          replaced: old.length,
+          slated_count: plan.slate.length,
+          slate_ids: insertSlates(id, plan.slate, now),
+        };
+      })();
+    } catch (err) {
+      if (err instanceof NoPlan) return c.json({ error: "No other fair lineups right now — deck kept" }, 409);
+      throw err;
+    }
+    broadcast();
+    return c.json(out);
   }
 
   if (locked.length) {

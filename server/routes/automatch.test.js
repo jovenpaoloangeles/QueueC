@@ -314,6 +314,64 @@ async function refillTests() {
   }
 }
 
+// "↻ Rerun deck": every lineup is released and re-planned so none of the old
+// pairings survives; the live match is untouched; bad combinations are 400s.
+async function rerunTests() {
+  const session = await mkSession(16, 1, "RerunP");
+  const post = (body) =>
+    fetch(`${BASE}/sessions/${session.id}/automatch`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  const ids4 = (m) => [m.team1_p1, m.team1_p2, m.team2_p1, m.team2_p2].filter(Boolean);
+  const num = (xs) => xs.slice().sort((a, b) => a - b);
+  const pairsOf = (m) =>
+    [
+      [m.team1_p1, m.team1_p2],
+      [m.team2_p1, m.team2_p2],
+    ].map((p) => num(p).join("-"));
+  try {
+    await post({ plan: (await (await post({ dry_run: true })).json()).plan }); // 1 court match + 3 on deck
+    let st = await snap();
+    assert.equal(st.slatedMatches.length, 3, "setup: deck full");
+    const liveId = st.activeMatches[0].id;
+    const oldPairs = new Set(st.slatedMatches.flatMap(pairsOf));
+    const stagedBefore = num(st.slatedMatches.flatMap(ids4));
+
+    const res = await post({ rerun_deck: true });
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.replaced, 3);
+    assert.equal(body.slated_count, 3);
+    assert.equal(body.slate_ids.length, 3);
+
+    st = await snap();
+    assert.equal(st.slatedMatches.length, 3, "deck re-planned to the cap");
+    assert.equal(st.activeMatches.length, 1);
+    assert.equal(st.activeMatches[0].id, liveId, "the live match is untouched");
+    for (const m of st.slatedMatches) {
+      for (const p of pairsOf(m)) assert.ok(!oldPairs.has(p), `old pairing ${p} must not survive a rerun`);
+    }
+    assert.deepEqual(
+      num(st.slatedMatches.flatMap(ids4)),
+      stagedBefore,
+      "the same twelve players are on deck",
+    );
+    assert.deepEqual(
+      st.slatedMatches.map((m) => m.slate_seq),
+      [1, 2, 3],
+      "deck renumbered from 1",
+    );
+
+    // rerun_deck is a whole-deck operation — it cannot be previewed or narrowed
+    assert.equal((await post({ rerun_deck: true, dry_run: true })).status, 400);
+    assert.equal((await post({ rerun_deck: true, plan: { matches: [], slate: [] } })).status, 400);
+  } finally {
+    await fetch(`${BASE}/sessions/${session.id}/end`, { method: "PATCH" });
+  }
+}
+
 async function run() {
   // End any stray unended session first
   const active = await fetch(`${BASE}/sessions/active`).then((r) => r.json());
@@ -324,6 +382,7 @@ async function run() {
   await planTests();
   await multiSlateTests();
   await refillTests();
+  await rerunTests();
 
   // 1) Create a session with 3 courts, check in 14 waiting players, start session, and disable Court 3
   const session = (
