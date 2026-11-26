@@ -59,3 +59,34 @@ test("43.4 the shell's ← Back leaves the History list for the live view", asyn
   await back.click();
   await expect(page.getByTestId("session-setup")).toBeVisible(); // back on the live/setup view
 });
+
+test("43.9 a past session can be deleted from the history list, after a confirm", async ({ page }) => {
+  await endedSession(page, "Test Session");
+  await page.goto("/#/history");
+  const rows = page.getByTestId("history-row");
+  await expect(rows.first()).toBeVisible(); // the list loads async — count after it lands
+  const before = await rows.count();
+  await rows.first().getByTestId("history-delete").click();
+  const dialog = page.getByTestId("history-delete-dialog");
+  await expect(dialog).toContainText("can't be undone");
+  await dialog.getByRole("button", { name: "Cancel" }).click(); // Cancel keeps it
+  await expect(rows).toHaveCount(before);
+
+  await rows.first().getByTestId("history-delete").click();
+  await page.getByTestId("history-delete-confirm").click();
+  await expect(page.getByTestId("toast")).toContainText("Deleted");
+  await expect(rows).toHaveCount(before - 1);
+});
+
+test("43.10 Clear all history empties the list after a confirm", async ({ page }) => {
+  await endedSession(page);
+  await endedSession(page);
+  await page.goto("/#/history");
+  await expect(page.getByTestId("history-row").first()).toBeVisible();
+  await page.getByTestId("history-clear-all").click();
+  await expect(page.getByTestId("history-delete-dialog")).toContainText("Clear all history?");
+  await page.getByTestId("history-delete-confirm").click();
+  await expect(page.getByTestId("toast")).toContainText("History cleared");
+  await expect(page.getByTestId("history-row")).toHaveCount(0);
+  await expect(page.getByTestId("history-list")).toContainText("No past sessions yet.");
+});

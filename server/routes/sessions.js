@@ -246,4 +246,40 @@ router.patch("/:id/end", (c) => {
   return c.json({ session });
 });
 
+// History cleanup. An ended session goes with everything that hangs off it —
+// games, attendance (queue entries) and courts. Career, leaderboard and the
+// learned ratings are all derived from the remaining games on the next read,
+// so they follow automatically. Players themselves are kept.
+function deleteSessions(ids) {
+  db.transaction(() => {
+    for (const id of ids) {
+      db.prepare("DELETE FROM matches WHERE session_id = ?").run(id);
+      db.prepare("DELETE FROM queue_entries WHERE session_id = ?").run(id);
+      db.prepare("DELETE FROM courts WHERE session_id = ?").run(id);
+      db.prepare("DELETE FROM sessions WHERE id = ?").run(id);
+    }
+  })();
+}
+
+// Clear all history: every ENDED session. `?all=1` is required so a stray
+// DELETE can't wipe the history; the live session is never touched.
+router.delete("/", (c) => {
+  if (c.req.query("all") !== "1") return c.json({ error: "Add ?all=1 to delete every ended session" }, 400);
+  const ids = db
+    .prepare("SELECT id FROM sessions WHERE ended_at IS NOT NULL")
+    .all()
+    .map((r) => r.id);
+  deleteSessions(ids);
+  return c.json({ deleted: ids.length });
+});
+
+router.delete("/:id", (c) => {
+  const id = c.req.param("id");
+  const session = db.prepare("SELECT * FROM sessions WHERE id = ?").get(id);
+  if (!session) return c.json({ error: "Session not found" }, 404);
+  if (session.ended_at == null) return c.json({ error: "End the session before deleting it" }, 409);
+  deleteSessions([session.id]);
+  return c.json({ deleted: 1 });
+});
+
 export default router;
