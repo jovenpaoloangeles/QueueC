@@ -2,7 +2,15 @@
 
 import { execSync } from "node:child_process";
 import { expect, test } from "../fixtures.js";
-import { base, checkinPlayers, clickStartMatch, createSession, endMatch, startSession } from "../helpers.js";
+import {
+  base,
+  checkinPlayers,
+  clickStartMatch,
+  createSession,
+  endMatch,
+  fullSetup,
+  startSession,
+} from "../helpers.js";
 
 test.beforeEach(async ({ page }) => {
   const { session } = await (await page.request.get(`${base()}/api/sessions/active`)).json();
@@ -37,6 +45,17 @@ test("24.2 Smart Match with only 2 waiting starts a singles game on the free cou
   await expect(page.getByTestId("toast")).toContainText("(singles)");
   await expect(page.getByTestId("start-confirm-dialog")).toHaveCount(0);
   await expect(page.getByTestId("court-winner-1")).toHaveCount(1);
+});
+
+test("24.3 Smart Match with a lone waiting player toasts Nothing to auto-match and starts nothing", async ({
+  page,
+}) => {
+  // seeded over the API: the setup screen's Start Session needs two players picked
+  await fullSetup(page, { courts: 1, playerNames: ["Inter C1"] });
+  await page.getByTestId("btn-smart-match").click();
+  await expect(page.getByTestId("toast")).toContainText("Nothing to auto-match");
+  await expect(page.getByTestId("court-winner-1")).toHaveCount(0);
+  await expect(page.getByTestId("start-confirm-dialog")).toHaveCount(0);
 });
 
 test("24.4 hdr-longest uses net wait — leader leaves when they start; wait restarts after a match", async ({
