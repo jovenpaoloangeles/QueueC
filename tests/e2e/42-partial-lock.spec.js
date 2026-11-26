@@ -67,14 +67,29 @@ test("42.1 Smart add keeps drafted players in their slots", async ({ page }) => 
 test("42.2 Smart add re-picks when clicked on a full draft", async ({ page }) => {
   await expandDeck(page);
   await openBuilder(page);
-  for (let i = 0; i < 4; i++)
+  // one drag at a time: a drag only lands once the queue grid has dropped the
+  // previous player, so wait for the queue to shrink before the next one
+  const before = await page.locator("[data-entry-id]").count();
+  for (let i = 0; i < 4; i++) {
     await syntheticDrag(page, "[data-entry-id]", `[data-testid="ondeck-new-slot-${i}"]`, { fromIndex: 0 });
-  const old = [];
-  for (let i = 0; i < 4; i++) old.push(await page.getByTestId(`ondeck-new-slot-${i}`).textContent());
+    await expect(page.locator("[data-entry-id]")).toHaveCount(before - (i + 1));
+  }
+  const slots = async () =>
+    Promise.all([0, 1, 2, 3].map((i) => page.getByTestId(`ondeck-new-slot-${i}`).textContent()));
+  const old = await slots();
+  // the draft really is full — on an empty draft the click is a plain fill, not a re-pick
+  expect(new Set(old).size).toBe(4);
+  for (const s of old) expect(s).not.toContain("Drop");
+
   await page.getByTestId("ondeck-smart-add").click();
-  // a fresh quartet: 4 distinct players, none of the previously drafted ones
-  const filled = [];
-  for (let i = 0; i < 4; i++) filled.push(await page.getByTestId(`ondeck-new-slot-${i}`).textContent());
+  // the re-pick lands after a server round-trip
+  await expect
+    .poll(async () => {
+      const now = await slots();
+      return old.every((name) => !now.includes(name));
+    })
+    .toBe(true);
+  const filled = await slots();
   expect(new Set(filled).size).toBe(4);
   for (const name of old) expect(filled).not.toContain(name);
 });
