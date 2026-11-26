@@ -11,6 +11,7 @@ the version that matters for self-hosters).
 - Smart Add can be re-clicked while the lineup builder is full: it re-picks a
   fresh quartet around the rest of the queue instead of greying out. The
   automatch dry-run accepts `excluded` entry ids alongside `locked`.
+- Ending a game is one tap: the live court shows a winner button under each team instead of an End match button plus a confirm dialog. The score form opens with the winner's score preset to the session's **Points per game** (new setup select: 11 / 15 / 21 / 31, default 31) and the cursor in the loser's field.
 
 ## [1.7.0] — 2026-10-29
 

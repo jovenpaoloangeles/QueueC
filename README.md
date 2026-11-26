@@ -40,10 +40,11 @@ Without Docker: install [Bun](https://bun.sh), then
 
 ## What it does
 
-- **One-screen setup** — session name, start time, courts with per-court
+- **One-screen setup** — session name, start time, points per game, courts with per-court
   rental hours and staggered opens, alphabetical player pool, one Start button.
 - **Live courts** — drag-and-drop 2×2 lineup drafting, confirm-gated match
-  starts, per-court rental countdown with mid-match extend, team rearranging.
+  starts, per-court rental countdown with mid-match extend, team rearranging,
+  tap the winning team to end a game.
 - **On Deck slate** — build lineups manually or review a Smart Match plan;
   slates auto-promote to the next free court; nothing starts unconfirmed.
 - **Smart Match** — a dry-run-first matching heuristic (wait time, games

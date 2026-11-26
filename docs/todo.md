@@ -9,7 +9,8 @@
 - [x] On Deck always mounted — accent panel, numbered cards, skill-balance label, next-free-court ETA, manual builder with oversized slots (＋ Build lineup → Add to On Deck; nothing slates until that click), Smart add / builder ✨ Smart Match pour a slate-only dry-run plan into the builder for review, multiple slates up to SLATE_CAP=3 counted across existing, ↑/↓ reorder, cancel asks for confirmation (Keep / Cancel lineup); per-court 'Next match lineup' matrix removed — slating happens only via the builder
 - [x] Slate / On Deck matches with auto-promotion; slate to next free court
 - [x] Smart Match (`POST /sessions/:id/automatch`); queue selection always manual — Smart/Manual mode toggle removed (header Smart Match dry-run→confirm and the builder smart fill are the smart paths)
-- [x] New-shuttles-only counting — Used stepper, final-modal Used field and sidebar Used tile removed (server columns/history untouched); two-step end match with 1–5 star rating
+- [x] New-shuttles-only counting — Used stepper, final-modal Used field and sidebar Used tile removed (server columns/history untouched); end match: tap the winning team on the court card → score form (winner preset to the session's points per game, cursor in the loser's field) with 1–5 star rating
+- [x] Points per game session setting (11 / 15 / 21 / 31, default 31) — setup select, stored as `sessions.points_to_win`, presets the winner's score in the end-match form
 - [x] Skills render title-cased ('Upper Intermediate'); stored values unchanged
 - [x] Header polish — session name as ASTIRISK over the date, Longest wait uses net wait (playing time excluded); End Session (and New Session) confirm before ending
 - [x] Queue tabs (All/Wait/Rest), fairness ordering, rest/wake rules
