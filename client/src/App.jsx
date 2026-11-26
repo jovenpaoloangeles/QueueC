@@ -654,6 +654,7 @@ function LiveView() {
           match={endTarget.match}
           courtLabel={endTarget.courtLabel}
           onClose={() => setEndTarget(null)}
+          pointsToWin={session?.points_to_win}
         />
       )}
       <ShortcutCheatsheet open={cheatsheetOpen} onOpenChange={setCheatsheetOpen} />

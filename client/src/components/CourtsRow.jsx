@@ -15,6 +15,7 @@ function isLive(court, serverTime) {
 }
 
 export default function CourtsRow({
+  session,
   courts,
   serverTime,
   activeMatches,
@@ -85,6 +86,7 @@ export default function CourtsRow({
               match={activeMatches.find((m) => m.court_number === court.id) ?? null}
               queue={queue}
               playSeconds={playSeconds}
+              pointsToWin={session?.points_to_win}
               canStart={useDraft || canStartSelection}
               onStartClick={() => onStartMatch(court.id, startPlayers, useDraft ? "draft" : "selection")}
               onStartSingles={() => onStartMatch(court.id, [filled[0], filled[1]], "draft")}

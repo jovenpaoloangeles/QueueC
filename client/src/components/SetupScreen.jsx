@@ -243,6 +243,7 @@ export default function SetupScreen({ draft }) {
   const [checkinOrder, setCheckinOrder] = useState("alphabetical");
   const [maxConsecutive, setMaxConsecutive] = useState(2);
   const [restGames, setRestGames] = useState(0);
+  const [pointsToWin, setPointsToWin] = useState(31);
   const [courts, setCourts] = useState(() => syncCourts([], 2));
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -352,6 +353,7 @@ export default function SetupScreen({ draft }) {
         checkin_order: checkinOrder,
         max_consecutive: maxConsecutive,
         rest_games: restGames,
+        points_to_win: pointsToWin,
         courts: courts.map((c, i) => ({
           label: c.label.trim() || `Court ${i + 1}`,
           duration_minutes: Math.round(Number(c.hours) * 60),
@@ -484,6 +486,24 @@ export default function SetupScreen({ draft }) {
                   {[1, 2, 3].map((n) => (
                     <option key={n} value={n}>
                       {n} game{n > 1 ? "s" : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-1 flex-col gap-1.5">
+                <Label htmlFor="setup-points">Points per game</Label>
+                <select
+                  id="setup-points"
+                  aria-label="Points per game"
+                  data-testid="setup-points"
+                  className="h-9 rounded-md border border-border bg-card px-3 text-sm text-foreground"
+                  value={pointsToWin}
+                  onChange={(e) => setPointsToWin(Number(e.target.value))}
+                >
+                  {[11, 15, 21, 31].map((n) => (
+                    <option key={n} value={n}>
+                      to {n}
                     </option>
                   ))}
                 </select>

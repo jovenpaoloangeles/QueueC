@@ -206,6 +206,7 @@ export default function CourtCard({
   queue,
   playSeconds,
   serverTime,
+  pointsToWin,
   onStartClick,
   onStartSingles,
   canStart,
@@ -554,6 +555,7 @@ export default function CourtCard({
           teamNames={teamNames}
           winner={showEnd === "team1" || showEnd === "team2" ? showEnd : null}
           onClose={() => setShowEnd(false)}
+          pointsToWin={pointsToWin}
         />
       )}
       {showSub && match && (

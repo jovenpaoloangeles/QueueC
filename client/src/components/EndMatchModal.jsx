@@ -15,11 +15,12 @@ import { cn } from "@/lib/utils";
 import { endMatch } from "../api.js";
 
 /** The End Match score form: final score, shuttle usage and match rating. */
-export default function EndMatchModal({ match, courtLabel, teamNames, winner, onClose }) {
-  // scores start empty (not 0) so users type "31", never "031"; a winner tapped on the court card presets the winning side
+export default function EndMatchModal({ match, courtLabel, teamNames, winner, onClose, pointsToWin = 31 }) {
+  // scores start empty (not 0) so users type "31", never "031"; a winner tapped
+  // on the court card presets the winning side to the session's points per game
   const [scores, setScores] = useState({
-    team1: winner === "team1" ? 31 : (match.team1_score ?? ""),
-    team2: winner === "team2" ? 31 : (match.team2_score ?? ""),
+    team1: winner === "team1" ? pointsToWin : (match.team1_score ?? ""),
+    team2: winner === "team2" ? pointsToWin : (match.team2_score ?? ""),
   });
   const [shuttles, setShuttles] = useState({
     newShuttles: match.new_shuttles ?? 1,
