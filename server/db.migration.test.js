@@ -87,6 +87,7 @@ const expected = [
   "court_fee",
   "shuttle_price",
   "fee_split",
+  "points_to_win",
 ];
 const got = db
   .prepare("PRAGMA table_info(sessions)")

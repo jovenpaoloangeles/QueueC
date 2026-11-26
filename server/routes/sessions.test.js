@@ -271,9 +271,10 @@ async function malformedPresetTest() {
   }
 }
 
-// Per-session rotation settings: POST validates max_consecutive (1–5) and
-// rest_games (0–3), persists both; omitted fields get engine defaults (2 / 0)
-// and the session still plans via automatch dry-run.
+// Per-session rotation settings: POST validates max_consecutive (1–5),
+// rest_games (0–3) and points_to_win (11 / 15 / 21 / 31), persists all three;
+// omitted fields get engine defaults (2 / 0 / 31) and the session still plans
+// via automatch dry-run.
 async function rotationSettingsTest() {
   const api = async (path, method = "GET", body) => {
     const res = await fetch(`${BASE}${path}`, {
@@ -304,16 +305,34 @@ async function rotationSettingsTest() {
   });
   assert.equal(badRest.status, 400, "rest_games: 7 must be rejected");
 
+  const badPoints = await api("/sessions", "POST", {
+    name: "Rot Bad Points",
+    scheduled_start: 1,
+    scheduled_end: 2,
+    points_to_win: 17,
+  });
+  assert.equal(badPoints.status, 400, "points_to_win: 17 must be rejected");
+
+  const badPointsType = await api("/sessions", "POST", {
+    name: "Rot Bad Points Type",
+    scheduled_start: 1,
+    scheduled_end: 2,
+    points_to_win: "21",
+  });
+  assert.equal(badPointsType.status, 400, 'points_to_win: "21" (string) must be rejected');
+
   const custom = await api("/sessions", "POST", {
     name: "Rot Custom",
     scheduled_start: 1,
     scheduled_end: 2,
     max_consecutive: 3,
     rest_games: 1,
+    points_to_win: 21,
   });
   assert.equal(custom.status, 201, "valid rotation settings must be accepted");
   assert.equal(custom.session.max_consecutive, 3, "max_consecutive persisted");
   assert.equal(custom.session.rest_games, 1, "rest_games persisted");
+  assert.equal(custom.session.points_to_win, 21, "points_to_win persisted");
   await api(`/sessions/${custom.session.id}/end`, "PATCH");
 
   // Defaults when omitted, and the session still plans (rest off).
@@ -324,6 +343,7 @@ async function rotationSettingsTest() {
   });
   assert.equal(def.session.max_consecutive, 2, "default max_consecutive 2");
   assert.equal(def.session.rest_games, 0, "default rest_games 0");
+  assert.equal(def.session.points_to_win, 31, "default points_to_win 31");
   const sid = def.session.id;
   await api(`/sessions/${sid}/start`, "PATCH");
   const { players } = await api("/players");

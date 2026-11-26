@@ -52,6 +52,7 @@ db.exec(`
     checkin_order TEXT NOT NULL DEFAULT 'alphabetical',
     max_consecutive INTEGER NOT NULL DEFAULT 2,
     rest_games INTEGER NOT NULL DEFAULT 0,
+    points_to_win INTEGER NOT NULL DEFAULT 31,
     started_at INTEGER,
     ended_at INTEGER
   );
@@ -318,6 +319,9 @@ if (!sessionCols.has("court_fee")) {
 }
 if (!sessionCols.has("checkin_order")) {
   db.exec("ALTER TABLE sessions ADD COLUMN checkin_order TEXT NOT NULL DEFAULT 'alphabetical'");
+}
+if (!sessionCols.has("points_to_win")) {
+  db.exec("ALTER TABLE sessions ADD COLUMN points_to_win INTEGER NOT NULL DEFAULT 31");
 }
 
 // Late-arrival virtual game offset: g_virt = games_played + virt_offset.

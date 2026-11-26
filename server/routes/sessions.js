@@ -44,6 +44,7 @@ router.post("/", async (c) => {
     checkin_order,
     max_consecutive,
     rest_games,
+    points_to_win,
   } = await c.req.json().catch(() => ({}));
   if (typeof name !== "string" || !name.trim()) {
     return c.json({ error: "Name is required" }, 400);
@@ -72,12 +73,16 @@ router.post("/", async (c) => {
   if (!Number.isInteger(restGames) || restGames < 0 || restGames > 3) {
     return c.json({ error: "rest_games must be an integer 0–3" }, 400);
   }
+  const pointsToWin = points_to_win ?? 31;
+  if (![11, 15, 21, 31].includes(pointsToWin)) {
+    return c.json({ error: "points_to_win must be one of 11, 15, 21, 31" }, 400);
+  }
   const order = checkin_order ?? "alphabetical";
   const { lastInsertRowid } = db
     .prepare(
-      "INSERT INTO sessions (name, scheduled_start, scheduled_end, court_count, checkin_order, max_consecutive, rest_games) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO sessions (name, scheduled_start, scheduled_end, court_count, checkin_order, max_consecutive, rest_games, points_to_win) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
     )
-    .run(name, scheduled_start, scheduled_end, count, order, maxConsec, restGames);
+    .run(name, scheduled_start, scheduled_end, count, order, maxConsec, restGames, pointsToWin);
 
   // seed courts (custom configuration array or default Court 1..N)
   const insertCourt = db.prepare(
