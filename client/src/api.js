@@ -66,4 +66,5 @@ export const cancelSlate = (id) => req("DELETE", `/matches/${id}/slate`);
 export const startSlateOnCourt = (matchId, courtId) =>
   req("POST", `/matches/${matchId}/start`, { court_id: courtId });
 export const autoMatch = (sessionId, body) => req("POST", `/sessions/${sessionId}/automatch`, body);
+export const rerunDeck = (sessionId) => req("POST", `/sessions/${sessionId}/automatch`, { rerun_deck: true });
 export const extendCourt = (id, minutes = 60) => req("PATCH", `/courts/${id}/extend`, { minutes });

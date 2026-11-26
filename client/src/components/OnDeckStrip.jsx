@@ -13,7 +13,15 @@ import {
 import { drag, valid } from "@/lib/dnd";
 import { nextFreeCourt } from "@/lib/eta";
 import { balanceHint, cn, fmtClock, freeCourts, shortSkill, TIER_CLASS } from "@/lib/utils";
-import { abortMatch, cancelSlate, moveSlate, slateMatch, startSlateOnCourt, updateSlate } from "../api.js";
+import {
+  abortMatch,
+  cancelSlate,
+  moveSlate,
+  rerunDeck,
+  slateMatch,
+  startSlateOnCourt,
+  updateSlate,
+} from "../api.js";
 
 /** Slot order mirrors the slate payload: Team A = 0,1 · Team B = 2,3. */
 const SLOT_KEYS = ["team1_p1", "team1_p2", "team2_p1", "team2_p2"];
@@ -206,6 +214,7 @@ export default function OnDeckStrip({
   const [editDraft, setEditDraft] = useState([null, null, null, null]);
   const [saving, setSaving] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [rerunning, setRerunning] = useState(false);
   const [pendingCancelId, setPendingCancelId] = useState(null); // confirm dialog target
   const [pendingStartId, setPendingStartId] = useState(null); // start-now dialog target
   const [starting, setStarting] = useState(false);
@@ -458,6 +467,34 @@ export default function OnDeckStrip({
     }
   }
 
+  // ↻ Rerun: the server throws the deck away and plans a new one that reuses
+  // none of the old pairings. Undo re-creates the old lineups, in order.
+  async function handleRerun() {
+    if (rerunning) return;
+    const old = rows.map((r) => ({
+      team1_p1: r.team1_p1,
+      team1_p2: r.team1_p2,
+      team2_p1: r.team2_p1,
+      team2_p2: r.team2_p2,
+    }));
+    setRerunning(true);
+    try {
+      const r = await rerunDeck(sessionId);
+      toast(`Deck re-planned — ${r.slated_count} new lineup${r.slated_count === 1 ? "" : "s"}`, "success", {
+        duration: 10000,
+        undo: async () => {
+          await Promise.all(r.slate_ids.map((id) => cancelSlate(id)));
+          for (const l of old) await slateMatch({ session_id: sessionId, ...l });
+          return true;
+        },
+      });
+    } catch (err) {
+      toast(err?.data?.error ?? "Could not re-plan the deck", "error");
+    } finally {
+      setRerunning(false);
+    }
+  }
+
   async function handleCancel(row) {
     if (cancelling) return; // in-flight guard: no double DELETE / double 404 toast
     setCancelling(true);
@@ -575,6 +612,19 @@ export default function OnDeckStrip({
       >
         <Spark /> Smart add
       </Button>
+      {rows.length > 0 && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="rounded-full"
+          data-testid="ondeck-rerun"
+          disabled={rerunning}
+          title="Throw these lineups away and plan different ones"
+          onClick={handleRerun}
+        >
+          ↻ Rerun
+        </Button>
+      )}
     </header>
   );
 
@@ -602,6 +652,19 @@ export default function OnDeckStrip({
       >
         <Spark /> Smart add
       </Button>
+      {rows.length > 0 && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="rounded-full"
+          data-testid="ondeck-rerun"
+          disabled={rerunning}
+          title="Throw these lineups away and plan different ones"
+          onClick={handleRerun}
+        >
+          ↻ Rerun
+        </Button>
+      )}
       <Button
         size="sm"
         variant={building ? "secondary" : "default"}
@@ -672,8 +735,8 @@ export default function OnDeckStrip({
               >
                 <p className="text-sm font-bold tracking-tight">Nothing on deck</p>
                 <p className="text-xs text-muted-foreground">
-                  Line up the next match so it starts the moment a court frees up — Smart add or build a
-                  lineup.
+                  Smart Match fills it — after that it refills itself as lineups go onto a court — or build
+                  one.
                 </p>
               </div>
             )}
