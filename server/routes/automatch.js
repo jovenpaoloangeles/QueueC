@@ -34,15 +34,15 @@ router.post("/sessions/:id/automatch", async (c) => {
     if (!slateOnly) return c.json({ error: "locked requires slate_only" }, 400);
     locked = body.locked;
   }
-  // excluded: entry ids the plan must not pick (On Deck "repick" re-click)
+  // excluded: entry ids the plan must not pick (On Deck "repick" re-click — it sends the whole draft, so up to 4)
   let excluded = [];
   if (Array.isArray(body?.excluded)) {
     if (
-      body.excluded.length > 3 ||
+      body.excluded.length > 4 ||
       body.excluded.some((x) => !Number.isInteger(x)) ||
       new Set(body.excluded).size !== body.excluded.length
     ) {
-      return c.json({ error: "excluded must be unique queue-entry ids (0–3 of them)" }, 400);
+      return c.json({ error: "excluded must be unique queue-entry ids (0–4 of them)" }, 400);
     }
     if (!slateOnly) return c.json({ error: "excluded requires slate_only" }, 400);
     excluded = body.excluded;

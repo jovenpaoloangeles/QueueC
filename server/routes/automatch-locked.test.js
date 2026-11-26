@@ -133,6 +133,45 @@ async function main() {
   );
 
   await api(`/api/sessions/${session.id}/end`, "PATCH");
+
+  // Re-pick: the builder sends the whole draft (4 ids) as `excluded`. The first
+  // cut of the route capped it at 3 and answered 400, so re-clicking Smart add
+  // never re-picked.
+  const now2 = Math.floor(Date.now() / 1000);
+  const { session: s2 } = await api("/api/sessions", "POST", {
+    name: "RepickFour",
+    scheduled_start: now2,
+    scheduled_end: now2 + 3600,
+    court_count: 1,
+  });
+  for (let i = 0; i < 12; i++) {
+    const { player } = await api("/api/players", "POST", {
+      name: `Repick P${i + 1}`,
+      skill_level: "intermediate",
+    });
+    await api(`/api/sessions/${s2.id}/checkin`, "POST", { player_id: player.id });
+  }
+  await api(`/api/sessions/${s2.id}/start`, "PATCH");
+  const ids2 = (await readFirstState()).queue.map((e) => e.id);
+  const excluded4 = ids2.slice(0, 4);
+  const dry4 = await api(`/api/sessions/${s2.id}/automatch`, "POST", {
+    dry_run: true,
+    slate_only: true,
+    excluded: excluded4,
+  });
+  assert.equal(dry4.status, 200, "a full draft (4 ids) must be accepted as excluded");
+  const quartet4 = [...(dry4.plan?.slate?.[0]?.team1 ?? []), ...(dry4.plan?.slate?.[0]?.team2 ?? [])];
+  assert.equal(quartet4.length, 4, "re-pick still plans a quartet");
+  for (const id of excluded4) {
+    assert.ok(!quartet4.includes(id), `excluded id ${id} must not be re-picked, got [${quartet4}]`);
+  }
+  const tooMany = await api(`/api/sessions/${s2.id}/automatch`, "POST", {
+    dry_run: true,
+    slate_only: true,
+    excluded: ids2.slice(0, 5),
+  });
+  assert.equal(tooMany.status, 400, "five excluded ids is still a bad request");
+  await api(`/api/sessions/${s2.id}/end`, "PATCH");
   console.log("automatch-locked.test.js: all assertions passed");
 }
 
