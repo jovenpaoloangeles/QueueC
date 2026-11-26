@@ -47,7 +47,7 @@ test("24.2 Smart Match with only 2 waiting starts a singles game on the free cou
   await expect(page.getByTestId("court-winner-1")).toHaveCount(1);
 });
 
-test("24.3 Smart Match with a lone waiting player toasts Nothing to auto-match and starts nothing", async ({
+test("24.5 Smart Match with a lone waiting player toasts Nothing to auto-match and starts nothing", async ({
   page,
 }) => {
   // seeded over the API: the setup screen's Start Session needs two players picked
