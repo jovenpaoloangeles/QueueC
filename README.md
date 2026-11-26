@@ -48,12 +48,12 @@ Without Docker: install [Bun](https://bun.sh), then
 - **On Deck slate** — build lineups manually or let Smart Match fill it;
   the deck refills itself (up to 3 lineups deep) as lineups go onto a court, slates
   auto-promote to the next free court, and **↻ Rerun** re-plans it with
-  different pairings (Undo restores the old ones). Manual lineups never start
-  without a confirm.
+  different pairings (Undo restores the old ones).
 - **Smart Match** — one click: a matching heuristic (wait time, games played,
-  skill variance, team balance, pair redundancy) fills every free court and
-  tops up On Deck. No preview dialog — the result is on screen and the toast's
-  Undo takes the whole click back. [Algorithm deep-dive →](docs/algorithm.md)
+  skill variance, team balance, pair redundancy) fills each free court's
+  lineup slots for review and tops up On Deck. Drag players in or out, then
+  one tap on **Start match** starts the court; Undo on the toast empties the
+  slots it filled. [Algorithm deep-dive →](docs/algorithm.md)
 - **Fair queue** — net-wait clocks (playing time doesn't count toward your
   wait), rest/wake, alphabetical check-in, remove-with-confirm.
 - **Shuttles & stats** — 1 shuttle per game by default with manual extras,

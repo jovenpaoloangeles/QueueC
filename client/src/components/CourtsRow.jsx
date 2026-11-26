@@ -25,6 +25,7 @@ export default function CourtsRow({
   drafts = {},
   draftedIds = new Set(),
   onStartMatch,
+  onStartDraft,
   onDropPlayer,
   onDropSlot,
   onClearSlot,
@@ -88,8 +89,12 @@ export default function CourtsRow({
               playSeconds={playSeconds}
               pointsToWin={session?.points_to_win}
               canStart={useDraft || canStartSelection}
-              onStartClick={() => onStartMatch(court.id, startPlayers, useDraft ? "draft" : "selection")}
-              onStartSingles={() => onStartMatch(court.id, [filled[0], filled[1]], "draft")}
+              // a lineup drafted on the card is already on screen, so its Start is
+              // one tap; a queue selection isn't, so it still asks first
+              onStartClick={() =>
+                useDraft ? onStartDraft(court.id, filled) : onStartMatch(court.id, startPlayers, "selection")
+              }
+              onStartSingles={() => onStartDraft(court.id, [filled[0], filled[1]])}
               onDropPlayer={onDropPlayer}
               canDropPlayer={(entryId) => !draftedIds.has(entryId) && filled.length < 4}
               draft={draft}

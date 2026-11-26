@@ -17,7 +17,9 @@ test.beforeEach(async ({ page }) => {
   if (session) await page.request.fetch(`${base()}/api/sessions/${session.id}/end`, { method: "PATCH" });
 });
 
-test("24.1 Smart Match in one click: fills the free court, the rest go to On Deck", async ({ page }) => {
+test("24.1 Smart Match pours the free court's lineup for review; the rest go to On Deck", async ({
+  page,
+}) => {
   await createSession(page, { courts: 1 });
   await checkinPlayers(page, [
     "Inter C1",
@@ -32,17 +34,23 @@ test("24.1 Smart Match in one click: fills the free court, the rest go to On Dec
   await startSession(page);
   await page.getByTestId("btn-smart-match").click(); // no confirm dialog
   const toast = page.getByTestId("toast");
-  await expect(toast).toContainText("1 started · 1 added to On Deck");
-  await expect(page.getByTestId("court-winner-1")).toHaveCount(1); // the free court is live
+  await expect(toast).toContainText("1 lineup ready on court — check, then Start · 1 added to On Deck");
+  await expect(page.getByTestId("court-winner-1")).toHaveCount(0); // nothing started yet
   await expect(page.getByTestId("on-deck-count")).toHaveText("1");
+  await page.getByTestId("btn-start-match").click();
+  await expect(page.getByTestId("court-winner-1")).toHaveCount(1);
 });
 
-test("24.2 Smart Match with only 2 waiting starts a singles game on the free court", async ({ page }) => {
+test("24.2 Smart Match with only 2 waiting pours a singles lineup; Start Singles starts it", async ({
+  page,
+}) => {
   await createSession(page, { courts: 1 });
   await checkinPlayers(page, ["Inter C1", "Inter C2"]);
   await startSession(page);
   await page.getByTestId("btn-smart-match").click();
-  await expect(page.getByTestId("toast")).toContainText("(singles)");
+  await expect(page.getByTestId("toast")).toContainText("1 lineup ready on court");
+  await expect(page.getByTestId("court-winner-1")).toHaveCount(0);
+  await page.getByTestId("btn-start-singles").click();
   await expect(page.getByTestId("start-confirm-dialog")).toHaveCount(0);
   await expect(page.getByTestId("court-winner-1")).toHaveCount(1);
 });

@@ -62,11 +62,13 @@ test("29.4 courts sit tight under the header at natural height", async ({ page }
   expect(cards.grid).toBeGreaterThanOrEqual(cards.card);
 });
 
-test("29.5 Smart Match starts the free courts in one click — nothing waits in a dialog", async ({ page }) => {
+test("29.5 Smart Match fills the court slots for review — nothing starts, nothing waits in a dialog", async ({
+  page,
+}) => {
   await page.getByTestId("btn-smart-match").click();
   await expect(page.getByTestId("start-confirm-dialog")).toHaveCount(0);
-  await expect(page.getByTestId("toast")).toContainText("2 started");
+  await expect(page.getByTestId("toast")).toContainText("2 lineups ready on court");
   const st = await liveState(page);
-  expect(st.activeMatches).toHaveLength(2);
+  expect(st.activeMatches).toHaveLength(0);
   expect(st.slatedMatches).toHaveLength(0); // 8 players, 2 courts — nobody left for On Deck
 });

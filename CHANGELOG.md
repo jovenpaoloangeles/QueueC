@@ -15,7 +15,9 @@ the version that matters for self-hosters).
   cut of this capped `excluded` at 3 while the re-click sends all four drafted
   players, so the re-click only produced an error toast.)
 - Ending a game is one tap: the live court shows a winner button under each team instead of an End match button plus a confirm dialog. The score form opens with the winner's score preset to the session's **Points per game** (new setup select: 11 / 15 / 21 / 31, default 31) and the cursor in the loser's field.
-- **Smart Match is one click.** It fills every free court and tops up On Deck (up to 3 lineups); the preview dialog is gone. The success toast's **Undo** takes the whole click back and stays for 15 s when games were started. With 2–3 players waiting it still falls back to a singles game, now without asking.
+- **Smart Match is one click.** It fills each free court's lineup slots for review and tops up On Deck (up to 3 lineups); the preview dialog is gone. Check the lineup on the court card (drag players in or out), then one tap on **Start match** starts it. The toast's **Undo** empties the slots it filled and cancels the new deck lineups. With 2–3 players waiting the court gets a singles lineup.
+- The queue's **All** tab lists only players who can be called (waiting, then resting); players on a court appear on the court card only.
+- **History cleanup.** Each past session on the History page has a **Delete** button, and **Clear all history** removes every past session at once — games, attendance and payments. Both confirm first and can't be undone; players are kept, and leaderboards, careers and learned skill ratings are rebuilt from what remains. Single games can still be deleted from a session's own page. API: `DELETE /api/sessions/:id` (ended sessions only) and `DELETE /api/sessions?all=1`.
 
 ## [1.7.0] — 2026-10-29
 

@@ -1,4 +1,5 @@
-// tests/e2e/27-start-confirm.spec.js — manual starts and slate promotion ask for confirmation first
+// tests/e2e/27-start-confirm.spec.js — a queue-selection start, a 4th-slot drop and slate promotion ask first;
+// a lineup already on the court card starts in one tap
 import { expect, test } from "../fixtures.js";
 import { base, confirmStart, fullSetup, liveState, startDoubles, syntheticDrag } from "../helpers.js";
 
@@ -44,7 +45,9 @@ test("27.2 Esc cancels the dialog", async ({ page }) => {
   expect((await liveState(page)).activeMatches).toHaveLength(0);
 });
 
-test("27.3 filling the 4th slot on an idle court asks first; Cancel keeps the draft", async ({ page }) => {
+test("27.3 filling the 4th slot on an idle court asks first; after Cancel, Start match starts in one tap", async ({
+  page,
+}) => {
   const { courts } = await liveState(page);
   const c1 = courts[0].id;
   for (let i = 0; i < 4; i++) await dropOnCourt(page, c1, i);
@@ -56,39 +59,35 @@ test("27.3 filling the 4th slot on an idle court asks first; Cancel keeps the dr
   await expect(page.getByTestId("slot-3").first()).not.toBeEmpty(); // draft still has 4
   expect((await liveState(page)).activeMatches).toHaveLength(0);
 
+  // the lineup is on the card, so its Start needs no second look
   await page.getByRole("button", { name: "Start Match" }).first().click();
-  await confirmStart(page);
+  await expect(dialog(page)).toHaveCount(0);
   await expect(page.getByTestId("court-winner-1")).toHaveCount(1);
 });
 
-test("27.4 Start Singles asks for confirmation", async ({ page }) => {
+test("27.4 Start Singles on a court lineup starts in one tap", async ({ page }) => {
   const { courts } = await liveState(page);
   const c1 = courts[0].id;
   await dropOnCourt(page, c1, 0);
   await dropOnCourt(page, c1, 1);
   await page.getByTestId("btn-start-singles").first().click();
-  await expect(dialog(page)).toBeVisible();
-  await expect(dialog(page)).toContainText("Singles");
-  expect((await liveState(page)).activeMatches).toHaveLength(0);
-  await confirmStart(page);
+  await expect(dialog(page)).toHaveCount(0);
   await expect(page.getByTestId("court-winner-1")).toHaveCount(1);
   expect((await liveState(page)).activeMatches[0].format).toBe("singles");
 });
 
-test("27.5 Smart Match needs no confirm dialog — and its Undo takes the whole click back", async ({
-  page,
-}) => {
+test("27.5 Smart Match needs no dialog — its Undo empties the court slots it filled", async ({ page }) => {
   await page.getByTestId("btn-smart-match").click();
   await expect(page.getByTestId("start-confirm-dialog")).toHaveCount(0);
-  await expect(page.getByTestId("toast")).toContainText("2 started");
-  expect((await liveState(page)).activeMatches).toHaveLength(2);
+  await expect(page.getByTestId("toast")).toContainText("2 lineups ready on court");
+  await expect(page.locator("[data-entry-id]")).toHaveCount(0);
 
   await page.getByTestId("toast-undo").click();
   await expect(page.getByTestId("toast")).toContainText("Undone");
+  await expect(page.locator("[data-entry-id]")).toHaveCount(8); // everyone back in the queue
   const st = await liveState(page);
   expect(st.activeMatches).toHaveLength(0);
   expect(st.slatedMatches).toHaveLength(0);
-  expect(st.queue.filter((q) => q.status === "waiting")).toHaveLength(8);
 });
 
 test("27.6 live court shows no lineup matrix; slating goes through the On Deck builder", async ({ page }) => {

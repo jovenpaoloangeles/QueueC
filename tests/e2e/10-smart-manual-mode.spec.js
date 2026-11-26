@@ -48,15 +48,20 @@ test("10.4 no Manual/Smart mode buttons exist in the queue header", async ({ pag
   await expect(page.getByTestId("checkin-toggle")).toHaveCount(1);
 });
 
-test("10.5 header Smart Match runs in one click — no dialog; the free courts start at once", async ({
+test("10.5 header Smart Match pours each free court's lineup for review — nothing starts until Start", async ({
   page,
 }) => {
   await page.getByTestId("btn-smart-match").click();
   await expect(page.getByTestId("start-confirm-dialog")).toHaveCount(0);
-  await expect(page.getByTestId("toast")).toContainText("2 started");
+  await expect(page.getByTestId("toast")).toContainText("2 lineups ready on court");
+  await expect(page.getByTestId("btn-start-match")).toHaveCount(2);
+  for (const b of await page.getByTestId("btn-start-match").all()) await expect(b).toBeEnabled();
   const st = await liveState(page);
-  expect(st.activeMatches).toHaveLength(2); // both free courts
+  expect(st.activeMatches).toHaveLength(0); // review first
   expect(st.slatedMatches).toHaveLength(0); // 8 players — nobody left for On Deck
-  // queue untouched too — Smart Match never selects from the queue
-  await expect(page.locator("text=selected →")).toHaveCount(0);
+  await expect(page.locator("[data-entry-id]")).toHaveCount(0); // all 8 sit in court slots
+  // one tap per court starts it — the card is the review, no confirm dialog
+  await page.getByTestId("btn-start-match").first().click();
+  await expect(page.getByTestId("start-confirm-dialog")).toHaveCount(0);
+  await expect(page.getByTestId("court-winner-1")).toHaveCount(1);
 });

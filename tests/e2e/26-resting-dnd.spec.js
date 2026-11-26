@@ -57,13 +57,13 @@ test("26.6 resting players stay visible under the Rest tab", async ({ page }) =>
   await expect(page.locator("[data-resting-id]").filter({ hasText: name })).toBeVisible();
 });
 
-test("26.7 All tab shows playing players; Wait and Rest tabs do not", async ({ page }) => {
+test("26.7 players on a court are on no queue tab", async ({ page }) => {
   await startDoubles(page); // 4 players go In Game on court 1
-  // All (the default tab) lists them too — playing cards carry data-playing-id
-  await expect(page.locator("[data-playing-id]")).toHaveCount(4);
-  await expect(page.locator("[data-playing-id]").first()).toContainText("In Game");
-  await page.getByTestId("queue-tab-wait").click();
-  await expect(page.locator("[data-playing-id]")).toHaveCount(0);
-  await page.getByTestId("queue-tab-rest").click();
-  await expect(page.locator("[data-playing-id]")).toHaveCount(0);
+  // the court card is where they are — the queue lists only who can be called
+  for (const tab of ["queue-tab-all", "queue-tab-wait", "queue-tab-rest"]) {
+    await page.getByTestId(tab).click();
+    await expect(page.locator("[data-playing-id]")).toHaveCount(0);
+  }
+  await page.getByTestId("queue-tab-all").click();
+  await expect(page.locator("[data-entry-id]")).toHaveCount(4); // the 4 still waiting
 });

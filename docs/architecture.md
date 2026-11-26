@@ -71,12 +71,13 @@ a **plan**. The API is always dry-run first — `POST /api/sessions/:id/automatc
 with `{dry_run: true}` (optionally `slate_only: true`) returns the plan without
 writing; posting `{plan}` back executes exactly it, with a 409 if the queue
 moved in between.
-The UI makes both calls from one click on **Smart Match** (there is no preview
-dialog): lineups for free courts are started and the rest land on On Deck, up
-to `SLATE_CAP` (3) lineups counted across existing ones. While the session is
-paused the client sends `slate_only: true`, so only the deck part runs. The
-response carries `match_ids` and `slate_ids` so the toast's Undo can take the
-whole click back.
+One click on **Smart Match** runs the dry run, pours each free court's planned
+lineup into that court's four draft slots (client-side — nothing starts until
+the queue master presses **Start match** on the card, one tap), and commits only
+the deck part (`slate_only: true`), up to `SLATE_CAP` (3) lineups counted across
+existing ones. A court that already holds a draft is left alone. The toast's
+Undo empties the poured slots and cancels the new deck lineups (`slate_ids`).
+`match_ids` in the response still serves any client that commits court matches.
 
 On Deck holds up to `SLATE_CAP` (3) lineups and refills itself. When a match ends and the top
 lineup is promoted to the freed court, the server plans replacements up to the

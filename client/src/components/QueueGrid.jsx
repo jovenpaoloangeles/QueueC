@@ -17,8 +17,9 @@ import PlayerCard from "./PlayerCard.jsx";
 import PlayerSearchAdd from "./PlayerSearchAdd.jsx";
 import { useToast } from "./Toast.jsx";
 
-// mockup .queue-tabs: All = everything in the session (waiting + resting, then
-// playing), Wait = waiting only, Rest = resting only
+// mockup .queue-tabs: All = everyone who can be called (waiting, then resting),
+// Wait = waiting only, Rest = resting only. Players on a court are on no tab —
+// the court card is where they are.
 const TABS = [
   { id: "all", label: "All", testid: "queue-tab-all" },
   { id: "wait", label: "Wait", testid: "queue-tab-wait" },
@@ -155,23 +156,22 @@ export default function QueueGrid({
   const notDrafted = (e) => !draftedIds.has(e.id);
   const waiting = queue.filter((e) => e.status === "waiting" && notDrafted(e));
   const resting = queue.filter((e) => e.status === "resting" && notDrafted(e));
-  const playing = queue.filter((e) => e.status === "playing" && notDrafted(e));
   // click-selected OR drag-drafted players both count as "picked" for the header line
   const pickedCount = new Set([...selection, ...draftedIds]).size;
 
   const list = useMemo(() => {
     const idx = new Map(order.map((id, i) => [id, i]));
     const byOrder = (a, b) => (idx.get(a.id) ?? 1e9) - (idx.get(b.id) ?? 1e9);
-    const base = tab === "wait" ? waiting : tab === "rest" ? resting : [...waiting, ...resting, ...playing];
+    const base = tab === "wait" ? waiting : tab === "rest" ? resting : [...waiting, ...resting];
     const q = filter.trim().toLowerCase();
     if (tab === "all") {
-      // groups stay intact (playing last); each group keeps its own order
-      return [waiting, resting, playing].flatMap((g) =>
+      // groups stay intact (resting after waiting); each group keeps its own order
+      return [waiting, resting].flatMap((g) =>
         g.filter((e) => !q || (e.name ?? "").toLowerCase().includes(q)).sort(byOrder),
       );
     }
     return base.filter((e) => !q || (e.name ?? "").toLowerCase().includes(q)).sort(byOrder);
-  }, [waiting, resting, playing, order, tab, filter]);
+  }, [waiting, resting, order, tab, filter]);
 
   function handleDropOnPlayer(dragId, targetId) {
     if (drag.current?.status === "playing") return; // playing cards don't reorder the queue
@@ -203,11 +203,7 @@ export default function QueueGrid({
   }, [waiting, order]);
 
   const tabCount = (id) =>
-    id === "wait"
-      ? waiting.length
-      : id === "rest"
-        ? resting.length
-        : waiting.length + resting.length + playing.length;
+    id === "wait" ? waiting.length : id === "rest" ? resting.length : waiting.length + resting.length;
 
   return (
     <div className="flex flex-col gap-2">

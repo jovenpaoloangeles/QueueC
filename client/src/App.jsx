@@ -72,47 +72,63 @@ function LiveView() {
       return { name: e?.name ?? "?", skill_level: e?.skill_level };
     });
 
-  // header "✨ Smart Match": one click. Free courts get their lineups at once
-  // and the rest land on On Deck (topping it up to the deck cap) — there is
-  // no preview dialog: the result is on screen and the toast's Undo takes
-  // the whole click back. While the session is paused only the deck part
-  // runs (slating is fine on a frozen clock; starting a match isn't).
+  // header "✨ Smart Match": one click. Each free court's lineup is poured into
+  // that court's four slots for review — nothing starts until the QM presses
+  // Start match on the card (one tap; drag players in or out first). The rest
+  // land on On Deck, topping it up to the deck cap. A court that already holds
+  // a draft is left alone. Undo clears the poured slots and the new lineups.
   async function handleSmartMatch() {
     if (!session || smartBusy) return;
     setSmartBusy(true);
     try {
-      const opts = session.paused_at != null ? { slate_only: true } : {};
-      const { plan } = await autoMatch(session.id, { dry_run: true, ...opts });
+      const { plan } = await autoMatch(session.id, { dry_run: true });
       if (!plan || (!plan.matches.length && !plan.slate.length)) {
         toast("Nothing to auto-match", "info");
         return;
       }
-      const r = await autoMatch(session.id, { ...opts, plan });
+      const busy = new Set(Object.values(drafts).flat().filter(Boolean));
+      const poured = {};
+      for (const m of plan.matches) {
+        const ids = [...m.team1, ...m.team2];
+        if ((drafts[m.court_id] ?? EMPTY_DRAFT).some(Boolean) || ids.some((id) => busy.has(id))) continue;
+        // singles: one player a side, in each team's first slot
+        poured[m.court_id] = m.team1.length === 1 ? [m.team1[0], null, m.team2[0], null] : ids;
+      }
+      setDrafts((prev) => ({ ...prev, ...poured }));
+      const r = plan.slate.length
+        ? await autoMatch(session.id, { plan: { matches: [], slate: plan.slate }, slate_only: true })
+        : { slated_count: 0, slate_ids: [] };
+      const nCourts = Object.keys(poured).length;
       const what = [
-        r.started ? `${r.started} started${plan.matches[0]?.format === "singles" ? " (singles)" : ""}` : "",
+        nCourts ? `${nCourts} lineup${nCourts === 1 ? "" : "s"} ready on court — check, then Start` : "",
         r.slated_count ? `${r.slated_count} added to On Deck` : "",
       ]
         .filter(Boolean)
         .join(" · ");
+      if (!what) {
+        toast("Nothing to auto-match", "info");
+        return;
+      }
       toast(what, "success", {
-        // this click can put players on a court — leave the Undo on screen
-        // longer than a normal toast
-        duration: r.started ? 15000 : 3500,
-        undo: () =>
-          Promise.all([
-            // a match that already ended (404/409) or a lineup that already
-            // left the deck (404) has nothing left to take back
-            ...(r.match_ids ?? []).map((id) =>
-              abortMatch(id).catch((err) => {
-                if (err?.status !== 404 && err?.status !== 409) throw err;
-              }),
-            ),
-            ...(r.slate_ids ?? []).map((id) =>
+        duration: 10000,
+        undo: () => {
+          setDrafts((prev) => {
+            const next = { ...prev };
+            for (const [courtId, ids] of Object.entries(poured)) {
+              // only clear a court whose slots are still exactly what was poured
+              if ((next[courtId] ?? EMPTY_DRAFT).every((v, i) => v === ids[i])) next[courtId] = EMPTY_DRAFT;
+            }
+            return next;
+          });
+          // a lineup that already left the deck (404) has nothing left to take back
+          return Promise.all(
+            (r.slate_ids ?? []).map((id) =>
               cancelSlate(id).catch((err) => {
                 if (err?.status !== 404) throw err;
               }),
             ),
-          ]).then(() => true),
+          ).then(() => true);
+        },
       });
     } catch (err) {
       toast(err?.data?.error ?? (err?.status ? err.message : "Auto-match failed"), "error");
@@ -594,6 +610,7 @@ function LiveView() {
               drafts={drafts}
               draftedIds={draftedIds}
               onStartMatch={requestStartMatch}
+              onStartDraft={(courtId, ids) => handleStartMatch(courtId, ids, "draft")}
               onDropPlayer={handleDropOnCourt}
               onDropSlot={handleDropOnSlot}
               onClearSlot={clearSlot}

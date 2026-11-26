@@ -73,14 +73,19 @@ test("QM.3 Smart Match uses only waiting players — never the four on court", a
   expect(waitingCount).toBe(initialCount - 4);
   const liveId = (await liveState(page)).activeMatches[0].id;
 
-  // one court busy, four waiting: Smart Match starts exactly those four on the
-  // free court and leaves the live match alone
+  // one court busy, four waiting: Smart Match pours exactly those four into the
+  // free court's slots and leaves the live match alone
   await page.getByTestId("btn-smart-match").click();
-  await expect(page.getByTestId("toast")).toContainText("1 started");
-  const st = await liveState(page);
-  expect(st.activeMatches).toHaveLength(2);
-  expect(st.activeMatches.map((m) => m.id)).toContain(liveId);
+  await expect(page.getByTestId("toast")).toContainText("1 lineup ready on court");
+  await expect(page.locator("[data-entry-id]")).toHaveCount(0);
+  let st = await liveState(page);
+  expect(st.activeMatches.map((m) => m.id)).toEqual([liveId]);
   expect(st.slatedMatches).toHaveLength(0);
+
+  await page.getByTestId("btn-start-match").click();
+  await expect(page.getByTestId("court-winner-1")).toHaveCount(2);
+  st = await liveState(page);
+  expect(st.activeMatches.map((m) => m.id)).toContain(liveId);
 });
 
 test("QM.4 queue master picks their own 4 — selection always manual", async ({ page }) => {
