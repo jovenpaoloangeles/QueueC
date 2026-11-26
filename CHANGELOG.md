@@ -8,6 +8,7 @@ the version that matters for self-hosters).
 
 ### Changed
 
+- **On Deck refills itself.** When a game ends and the next lineup steps on, QueueC plans replacements up to 3 lineups deep — no more re-pressing Smart Match. New **↻ Rerun** (On Deck header) throws the deck away and re-plans it without reusing any old pairing; Undo restores the previous lineups. Cancelling a lineup or starting one with ▶ Start now does not refill.
 - Smart Add can be re-clicked while the lineup builder is full: it re-picks a
   fresh quartet around the rest of the queue instead of greying out. The
   automatch dry-run accepts `excluded` entry ids alongside `locked`. (The first

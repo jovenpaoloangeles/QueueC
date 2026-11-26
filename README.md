@@ -46,7 +46,9 @@ Without Docker: install [Bun](https://bun.sh), then
   starts, per-court rental countdown with mid-match extend, team rearranging,
   tap the winning team to end a game.
 - **On Deck slate** — build lineups manually or let Smart Match fill it;
-  slates auto-promote to the next free court; manual lineups never start
+  the deck refills itself (up to 3 lineups deep) as lineups go onto a court, slates
+  auto-promote to the next free court, and **↻ Rerun** re-plans it with
+  different pairings (Undo restores the old ones). Manual lineups never start
   without a confirm.
 - **Smart Match** — one click: a matching heuristic (wait time, games played,
   skill variance, team balance, pair redundancy) fills every free court and

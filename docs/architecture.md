@@ -78,6 +78,14 @@ paused the client sends `slate_only: true`, so only the deck part runs. The
 response carries `match_ids` and `slate_ids` so the toast's Undo can take the
 whole click back.
 
+On Deck holds up to `SLATE_CAP` (3) lineups and refills itself. When a match ends and the top
+lineup is promoted to the freed court, the server plans replacements up to the
+cap in the same transaction (`refillDeck` in `routes/automatch.js`); manual
+starts (`▶ Start now`) and cancellations do not refill. `POST
+/api/sessions/:id/automatch` with `{rerun_deck: true}` releases every deck
+lineup, bans their pairings for one planning pass and writes a fresh deck; if
+nothing else can be planned it answers 409 and leaves the deck untouched.
+
 For the full two-stage ε-lexicographic optimizer design (quartet filtering,
 split ranking, multi-court batch assignment), see [algorithm.md](algorithm.md) —
 a spec, not yet implemented.
