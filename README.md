@@ -45,11 +45,13 @@ Without Docker: install [Bun](https://bun.sh), then
 - **Live courts** — drag-and-drop 2×2 lineup drafting, confirm-gated match
   starts, per-court rental countdown with mid-match extend, team rearranging,
   tap the winning team to end a game.
-- **On Deck slate** — build lineups manually or review a Smart Match plan;
-  slates auto-promote to the next free court; nothing starts unconfirmed.
-- **Smart Match** — a dry-run-first matching heuristic (wait time, games
-  played, skill variance, team balance, pair redundancy); it never writes
-  without showing you the plan. [Algorithm deep-dive →](docs/algorithm.md)
+- **On Deck slate** — build lineups manually or let Smart Match fill it;
+  slates auto-promote to the next free court; manual lineups never start
+  without a confirm.
+- **Smart Match** — one click: a matching heuristic (wait time, games played,
+  skill variance, team balance, pair redundancy) fills every free court and
+  tops up On Deck. No preview dialog — the result is on screen and the toast's
+  Undo takes the whole click back. [Algorithm deep-dive →](docs/algorithm.md)
 - **Fair queue** — net-wait clocks (playing time doesn't count toward your
   wait), rest/wake, alphabetical check-in, remove-with-confirm.
 - **Shuttles & stats** — 1 shuttle per game by default with manual extras,

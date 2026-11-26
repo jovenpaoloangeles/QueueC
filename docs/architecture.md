@@ -70,7 +70,13 @@ variance low and teams balanced, avoids repeating recent pairings, and returns
 a **plan**. The API is always dry-run first — `POST /api/sessions/:id/automatch`
 with `{dry_run: true}` (optionally `slate_only: true`) returns the plan without
 writing; posting `{plan}` back executes exactly it, with a 409 if the queue
-moved in between. The UI never slates without showing you the plan.
+moved in between.
+The UI makes both calls from one click on **Smart Match** (there is no preview
+dialog): lineups for free courts are started and the rest land on On Deck, up
+to `SLATE_CAP` (3) lineups counted across existing ones. While the session is
+paused the client sends `slate_only: true`, so only the deck part runs. The
+response carries `match_ids` and `slate_ids` so the toast's Undo can take the
+whole click back.
 
 For the full two-stage ε-lexicographic optimizer design (quartet filtering,
 split ranking, multi-court batch assignment), see [algorithm.md](algorithm.md) —

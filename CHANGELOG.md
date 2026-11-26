@@ -12,6 +12,7 @@ the version that matters for self-hosters).
   fresh quartet around the rest of the queue instead of greying out. The
   automatch dry-run accepts `excluded` entry ids alongside `locked`.
 - Ending a game is one tap: the live court shows a winner button under each team instead of an End match button plus a confirm dialog. The score form opens with the winner's score preset to the session's **Points per game** (new setup select: 11 / 15 / 21 / 31, default 31) and the cursor in the loser's field.
+- **Smart Match is one click.** It fills every free court and tops up On Deck (up to 3 lineups); the preview dialog is gone. The success toast's **Undo** takes the whole click back and stays for 15 s when games were started. With 2–3 players waiting it still falls back to a singles game, now without asking.
 
 ## [1.7.0] — 2026-10-29
 
