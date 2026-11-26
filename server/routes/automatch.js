@@ -230,6 +230,7 @@ router.post("/sessions/:id/automatch", async (c) => {
   let started = 0;
   let slated = 0;
   const slateIds = [];
+  const matchIds = []; // started matches — the client's Undo aborts exactly these
   db.transaction(() => {
     const setPlaying = db.prepare(
       "UPDATE queue_entries SET status = 'playing', status_updated_at = ? WHERE id = ?",
@@ -237,10 +238,13 @@ router.post("/sessions/:id/automatch", async (c) => {
     for (const m of plan.matches) {
       const [t1p1, t1p2] = m.team1;
       const [t2p1, t2p2] = m.team2;
-      db.prepare(`
+      const { lastInsertRowid } = db
+        .prepare(`
         INSERT INTO matches (session_id, court_number, format, state, team1_p1, team1_p2, team2_p1, team2_p2, started_at, new_shuttles)
         VALUES (?, ?, ?, 'active', ?, ?, ?, ?, ?, 1)
-      `).run(id, m.court_id, m.format, t1p1, t1p2 ?? null, t2p1, t2p2 ?? null, now);
+      `)
+        .run(id, m.court_id, m.format, t1p1, t1p2 ?? null, t2p1, t2p2 ?? null, now);
+      matchIds.push(lastInsertRowid);
       for (const eid of [...m.team1, ...m.team2]) setPlaying.run(now, eid);
       started++;
     }
@@ -275,7 +279,13 @@ router.post("/sessions/:id/automatch", async (c) => {
   }
 
   broadcast();
-  return c.json({ started, slated: slated > 0, slated_count: slated, slate_ids: slateIds });
+  return c.json({
+    started,
+    slated: slated > 0,
+    slated_count: slated,
+    slate_ids: slateIds,
+    match_ids: matchIds,
+  });
 });
 
 export default router;

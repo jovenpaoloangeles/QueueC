@@ -107,6 +107,7 @@ async function planTests() {
     assert.equal(body.slated, true);
     assert.equal(body.slated_count, 1);
     assert.equal(body.slate_ids?.length, 1, "slate ids returned for undo");
+    assert.deepEqual(body.match_ids?.length, 2, "started match ids returned for undo");
     st = await snap();
     for (const m of plan2.matches) {
       const am = st.activeMatches.find((x) => x.court_number === m.court_id);
