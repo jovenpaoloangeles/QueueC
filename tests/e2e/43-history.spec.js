@@ -56,8 +56,19 @@ test("43.4 the shell's ← Back leaves the History list for the live view", asyn
   const back = page.locator("a", { hasText: "← Back" });
   await expect(back).toBeVisible();
   await expect(back).toHaveAttribute("href", "#/"); // not a self-link — clicking must do something
+  // the old assertion waited for the setup screen — it only ever passed by
+  // catching a one-frame flash of it before the first SSE frame. Watch for
+  // that flash explicitly: a live session must come straight back.
+  await page.evaluate(() => {
+    window.__sawSetup = false;
+    new MutationObserver(() => {
+      if (document.querySelector('[data-testid="session-setup"]')) window.__sawSetup = true;
+    }).observe(document.body, { childList: true, subtree: true });
+  });
   await back.click();
-  await expect(page.getByTestId("session-setup")).toBeVisible(); // back on the live/setup view
+  await expect(page.locator("[data-entry-id]").first()).toBeVisible(); // the live queue
+  await expect(page.getByTestId("courts-edit")).toBeVisible();
+  expect(await page.evaluate(() => window.__sawSetup)).toBe(false);
 });
 
 test("43.9 a past session can be deleted from the history list, after a confirm", async ({ page }) => {

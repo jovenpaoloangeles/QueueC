@@ -595,7 +595,12 @@ function LiveView() {
           Reconnecting…
         </div>
       )}
-      {(!session || session.started_at == null) && <SetupScreen draft={session} />}
+      {/* serverTime is null until the first SSE frame: without this gate a
+          remount (e.g. ← Back from History) flashed the setup screen over a
+          live session for a frame */}
+      {sseData.serverTime != null && (!session || session.started_at == null) && (
+        <SetupScreen draft={session} />
+      )}
       {session && session.started_at != null && (
         <div className="flex flex-1 flex-col lg:flex-row lg:items-start">
           {/* one scrolling column: Courts → On Deck → Queue at natural height */}
