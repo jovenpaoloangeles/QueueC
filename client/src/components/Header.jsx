@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { pauseSession, resumeSession } from "@/api";
 import { Button } from "@/components/ui/button";
-import { toggleTheme } from "@/lib/theme";
+import { toggleSkillPrivacy, toggleTheme } from "@/lib/theme";
 import { cn, fmtClock, fmtDur, netWait } from "@/lib/utils";
 import EndSessionConfirmDialog from "./EndSessionConfirmDialog.jsx";
 import { useToast } from "./Toast.jsx";
@@ -34,6 +34,9 @@ export default function Header({
 }) {
   const [elapsed, setElapsed] = useState(0);
   const [confirmEnd, setConfirmEnd] = useState(false);
+  const [skillHidden, setSkillHidden] = useState(() =>
+    document.documentElement.classList.contains("hide-skill"),
+  );
   const toast = useToast();
   const paused = session?.paused_at != null;
 
@@ -58,6 +61,14 @@ export default function Header({
   // ---- live indicators, all derived client-side from the SSE payload ----
   const queue = sseData?.queue ?? [];
   const courts = sseData?.courts ?? [];
+  // the courts' real hours win over the setup guess once the session is live
+  // (Edit courts can move them); fall back to the scheduled window
+  const opens = courts.filter((c) => c.enabled).map((c) => c.active_from ?? session?.started_at);
+  const closes = courts.filter((c) => c.enabled && c.expires_at != null).map((c) => c.expires_at);
+  const timeRange = [
+    session?.started_at != null && opens.length ? Math.min(...opens) : session?.scheduled_start,
+    closes.length ? Math.max(...closes) : session?.scheduled_end,
+  ];
   const stats = sseData?.stats;
   const serverTime = sseData?.serverTime ?? Math.floor(Date.now() / 1000);
 
@@ -93,7 +104,7 @@ export default function Header({
               data-testid="header-time-range"
               className="hidden text-[12.5px] uppercase tracking-wider text-muted-foreground 2xl:inline"
             >
-              {fmtTime(session.scheduled_start)}–{fmtTime(session.scheduled_end)}
+              {fmtTime(timeRange[0])}–{fmtTime(timeRange[1])}
             </span>
           </>
         ) : (
@@ -105,7 +116,10 @@ export default function Header({
 
       {/* live status chips — draft `.chips`, space-evenly; only from xl, where
           they fit beside the actions (below that the actions would overflow) */}
-      <div aria-label="Session status" className="hidden flex-1 items-center justify-evenly px-2 xl:flex">
+      <div
+        aria-label="Session status"
+        className="hidden min-w-0 flex-1 items-center justify-evenly gap-4 px-2 xl:flex"
+      >
         <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[12.5px] text-muted-foreground">
           <ChipDot tone="bg-primary" />
           Courts{" "}
@@ -120,17 +134,26 @@ export default function Header({
             {waiting.length}
           </b>
         </span>
-        <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[12.5px] text-muted-foreground">
+        {/* min-w-0 chain: a long name shrinks (truncates) instead of wrapping the header */}
+        <span className="inline-flex min-w-0 items-center gap-1.5 whitespace-nowrap text-[12.5px] text-muted-foreground">
           <ChipDot tone="bg-destructive" />
           Longest{" "}
           <b
             data-testid="hdr-longest"
-            className={cn("font-bold text-foreground", !longest.name && "text-muted-foreground")}
+            className={cn(
+              "flex min-w-0 gap-1 font-bold text-foreground",
+              !longest.name && "text-muted-foreground",
+            )}
           >
             {longest.name ? (
               <>
-                {longest.name}{" "}
-                <span className="font-mono font-semibold text-destructive">({fmtDur(longest.secs)})</span>
+                {/* a long full name must not wrap the header (sidebar offset assumes one row) */}
+                <span className="min-w-0 max-w-[10rem] truncate" title={longest.name}>
+                  {longest.name}
+                </span>{" "}
+                <span className="shrink-0 font-mono font-semibold text-destructive">
+                  ({fmtDur(longest.secs)})
+                </span>
               </>
             ) : (
               "—"
@@ -186,6 +209,33 @@ export default function Header({
             />
           </svg>
           Smart Match
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          data-testid="btn-hide-skill"
+          aria-pressed={skillHidden}
+          title={
+            skillHidden ? "Show skill levels" : "Hide skill levels (for when players can see the screen)"
+          }
+          aria-label={skillHidden ? "Show skill" : "Hide skill"}
+          className="rounded-full px-2"
+          onClick={() => setSkillHidden(toggleSkillPrivacy())}
+        >
+          {/* icon-only like ☾: a text label wrapped the header to two rows at
+              1280–1300px, and the sidebar's sticky offset assumes one row */}
+          <svg
+            viewBox="0 0 24 24"
+            className="size-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden="true"
+          >
+            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+            <circle cx="12" cy="12" r="3" />
+            {skillHidden && <path d="M3 3l18 18" />}
+          </svg>
         </Button>
         <Button
           size="sm"

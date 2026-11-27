@@ -279,6 +279,7 @@ export default function CourtCard({
   return (
     <Card
       data-drop={`court-${court.id}`}
+      data-testid="court-card"
       className={cn(
         "flex flex-col gap-3 py-3.5 shadow-card",
         isExpiring && "border-amber/40 bg-wash-amber/40 ring-amber/40",

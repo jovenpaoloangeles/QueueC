@@ -114,7 +114,13 @@ export function currentState() {
     activeMatches,
     slatedMatches,
     courts,
-    stats: { player_count: queue.length, match_count, avg_wait_seconds, leaderboard, shuttles },
+    stats: {
+      player_count: queue.filter((e) => e.status !== "away").length,
+      match_count,
+      avg_wait_seconds,
+      leaderboard,
+      shuttles,
+    },
     serverTime: effNow,
   };
 }

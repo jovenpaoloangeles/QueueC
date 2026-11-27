@@ -39,7 +39,16 @@ export function normalizeOrder(order, allowed) {
 
 // Check-in body, shared by the live check-in route and the v1.3 attendance
 // endpoint (which delegates to it for live sessions).
-export function checkinPlayer(sessionId, playerId, when = Math.floor(Date.now() / 1000)) {
+// `away`: picked for the session but not at the venue yet — the entry exists
+// (one tap marks them arrived) but has no wait clock and can't be called.
+// Arriving replaces it with a fresh check-in, so the clock, queue slot and
+// late-arrival credit all date from the moment they walk in.
+export function checkinPlayer(
+  sessionId,
+  playerId,
+  when = Math.floor(Date.now() / 1000),
+  { away = false } = {},
+) {
   // a stale tab can hold a player the end-of-session pool reset deleted
   if (!db.prepare("SELECT id FROM players WHERE id = ?").get(playerId)) {
     return { error: "Player not found", status: 404 };
@@ -60,7 +69,9 @@ export function checkinPlayer(sessionId, playerId, when = Math.floor(Date.now() 
     );
     return { entry: db.prepare("SELECT * FROM queue_entries WHERE id = ?").get(existing.id), status: 200 };
   }
-  if (existing) return { error: "Player already checked in", status: 409 };
+  if (existing?.status === "away" && !away) {
+    db.prepare("DELETE FROM queue_entries WHERE id = ?").run(existing.id);
+  } else if (existing) return { error: "Player already checked in", status: 409 };
 
   const existingOrders = db
     .prepare("SELECT sort_order FROM queue_entries WHERE session_id = ?")
@@ -73,16 +84,17 @@ export function checkinPlayer(sessionId, playerId, when = Math.floor(Date.now() 
   const name = db.prepare("SELECT name FROM players WHERE id = ?").get(playerId)?.name;
   const arrivalOrder =
     db.prepare("SELECT checkin_order FROM sessions WHERE id = ?").get(sessionId)?.checkin_order === "arrival";
-  const insertAt = arrivalOrder
-    ? null
-    : alphabeticalSortOrder(
-        db
-          .prepare(
-            "SELECT qe.sort_order, p.name FROM queue_entries qe JOIN players p ON p.id = qe.player_id WHERE qe.session_id = ? AND qe.status = 'waiting'",
-          )
-          .all(sessionId),
-        name ?? "",
-      );
+  const insertAt =
+    arrivalOrder || away
+      ? null
+      : alphabeticalSortOrder(
+          db
+            .prepare(
+              "SELECT qe.sort_order, p.name FROM queue_entries qe JOIN players p ON p.id = qe.player_id WHERE qe.session_id = ? AND qe.status = 'waiting'",
+            )
+            .all(sessionId),
+          name ?? "",
+        );
   let sortOrder;
   if (insertAt == null) {
     sortOrder = assignSortOrder(existingOrders);
@@ -109,17 +121,17 @@ export function checkinPlayer(sessionId, playerId, when = Math.floor(Date.now() 
 
   const { lastInsertRowid } = db
     .prepare(
-      "INSERT INTO queue_entries (session_id, player_id, checked_in_at, sort_order, virt_offset, status_updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+      "INSERT INTO queue_entries (session_id, player_id, checked_in_at, sort_order, virt_offset, status_updated_at, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
     )
-    .run(sessionId, playerId, when, sortOrder, virtOffset, when);
+    .run(sessionId, playerId, when, sortOrder, virtOffset, when, away ? "away" : "waiting");
 
   return { entry: db.prepare("SELECT * FROM queue_entries WHERE id = ?").get(lastInsertRowid), status: 201 };
 }
 
 router.post("/sessions/:id/checkin", async (c) => {
   const id = c.req.param("id");
-  const { player_id } = await c.req.json().catch(() => ({}));
-  const result = checkinPlayer(id, player_id);
+  const { player_id, away } = await c.req.json().catch(() => ({}));
+  const result = checkinPlayer(id, player_id, undefined, { away: away === true });
   if (result.error) return c.json({ error: result.error }, result.status);
   broadcast();
   return c.json({ entry: result.entry }, result.status);
@@ -194,6 +206,9 @@ router.patch("/queue/:entryId/status", async (c) => {
   // playing/staged are owned by the match and slate routes
   if (!["waiting", "resting", "left"].includes(status)) {
     return c.json({ error: "status must be waiting, resting or left" }, 400);
+  }
+  if (cur.status === "away") {
+    return c.json({ error: "Not here yet — check them in when they arrive" }, 409);
   }
   if (status === "left" && (cur.status === "playing" || cur.status === "staged")) {
     return c.json({ error: "Player is on court or on deck" }, 409);

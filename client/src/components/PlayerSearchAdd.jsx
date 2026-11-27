@@ -58,13 +58,15 @@ export default function PlayerSearchAdd({
 
   // Normalized search & duplicate checks
   const pre = !session;
-  const inQueue = new Set(pre ? selectedIds : queue.map((e) => e.player_id));
+  // not-here-yet players are still checkable — checking them in is their arrival
+  const here = queue.filter((e) => e.status !== "away");
+  const inQueue = new Set(pre ? selectedIds : here.map((e) => e.player_id));
   const pool = players.filter((p) => !inQueue.has(p.id));
   const normQuery = searchQuery.trim().toLowerCase();
   const activeDuplicate = normQuery
     ? pre
       ? players.find((p) => inQueue.has(p.id) && p.name.trim().toLowerCase() === normQuery)
-      : queue.find((e) => e.name.trim().toLowerCase() === normQuery)
+      : here.find((e) => e.name.trim().toLowerCase() === normQuery)
     : null;
   const exactPoolMatch = normQuery ? pool.find((p) => p.name.trim().toLowerCase() === normQuery) : null;
   // count from the full pool, render only the first maxMatches — the label

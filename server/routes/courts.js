@@ -4,6 +4,16 @@ import { broadcast } from "./sse.js";
 
 const router = new Hono();
 
+// times are epoch seconds or null (cleared); anything else would poison every
+// availability check that compares against them
+function badTime(b) {
+  for (const k of ["active_from", "active_until", "expires_at"]) {
+    if (b[k] !== undefined && b[k] !== null && !Number.isInteger(b[k]))
+      return `${k} must be epoch seconds or null`;
+  }
+  return null;
+}
+
 router.get("/sessions/:id/courts", (c) => {
   const id = c.req.param("id");
   const courts = db.prepare("SELECT * FROM courts WHERE session_id = ? ORDER BY id").all(id);
@@ -12,13 +22,18 @@ router.get("/sessions/:id/courts", (c) => {
 
 router.post("/sessions/:id/courts", async (c) => {
   const id = c.req.param("id");
-  const { label, duration_minutes, active_from, active_until } = await c.req.json().catch(() => ({}));
+  const b = await c.req.json().catch(() => ({}));
+  const { label, duration_minutes, active_from, active_until } = b;
   const session = db.prepare("SELECT * FROM sessions WHERE id = ?").get(id);
   if (!session) return c.json({ error: "Session not found" }, 404);
+  const bad = badTime(b);
+  if (bad) return c.json({ error: bad }, 400);
 
   const dur = duration_minutes != null && duration_minutes !== "" ? Number(duration_minutes) : null;
   const now = Math.floor(Date.now() / 1000);
-  const expires_at = dur && session.started_at != null ? now + dur * 60 : null;
+  // an exact closing time (live court editor) wins over a duration
+  const expires_at =
+    b.expires_at !== undefined ? b.expires_at : dur && session.started_at != null ? now + dur * 60 : null;
 
   const { lastInsertRowid } = db
     .prepare(
@@ -37,6 +52,8 @@ router.patch("/courts/:id", async (c) => {
     .catch(() => ({}));
   const court = db.prepare("SELECT * FROM courts WHERE id = ?").get(id);
   if (!court) return c.json({ error: "Court not found" }, 404);
+  const bad = badTime({ active_from, active_until, expires_at });
+  if (bad) return c.json({ error: bad }, 400);
   const session = db.prepare("SELECT * FROM sessions WHERE id = ?").get(court.session_id);
 
   const nextLabel = label !== undefined ? String(label).trim() || court.label : court.label;

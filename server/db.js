@@ -62,7 +62,7 @@ db.exec(`
     session_id INTEGER NOT NULL REFERENCES sessions(id),
     player_id INTEGER NOT NULL REFERENCES players(id),
     checked_in_at INTEGER NOT NULL,
-    status TEXT NOT NULL DEFAULT 'waiting' CHECK(status IN ('waiting','playing','resting','left','staged')),
+    status TEXT NOT NULL DEFAULT 'waiting' CHECK(status IN ('waiting','playing','resting','left','staged','away')),
     last_played_at INTEGER,
     total_seconds_played INTEGER NOT NULL DEFAULT 0,
     sort_order INTEGER NOT NULL DEFAULT 0,
@@ -345,6 +345,26 @@ if (!virtCols.has("paid")) {
 }
 if (!virtCols.has("virt_offset")) {
   db.exec("ALTER TABLE queue_entries ADD COLUMN virt_offset REAL NOT NULL DEFAULT 0");
+}
+
+// 'away' = picked for the session but not at the venue yet: no wait clock, not
+// callable. Widening a CHECK needs a rebuild; the stored CREATE already lists
+// every column (ALTER ADD COLUMN rewrites it), so copy it rather than restate it.
+const qeNow = db
+  .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='queue_entries'")
+  .get().sql;
+if (!qeNow.includes("'away'")) {
+  const rebuilt = qeNow
+    .replace("'staged')", "'staged','away')")
+    .replace(/CREATE TABLE "?queue_entries"?/, "CREATE TABLE queue_entries_new");
+  db.exec("PRAGMA foreign_keys = OFF");
+  db.transaction(() => {
+    db.exec(rebuilt);
+    db.exec("INSERT INTO queue_entries_new SELECT * FROM queue_entries");
+    db.exec("DROP TABLE queue_entries");
+    db.exec("ALTER TABLE queue_entries_new RENAME TO queue_entries");
+  })();
+  db.exec("PRAGMA foreign_keys = ON");
 }
 
 // backfill courts for sessions that predate the courts table

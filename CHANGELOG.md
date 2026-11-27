@@ -6,6 +6,12 @@ the version that matters for self-hosters).
 
 ## [Unreleased]
 
+### Added
+
+- **Edit courts** on a live session (Courts header): rename a court, change when it opens or closes, switch it off or on, add one, or remove one that has no games — no more restarting the session to fix a setup mistake. The header's time range follows the courts' real hours. `POST /api/sessions/:id/courts` accepts an exact `expires_at`; court times must be epoch seconds or null.
+- **Hide skill** (header): one tap hides every skill level — queue and court badges, On Deck, the setup pool, tier filter and skill pickers, the career rating — for when players can see the screen. Remembered per device (other devices keep their own setting); matching still uses skill as before.
+- **Not here yet.** Players picked in setup are listed, not clocked in: they wait on a strip above the queue until tapped in (or **All here**), so a late arrival doesn't start with a long wait or get called while still on the road. Arriving is a fresh check-in. No-shows are dropped from attendance when the session ends. API: `POST /api/sessions/:id/checkin` takes `away: true`; a normal check-in of an away player is their arrival.
+
 ### Changed
 
 - **On Deck refills itself.** When a game ends and the next lineup steps on, QueueC plans replacements up to 3 lineups deep — no more re-pressing Smart Match. New **↻ Rerun** (On Deck header) throws the deck away and re-plans it without reusing any old pairing; Undo restores the previous lineups. Cancelling a lineup or starting one with ▶ Start now does not refill.

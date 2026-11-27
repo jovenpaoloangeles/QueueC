@@ -5,9 +5,10 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
 import { ToastProvider } from "./components/Toast.jsx";
-import { initTheme } from "./lib/theme.js";
+import { initSkillPrivacy, initTheme } from "./lib/theme.js";
 
 initTheme();
+initSkillPrivacy();
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

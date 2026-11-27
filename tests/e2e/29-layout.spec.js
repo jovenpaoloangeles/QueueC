@@ -72,3 +72,25 @@ test("29.5 Smart Match fills the court slots for review — nothing starts, noth
   expect(st.activeMatches).toHaveLength(0);
   expect(st.slatedMatches).toHaveLength(0); // 8 players, 2 courts — nobody left for On Deck
 });
+
+test("29.6 the header stays one row at 1280px, even with a long name waiting longest", async ({ page }) => {
+  // regression: a text "Hide skill" button, or a long full name in the
+  // Longest chip, wrapped the header at 1280–1300px; the sidebar's sticky
+  // offset (top-14) assumes one 56px row, so it slid under the header
+  await page.setViewportSize({ width: 1280, height: 700 });
+  // the longest waiter gets a long full name (the real roster has these)
+  const { queue } = await liveState(page);
+  const leader = queue.find((e) => e.name === "Inter C1");
+  await page.request.fetch(`${base()}/api/players/${leader.player_id}`, {
+    method: "PATCH",
+    data: { name: "Maximiliano Bartholomew Escosio-Villanueva" },
+  });
+  await expect(page.getByTestId("hdr-longest")).toContainText("Maximiliano");
+  await page.getByTestId("btn-hide-skill").click();
+  const header = page.getByTestId("brand").locator("xpath=..");
+  // the chip's timer keeps ticking; check across a few renders
+  for (let i = 0; i < 3; i++) {
+    expect((await header.boundingBox()).height).toBeLessThanOrEqual(57);
+    await page.waitForTimeout(1000);
+  }
+});

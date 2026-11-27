@@ -240,7 +240,7 @@ export function getSessionDetail(sessionId) {
     .prepare(
       `SELECT qe.id AS entry_id, qe.player_id, p.name, qe.checked_in_at, qe.status, qe.paid
        FROM queue_entries qe JOIN players p ON p.id = qe.player_id
-       WHERE qe.session_id = ? ORDER BY qe.sort_order, qe.id`,
+       WHERE qe.session_id = ? AND qe.status != 'away' ORDER BY qe.sort_order, qe.id`,
     )
     .all(sessionId);
 
@@ -289,7 +289,7 @@ router.get("/sessions/:id/stats", (c) => {
 
   const player_count = db
     .prepare(
-      "SELECT COUNT(*) as c FROM queue_entries WHERE session_id = ? AND status NOT IN ('left', 'staged')",
+      "SELECT COUNT(*) as c FROM queue_entries WHERE session_id = ? AND status NOT IN ('left', 'staged', 'away')",
     )
     .get(sid).c;
 

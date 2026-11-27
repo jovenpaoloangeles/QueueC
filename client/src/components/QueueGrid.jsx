@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { drag, moveBefore } from "@/lib/dnd";
 import { cn } from "@/lib/utils";
-import { getPlayers, removeEntry, setEntryStatus } from "../api.js";
+import { checkinPlayer, getPlayers, removeEntry, setEntryStatus } from "../api.js";
 import PlayerCard from "./PlayerCard.jsx";
 import PlayerSearchAdd from "./PlayerSearchAdd.jsx";
 import { useToast } from "./Toast.jsx";
@@ -51,7 +51,43 @@ export default function QueueGrid({
   const [filter, setFilter] = useState("");
   const [pendingRemove, setPendingRemove] = useState(null); // confirm-dialog target
   const [removing, setRemoving] = useState(false);
+  const [arriving, setArriving] = useState(false);
   const toast = useToast();
+
+  // "Not here yet" → arrived: a fresh check-in, so their wait starts now.
+  // Undo puts a single mis-tap back on the not-here list.
+  async function arrive(entries) {
+    if (arriving) return;
+    setArriving(true);
+    let done = 0;
+    let last = null;
+    try {
+      for (const e of entries) {
+        last = (await checkinPlayer(session.id, e.player_id))?.entry;
+        done++;
+      }
+    } catch (err) {
+      toast(err?.data?.error ?? "Could not check in", "error");
+    } finally {
+      setArriving(false);
+    }
+    if (done === 1 && last) {
+      const { player_id, name } = entries[0];
+      toast(`${name} arrived — wait starts now`, "success", {
+        undo: () =>
+          removeEntry(last.id)
+            .then(() => checkinPlayer(session.id, player_id, { away: true }))
+            .then(
+              () => true,
+              // e.g. already put on a court — say why, don't just go quiet
+              (err) => {
+                toast(err?.data?.error ?? "Could not undo", "error");
+                return false;
+              },
+            ),
+      });
+    } else if (done > 1) toast(`${done} players arrived — wait starts now`, "success");
+  }
 
   // check-in undo: if the entry is already gone (another client checked them
   // out), say so instead of toasting a false "Undone" — OnDeckStrip convention
@@ -156,6 +192,11 @@ export default function QueueGrid({
   const notDrafted = (e) => !draftedIds.has(e.id);
   const waiting = queue.filter((e) => e.status === "waiting" && notDrafted(e));
   const resting = queue.filter((e) => e.status === "resting" && notDrafted(e));
+  const fq = filter.trim().toLowerCase();
+  // queue order = setup pick order, which "All here" keeps (arrival-order sessions);
+  // the chips themselves read alphabetically so a name is quick to find
+  const away = queue.filter((e) => e.status === "away" && (!fq || (e.name ?? "").toLowerCase().includes(fq)));
+  const awayChips = [...away].sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
   // click-selected OR drag-drafted players both count as "picked" for the header line
   const pickedCount = new Set([...selection, ...draftedIds]).size;
 
@@ -329,6 +370,43 @@ export default function QueueGrid({
               hint="Type to search registered players"
               maxMatches={8}
             />
+          )}
+        </div>
+      )}
+
+      {/* picked in setup but not at the venue yet — tap a name when they walk in */}
+      {away.length > 0 && (
+        <div
+          data-testid="away-strip"
+          className="flex flex-wrap items-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2"
+        >
+          <span className="mr-1 text-xs font-semibold text-muted-foreground">
+            Not here yet · <span className="font-mono tabular-nums">{away.length}</span>
+            <span className="font-normal"> — tap when they arrive</span>
+          </span>
+          {awayChips.map((e) => (
+            <button
+              key={e.id}
+              type="button"
+              data-testid="away-chip"
+              disabled={arriving}
+              onClick={() => arrive([e])}
+              className="rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:border-primary/50 hover:bg-wash-green disabled:opacity-50"
+            >
+              {e.name}
+            </button>
+          ))}
+          {away.length > 1 && (
+            <Button
+              variant="ghost"
+              size="xs"
+              data-testid="away-all"
+              disabled={arriving}
+              className="ml-auto rounded-full text-primary"
+              onClick={() => arrive(away)}
+            >
+              All here
+            </Button>
           )}
         </div>
       )}

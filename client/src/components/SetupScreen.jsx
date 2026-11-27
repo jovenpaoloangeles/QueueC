@@ -196,7 +196,7 @@ function EditRow({ p, onSave, onCancel }) {
         />
         <select
           aria-label="Player skill"
-          className="h-8 rounded-md border border-border bg-card px-2 text-xs text-foreground"
+          className="skill-info h-8 rounded-md border border-border bg-card px-2 text-xs text-foreground"
           value={skill}
           onChange={(e) => setSkill(e.target.value)}
           onKeyDown={keys}
@@ -361,7 +361,8 @@ export default function SetupScreen({ draft }) {
         })),
       });
       createdId = session.id;
-      for (const pid of activePicked) await checkinPlayer(createdId, pid);
+      // on the list, not on the clock: each player's wait starts when they're marked arrived
+      for (const pid of activePicked) await checkinPlayer(createdId, pid, { away: true });
       await startSession(createdId);
     } catch (err) {
       // no half-created state: end the session we just made, keep the form intact
@@ -659,7 +660,7 @@ export default function SetupScreen({ draft }) {
                   </Button>
                   <select
                     aria-label="Filter tier"
-                    className="h-8 rounded-md border border-border bg-card px-2 text-xs text-foreground"
+                    className="skill-info h-8 rounded-md border border-border bg-card px-2 text-xs text-foreground"
                     value={tierFilter}
                     onChange={(e) => setTierFilter(e.target.value)}
                   >

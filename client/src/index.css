@@ -235,6 +235,12 @@
     animation: livepulse 1.8s ease-out infinite;
   }
 
+  /* "Hide skill" privacy switch (Header) — badges, ratings, tier pickers */
+  .hide-skill .tier,
+  .hide-skill .skill-info {
+    display: none !important;
+  }
+
   /* skill-tier badge — draft recipe: tinted fill + inset ring from the tier color */
   .tier {
     display: inline-flex;

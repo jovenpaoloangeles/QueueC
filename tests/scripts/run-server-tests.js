@@ -110,6 +110,8 @@ for (const f of [
   "server/routes/stats.test.js", // expectations aligned in this plan
   // registered 2026-11-16: plan 004 request-validation guards (one case per rule)
   "server/routes/validation.test.js",
+  // 2026-11-27 event feedback: not-here-yet arrivals + live court edits
+  "server/routes/arrivals-courts.test.js",
   // LAST: clear-all deletes every ended session on the shared server
   "server/routes/history-delete.test.js",
 ]) {

@@ -23,10 +23,17 @@ One screen, no modals:
   them; when the queue is too short to satisfy a rule, it relaxes it rather
   than fielding nothing.
 
-One **Start Session** button does everything: create session → check in the
-selection → start the court clocks. Nothing is written until that click.
+One **Start Session** button does everything: create session → put the
+selection on the session's **Not here yet** list → start the court clocks.
+Nothing is written until that click. Nobody's wait clock runs until they're
+marked arrived (see Queue).
 
 ## Live
+
+**Hide skill** (header, next to ☾) hides every skill level on this device —
+badges, the setup tier filter and pickers, the career rating — for when
+players can see the screen. Tap **Show skill** to bring them back. It's
+remembered per device; Smart Match keeps using skill either way.
 
 The header shows the session name over the date, courts in use, waiting count,
 and the longest current wait (net wait — time spent playing is excluded, so a
@@ -47,6 +54,10 @@ player's wait clock restarts after each match).
   pulses EXPIRED and leaves the available pool; mid-match, the game keeps
   running under a **Last Game** badge. Extending adds an hour from
   `max(expires_at, now)`.
+- **Edit courts** (Courts header) fixes a setup mistake without restarting:
+  each court's name, opening time, closing time and on/off, plus add a court
+  or remove one that has no games. A blank opening time means open now; a
+  blank closing time means no rental timer. A game in progress keeps playing.
 
 ### On Deck
 
@@ -66,6 +77,13 @@ skill-balance label and a next-free-court ETA.
   freed court.
 
 ### Queue
+
+Players picked in setup start on the **Not here yet** strip above the queue —
+no wait clock, never matched. Tap a name when they walk in: their wait starts
+then, and they join the queue like any late arrival (Undo puts a mis-tap back).
+**All here** marks everyone at once. Searching a not-here player in Check In
+also marks them arrived. Anyone still not here when the session ends is left
+out of attendance and payments.
 
 **Check In** opens the search panel — select several players (checkbox chips)
 and check them all in with one confirmation. **Pause** (header) freezes every

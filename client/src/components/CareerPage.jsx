@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getPlayerCareer } from "@/api";
 import downloadExport from "@/lib/download";
+import { cn } from "@/lib/utils";
 import HistoryShell from "./HistoryShell.jsx";
 import { Button } from "./ui/button";
 
@@ -169,7 +170,7 @@ export default function CareerPage({ id }) {
               ? [["Rating", `${career.rating.mu.toFixed(1)} ±${career.rating.sigma.toFixed(1)}`]]
               : []),
           ].map(([label, value]) => (
-            <div key={label} className="bg-card px-4 py-3">
+            <div key={label} className={cn("bg-card px-4 py-3", label === "Rating" && "skill-info")}>
               <div className="text-[12.5px] uppercase tracking-wider text-muted-foreground">{label}</div>
               <div className="font-mono text-lg font-bold tabular-nums">{value}</div>
             </div>

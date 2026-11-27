@@ -34,8 +34,9 @@ export const deleteSession = (id) => req("DELETE", `/sessions/${id}`);
 export const clearHistory = () => req("DELETE", "/sessions?all=1");
 export const createPlayer = (data) => req("POST", "/players", data);
 export const updatePlayer = (id, data) => req("PATCH", `/players/${id}`, data);
-export const checkinPlayer = (sessionId, playerId) =>
-  req("POST", `/sessions/${sessionId}/checkin`, { player_id: playerId });
+// away: on the session list but not at the venue yet (no wait clock until they check in)
+export const checkinPlayer = (sessionId, playerId, { away = false } = {}) =>
+  req("POST", `/sessions/${sessionId}/checkin`, { player_id: playerId, ...(away && { away: true }) });
 export const setEntryStatus = (entryId, status) => req("PATCH", `/queue/${entryId}/status`, { status });
 export const removeEntry = (entryId) => req("DELETE", `/queue/${entryId}`);
 export const updateShuttles = (sessionId, delta) =>
@@ -57,8 +58,7 @@ export const substitute = (matchId, outEntry, inEntry) =>
   req("PATCH", `/matches/${matchId}/substitute`, { out_entry: outEntry, in_entry: inEntry });
 export const getLeaderboard = (since) => req("GET", `/leaderboard?since=${since}`);
 export const getPlayerCareer = (playerId) => req("GET", `/players/${playerId}/career`);
-export const addCourt = (sessionId, label, duration_minutes = null) =>
-  req("POST", `/sessions/${sessionId}/courts`, { label, duration_minutes });
+export const addCourt = (sessionId, body) => req("POST", `/sessions/${sessionId}/courts`, body);
 export const deleteCourt = (courtId) => req("DELETE", `/courts/${courtId}`);
 export const updateCourt = (courtId, patch) => req("PATCH", `/courts/${courtId}`, patch);
 export const slateMatch = (data) => req("POST", "/matches/slate", data);

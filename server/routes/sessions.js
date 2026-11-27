@@ -234,6 +234,8 @@ router.patch("/:id/end", (c) => {
     db.prepare(
       "UPDATE queue_entries SET status = 'left', status_updated_at = ? WHERE session_id = ? AND status IN ('playing', 'staged')",
     ).run(now, id);
+    // picked but never showed up: not attendance
+    db.prepare("DELETE FROM queue_entries WHERE session_id = ? AND status = 'away'").run(id);
     db.prepare("UPDATE sessions SET ended_at = ? WHERE id = ?").run(now, id);
     // Reset the pool only when this is the last unended session — ending one
     // session must not wipe other live sessions' registrants, queue entries

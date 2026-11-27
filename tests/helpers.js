@@ -46,10 +46,15 @@ export async function checkinPlayers(page, names = DEFAULT_PLAYERS) {
   }
 }
 
-export async function startSession(page) {
+export async function startSession(page, { arrived = true } = {}) {
   await page.getByRole("button", { name: "Start Session" }).click();
   // setup screen unmounts once the live session arrives via SSE
   await page.getByTestId("session-setup").waitFor({ state: "detached", timeout: 8000 });
+  // setup puts everyone on "Not here yet"; these specs want them all in the queue
+  if (arrived) {
+    await page.getByTestId("away-all").click();
+    await page.getByTestId("away-strip").waitFor({ state: "detached" });
+  }
 }
 
 /** API-seeded session setup: create + check in + start over HTTP, then one
@@ -79,7 +84,7 @@ function defaultStartEpoch(startTime) {
 
 export async function fullSetup(
   page,
-  { courts = 2, playerNames = DEFAULT_PLAYERS, name = "Test Session", hours, startTime } = {},
+  { courts = 2, playerNames = DEFAULT_PLAYERS, name = "Test Session", hours, startTime, away = [] } = {},
 ) {
   const rows = Array.isArray(courts) ? courts : null;
   const label = (i, r) => (r?.label ?? "").trim() || `Court ${i + 1}`;
@@ -117,11 +122,19 @@ export async function fullSetup(
   if (entryIds.length > 1) {
     await api("/api/queue/order", "PATCH", { session_id: session.id, order: entryIds });
   }
+  // `away`: on the session's "Not here yet" list (setup picks), no wait clock
+  for (const n of away) {
+    const p = players.find((x) => x.name === n);
+    if (!p) throw new Error(`fullSetup: player not in fixtures/players.json: ${n}`);
+    await api(`/api/sessions/${session.id}/checkin`, "POST", { player_id: p.id, away: true });
+  }
   await api(`/api/sessions/${session.id}/start`, "PATCH");
   await page.goto("/");
   // the live view renders on the first SSE frame — wait for the seeded rows so
   // callers can read the queue/grid immediately (the UI flow had them already)
   if (playerNames.length) await expect(page.locator("[data-entry-id]")).toHaveCount(playerNames.length);
+  if (away.length) await expect(page.getByTestId("away-chip")).toHaveCount(away.length);
+  return { session, entryIds };
 }
 
 export async function endMatch(page, _courtLabel, { team1 = 21, team2 = 15 } = {}) {

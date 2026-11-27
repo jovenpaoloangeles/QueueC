@@ -1,6 +1,9 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { EMPTY_DRAFT } from "@/lib/dnd";
 import { cn, fmtWall } from "@/lib/utils";
 import CourtCard from "./CourtCard.jsx";
+import CourtsEditDialog from "./CourtsEditDialog.jsx";
 
 function isLive(court, serverTime) {
   if (!court.enabled) return false;
@@ -31,6 +34,7 @@ export default function CourtsRow({
   onClearSlot,
   onClearDraft,
 }) {
+  const [editing, setEditing] = useState(false);
   // Expired courts stay on screen (pulsing red + "Extend +1 Hour"); an expired
   // court with a match in progress is the Last Game case — both need the card.
   // A staggered court waiting for its opens_at offset renders as "Opens in Xm".
@@ -57,7 +61,9 @@ export default function CourtsRow({
     .filter(Boolean)
     .join(" · ");
 
-  if (!liveCourts.length) return null;
+  // the header (and its Edit button) stays even with every court off — that's
+  // exactly when the QM needs to turn one back on
+  if (!courts.length) return null;
 
   // ponytail: >9 courts wrap to a 3rd column; the page scroll takes the overflow
   return (
@@ -65,7 +71,17 @@ export default function CourtsRow({
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 px-0.5">
         <h2 className="text-base font-bold tracking-[-0.015em] text-foreground">Courts</h2>
         {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
+        <Button
+          variant="ghost"
+          size="xs"
+          data-testid="courts-edit"
+          className="ml-auto self-center rounded-full text-muted-foreground"
+          onClick={() => setEditing(true)}
+        >
+          Edit courts
+        </Button>
       </div>
+      {editing && <CourtsEditDialog session={session} courts={courts} onClose={() => setEditing(false)} />}
       <div
         className={cn(
           "grid gap-3",
