@@ -6,6 +6,12 @@ the version that matters for self-hosters).
 
 ## [Unreleased]
 
+## [1.8.1] — 2026-11-27
+
+### Fixed
+
+- Coming back to the live view (← Back from History, a session page or a career page) no longer flashes the setup screen for a moment before the session appears. This also made one test pass by accident locally and fail in CI, which left the v1.8.0 tag's CI red.
+
 ## [1.8.0] — 2026-11-27
 
 Event-day release: fewer taps for the queue master, and the fixes asked for
