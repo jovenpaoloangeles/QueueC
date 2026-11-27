@@ -6,6 +6,11 @@ the version that matters for self-hosters).
 
 ## [Unreleased]
 
+## [1.8.0] — 2026-11-27
+
+Event-day release: fewer taps for the queue master, and the fixes asked for
+after the 2026-11-26 wellness event.
+
 ### Added
 
 - **Edit courts** on a live session (Courts header): rename a court, change when it opens or closes, switch it off or on, add one, or remove one that has no games — no more restarting the session to fix a setup mistake. The header's time range follows the courts' real hours. `POST /api/sessions/:id/courts` accepts an exact `expires_at`; court times must be epoch seconds or null.
